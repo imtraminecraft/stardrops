@@ -127,6 +127,7 @@ public class FancyConfig {
     public boolean selfSuffix = true, selfName = true, selfAura = true;            // show your own cosmetics
     public int cosRange = 32, cosMax = 8, cosSpeed = 100, cosAmount = 100, cosSize = 100;
     public boolean cosHideFirst = false, cosCalm = false;
+    public boolean achIntro = true;                                       // the stargazer film when the achievements open
     public java.util.List<String> seenAch = new java.util.ArrayList<>();     // achievements whose star you have already seen light up (new ones ignite when the sky opens)
     // Music: Spotify lyrics in the world
     public String spotifyClient = "";                          // your Spotify app's Client ID (developer.spotify.com)

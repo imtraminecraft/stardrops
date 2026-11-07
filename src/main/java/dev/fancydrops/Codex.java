@@ -37,6 +37,9 @@ final class Codex {
 
     static boolean open;
     private static long openAt, closeAt, zoomAt, hoverAt, blinkAt;
+    /** The opening film: the stargazer at the telescope (INTRO ms, then the page starts at openAt), the camera pushes into the lens, and
+     *  the page opens out of it like an iris while the camera pulls back from the hill. Click or Esc skips it. */
+    private static final long INTRO = 1900, IRIS = 900; private static long introFrom; private static int introSounds;
     private static String blinkId = "";
     private static int[] from = {0, 0, 0, 0};
     private static int focus = -1, prevFocus = -1, hoverCon = -1, lastHoverCon = -1;
@@ -52,7 +55,9 @@ final class Codex {
 
     // ------------------------------------------------------------------ open / close
     static void open(int[] btn, int chapter) {
-        open = true; openAt = System.currentTimeMillis(); closeAt = 0; from = btn.clone(); IGNITE.clear(); igSounded.clear(); ignitesPlanned = false; blinkId = "";
+        long t0 = System.currentTimeMillis(); introFrom = t0; introSounds = 0;
+        boolean intro = FancyConfig.get().achIntro;
+        open = true; openAt = t0 + (intro ? INTRO : 0); closeAt = 0; from = btn.clone(); IGNITE.clear(); igSounded.clear(); ignitesPlanned = false; blinkId = "";
         focus = chapter >= 1 && chapter <= ACH.length ? chapter - 1 : -1; prevFocus = focus; zoomAt = 0;
         Achievements.refresh(true);
         sound("sky_open", 1f, 0.8f);
@@ -107,8 +112,11 @@ final class Codex {
         G = g; now = System.currentTimeMillis(); host = h; font = h.font(); W = width; H = height; mx = mx0; my = my0; HITS.clear(); LABELS.clear();
         float t = now - openAt, closeT = closeAt == 0 ? -1f : now - closeAt;
         if (closeT >= CLOSE) { open = false; return; }
-        float grow = closeT >= 0 ? 1f - ease(closeT / CLOSE) : ease(t / 420f);
-        alpha = closeT >= 0 ? 1f - cl(closeT / (CLOSE * 0.8f)) : cl(t / 200f);
+        boolean film = openAt > introFrom;                                              // this opening has the film
+        if (film && t < 0 && closeT < 0) { intro(g, now - introFrom); return; }
+        float grow = closeT >= 0 ? 1f - ease(closeT / CLOSE) : film ? 1f : ease(t / 420f);
+        alpha = closeT >= 0 ? 1f - cl(closeT / (CLOSE * 0.8f)) : film ? 1f : cl(t / 200f);
+        if (film && introSounds < 3 && t >= 0) { introSounds = 3; sound("sky_star", 1.4f, 0.6f); }
         planIgnites();
 
         int fw = Math.round(Math.min(W - 24, H * 2.0f)), fh = Math.round(Math.min(H - 24, fw / 1.7f));
@@ -129,7 +137,11 @@ final class Codex {
         int showFocus = zoomAt > now ? -1 : fc;
 
         g.enableScissor(sx0, sy0, sx0 + sw, sy0 + sh);
+        float iris = film && closeT < 0 ? cl(t / IRIS) : 1f, pull = 1f - ease(iris);       // the page opens out of the lens and the camera pulls back
+        boolean pulling = pull > 0.001f;
+        if (pulling) { Gfx.push(g); float pk = 1f + 0.45f * pull, pcx = sx0 + sw / 2f, pcy = sy0 + sh / 2f; Gfx.translate(g, pcx, pcy); Gfx.scale(g, pk); Gfx.translate(g, -pcx, -pcy); }
         sky(g);
+        scenery(g, 1f - cl(zoomed * 2.5f));
         streaks(g);
         hoverCon = -1;
         for (int c = 0; c < ACH.length; c++) constellation(g, c, zoomed, showFocus);
@@ -137,6 +149,9 @@ final class Codex {
         shootingStars(g);
         stargazer(g, 1f - cl(zoomed * 2.5f));
         vignette(g);
+        if (pulling) Gfx.pop(g);
+        if (iris < 1f) { try { g.nextStratum(); } catch (Throwable ignored) { } }      // over the names of the stars too
+        if (iris < 1f) lensMask(g, sx0 + sw / 2f, sy0 + sh / 2f, Math.min(sw, sh) * 0.2f + (float) Math.hypot(sw, sh) * 0.62f * ease(iris), 1f - iris);
         g.disableScissor();
         frame(g);
         if (alpha > 0.6f && closeT < 0) {
@@ -212,51 +227,139 @@ final class Codex {
     }
 
     // ------------------------------------------------------------------ the stargazer: on a hill, bottom left, with a telescope that follows your mouse
-    private static void stargazer(GuiGraphicsExtractor g, float a) {
-        if (a < 0.02f) return;
+    /** The hill's top at screen x (the stargazer, the tripod's feet and the lantern all stand on it). */
+    private static float ground(float x) {
+        float hillW = sw * 0.36f, i = x - sx0, u = i / hillW; if (u < 0 || u > 1) return sy0 + sh;
+        return sy0 + sh - (sh * 0.17f * (1f - u * u) * (0.95f + 0.05f * (float) Math.sin(i * 0.15f)) + 3);
+    }
+    private static void stargazer(GuiGraphicsExtractor g, float a) { stargazer(g, a, false); }
+    /** film: the scope holds still on the sky (the opening), and the lens is remembered for the camera. */
+    private static float lensX, lensY, headXs, headYs;
+    private static void stargazer(GuiGraphicsExtractor g, float a, boolean film) {
+        if (a < 0.02f && !film) return;
         float k = sh / 150f, gnd = sy0 + sh, hillW = sw * 0.36f;
         int sil = argb(a * alpha, 0x05040A), rim = argb(0.55f * a * alpha, 0x8A6AD8);
         for (int i = 0; i <= Math.round(hillW); i += 2) {                       // the hill, its top edge caught by the sky's light, a few grass tufts
-            float u = i / hillW, hgt = sh * 0.17f * (1f - u * u) * (0.95f + 0.05f * (float) Math.sin(i * 0.15f)) + 3;
-            int x = sx0 + i, top = Math.round(gnd - hgt);
+            int x = sx0 + i, top = Math.round(ground(x));
             g.fill(x, top, x + 2, Math.round(gnd), sil); g.fill(x, top - 1, x + 2, top, rim);
             if (i % 14 == 6) { float sway = (float) Math.sin(now / 900.0 + i) * 1.2f; line(x + 1, top, x + 1 + sway, top - 4 * k, 0x05040A, a * alpha, 0); }
         }
-        float hx = sx0 + sw * 0.12f, hy = gnd - sh * 0.17f * (1f - 0.333f * 0.333f) + 1;   // where they sit (the hilltop)
-        // the lantern beside them: warm light on the grass, a flame that flickers
-        float lx = hx - 16 * k, ly = hy - 3 * k, fl = 0.8f + 0.2f * (float) Math.sin(now / 90.0) * (float) Math.sin(now / 37.0);
+        float hx = sx0 + sw * 0.12f, hy = ground(hx) + 1;                                       // where they sit (the hilltop)
+        // a little tree at the hill's edge, swaying
+        float trx = sx0 + sw * 0.035f, trg = ground(trx) + 1, sway = (float) Math.sin(now / 1300.0) * 0.8f * k;
+        thick(trx, trg, trx + sway * 0.3f, trg - 16 * k, 1.6f * k, 0x05040A, a);
+        thick(trx + sway * 0.2f, trg - 9 * k, trx - 5 * k + sway, trg - 14 * k, 1f * k, 0x05040A, a); thick(trx + sway * 0.25f, trg - 12 * k, trx + 5 * k + sway, trg - 17 * k, 1f * k, 0x05040A, a);
+        disc(g, trx + sway, trg - 19 * k, 5.5f * k, sil); disc(g, trx - 4 * k + sway, trg - 16 * k, 4.2f * k, sil); disc(g, trx + 4.5f * k + sway, trg - 17 * k, 4.4f * k, sil);
+        // the lantern beside them, standing on the grass: warm light, a flame that flickers
+        float lx = hx - 16 * k, ly = ground(lx) - 2.5f * k, fl = 0.8f + 0.2f * (float) Math.sin(now / 90.0) * (float) Math.sin(now / 37.0);
         glow(lx, ly, 26 * k * fl, 0xFFB050, 0.35f * a); glow(lx, ly, 8 * k, 0xFFD890, 0.8f * a * fl);
         bar(lx - 1.5f * k, ly - 2.5f * k, lx + 1.5f * k, ly + 2.5f * k, 0x1A120A, a);
         disc(g, lx, ly, 1.2f * k, argb(a * alpha * fl, 0xFFE8A0));
-        // the telescope turns to the constellation under your mouse, or sweeps slowly
-        float apX = hx + 9f * k, apY = hy - 12.5f * k, want;                                 // the tripod stands still; the tube turns on its head
-        line(apX, apY, apX - 4.5f * k, hy, 0x05040A, a, 1); line(apX, apY, apX + 4.5f * k, hy, 0x05040A, a, 1); line(apX, apY, apX + 0.6f * k, hy + 0.5f * k, 0x05040A, a, 1);
-        if (hoverCon >= 0) { float[] o = centre(hoverCon); want = (float) Math.atan2(Y(o[1]) - apY, X(o[0]) - apX); }
+        // a cat beside the lantern, its tail swishing
+        float cx0 = hx - 9 * k, cg = ground(cx0) + 0.5f, tail = (float) Math.sin(now / 600.0) * 2.5f * k;
+        disc(g, cx0, cg - 2.2f * k, 2.4f * k, sil); disc(g, cx0 + 1.2f * k, cg - 5.2f * k, 1.7f * k, sil);
+        thick(cx0 + 0.3f * k, cg - 6.2f * k, cx0 + 0.4f * k, cg - 7.1f * k, 0.8f * k, 0x05040A, a); thick(cx0 + 2f * k, cg - 6.2f * k, cx0 + 2.1f * k, cg - 7.1f * k, 0.8f * k, 0x05040A, a);
+        thick(cx0 - 2 * k, cg - 0.8f * k, cx0 - 4.5f * k + tail * 0.4f, cg - 3.5f * k - Math.abs(tail) * 0.3f, 0.7f * k, 0x05040A, a);
+        // the telescope: a tripod standing on the ground in front of them; the tube turns to the constellation under your mouse, or sweeps slowly
+        float apX = hx + 9f * k, apY = Math.min(ground(apX), hy) - 12.5f * k, want;
+        for (float fx : new float[]{apX - 4.5f * k, apX + 4.5f * k, apX + 0.6f * k}) line(apX, apY, fx, ground(fx) + 0.5f, 0x05040A, a, 1);
+        if (film) want = -1.05f;
+        else if (hoverCon >= 0) { float[] o = centre(hoverCon); want = (float) Math.atan2(Y(o[1]) - apY, X(o[0]) - apX); }
         else want = -0.95f + 0.25f * (float) Math.sin(now / 5000.0);
         want = Math.max(-2.6f, Math.min(-0.15f, want));
-        scopeAng += (want - scopeAng) * 0.08f;
+        scopeAng += (want - scopeAng) * (film ? 0.2f : 0.08f);
         float ca = (float) Math.cos(scopeAng), sa = (float) Math.sin(scopeAng), len = 15 * k;
         float eyeX = apX - ca * len * 0.4f, eyeY = apY - sa * len * 0.4f, tx1 = apX + ca * len * 0.6f, ty1 = apY + sa * len * 0.6f;
+        lensX = tx1; lensY = ty1;
         thick(eyeX, eyeY, tx1, ty1, 1.7f * k, 0x0A0812, a); thick(eyeX, eyeY, tx1, ty1, 0.5f * k, 0x3A2A5A, a * 0.6f);                                                    // the tube, a sheen along it
         thick(tx1 - ca * 1.5f * k, ty1 - sa * 1.5f * k, tx1, ty1, 2.4f * k, 0x0A0812, a);
         disc(g, apX, apY, 1.1f * k, argb(a * alpha, 0x1A1424));
-        glow(tx1, ty1, 4 * k, 0xBFD8FF, (hoverCon >= 0 ? 0.55f : 0.25f) * a);                                                                                              // starlight in the lens
-        // the person: sitting, knees up, leaning back to the eyepiece
+        glow(tx1, ty1, 4 * k, 0xBFD8FF, (hoverCon >= 0 || film ? 0.55f : 0.25f) * a);                                                                                       // starlight in the lens
+        // the person: sitting, knees up, leaning back to the eyepiece, feet on the grass
+        float footX = hx + 9.5f * k, footY = ground(footX) - 0.6f * k;
         thick(hx, hy - 1.5f * k, hx + 1.5f * k, hy - 11 * k, 5.2f * k, 0x05040A, a);                  // back
         thick(hx + 1.5f * k, hy - 2.5f * k, hx + 7 * k, hy - 7.5f * k, 3.2f * k, 0x05040A, a);        // thigh
-        thick(hx + 7 * k, hy - 7.5f * k, hx + 9.5f * k, hy - 1 * k, 2.8f * k, 0x05040A, a);           // shin
+        thick(hx + 7 * k, hy - 7.5f * k, footX, footY, 2.8f * k, 0x05040A, a);                        // shin
         thick(hx + 1.5f * k, hy - 10 * k, eyeX, eyeY + 1.5f * k, 2.2f * k, 0x05040A, a);              // arm up to the scope
-        float headX = hx + 3 * k, headY = hy - 14.5f * k;
+        float headX = hx + 3 * k, headY = hy - 14.5f * k; headXs = headX; headYs = headY;
         disc(g, headX, headY, 3.1f * k, sil); disc(g, headX - 0.6f * k, headY - 0.8f * k, 3.1f * k, sil);
         float wind = (float) Math.sin(now / 700.0) * 1.2f;                                               // a scarf end lifting in the wind
         thick(hx + 1 * k, hy - 11.5f * k, hx - 4 * k + wind, hy - 10.5f * k - wind * 0.5f, 1.6f * k, 0x05040A, a);
         line(headX - 2.6f * k, headY - 2.2f * k, headX + 1f * k, headY - 3.4f * k, 0x8A6AD8, 0.45f * a, 0);                                                              // rim light on the hair
         line(hx - 1.6f * k, hy - 3 * k, hx - 0.6f * k, hy - 11 * k, 0x8A6AD8, 0.35f * a, 0);
-        if (hoverCon >= 0) {                                                                         // a faint sight line to what they look at
+        for (int i = 0; i < (film ? 0 : 7); i++) {                                                   // fireflies drifting over the hill
+            float u = (now % 3_600_000L) / 1000f, fx = sx0 + sw * (0.02f + 0.3f * rnd(i * 7)) + (float) Math.sin(u * 0.5f + i) * 8 * k, fy = ground(fx) - (6 + 14 * rnd(i * 3)) * k + (float) Math.sin(u * 0.8f + i * 2) * 3 * k;
+            float bl = (float) Math.max(0, Math.sin(u * 1.7f + i * 1.3f)); glow(fx, fy, 3.5f * k, 0xD8FF8A, 0.6f * bl * a); disc(g, fx, fy, 0.5f * k, argb(bl * a * alpha, 0xF4FFC8));
+        }
+        if (hoverCon >= 0 && !film) {                                                                // a faint sight line to what they look at
             float[] o = centre(hoverCon); float ox = X(o[0]), oy = Y(o[1]), d = (float) Math.hypot(ox - tx1, oy - ty1);
             float ha = ease((now - hoverAt) / 400f);
             for (int i = 0; i < 30; i++) { float u = (i + ((now / 60) % 3) / 3f) / 30f; if (u * d < 6) continue; float xx = tx1 + (ox - tx1) * u, yy = ty1 + (oy - ty1) * u; G.fill(Math.round(xx), Math.round(yy), Math.round(xx) + 1, Math.round(yy) + 1, argb(0.25f * ha * a * (1f - u) * alpha, ACH_COL[hoverCon])); }
         }
+    }
+
+    // ------------------------------------------------------------------ the sky's furniture: a moon, a ringed planet, far hills with town lights, a satellite
+    private static void scenery(GuiGraphicsExtractor g, float a) {
+        if (a < 0.02f) return;
+        float k = sh / 150f;
+        float mx0 = sx0 + sw * 0.49f, my0 = sy0 + sh * 0.1f, mr = 6 * k;                                  // a crescent moon, its halo breathing
+        glow(mx0, my0, mr * 5, 0xBFD0FF, (0.18f + 0.04f * (float) Math.sin(now / 2000.0)) * a);
+        for (int i = 0; i <= 24; i++) { float u = i / 24f; double an = Math.toRadians(95 + 170 * u); disc(g, mx0 + (float) Math.cos(an) * mr * 0.8f, my0 + (float) Math.sin(an) * mr * 0.8f, mr * 0.28f * (float) Math.sin(Math.PI * u) + 0.4f, argb(a * alpha, 0xF2EEDC)); }   // a crescent, lit from the left
+        float px = sx0 + sw * 0.92f, py = sy0 + sh * 0.44f, pr = 3.2f * k;                                  // a ringed planet, far off
+        glow(px, py, pr * 4, 0xE8B080, 0.15f * a);
+        disc(g, px, py, pr, argb(a * alpha, 0xC88A5A)); bar(px - pr, py - pr * 0.25f, px + pr, py - pr * 0.05f, 0xE8B88A, 0.6f * a);
+        Gfx.push(g); Gfx.translate(g, px, py); Gfx.rotate(g, -0.35f); Gfx.scale(g, 1f, 0.32f); ring(0, 0, pr * 1.9f, argb(0.7f * a * alpha, 0xF0D8B0), 1f); Gfx.pop(g);
+        int base = sy0 + sh;                                                                              // far hills along the bottom, a few town lights twinkling
+        for (int x = sx0 + Math.round(sw * 0.36f); x < sx0 + sw; x += 3) {
+            float u = (x - sx0) / (float) sw, h = sh * (0.035f + 0.02f * (float) Math.sin(u * 17) + 0.012f * (float) Math.sin(u * 41 + 1));
+            g.fill(x, Math.round(base - h), x + 3, base, argb(0.85f * a * alpha, 0x07060E));
+            if (rnd(x) > 0.93f) { float tw = 0.5f + 0.5f * (float) Math.sin(now / (300.0 + rnd(x * 3) * 500) + x); g.fill(x + 1, Math.round(base - h * 0.5f), x + 2, Math.round(base - h * 0.5f) + 1, argb(tw * a * alpha, 0xFFC870)); }
+        }
+        long per = 26000; float su = (now % per) / (float) per;                                           // a satellite crossing now and then, blinking
+        if (su < 0.5f) { float sxp = sx0 + sw * (0.1f + su * 1.6f), syp = sy0 + sh * (0.06f + su * 0.1f); boolean on = (now / 500) % 2 == 0;
+            g.fill(Math.round(sxp), Math.round(syp), Math.round(sxp) + 1, Math.round(syp) + 1, argb((on ? 0.9f : 0.35f) * a * alpha, on ? 0xFF8A8A : 0xFFFFFF)); }
+    }
+
+    // ------------------------------------------------------------------ the opening film
+    private static void skipIntro() { long n = System.currentTimeMillis(); long d = openAt - n; if (d <= 0) return; openAt = n; if (zoomAt > 0) zoomAt -= d; blinkAt -= d; introSounds = 3; }
+    /** u ms into the film: the stargazer close up, then the camera pushes into the telescope's lens until the lens fills the screen. */
+    private static void intro(GuiGraphicsExtractor g, long u) {
+        int fw = Math.round(Math.min(W - 24, H * 2.0f)), fh = Math.round(Math.min(H - 24, fw / 1.7f));
+        sw = fw; sh = fh; sx0 = Math.round(W / 2f - sw / 2f); sy0 = Math.round(H / 2f - sh / 2f);
+        float[] cam = camOf(-1); camU = cam[0]; camV = cam[1]; camS = cam[2]; warp = 0; alpha = 1f;
+        g.fill(0, 0, W, H, argb(cl(u / 250f) * 0.72f, 0x02010A));
+        float fadeIn = cl(u / 350f);
+        g.enableScissor(sx0, sy0, sx0 + sw, sy0 + sh);
+        sky(g);
+        float push = cl((u - 900f) / (INTRO - 900f)), pe = push * push * push;                       // 0..900 ms: the close-up, then the push into the lens
+        if (introSounds < 1 && u >= 900) { introSounds = 1; sound("sky_zoom", 1.1f, 0.8f); }
+        float k0 = 3.4f + 0.5f * cl(u / 900f), kz = k0 * (float) Math.pow(70f / k0, pe);
+        stargazer(g, 0f, true);                                                                       // (nothing drawn: works out where the lens is)
+        float fx0 = (headXs + lensX) / 2f, fy0 = (headYs + lensY) / 2f, fx = fx0 + (lensX - fx0) * ease(push * 1.6f), fy = fy0 + (lensY - fy0) * ease(push * 1.6f);
+        float tx = sx0 + sw * (0.42f + 0.08f * ease(push)), ty = sy0 + sh * (0.58f - 0.08f * ease(push));
+        Gfx.push(g); Gfx.translate(g, tx, ty); Gfx.scale(g, kz); Gfx.translate(g, -fx, -fy);
+        stargazer(g, fadeIn, true);
+        Gfx.pop(g);
+        float lensGlow = cl((push - 0.55f) / 0.45f);                                                 // the lens's light swells to fill the screen
+        if (lensGlow > 0f) { float lx = tx + (lensX - fx) * kz, ly = ty + (lensY - fy) * kz; glow(lx, ly, Math.max(sw, sh) * (0.2f + lensGlow), 0xCFE0FF, lensGlow); g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(lensGlow * lensGlow * 0.85f, 0xE8F0FF)); }
+        if (u < 900) {                                                                                 // a line of words while they look
+            float ta = cl(u / 300f) * cl((900 - u) / 250f); String cap = "✦  looking up  ✦"; int cw = host.width(cap);
+            text(g, cap, Math.round(sx0 + sw * 0.62f - cw / 2f), Math.round(sy0 + sh * 0.8f), argb(ta * 0.85f, 0xE9D9A8), true);
+        }
+        g.disableScissor();
+        frame(g);
+    }
+    /** The lens's edge while the page opens out of it: dark outside the circle, a brass rim on it. */
+    private static void lensMask(GuiGraphicsExtractor g, float cx, float cy, float r, float a) {
+        int c = argb(cl(a * 1.6f), 0x02010A);
+        for (int y = sy0; y < sy0 + sh; y += 2) {
+            float dy = y + 1 - cy;
+            if (Math.abs(dy) >= r) { g.fill(sx0, y, sx0 + sw, y + 2, c); continue; }
+            int hw = Math.round((float) Math.sqrt(r * r - dy * dy));
+            g.fill(sx0, y, Math.round(cx) - hw, y + 2, c); g.fill(Math.round(cx) + hw, y, sx0 + sw, y + 2, c);
+        }
+        ring(cx, cy, r, argb(a, 0xE8C76A), 1f); ring(cx, cy, r + 3, argb(a * 0.5f, 0xB08A3A), 1f);
+        glow(cx, cy - r, r * 0.6f, 0xE8F0FF, 0.25f * a);
     }
 
     // ------------------------------------------------------------------ the skill tree of a constellation
@@ -625,6 +728,7 @@ final class Codex {
     static boolean click(double x, double y, int button) {
         if (!open) return false;
         if (closeAt != 0) return true;
+        if (System.currentTimeMillis() < openAt) { skipIntro(); return true; }
         if (button == 1) { if (focus >= 0) fly(-1); else close(); return true; }
         if (button != 0) return true;
         for (int i = HITS.size() - 1; i >= 0; i--) { Object[] h = HITS.get(i); if (x >= (int) h[0] && x < (int) h[2] && y >= (int) h[1] && y < (int) h[3]) { ((Runnable) h[4]).run(); return true; } }
@@ -639,6 +743,7 @@ final class Codex {
     }
     static boolean key(int key) {
         if (!open) return false;
+        if (System.currentTimeMillis() < openAt) { skipIntro(); return true; }
         if (key == 256) { if (focus >= 0) fly(-1); else close(); }
         else if (key == 262) fly(focus < 0 ? 0 : Math.floorMod(focus + 1, ACH.length));
         else if (key == 263) fly(focus < 0 ? ACH.length - 1 : Math.floorMod(focus - 1, ACH.length));
