@@ -49,7 +49,7 @@ public final class AnimationManager {
         FancyConfig.AnimCfg cfg() { return FancyConfig.get().anim(key()); }
         float secs() { return sceneLen(type); }
         /** Extra seconds the finish is held so the words of several drops can be read (0.5 s per extra drop, at most 1.5). */
-        float hold() { int n = count(); return n <= 1 ? 0f : Math.min(1.5f, (n - 1) * 0.5f); }
+        float hold() { int n = count(); return n <= 1 ? 0f : Math.min(1.2f, (n - 1) * 0.4f); }
         /** The whole length: the scene plus the hold. */
         float total() { return secs() + hold(); }
         /** The drops this animation shows (0 to 8). */
@@ -112,14 +112,16 @@ public final class AnimationManager {
     static float pace(Anim a) { return a.speed; }
 
     // ---- the fixed lengths (author request): No Drops 4 s, Normal 4 s, RNG 6 s; the words stay 2 s after the animation ends
-    static final float TEXT_HOLD = 2.0f;
+    static final float TEXT_HOLD = 1.4f;
+    /** How long the words stay after the animation: RNG a little longer. */
+    static float textHold(int type) { return type == RNG ? 1.8f : type == NO_DROPS ? 0f : TEXT_HOLD; }
     static int typeOfKey(String key) { return key.endsWith("rng") ? RNG : key.endsWith("nodrops") ? NO_DROPS : NORMAL; }
     /** The animation itself: the opening, the drop appearing and its finish. */
-    static float animLen(int type) { return type == RNG ? 6f : 4f; }
+    static float animLen(int type) { return type == RNG ? 3.6f : type == NO_DROPS ? 1.6f : 2.4f; }
     /** The whole scene without the multi-drop hold: the animation, then the words alone for 2 s (No Drops has no words). */
-    static float sceneLen(int type) { return type == NO_DROPS ? animLen(type) : animLen(type) + TEXT_HOLD; }
-    /** When the drop appears: the opening takes all but the last 1.4 s of the animation (the finish). */
-    static float opening(int type) { return animLen(type) - 1.4f; }
+    static float sceneLen(int type) { return animLen(type) + textHold(type); }
+    /** When the drop appears: a short build-up (No Drops 1.0 s, Normal 1.2 s, RNG 2.2 s), then the finish. */
+    static float opening(int type) { return type == RNG ? 2.2f : type == NO_DROPS ? 1.0f : 1.2f; }
 
     /** Called every frame from the HUD. */
     public static void render(GuiGraphicsExtractor g) {
@@ -234,8 +236,8 @@ public final class AnimationManager {
         float t = syncSec >= 0 ? syncSec : ((now - previewT0) / 1000f) % (secs + 1f);
         float pivot = opening(type);
         if (TextFx.freezeT >= 0) t = pivot + TextFx.freezeT;                       // held that many seconds after the drop appears
-        else if (TextFx.itemOnly || TextFx.barsOnly) t = pivot + 1.6f;                                // the Item editor shows the scene held, with the item living on its own clock
-        else if (TextFx.textOnly) t = pivot + 1.6f;                                // the Text editor draws the words alone (they loop on the text clock)
+        else if (TextFx.itemOnly || TextFx.barsOnly) t = Math.min(pivot + 1.6f, secs - 0.05f);                                // the Item editor shows the scene held, with the item living on its own clock
+        else if (TextFx.textOnly) t = Math.min(pivot + 1.6f, secs - 0.05f);                                // the Text editor draws the words alone (they loop on the text clock)
         if (t > secs + 0.01f) return;
         previewing = true;
         try { draw(g, Minecraft.getInstance().font, a, t, W, H); } finally { previewing = false; }

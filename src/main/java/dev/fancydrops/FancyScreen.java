@@ -2660,7 +2660,7 @@ public class FancyScreen extends Screen {
     /** How long an animation lasts: "4 s", or "4 s + 2.5 s text". */
     private static String lenText(String key) {
         int ty = AnimationManager.typeOfKey(key); float a = AnimationManager.animLen(ty);
-        return ty == AnimationManager.NO_DROPS ? String.format(Locale.ROOT, "%.0f s", a) : String.format(Locale.ROOT, "%.0f s + %.1f s text", a, AnimationManager.TEXT_HOLD);
+        return ty == AnimationManager.NO_DROPS ? String.format(Locale.ROOT, "%.1f s", a) : String.format(Locale.ROOT, "%.1f s + %.1f s text", a, AnimationManager.textHold(ty));
     }
 
     /** The three types of a group (No Drops, Normal, RNG) as tiles. */

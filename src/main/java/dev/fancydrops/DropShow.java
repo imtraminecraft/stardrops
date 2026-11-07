@@ -8,16 +8,18 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import java.util.List;
 
 /**
- * The drop animations (1.0): drawn straight on the screen every frame (soft lights, rings, rays and sparks on the GPU), so they move
- * like a video at your full frame rate and cost almost nothing. Every group shares one clean structure in its own colour:
+ * The drop animations (1.1): small, quick pop-ups drawn fresh every frame in crisp pixel squares, so they move smoothly at your full
+ * frame rate and never cover the screen. A Normal pop-up fits in about 120 x 60 GUI pixels, RNG in about 180 x 110.
  *
- *   OPENING (until the drop appears): the screen dims softly round the middle, motes of light spiral in, a core of light gathers and
- *     beats three times (a ring rolls out on each beat). RNG also brings in the cinematic bars, slow light rays and a deeper dim.
- *   THE DROP: a flash and a shockwave; the item springs in on a halo (RNG: a second ring, a burst of sparks and a turning flare).
- *   THE WORDS: the name rises in letter by letter under a line that draws itself open, then the odds and the price; RNG adds a small
- *     "RNG DROP" title and a shine that runs across the name. They stay 2 s after the animation ends, then fade.
- *   NO DROPS: the core gathers and beats, then folds in on itself and puffs away.
+ *   BUILD-UP: pixel sparks fly in and a small diamond of light gathers, beating three times (a ring of squares on each beat). Its colour
+ *     flickers while it builds and settles on the true colour at the last beat: the only tell, and an honest one.
+ *   THE POP: a white cross flash and a ring of squares going out, a few sparks flung up that fall under their own weight; the item
+ *     springs up into place and twinkles. RNG adds thin cinematic bars, a second ring, more sparks, slow pixel rays and a tiny shake.
+ *   THE WORDS: the name in its rarity colour with a black outline (like the game's own drop messages), typed in left to right, a line
+ *     drawing open under it, then the odds and the price. RNG adds a small "RNG DROP" tag and a shine across the name.
+ *   NO DROPS: the diamond cracks into shards that drop away. Quick: 1.6 s.
  *
+ * Timings come from AnimationManager (No Drops 1.6 s, Normal 2.4 s + 1.4 s words, RNG 3.6 s + 1.8 s words).
  * The editors in the menu (Item / Text / Bars) still use the classic scene for their previews.
  */
 final class DropShow {
@@ -26,10 +28,11 @@ final class DropShow {
     private static float cl(float v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
     private static float sm(float v) { v = cl(v); return v * v * (3 - 2 * v); }
     private static float eo(float v) { v = cl(v); return 1f - (1f - v) * (1f - v) * (1f - v); }
-    private static float spring(float v) { v = cl(v); return 1f - (float) (Math.exp(-6.5 * v) * Math.cos(10 * v)); }
+    private static float spring(float v) { v = cl(v); return 1f - (float) (Math.exp(-7 * v) * Math.cos(11 * v)); }
     private static float rnd(int n) { return Ritual.rnd(n); }
     private static int mix(int a, int b, float f) { return Ritual.mixc(a, b, cl(f)); }
     private static int A(float a, int rgb) { return Gfx.argb(Math.round(cl(a) * 255), rgb & 0xFFFFFF); }
+    private static final int[] FLICKER = {0xFFFFFF, 0x55FFFF, 0xFFAA00, 0xFF55FF, 0x55FF55, 0x5555FF, 0xFF5555};
 
     static void draw(GuiGraphicsExtractor g, Font font, Anim a, float t, int W, int H) {
         FancyConfig c = FancyConfig.get();
@@ -37,145 +40,164 @@ final class DropShow {
         float A = AnimationManager.animLen(type), O = AnimationManager.opening(type), S = a.total(), p = t - O;
         Item it = a.lead();
         int gc = Categories.group(a.group).color() & 0xFFFFFF, rc = it == null ? 0x9AA3B5 : it.color() & 0xFFFFFF;
-        int col = nod ? 0x9AA3B5 : rng ? mix(gc, rc, 0.5f) : gc, lite = mix(col, 0xFFFFFF, 0.55f);
-        float k = Math.min(W, H) / 270f * Math.max(0.6f, Math.min(1.4f, c.animScale)) * (rng ? 1.1f : 1f);
-        float cx = W / 2f, cy = H * (c.animPos == 0 ? 0.3f : c.animPos == 2 ? 0.58f : 0.42f);
-        float sceneA = (1f - sm((t - (A - 0.5f)) / 0.7f)) * sm(t / 0.25f);                  // the lights end with the animation; the words stay on
-        float wordsA = 1f - sm((t - (S - 0.55f)) / 0.5f);
+        int truth = nod ? 0x8A92A3 : rng ? rc : mix(gc, rc, 0.5f);
+        float k = Math.max(0.6f, Math.min(1.4f, c.animScale));
+        int q = Math.max(1, Math.round(k * (rng ? 2f : 1.5f)));                                   // the size of one art square
+        float cx = W / 2f, cy = c.animPos == 0 ? 34 * k + (rng ? H * 0.07f : 0) : c.animPos == 2 ? H - 104 * k : H * 0.40f;
+        float fxA = (1f - sm((t - (A - 0.35f)) / 0.35f)) * sm(t / 0.12f);                         // the effects end with the animation; the words stay on
+        float wordsA = 1f - sm((t - (S - 0.4f)) / 0.4f);
 
-        // a small shake on an RNG drop
-        float sh = rng && p > 0 && p < 0.45f ? (1f - p / 0.45f) * 2.2f * k : 0f;
-        Gfx.push(g); if (sh > 0) Gfx.translate(g, (rnd((int) (t * 90)) - 0.5f) * 2 * sh, (rnd((int) (t * 90) + 7) - 0.5f) * 2 * sh);
+        // the colour of the core: flickers while it builds, settles on the truth at the last beat
+        float settle = 0.80f * O;
+        int col;
+        if (t >= settle || nod) col = truth;
+        else { int step = (int) (t * (6f + 10f * t / settle)); col = mix(FLICKER[Math.floorMod(step * 3 + a.group.length(), FLICKER.length)], gc, 0.35f); }
+        int lite = mix(col, 0xFFFFFF, 0.55f);
 
-        // ---- the dim round the middle (one soft picture), deeper for RNG
-        float dim = sceneA * (rng ? 0.62f : 0.38f) * sm(t / 0.5f);
-        NebulaTex.glow(g, cx, cy, W * 0.55f, H * 0.5f, A(dim, 0x03040A));
+        // a tiny shake on an RNG drop
+        float sh = rng && p > 0 && p < 0.3f ? (1f - p / 0.3f) * 1.5f * k : 0f;
+        Gfx.push(g); if (sh > 0) Gfx.translate(g, Math.round((rnd((int) (t * 60)) - 0.5f) * 2 * sh), Math.round((rnd((int) (t * 60) + 7) - 0.5f) * 2 * sh));
 
-        // ---- RNG: cinematic bars and slow light rays
-        if (rng && c.anim(a.key()).bars) {
-            float b = Math.min(sm((t - (O - 1.0f)) / 0.7f), 1f - sm((t - (S - 0.45f)) / 0.4f)), bh = H * 0.085f * eo(b);
-            if (bh > 0.5f) { g.fill(0, 0, W, Math.round(bh), A(0.94f, 0x04050A)); g.fill(0, H - Math.round(bh), W, H, A(0.94f, 0x04050A));
-                g.fill(0, Math.round(bh), W, Math.round(bh) + 1, A(0.5f * b, lite)); g.fill(0, H - Math.round(bh) - 1, W, H - Math.round(bh), A(0.5f * b, lite)); }
-        }
+        // ---- RNG: thin cinematic bars and a soft pool of shade behind the pop-up only
         if (rng) {
-            float ra = sceneA * sm((t - O * 0.4f) / (O * 0.6f)) * (p > 0 ? 1f : 0.55f);
-            for (int i = 0; i < 10; i++) {
-                float an = i * 0.6283f + t * 0.18f * (i % 2 == 0 ? 1 : -1), len = (90 + 50 * rnd(i)) * k * (1f + 0.25f * eo(p / 0.6f));
-                ray(g, cx, cy, an, len, (2.2f + 1.6f * rnd(i + 3)) * k, A(ra * (0.16f + 0.08f * (float) Math.sin(t * 2 + i)), lite));
+            if (c.anim(a.key()).bars) {
+                float b = Math.min(sm((t - (O - 0.6f)) / 0.45f), 1f - sm((t - (S - 0.35f)) / 0.3f)); int bh = Math.round(H * 0.055f * eo(b));
+                if (bh > 0) { g.fill(0, 0, W, bh, A(0.92f, 0x04050A)); g.fill(0, H - bh, W, H, A(0.92f, 0x04050A));
+                    g.fill(0, bh, W, bh + 1, A(0.45f * b, lite)); g.fill(0, H - bh - 1, W, H - bh, A(0.45f * b, lite)); }
             }
+            NebulaTex.glow(g, cx, cy + 14 * k, 110 * k, 62 * k, A(0.42f * Math.max(fxA, wordsA * 0.6f) * sm(t / 0.4f), 0x03040A));
         }
 
-        // ---- the opening: motes spiral in, the core gathers and beats three times
-        float gather = sm(t / O), core = (nod ? 6 : 8) * k * (0.3f + 0.7f * gather);
-        int motes = rng ? 46 : 26;
-        if (p < 0.15f) for (int i = 0; i < motes; i++) {
-            float life = 1.15f + 0.6f * rnd(i * 5), u = ((t + rnd(i * 3) * life) % life) / life;
-            if (t + 0.05f < rnd(i * 3) * life * 0.3f) continue;
-            float an = rnd(i * 7) * 6.2832f + u * 2.4f, r = (1f - eo(u)) * (70 + 60 * rnd(i)) * k + core;
-            float x = cx + (float) Math.cos(an) * r, y = cy + (float) Math.sin(an) * r * 0.75f, al = (float) Math.sin(Math.PI * u) * sceneA * (1f - cl(p / 0.15f));
-            NebulaTex.glow(g, x, y, 3.2f * k, 3.2f * k, A(0.55f * al, i % 3 == 0 ? 0xFFFFFF : lite));
+        // ---- build-up: sparks fly in, the diamond gathers and beats
+        float core = (rng ? 5f : 3.5f) * k * (0.35f + 0.65f * sm(t / O));
+        int sparks = rng ? 16 : 9;
+        if (p < 0.05f) for (int i = 0; i < sparks; i++) {
+            float life = 0.55f + 0.25f * rnd(i * 5), st = rnd(i * 3) * life;
+            float u = ((t + st) % life) / life; if (t < st * 0.5f) continue;
+            float an = rnd(i * 7) * 6.2832f + u * 1.6f, r = (1f - eo(u)) * (rng ? 58 : 34) * k + core;
+            float x = cx + (float) Math.cos(an) * r, y = cy + (float) Math.sin(an) * r * 0.7f, al = (float) Math.sin(Math.PI * u) * fxA;
+            sq(g, x, y, q, A(al, i % 3 == 0 ? 0xFFFFFF : lite));
+            sq(g, x - (float) Math.cos(an) * q * 1.5f, y - (float) Math.sin(an) * q * 1.05f, q, A(al * 0.4f, lite));          // a one-square trail
         }
-        float beatPulse = 0f;
+        float beat = 0f;
         for (int b = 0; b < 3; b++) {
             float bt = t - new float[]{0.34f, 0.58f, 0.80f}[b] * O; if (bt < 0) continue;
-            beatPulse = Math.max(beatPulse, 1f - cl(bt / 0.35f));
-            if (bt < 0.8f) { float u = eo(bt / 0.8f); ring(g, cx, cy, core + u * (40 + 14 * b) * k, 0.75f, A((1f - u) * 0.8f * sceneA, lite), 1.2f * k); }
+            beat = Math.max(beat, 1f - cl(bt / 0.22f));
+            if (bt < 0.45f) { float u = eo(bt / 0.45f); squareRing(g, cx, cy, core + u * (rng ? 26 + 6 * b : 14 + 4 * b) * k, 0.72f, q, A((1f - u) * 0.85f * fxA, b == 2 ? 0xFFFFFF : lite), rng ? 20 : 14); }
         }
         if (p < 0f) {
-            float cr = core * (1f + 0.35f * beatPulse);
-            NebulaTex.glow(g, cx, cy, cr * 4.5f, cr * 4.5f, A(0.35f * sceneA, col));
-            NebulaTex.glow(g, cx, cy, cr * 1.8f, cr * 1.8f, A(0.85f * sceneA, lite));
-            NebulaTex.glow(g, cx, cy, cr * 0.8f, cr * 0.8f, A(sceneA, 0xFFFFFF));
+            float cr = core * (1f + 0.4f * beat);
+            NebulaTex.glow(g, cx, cy, cr * 3.2f, cr * 3.2f, A(0.3f * fxA, col));
+            diamond(g, cx, cy, cr, q, A(fxA, lite), A(fxA, 0xFFFFFF));
+            if (rng) { float fl = (0.5f + 0.5f * sm(t / O)) * fxA; float len = (18 + 30 * sm(t / O)) * k * (1f + 0.3f * beat);         // a thin flare line through the core
+                g.fill(Math.round(cx - len), Math.round(cy), Math.round(cx + len), Math.round(cy) + 1, A(0.5f * fl, lite)); }
         }
 
-        // ---- the drop: a flash, a shockwave (or, for No Drops, the core folding away)
+        // ---- the pop (or, for No Drops, the crack)
         if (p >= 0f) {
             if (nod) {
-                float u = cl(p / 0.9f), cr = core * (1f - eo(u));
-                NebulaTex.glow(g, cx, cy, cr * 2f + 1, cr * 2f + 1, A((1f - u) * sceneA, lite));
-                for (int i = 0; i < 10; i++) { float an = i * 0.628f, d = eo(u) * 26 * k; NebulaTex.glow(g, cx + (float) Math.cos(an) * d, cy + (float) Math.sin(an) * d * 0.7f - u * 8 * k, 5 * k * (1f - u * 0.5f), 5 * k * (1f - u * 0.5f), A(0.35f * (1f - u) * sceneA, 0xB8C0D0)); }
-            } else {
-                float fl = 1f - cl(p / (rng ? 0.55f : 0.4f));
-                if (fl > 0f) { NebulaTex.glow(g, cx, cy, (rng ? 120 : 70) * k * (1.2f - fl * 0.2f), (rng ? 120 : 70) * k, A(fl * fl * (rng ? 0.95f : 0.7f), 0xFFFFFF)); }
-                for (int w = 0; w < (rng ? 2 : 1); w++) {
-                    float u = cl((p - w * 0.12f) / (rng ? 1.0f : 0.8f)); if (u <= 0f || u >= 1f) continue;
-                    ring(g, cx, cy, 14 * k + eo(u) * (rng ? 150 : 95) * k, 0.72f, A((1f - u) * 0.9f * sceneA, w == 0 ? 0xFFFFFF : lite), (2.2f - 1.4f * u) * k);
+                float u = cl(p / (A - O));
+                if (u < 0.15f) diamond(g, cx, cy, core * (1f + u * 2f), q, A(fxA, 0x9AA3B5), A(fxA, 0xD8DEE8));
+                for (int i = 0; i < 6; i++) {                                                         // shards falling away
+                    float dx = (rnd(i * 11) - 0.5f) * 22 * k, vy = -(6 + 8 * rnd(i * 5)) * k;
+                    float x = cx + dx * eo(u), y = cy + vy * u + 60 * k * u * u;
+                    sq(g, x, y, q + (i % 2), A((1f - u) * fxA, i % 2 == 0 ? 0x9AA3B5 : 0x5E6575));
                 }
-                if (rng && p < 1.3f) for (int i = 0; i < 56; i++) {                              // a burst of sparks, falling a little
-                    float an = rnd(i * 13) * 6.2832f, sp = (60 + 110 * rnd(i * 3)) * k, u = cl(p / 1.3f), d = eo(u) * sp;
-                    float x = cx + (float) Math.cos(an) * d, y = cy + (float) Math.sin(an) * d * 0.8f + u * u * 30 * k;
-                    float al = (1f - u) * sceneA; int sc = i % 3 == 0 ? 0xFFFFFF : i % 3 == 1 ? lite : col;
-                    g.fill(Math.round(x), Math.round(y), Math.round(x) + Math.max(1, Math.round(k)), Math.round(y) + Math.max(1, Math.round(k)), A(al, sc));
-                    if (i % 4 == 0) NebulaTex.glow(g, x, y, 3 * k, 3 * k, A(0.5f * al, sc));
+                float pu = cl(p / 0.35f); if (pu < 1f) squareRing(g, cx, cy, core + eo(pu) * 10 * k, 0.7f, q, A((1f - pu) * 0.6f * fxA, 0xB8C0D0), 10);
+            } else {
+                float fl = 1f - cl(p / 0.22f);
+                if (fl > 0f) {                                                                        // a white cross flash
+                    float hl = (rng ? 70 : 34) * k * (0.6f + 0.4f * fl), vl = hl * 0.45f;
+                    g.fill(Math.round(cx - hl), Math.round(cy), Math.round(cx + hl), Math.round(cy) + q, A(fl, 0xFFFFFF));
+                    g.fill(Math.round(cx), Math.round(cy - vl), Math.round(cx) + q, Math.round(cy + vl), A(fl, 0xFFFFFF));
+                    NebulaTex.glow(g, cx, cy, (rng ? 40 : 22) * k, (rng ? 40 : 22) * k, A(fl * 0.7f, 0xFFFFFF));
+                }
+                for (int w = 0; w < (rng ? 2 : 1); w++) {
+                    float u = cl((p - w * 0.1f) / (rng ? 0.65f : 0.5f)); if (u <= 0f || u >= 1f) continue;
+                    squareRing(g, cx, cy, 6 * k + eo(u) * (rng ? 62 : 32) * k, 0.68f, q, A((1f - u) * 0.95f * fxA, w == 0 ? 0xFFFFFF : lite), rng ? 28 : 18);
+                }
+                int ns = rng ? 26 : 10; float life = rng ? 1.0f : 0.75f;
+                if (p < life) for (int i = 0; i < ns; i++) {                                         // sparks flung up, falling
+                    float an = (float) (-Math.PI / 2 + (rnd(i * 13) - 0.5f) * Math.PI * 1.5f), sp = (22 + 40 * rnd(i * 3)) * k * (rng ? 1.3f : 1f), u = cl(p / life);
+                    float x = cx + (float) Math.cos(an) * sp * eo(u), y = cy + (float) Math.sin(an) * sp * eo(u) + u * u * 34 * k;
+                    sq(g, x, y, q, A((1f - u) * fxA, i % 3 == 0 ? 0xFFFFFF : i % 3 == 1 ? lite : col));
                 }
             }
         }
 
-        // ---- the item(s) on a halo
-        float itemA = 0f, iy = cy;
+        // ---- the item(s), springing up into place
+        float itemA = 0f, under = cy + 10 * k, over = cy - 10 * k;
         if (it != null && !nod && p >= 0f) {
             List<Item> all = a.items(); int n = all.size();
-            float gap = 34 * k * Math.min(1f, 3f / Math.max(1, n)), x0 = cx - gap * (n - 1) / 2f;
-            itemA = sm(p / 0.18f) * (1f - sm((t - (S - 0.9f)) / 0.8f));
-            for (int i = 0; i < n; i++) {
-                Item cur = all.get(i); float pi = p - i * 0.08f; if (pi < 0) continue;
-                float s = (rng ? 2.3f : 1.9f) * k * (n > 3 ? 0.75f : 1f) * spring(pi / 0.75f), bob = (float) Math.sin(t * 2.2f + i) * 1.6f * k;
-                float x = x0 + gap * i, y = cy + bob;
-                float halo = (0.85f + 0.15f * (float) Math.sin(t * 3 + i)) * itemA;
-                NebulaTex.glow(g, x, y, 30 * k, 30 * k, A(0.35f * halo, col));
-                NebulaTex.glow(g, x, y, 13 * k, 13 * k, A(0.45f * halo, lite));
-                if (rng) for (int r = 0; r < 4; r++) ray(g, x, y, r * 0.785f + t * 0.5f, 26 * k, 0.9f * k, A(0.35f * halo, 0xFFFFFF));
-                ItemIcons.drawAlpha = cl(itemA); boolean still0 = Icons.STILL_ICONS; Icons.STILL_ICONS = false;
-                try { ItemIcons.draw(g, cur.id, cur.icon, Math.round(x), Math.round(y), s); } catch (Throwable ignored) { } finally { ItemIcons.drawAlpha = 1f; Icons.STILL_ICONS = still0; }
-                for (int q = 0; q < 5; q++) {                                               // little glints twinkling round it
-                    float cyc = t * 1.4f + q * 0.21f + i, ph = cyc - (float) Math.floor(cyc); int slot = (int) Math.floor(cyc) * 17 + q * 5 + i * 3;
-                    float an = rnd(slot) * 6.2832f, rad = (12 + 9 * rnd(slot + 1)) * k, tw = (float) Math.sin(Math.PI * ph) * itemA;
-                    float gx = x + (float) Math.cos(an) * rad, gy = y + (float) Math.sin(an) * rad * 0.8f, arm = (1.5f + 1.5f * rnd(slot + 2)) * k * tw;
-                    g.fill(Math.round(gx - arm), Math.round(gy), Math.round(gx + arm) + 1, Math.round(gy) + 1, A(tw, 0xFFFFFF)); g.fill(Math.round(gx), Math.round(gy - arm), Math.round(gx) + 1, Math.round(gy + arm) + 1, A(tw, 0xFFFFFF));
+            float base = (rng ? 1.75f : 1.4f) * k * (n > 3 ? 0.8f : 1f), gap = 16 * base + 6 * k, x0 = cx - gap * (n - 1) / 2f;
+            itemA = sm(p / 0.12f) * (1f - sm((t - (S - 0.5f)) / 0.45f));
+            if (rng) {                                                                                // slow pixel rays turning behind it
+                float ra = itemA * 0.55f;
+                for (int r = 0; r < 8; r++) {
+                    float an = r * 0.7854f + t * 0.35f, len = (r % 2 == 0 ? 30 : 20) * k;
+                    for (float d = 12 * k; d < len; d += q * 2) sq(g, cx + (float) Math.cos(an) * d, cy + (float) Math.sin(an) * d, q, A(ra * (1f - d / len), lite));
                 }
             }
-            iy = cy + (n > 3 ? 14 : 20) * k;
+            for (int i = 0; i < n; i++) {
+                Item cur = all.get(i); float pi = p - i * 0.07f; if (pi < 0) continue;
+                float sp = spring(pi / 0.55f), s = base * (0.4f + 0.6f * sp), bob = (float) Math.sin(t * 2.4f + i) * k;
+                float x = x0 + gap * i, y = cy + (1f - sp) * 8 * k + (pi > 0.55f ? bob : 0);
+                NebulaTex.glow(g, x, y, 13 * base, 13 * base, A(0.32f * itemA, col));
+                ItemIcons.drawAlpha = cl(itemA); boolean still0 = Icons.STILL_ICONS; Icons.STILL_ICONS = false;
+                try { ItemIcons.draw(g, cur.id, cur.icon, Math.round(x), Math.round(y), s); } catch (Throwable ignored) { } finally { ItemIcons.drawAlpha = 1f; Icons.STILL_ICONS = still0; }
+                for (int z = 0; z < (rng ? 4 : 3); z++) {                                           // four-point twinkles round it
+                    float cyc = t * 1.3f + z * 0.29f + i * 0.5f, ph = cyc - (float) Math.floor(cyc); int slot = (int) Math.floor(cyc) * 17 + z * 5 + i * 3;
+                    float an = rnd(slot) * 6.2832f, rad = (9 + 5 * rnd(slot + 1)) * base, tw = (float) Math.sin(Math.PI * ph) * itemA;
+                    twinkle(g, x + (float) Math.cos(an) * rad, y + (float) Math.sin(an) * rad * 0.8f, q, tw, z == 0 ? 0xFFFFFF : mix(rc, 0xFFFFFF, 0.4f));
+                }
+            }
+            under = cy + 10 * base + 4 * k; over = cy - 10 * base - 4 * k;
         }
         Gfx.pop(g);
 
         // ---- the words
-        if (it != null && !nod) words(g, font, a, it, p, t, cx, iy + 8 * k, k, wordsA, rng, col, lite, rc);
+        if (it != null && !nod) words(g, font, a, it, p, t, cx, c.textAbove() ? over : under, c.textAbove(), k, wordsA, rng, col, lite, rc);
     }
 
-    private static void words(GuiGraphicsExtractor g, Font f, Anim a, Item it, float p, float t, float cx, float top, float k, float wa, boolean rng, int col, int lite, int rc) {
-        float tt = p - 0.25f; if (tt < 0f || wa < 0.02f) return;
-        float y = top;
-        if (rng) {                                                                            // a small tracked title
-            String ttl = "R N G   D R O P"; float ta = sm(tt / 0.3f) * wa, ts = 0.7f * k;
-            txt(g, f, ttl, cx - f.width(ttl) * ts / 2f, y - 2 * k * (1f - ta), ts, A(ta, rc), false);
-            y += 10 * k;
-        }
+    private static void words(GuiGraphicsExtractor g, Font f, Anim a, Item it, float p, float t, float cx, float anchor, boolean above, float k, float wa, boolean rng, int col, int lite, int rc) {
+        float tt = p - 0.12f; if (tt < 0f || wa < 0.02f) return;
         List<Item> all = a.items(); int n = Math.min(4, all.size());
-        float ns = (n > 1 ? 1.15f : 1.45f) * k;
-        for (int i = 0; i < n; i++) {                                                         // the name(s), letter by letter, rising into place
-            String name = all.get(i).title(); float w = f.width(name) * ns, x = cx - w / 2f, lt = tt - i * 0.12f;
+        float ns = (n > 1 ? 0.9f : 1f) * k * (rng ? 1.15f : 1f), ds = 0.75f * k;
+        String chance = it.chance != null && !it.chance.isEmpty() ? it.chance : it.odds == null ? "" : it.odds;
+        String odds = chance + (it.mf != null && !it.mf.isEmpty() ? (chance.isEmpty() ? "" : "  ·  ") + it.mf + " MF" : "");
+        String price = it.price > 0 ? PriceService.fmt(it.price * Math.max(1, it.amount)) + " coins" : it.price == -2 ? "pricing..." : "";
+        float h = (rng ? 9 * k : 0) + n * 10 * ns + 4 * k + (odds.isEmpty() ? 0 : 8 * k) + (price.isEmpty() ? 0 : 8 * k);
+        float y = above ? anchor - h : anchor;
+
+        if (rng) {                                                                                   // a small "RNG DROP" tag
+            String ttl = "RNG DROP"; float ta = sm(tt / 0.2f) * wa, ts = 0.7f * k, tw = f.width(ttl) * ts;
+            g.fill(Math.round(cx - tw / 2f - 3 * k), Math.round(y - 1 * k), Math.round(cx + tw / 2f + 3 * k), Math.round(y + 7 * k), A(0.55f * ta, mix(rc, 0x000000, 0.6f)));
+            txt(g, f, ttl, cx - tw / 2f, y, ts, A(ta, mix(rc, 0xFFFFFF, 0.3f)), false);
+            y += 9 * k;
+        }
+        float maxW = 0;
+        for (int i = 0; i < n; i++) {                                                                // the name(s), typed in left to right
+            String name = all.get(i).title(); float w = f.width(name) * ns, x = cx - w / 2f, lt = tt - i * 0.1f; maxW = Math.max(maxW, w);
             int ncol = all.get(i).color() & 0xFFFFFF;
-            float shine = rng ? ((t * 0.7f) % 1.6f) - 0.3f : -9f;                           // RNG: a shine running across the name
+            float shine = rng ? ((t * 0.8f) % 1.8f) - 0.4f : -9f;
             for (int ch = 0; ch < name.length(); ch++) {
-                String s = String.valueOf(name.charAt(ch)); float cw = f.width(s) * ns, u = sm((lt - ch * 0.022f) / 0.28f);
-                if (u <= 0f) { x += cw; continue; }
-                float rel = (x - (cx - w / 2f)) / Math.max(1f, w); int cc = Math.abs(rel - shine) < 0.12f ? mix(ncol, 0xFFFFFF, 0.75f) : ncol;
-                txt(g, f, s, x, y + (1f - u) * 6 * k, ns, A(u * wa, cc), true);
+                String s = String.valueOf(name.charAt(ch)); float cw = f.width(s) * ns, u = sm((lt - ch * 0.016f) / 0.12f);
+                if (u <= 0f) break;
+                float rel = (x - (cx - w / 2f)) / Math.max(1f, w); int cc = Math.abs(rel - shine) < 0.1f ? mix(ncol, 0xFFFFFF, 0.7f) : ncol;
+                outlined(g, f, s, x, y + (1f - u) * 2 * k, ns, u * wa, cc);
                 x += cw;
             }
-            y += 11 * ns / k * k;
+            y += 10 * ns;
         }
-        float lu = eo((tt - 0.15f) / 0.45f), lw = 70 * k * lu;                                // a line drawing itself open
-        if (lu > 0f) { g.fill(Math.round(cx - lw), Math.round(y + 1), Math.round(cx + lw), Math.round(y + 2), A(0.7f * wa, lite)); NebulaTex.glow(g, cx, y + 1.5f, lw, 3 * k, A(0.25f * wa, col)); }
-        y += 6 * k;
-        String odds = (it.odds == null || it.odds.isEmpty() ? "" : it.odds) + (it.chance != null && !it.chance.isEmpty() && !it.chance.equals(it.odds) ? (it.odds == null || it.odds.isEmpty() ? "" : "  ·  ") + it.chance : "") + (it.mf != null && !it.mf.isEmpty() ? "  ·  " + it.mf + " MF" : "");
-        String price = it.price > 0 ? PriceService.fmt(it.price * Math.max(1, it.amount)) + " coins" + (it.priceSource == null || it.priceSource.isEmpty() ? "" : "  ·  " + it.priceSource) : it.price == -2 ? "pricing..." : "";
-        float ds = 0.85f * k;
-        for (String line : new String[]{odds, price}) {
+        float lu = eo((tt - 0.1f) / 0.3f), lw = (maxW / 2f + 6 * k) * lu;                           // a line drawing itself open
+        if (lu > 0f) { g.fill(Math.round(cx - lw), Math.round(y + 1), Math.round(cx + lw), Math.round(y + 2), A(0.75f * wa, lite)); g.fill(Math.round(cx - lw), Math.round(y + 2), Math.round(cx + lw), Math.round(y + 3), A(0.3f * wa, 0x000000)); }
+        y += 4 * k;
+        int li = 0;
+        for (String line : new String[]{odds, price}) {                                              // the chance, then the price: short lines
             if (line.isEmpty()) continue;
-            float u = sm((tt - 0.35f) / 0.35f);
-            txt(g, f, line, cx - f.width(line) * ds / 2f, y + (1f - u) * 4 * k, ds, A(u * wa * 0.9f, line == price ? 0xFFD98A : 0xC8CEDC), true);
-            y += 10 * k; tt -= 0.12f;
+            float u = sm((tt - 0.25f - li * 0.1f) / 0.25f);
+            outlined(g, f, line, cx - f.width(line) * ds / 2f, y + (1f - u) * 2 * k, ds, u * wa * 0.95f, line == price ? 0xFFD98A : 0xC8CEDC);
+            y += 8 * k; li++;
         }
     }
 
@@ -183,22 +205,34 @@ final class DropShow {
     private static void txt(GuiGraphicsExtractor g, Font f, String s, float x, float y, float sc, int argb, boolean shadow) {
         Gfx.push(g); Gfx.translate(g, x, y); Gfx.scale(g, sc); Gfx.txt(g, f, s, 0, 0, argb, shadow); Gfx.pop(g);
     }
-    /** A ring of short bars; flat squashes it into an ellipse. */
-    private static void ring(GuiGraphicsExtractor g, float cx, float cy, float r, float flat, int argb, float w) {
-        if ((argb >>> 24) < 4 || r < 1) return;
-        int n = Math.max(24, Math.min(72, Math.round(r * 0.6f)));
-        for (int i = 0; i < n; i++) {
-            double a0 = i * 2 * Math.PI / n, a1 = (i + 1) * 2 * Math.PI / n;
-            float x0 = cx + (float) Math.cos(a0) * r, y0 = cy + (float) Math.sin(a0) * r * flat, x1 = cx + (float) Math.cos(a1) * r, y1 = cy + (float) Math.sin(a1) * r * flat;
-            float len = (float) Math.hypot(x1 - x0, y1 - y0);
-            Gfx.push(g); Gfx.translate(g, x0, y0); Gfx.rotate(g, (float) Math.atan2(y1 - y0, x1 - x0)); Gfx.scale(g, 1f, Math.max(1f, w));
-            g.fill(0, 0, Math.max(1, Math.round(len + 0.6f)), 1, argb); Gfx.pop(g);
-        }
+    /** Text with a black outline, like the game's own drop messages. */
+    private static void outlined(GuiGraphicsExtractor g, Font f, String s, float x, float y, float sc, float a, int rgb) {
+        if (a < 0.03f) return;
+        Gfx.push(g); Gfx.translate(g, x, y); Gfx.scale(g, sc);
+        int o = A(a * 0.85f, 0x000000);
+        Gfx.txt(g, f, s, -1, 0, o, false); Gfx.txt(g, f, s, 1, 0, o, false); Gfx.txt(g, f, s, 0, -1, o, false); Gfx.txt(g, f, s, 0, 1, o, false);
+        Gfx.txt(g, f, s, 0, 0, A(a, rgb), false); Gfx.pop(g);
     }
-    /** A soft ray from the centre outwards: one stretched glow. */
-    private static void ray(GuiGraphicsExtractor g, float cx, float cy, float an, float len, float w, int argb) {
-        if ((argb >>> 24) < 3) return;
-        Gfx.push(g); Gfx.translate(g, cx, cy); Gfx.rotate(g, an);
-        NebulaTex.glow(g, len / 2f, 0, len / 2f, w, argb); Gfx.pop(g);
+    /** One art square, snapped to the pixel grid. */
+    private static void sq(GuiGraphicsExtractor g, float x, float y, int s, int argb) {
+        if ((argb >>> 24) < 4) return;
+        int ix = Math.round(x - s / 2f), iy = Math.round(y - s / 2f); g.fill(ix, iy, ix + s, iy + s, argb);
+    }
+    /** A ring of squares; flat squashes it into an ellipse. */
+    private static void squareRing(GuiGraphicsExtractor g, float cx, float cy, float r, float flat, int s, int argb, int n) {
+        if ((argb >>> 24) < 4 || r < 1) return;
+        for (int i = 0; i < n; i++) { double an = i * 2 * Math.PI / n; sq(g, cx + (float) Math.cos(an) * r, cy + (float) Math.sin(an) * r * flat, s, argb); }
+    }
+    /** A pixel diamond with a bright middle. */
+    private static void diamond(GuiGraphicsExtractor g, float cx, float cy, float r, int s, int rim, int mid) {
+        int n = Math.max(1, Math.round(r / s));
+        for (int dy = -n; dy <= n; dy++) { int w = n - Math.abs(dy); int x0 = Math.round(cx - (w + 0.5f) * s), y0 = Math.round(cy + (dy - 0.5f) * s);
+            g.fill(x0, y0, x0 + (2 * w + 1) * s, y0 + s, Math.abs(dy) <= n / 2 ? mid : rim); }
+    }
+    /** A four-point star: a square with arms that grow and shrink. */
+    private static void twinkle(GuiGraphicsExtractor g, float x, float y, int s, float a, int rgb) {
+        if (a < 0.05f) return;
+        int arm = Math.round(a * 2) * s, ix = Math.round(x), iy = Math.round(y);
+        g.fill(ix - arm, iy, ix + s + arm, iy + s, A(a * 0.8f, rgb)); g.fill(ix, iy - arm, ix + s, iy + s + arm, A(a * 0.8f, rgb)); g.fill(ix, iy, ix + s, iy + s, A(a, 0xFFFFFF));
     }
 }
