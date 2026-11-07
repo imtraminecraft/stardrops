@@ -193,6 +193,73 @@ final class LyricsHud {
         l.add(s.substring(0, best).trim()); l.add(s.substring(best + 1).trim()); return l;
     }
 
+    // ------------------------------------------------------------------ the sung line, docked to Now Playing (Lyrics > Sung line)
+    private static float dockShow, dockSwap; private static int dockLine = -2, dockPrev = -2; private static long dockAt, dockFrame;
+    /**
+     * A slim glass strip that slides out from behind the Now Playing card, under it (or over it when there is room and you chose
+     * Above): a note that bobs, the line being sung with a wipe of the album's colour running through it, and a thin bar of how far
+     * through the line you are. A new line rolls in from below as the old one rolls away. Drawn in the card's own units (w x h).
+     */
+    static void dock(GuiGraphicsExtractor g, Font f, int w, int h, float e, boolean roomAbove, int acc) {
+        FancyConfig c = FancyConfig.get(); long now = System.currentTimeMillis();
+        float dt = Math.min(0.1f, (now - (dockFrame == 0 ? now : dockFrame)) / 1000f); dockFrame = now;
+        List<Lyrics.Line> L = Lyrics.lines;
+        boolean demo = NowPlayingHud.preview && (Spotify.track == null || L.isEmpty()); if (demo) L = DEMO;
+        boolean on = c.lyricsOn && c.npLine != 0 && (demo || Spotify.playing) && !L.isEmpty();
+        long pos = demo ? now % 9000 : Spotify.position() + c.lyricsOffset;
+        int li = on ? at(L, pos) : -1;
+        boolean has = li >= 0 && !L.get(li).text().isBlank();
+        dockShow += ((has ? 1f : 0f) - dockShow) * Math.min(1f, dt * 7f);
+        if (dockShow < 0.01f) { dockLine = -2; return; }
+        if (has && li != dockLine) { dockPrev = dockLine; dockLine = li; dockAt = now; }
+        boolean above = c.npLine == 2 && roomAbove;
+        float s = dockShow * dockShow * (3 - 2 * dockShow), sh = 17, sw = w - 18, sx = 9;
+        float y = above ? -sh * s - 2 * s + 3 : h - 3 + sh * s - sh + 2 * s;           // tucked behind the card, then out
+        int a = Math.round(255 * e * s), A = Math.round(255 * e);
+        NebulaTex.glow(g, w / 2f, y + sh / 2f + 2, sw * 0.55f, sh, Gfx.argb(Math.round(70 * e * s), 0x000000));
+        NowPlayingHud.round(g, Math.round(sx), Math.round(y), Math.round(sw), Math.round(sh), Gfx.argb(Math.round(225 * e * s), 0x0B0D14));
+        for (int i = 0; i < 8; i++) { int x0 = Math.round(sx + 2 + i * (sw - 4) / 8), x1 = Math.round(sx + 2 + (i + 1) * (sw - 4) / 8); float u = Math.abs(i / 7f - 0.5f) * 2f;
+            g.fill(x0, Math.round(y + 1), x1, Math.round(y + sh - 1), Gfx.argb(Math.round(e * s * 46 * (1f - u * 0.8f)), acc)); }
+        g.fill(Math.round(sx + 3), Math.round(above ? y : y + sh - 1), Math.round(sx + sw - 3), Math.round(above ? y + 1 : y + sh), Gfx.argb(Math.round(50 * e * s), 0xFFFFFF));   // the lit outer edge
+        for (int side = 0; side < 2; side++) {                                                // two little clips holding it to the card
+            int cx0 = Math.round(side == 0 ? sx + 14 : sx + sw - 18); int cy0 = Math.round(above ? y + sh - 1 : y - 2);
+            g.fill(cx0, cy0, cx0 + 4, cy0 + 3, Gfx.argb(a, Ritual.mixc(acc, 0x2A2E3A, 0.5f))); g.fill(cx0 + 1, cy0 + 1, cx0 + 3, cy0 + 2, Gfx.argb(a, Ritual.mixc(acc, 0xFFFFFF, 0.4f)));
+        }
+        float bob = (float) Math.sin(now / 260.0) * 1.3f;                                    // the note
+        NebulaTex.glow(g, sx + 9, y + sh / 2f, 6, 5, Gfx.argb(Math.round(a * 0.5f), acc));
+        Gfx.push(g); Gfx.translate(g, sx + 5, y + sh / 2f - 4 + bob); Gfx.txt(g, f, "♪", 0, 0, Gfx.argb(a, Ritual.mixc(acc, 0xFFFFFF, 0.5f)), false); Gfx.pop(g);
+        // the words: the old line rolls up and away, the new one rolls in from below
+        float roll = Math.min(1f, (now - dockAt) / 280f); roll = 1f - (1f - roll) * (1f - roll) * (1f - roll);
+        int tx0 = Math.round(sx + 17), tw = Math.round(sw - 24);
+        if (dockPrev >= 0 && dockPrev < L.size() && roll < 1f) dockText(g, f, L, dockPrev, Long.MAX_VALUE / 4, tx0, tw, y + sh / 2f - 4 - 6 * roll, Math.round(a * (1f - roll)), acc);
+        if (li >= 0 && li < L.size()) dockText(g, f, L, li, pos, tx0, tw, y + sh / 2f - 4 + 6 * (1f - roll), Math.round(a * roll), acc);
+        if (li >= 0) {                                                                        // how far through the line
+            long st = L.get(li).atMs(), en = li + 1 < L.size() ? L.get(li + 1).atMs() : st + 5000;
+            float p = Math.max(0f, Math.min(1f, (pos - st) / (float) Math.max(1, en - st))); int bw = Math.round(sw - 12), bx = Math.round(sx + 6), by = Math.round(above ? y + 1 : y + sh - 2);
+            g.fill(bx + Math.round(bw * p) - 6, by, bx + Math.round(bw * p), by + 1, Gfx.argb(Math.round(a * 0.9f), Ritual.mixc(acc, 0xFFFFFF, 0.3f)));
+        }
+    }
+    /** One line in the strip, left to right: sung letters in the album's colour, the rest grey, scaled down to fit. */
+    private static void dockText(GuiGraphicsExtractor g, Font f, List<Lyrics.Line> L, int li, long pos, int x, int tw, float y, int a, int acc) {
+        if (a < 6) return;
+        String text = L.get(li).text(); long start = L.get(li).atMs(), end = li + 1 < L.size() ? L.get(li + 1).atMs() : start + 5000;
+        float k = Math.max(0.62f, Math.min(0.9f, tw / (float) Math.max(1, f.width(text))));
+        if (f.width(text) * k > tw) text = f.plainSubstrByWidth(text, Math.round(tw / k) - f.width("…")) + "…";
+        float cx = x + (tw - f.width(text) * k) / 2f; int total = text.length(); int sung = Ritual.mixc(acc, 0xFFFFFF, 0.3f);
+        Gfx.push(g); Gfx.translate(g, cx, y + (1f - k) * 4); Gfx.scale(g, k);
+        int px = 0; StringBuilder run = new StringBuilder(); int runCol = 0, runX = 0;
+        for (int i = 0; i <= total; i++) {
+            int col = 0;
+            if (i < total) { long ca = wordAt(start, end, i, total); col = pos >= ca ? 1 : 2; }
+            if (i == total || col != runCol) {
+                if (run.length() > 0) Gfx.txt(g, f, run.toString(), runX, 0, Gfx.argb(runCol == 1 ? a : Math.round(a * 0.55f), runCol == 1 ? sung : 0xC6CAD6), true);
+                run.setLength(0); runCol = col; runX = px;
+            }
+            if (i < total) { String ch = String.valueOf(text.charAt(i)); run.append(ch); px += f.width(ch); }
+        }
+        Gfx.pop(g);
+    }
+
     private static void titleCard(GuiGraphicsExtractor g, Font f, int W, int H, long now, float vis, float k) {
         Spotify.Track t = Spotify.track; if (t == null || !Spotify.playing) return;
         float u = (now - titleAt) / 1000f; if (u > 3.5f) return;
@@ -208,6 +275,37 @@ final class LyricsHud {
         text(g, f, "NOW PLAYING", W / 2f, cy - 12, 0.6f, Gfx.argb(Math.round(160 * a), colour()));
         text(g, f, name, W / 2f, cy + (1f - open) * 6, k, Gfx.argb(Math.round(255 * a), 0xFFFFFF));
         text(g, f, artists, W / 2f, cy + 12 * k, k * 0.6f, Gfx.argb(Math.round(190 * a), 0xD8D8E8));
+        vinyl(g, f, W / 2f - nw / 2f - 24 * k, cy + 4 * k, u, a, size);
+    }
+    /** The song intro's record: it pops up beside the title, spins, a tone arm swings onto it and notes drift off it. */
+    private static void vinyl(GuiGraphicsExtractor g, Font font, float cx, float cy, float u, float a, float size) {
+        float pop = spring(Math.min(1f, u / 0.6f)), r = 17 * size * Math.max(0f, pop); if (r < 1f || a < 0.02f) return;
+        int acc = colour(), A = Math.round(255 * a);
+        cy += (1f - Math.min(1f, u / 0.35f)) * 18 * size;                                    // it rises as it pops
+        float spin = u * 5.5f;
+        NebulaTex.glow(g, cx, cy, r * 2.2f, r * 2.2f, Gfx.argb(Math.round(110 * a), acc));
+        NowPlayingHud.disc(g, cx, cy + 2, r, Gfx.argb(Math.round(90 * a), 0x000000));
+        NowPlayingHud.disc(g, cx, cy, r, Gfx.argb(A, 0x111116));
+        for (int i = 0; i < 4; i++) NowPlayingHud.circle(g, cx, cy, r * (0.5f + i * 0.13f), Gfx.argb(Math.round(70 * a), 0x50566A));
+        NowPlayingHud.disc(g, cx, cy, r * 0.36f, Gfx.argb(A, acc));
+        NowPlayingHud.disc(g, cx, cy, r * 0.36f * 0.55f, Gfx.argb(Math.round(90 * a), 0xFFFFFF));
+        NowPlayingHud.disc(g, cx, cy, Math.max(1f, r * 0.06f), Gfx.argb(A, 0x111116));
+        for (int i = 0; i < 2; i++) {                                                        // the shine sweeping round with the spin
+            double an = spin + i * Math.PI; float gx = cx + (float) Math.cos(an) * r * 0.72f, gy = cy + (float) Math.sin(an) * r * 0.72f;
+            NebulaTex.glow(g, gx, gy, r * 0.35f, r * 0.18f, Gfx.argb(Math.round(70 * a), 0xFFFFFF));
+        }
+        // the tone arm: from a pivot at the top right it swings onto the record
+        float sw = Math.min(1f, Math.max(0f, (u - 0.35f) / 0.5f)); sw = 1f - (1f - sw) * (1f - sw);
+        float px = cx + r * 1.05f, py = cy - r * 0.95f, an = (float) Math.toRadians(150 - 35 * sw), len = r * 1.15f;
+        float ex = px + (float) Math.cos(an) * len, ey = py + (float) Math.sin(an) * len;
+        Gfx.push(g); Gfx.translate(g, px, py); Gfx.rotate(g, an); g.fill(0, -1, Math.round(len), 1, Gfx.argb(A, 0xC8CCD8)); Gfx.pop(g);
+        g.fill(Math.round(ex) - 2, Math.round(ey) - 2, Math.round(ex) + 2, Math.round(ey) + 2, Gfx.argb(A, 0xE8ECF4));
+        NowPlayingHud.disc(g, px, py, Math.max(1.5f, r * 0.16f), Gfx.argb(A, 0x6A7084));
+        if (sw >= 1f) for (int i = 0; i < 3; i++) {                                           // notes drifting up off it
+            float q = ((u - 0.85f) * 0.8f + i / 3f) % 1f; if (q < 0) continue;
+            float nx = cx - r * 0.4f + i * r * 0.4f + (float) Math.sin(q * 6 + i) * 3 * size, ny = cy - r - q * 22 * size;
+            Gfx.push(g); Gfx.translate(g, nx, ny); Gfx.scale(g, size * 0.8f); Gfx.txt(g, font, i % 2 == 0 ? "♪" : "♫", 0, 0, Gfx.argb(Math.round(220 * a * (1f - q)), Ritual.mixc(acc, 0xFFFFFF, 0.4f)), true); Gfx.pop(g);
+        }
     }
     private static void noLyrics(GuiGraphicsExtractor g, Font f, long now, float vis, float cx, float cy, float k) {
         float u = (now - titleAt) / 1000f - 3.5f; if (u < 0f) return;

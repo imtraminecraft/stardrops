@@ -166,6 +166,7 @@ final class Codex {
             cards(g, in * (1f - cl(zoomed * 3f)));
         }
     }
+    private static boolean isTime(Achievements.Ach a) { return LocalLedger.live(a) != a.progress() || a.ch().equals("time") && a.id().startsWith("time_"); }
     private static float[] camOf(int c) {
         if (c < 0) return new float[]{aspect() / 2f, 0.5f, 1f};
         float[] o = centre(c); float top = -0.06f, bot = 0.06f;
@@ -648,7 +649,7 @@ final class Codex {
         if (ig != null && igT >= 0f && igT < 0.05f && igSounded.add(a.id())) sound("sky_star", 1.2f, 0.8f);
         int tier = Math.max(0, Math.min(2, a.tier())), tc = LocalLedger.TIER_COL[tier] & 0xFFFFFF;
         float tk = TIER_K[tier] * dK;
-        float prog = (float) Math.min(1.0, a.goal() <= 0 ? 0 : a.progress() / a.goal());
+        float prog = (float) Math.min(1.0, a.goal() <= 0 ? 0 : LocalLedger.live(a) / a.goal());
         if (lit) {                                                                           // a lit star: in the group's colour; its tier sets its size and flare (Bronze: a cross, Silver: six rays, Gold: eight and a crown ring)
             float r = (near ? 4.6f : 3.2f) * tw * tk + (hv ? 1.2f : 0f);
             if (igT < 1.4f) { float u = igT / 1.4f; glow(x, y, r * (12f - 7f * u), 0xFFFFFF, 0.9f * (1f - u) * fade); ring(x, y, r * (2f + 24f * ease(u)), argb((1f - u) * 0.9f * fade * alpha, col), 1f); r *= 1f + 1.2f * (1f - u); }
@@ -695,8 +696,8 @@ final class Codex {
             if (!lastHoverStar.equals(a.id())) { lastHoverStar = a.id(); if (now - hoverSoundAt > 90) { hoverSoundAt = now; sound("sky_star", 0.85f + 0.3f * rnd(n.depth() + c * 13), 0.45f); } }      // one chime per star, never a burst
             String nm = a.secret() && !a.done() ? "???" : a.name();
             String rew = a.reward().isEmpty() ? "" : Ledger.rewardName(a.reward());
-            String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  First day only." : "  Missed: your first day is over.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".");
-            String extra = (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal()));
+            String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  First day only: " + LocalLedger.firstDayLeft() + " left." : "  Missed: your first day is over.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".");
+            String extra = (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : (isTime(a) ? Ledger.hms(LocalLedger.live(a)) + " / " + Ledger.hms(a.goal()) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal())));
             host.tip(nm + "\n" + ACH_NAME[c] + "\nT" + Math.max(0, Math.min(2, a.tier())) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
         }
     }
@@ -708,7 +709,7 @@ final class Codex {
         Achievements.Profile p = Achievements.profile(); if (p == null || a < 0.02f) return;
         List<Achievements.Ach> next = new ArrayList<>(), recent = new ArrayList<>();
         for (Achievements.Ach q : p.list()) { if (q.done()) recent.add(q); else if (!q.secret() && q.goal() > 0) next.add(q); }
-        next.sort(Comparator.comparingDouble(q -> -(q.progress() / q.goal())));
+        next.sort(Comparator.comparingDouble(q -> -(LocalLedger.live(q) / q.goal())));
         recent.sort(Comparator.comparingLong(q -> -q.at()));
         int w = Math.max(110, Math.round(sw * 0.2f)), x = sx0 + sw - w - 10, y = sy0 + 26;
         y = card(g, "NEARLY THERE", next.subList(0, Math.min(3, next.size())), x, y, w, a, true) + 6;
@@ -736,9 +737,9 @@ final class Codex {
             glow(x + 10, yy + 3, 2.4f, col, a);
             small(g, q.name(), x + 16, yy, argb(a * alpha, 0xFFFFFF));
             if (bars) {
-                float f = (float) Math.min(1.0, q.progress() / q.goal()); int bw = w - 26;
+                float f = (float) Math.min(1.0, LocalLedger.live(q) / q.goal()); int bw = w - 26;
                 g.fill(x + 16, yy + 10, x + 16 + bw, yy + 12, argb(0.25f * a * alpha, 0x9AA6D0)); g.fill(x + 16, yy + 10, x + 16 + Math.round(bw * f), yy + 12, argb(a * alpha, col));
-                String pr = Ledger.fmt(q.progress()) + "/" + Ledger.fmt(q.goal()); small(g, pr, x + w - 6 - Math.round(host.width(pr) * 0.75f), yy, argb(0.7f * a * alpha, 0xB8C0DA));
+                String pr = isTime(q) ? Ledger.hms(LocalLedger.live(q)) + "/" + Ledger.hm(q.goal()) : Ledger.fmt(q.progress()) + "/" + Ledger.fmt(q.goal()); small(g, pr, x + w - 6 - Math.round(host.width(pr) * 0.75f), yy, argb(0.7f * a * alpha, 0xB8C0DA));
             }
             String id = q.id(); int c = ci;
             HITS.add(new Object[]{x, yy - 1, x + w, yy + (bars ? 17 : 11), (Runnable) () -> { blinkId = id; blinkAt = System.currentTimeMillis() + ZOOM; fly(c); }});

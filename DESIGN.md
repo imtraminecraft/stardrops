@@ -606,3 +606,6 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Performance: ring() max 32 segments, Milky Way dust 240, small unlit stars without spikes; ~1900 draws a frame (was ~3450). Fly time 480 ms.
 - Lyrics styles: Pop, Karaoke, Scroll. Now Playing redesigned (record behind the cover, equalizer, glowing progress bar).
 - Item size: old 50% is now 75%; cap 110%. The animation clock runs on nanoTime.
+- Sung line (Visuals > Lyrics > Sung line): its own strip docked to the Now Playing card, sliding out from behind it, Off / Above / Below (config npLine; Above falls back to Below near the top of the screen). Lines roll in, sung letters take the album colour, a tick runs along the edge. The menu control is a three-cell "Dock" picker with tiny cards. The card itself no longer holds the lyric.
+- Song intro: a vinyl pops up beside the title, spins, a tone arm swings on and notes drift off.
+- Achievements update live: Playtime progress, "First day … left" and "Next star in" count down to the second (LocalLedger.live / firstDayLeft).

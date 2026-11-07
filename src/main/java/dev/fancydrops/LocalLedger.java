@@ -46,6 +46,13 @@ final class LocalLedger {
     static double minutes() { return FancyConfig.get().playMinutes; }
     /** Still your first day of playing with FancyDrops (the first 24 hours of playtime)? */
     static boolean firstDay() { return minutes() < 1440; }
+    /** How far along an achievement is right now: Playtime stars count the seconds as they pass, the rest come from the profile. */
+    static double live(Achievements.Ach a) {
+        if (!a.done()) for (Def d : ACH) if (d.id.equals(a.id())) { if (d.stat.equals("pt")) return Math.min(a.goal(), minutes()); break; }
+        return a.progress();
+    }
+    /** "13:59:41" left of your first day, counting down. */
+    static String firstDayLeft() { return Ledger.hms(Math.max(0, 1440 - minutes())); }
 
     private static double[] grp(P p, String k) { double[] v = p.g.get(k); if (v != null && v.length < 3) { v = Arrays.copyOf(v, 3); p.g.put(k, v); } return v; }
     /** A star's number (the same words as the server's stat()). */

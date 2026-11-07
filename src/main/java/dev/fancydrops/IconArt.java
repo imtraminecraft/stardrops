@@ -489,6 +489,13 @@ final class IconArt {
                 outline();
                 glint(12, 7 + up, 1, 0xFFFFFF, t);
             }
+            case "lyr_dock" -> {                                                             // Sung line: a little Now Playing card with a lyric strip sliding out under it
+                int dn = Math.round(Math.min(1f, f * 2f) * 3);
+                bev(3, 8 + dn, 10, 4, 0x1E5A3A); rect(5, 9 + dn, 4, 1, 0x7CFFB0); rect(9, 9 + dn, 2, 1, 0x8A9AA8);
+                bev(1, 2, 14, 7, 0x2A2E44); bev(2, 3, 5, 5, 0x1ED760); rect(3, 4, 3, 3, 0x0C3A20); rect(8, 4, 6, 1, 0xFFFFFF); rect(8, 6, 4, 1, 0x9AA4C4);
+                outline();
+                glint(13, 9 + dn, 1, 0xFFFFFF, t);
+            }
             case "lyr_timing" -> {                                                           // Timing: a metronome, its arm ticking side to side
                 quad(4, 15, 12, 15, 10, 2, 6, 2, 0x8A5A3A); quad(5, 14, 11, 14, 9.5f, 4, 6.5f, 4, 0x6A3A1E);
                 float an = sn(f) * 0.55f; float ax = 8 + (float) Math.sin(an) * 9, ay = 13 - (float) Math.cos(an) * 9;

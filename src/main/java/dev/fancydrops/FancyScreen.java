@@ -116,6 +116,47 @@ public class FancyScreen extends Screen {
         boolean click(double mx, int button) { if (button == 0) set.accept(!get.getAsBoolean()); return true; }
     }
 
+    /**
+     * Where the sung line docks to Now Playing: three little screens side by side (Off, Above, Below), each a tiny Now Playing card
+     * with its lyric strip drawn where it would go. A lit frame glides to the one you pick, and the strip in it shimmers.
+     */
+    private class Dock extends Ctl {
+        final IntSupplier get; final IntConsumer set; static final int CELL = 34;
+        Dock(IntSupplier g, IntConsumer s) { get = g; set = s; }
+        int width() { return CELL * 3 + 4; }
+        void draw(GuiGraphicsExtractor g, int y, int h, boolean hover) {
+            int sel = get.getAsInt(), ty = y + (h - 22) / 2; int[] order = {0, 2, 1};                // shown as Off, Above, Below
+            int selPos = sel == 0 ? 0 : sel == 2 ? 1 : 2;
+            float gx = anim("dock|" + key, selPos, 14f);
+            pill(g, x0, ty, x1 - x0, 22, Ui.PANEL2);
+            int fx = Math.round(x0 + 2 + gx * CELL);
+            pill(g, fx, ty + 1, CELL, 20, Canvas.mix(Ui.PANEL2, 0xFF1ED760, 0.28f));
+            float pulse = 0.5f + 0.5f * (float) Math.sin(fxNow / 300.0);
+            rout(g, fx, ty + 1, CELL, 20, Gfx.argb(Math.round(120 + 100 * pulse), 0x1ED760));
+            for (int i = 0; i < 3; i++) {
+                int mode = order[i], cx = x0 + 2 + i * CELL, on = Math.abs(gx - i) < 0.5f ? 1 : 0;
+                boolean hv = hover && lastMx >= cx && lastMx < cx + CELL;
+                int dim = on == 1 ? 0xFFFFFFFF : hv ? 0xFFC8CCD8 : 0xFF6A7088;
+                int cardY = mode == 2 ? ty + 10 : mode == 1 ? ty + 4 : ty + 7, cw = 22, ccx = cx + (CELL - cw) / 2;
+                g.fill(ccx, cardY, ccx + cw, cardY + 8, Canvas.mix(0xFF0B0D14, dim, 0.18f));          // the tiny card: cover, two lines of text
+                g.fill(ccx + 1, cardY + 1, ccx + 7, cardY + 7, on == 1 ? 0xFF1ED760 : Canvas.mix(0xFF1ED760, 0xFF2A2E3A, 0.6f));
+                g.fill(ccx + 9, cardY + 2, ccx + 19, cardY + 3, dim); g.fill(ccx + 9, cardY + 5, ccx + 16, cardY + 6, Canvas.mix(dim, 0xFF000000, 0.4f));
+                if (mode != 0) {                                                                       // the strip, above or below
+                    int sy = mode == 2 ? cardY - 5 : cardY + 10;
+                    g.fill(ccx + 2, sy, ccx + cw - 2, sy + 4, Canvas.mix(0xFF0B0D14, 0xFF1ED760, on == 1 ? 0.35f : 0.12f));
+                    int sweep = on == 1 ? Math.round(((fxNow / 18) % 40) / 40f * (cw - 6)) : cw - 6;
+                    g.fill(ccx + 3, sy + 1, ccx + 3 + sweep, sy + 3, on == 1 ? 0xFF7CFFB0 : 0xFF4A5068);
+                } else {                                                                               // Off: a small slash
+                    for (int d = 0; d < 6; d++) g.fill(ccx + cw + 1 - d, cardY + 8 + d - 9, ccx + cw + 2 - d, cardY + 9 + d - 9, on == 1 ? 0xFFFF6A6A : 0xFF4A5068);
+                }
+            }
+        }
+        boolean click(double mx, int button) {
+            int i = (int) Math.max(0, Math.min(2, (mx - x0 - 2) / CELL)); int[] order = {0, 2, 1};
+            set.accept(order[i]); return true;
+        }
+    }
+
     private class Btn extends Ctl {
         final String label; final int color; final Runnable run;
         Btn(String label, int color, Runnable run) { this.label = label; this.color = color; this.run = run; }
@@ -2788,6 +2829,9 @@ public class FancyScreen extends Screen {
             Row ls = row(0, ":size:", "Size", "How big the words are", Ui.ACCENT);
             ls.ctls.add(new Slider(60, 160, 5, () -> c.lyricsSize, v -> c.lyricsSize = (int) v, () -> c.lyricsSize + "%").typed(1)); rows.add(ls);
             rows.add(toggle(":format:", "Next line", "The coming line, faintly below", () -> c.lyricsNext, v -> c.lyricsNext = v));
+            rows.add(section("Sung line"));
+            Row nl = row(0, ":lyr_dock:", "Sung line", "The line being sung, docked to Now Playing: off, above or below", 0xFF1ED760);
+            nl.ctls.add(new Dock(() -> c.npLine, i -> c.npLine = i)); rows.add(nl);
             rows.add(section("Extras"));
             rows.add(toggle(":lyr_burst:", "Star bursts", "Little stars burst from each word as it's sung", () -> c.lyricsStars, v -> c.lyricsStars = v));
             rows.add(toggle(":lyr_intro:", "Song intro", "The song's name in big letters when it starts", () -> c.lyricsIntro, v -> c.lyricsIntro = v));

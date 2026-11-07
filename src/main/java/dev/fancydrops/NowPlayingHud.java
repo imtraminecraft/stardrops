@@ -50,6 +50,7 @@ final class NowPlayingHud {
         int w = width(), h = height(!lyric.isEmpty());
         bx0 = Math.round(cx - w / 2f * k); by0 = Math.round(top); bx1 = Math.round(cx + w / 2f * k); by1 = Math.round(top + h * k);
         Gfx.push(g); Gfx.translate(g, cx - w / 2f * k, top); Gfx.scale(g, k);
+        LyricsHud.dock(g, font, w, h, e, top > 26 * k, acc);                       // the sung line, sliding out from behind the card
         glass(g, font, w, h, e, t, now, since, pos, playing, lyric, art, acc);
         Gfx.pop(g);
     }
@@ -113,10 +114,10 @@ final class NowPlayingHud {
         small(g, font, r, b1 - rw, by + 4, 0.55f, Gfx.argb(Math.round(a * 0.55f), 0xFFFFFF));
     }
     private static float rec = 0f;
-    private static void disc(GuiGraphicsExtractor g, float cx, float cy, float r, int c) {
+    static void disc(GuiGraphicsExtractor g, float cx, float cy, float r, int c) {
         for (int y = Math.round(-r); y <= Math.round(r); y++) { float hw = (float) Math.sqrt(Math.max(0, r * r - y * y)); g.fill(Math.round(cx - hw), Math.round(cy + y), Math.round(cx + hw), Math.round(cy + y) + 1, c); }
     }
-    private static void circle(GuiGraphicsExtractor g, float cx, float cy, float r, int c) {
+    static void circle(GuiGraphicsExtractor g, float cx, float cy, float r, int c) {
         int n = Math.max(12, Math.round(r * 4)); for (int i = 0; i < n; i++) { double an = i * Math.PI * 2 / n; int x = Math.round(cx + (float) Math.cos(an) * r), y = Math.round(cy + (float) Math.sin(an) * r); g.fill(x, y, x + 1, y + 1, c); }
     }
 
