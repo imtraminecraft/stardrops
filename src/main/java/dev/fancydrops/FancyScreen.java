@@ -1595,7 +1595,7 @@ public class FancyScreen extends Screen {
         String q = query.trim().toLowerCase(Locale.ROOT); if (q.length() < 2) return false;
         return "cosmetics".startsWith(q) || q.contains("cosmetic") || "suffix".startsWith(q) || "name icon".startsWith(q) || "icon".startsWith(q) || "aura".startsWith(q) || q.contains("name effect") || "name effects".startsWith(q);
     }
-    private boolean masterLast; private long masterAt;
+    private static Boolean masterLast; private static long masterAt;   // static: reopening the menu shows the state, it doesn't replay the launch
     private int[] masterBox() { int top = FancyConfig.get().previewAt == 0 ? Math.round((dockH() + DOCK_GAP) * dockK) : 0; int w = 100, y = Math.max(2, py - top - 25); return new int[]{px, y, px + w, y + 22}; }
 
     /** The header line: the tab, and the page inside it ("Drop Library  >  Mythological  >  Griffin"). */
@@ -3393,8 +3393,8 @@ public class FancyScreen extends Screen {
             float pulse = STILL ? 0.5f : 0.5f + 0.5f * (float) Math.sin(fxNow / 420.0);
             // Launch control: off, the rocket sits docked on its pad; on, it blasts off and circles a little planet. Switching
             // plays the launch (or the landing): flame, smoke puffs, the climb into orbit.
-            if (on != masterLast) { masterLast = on; masterAt = now; }
-            float tt = masterAt == 0L ? 9f : (now - masterAt) / 1000f, fly = on ? Math.min(1f, tt / 2.6f) : 1f - Math.min(1f, tt / 1.8f);   // the launch takes 2.6 s, the landing 1.8 s (LaunchPad eases each part)
+            if (masterLast == null) { masterLast = on; masterAt = 0L; } else if (on != masterLast) { masterLast = on; masterAt = now; }
+            float tt = masterAt == 0L ? 9f : (now - masterAt) / 1000f, fly = on ? Math.min(1f, tt / 2.6f) : 1f - Math.min(1f, tt / 3.0f);   // the launch takes 2.6 s, the landing 3 s (LaunchPad eases each part)
             LaunchPad.draw(g, font, b[0], b[1], w, h, on, fly, mv, hv, pulse, now, STILL);
         }
         // page header

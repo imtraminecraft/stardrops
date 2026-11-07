@@ -54,24 +54,33 @@ final class LaunchPad {
         }
         // the planet rising into view
         float pcx = wx1 - 15, pcy = wy0 - 14 + (wh / 2f + 14) * arrive;
-        float oa = still ? 0.6f : now / 650f;
-        float ox = pcx + (float) Math.cos(oa) * 12, oy = pcy + (float) Math.sin(oa) * 4f;
-        // the rocket: up off the pad, the camera holding it mid-window, then across into orbit
-        float rx = padX, ry = wy1 - 9 - wh * 0.3f * Math.min(1f, rise * 4f);
-        float ang = -(float) Math.PI / 2;
-        boolean behind = false;
-        if (arrive > 0f) {
-            float oang = (float) Math.atan2(Math.cos(oa) * 4f, -Math.sin(oa) * 12);
-            rx += (ox - rx) * arrive; ry += (oy - ry) * arrive; ang = lerpAng(ang, oang, arrive); behind = arrive > 0.7f && Math.sin(oa) < 0;
+        float oa = still ? 0.6f : (now % 600_000L) / 1100f;                                             // one smooth turn every ~7 s
+        float orx = 11f, ory = 5f, ox = pcx + (float) Math.cos(oa) * orx, oy = pcy + (float) Math.sin(oa) * ory;
+        float oang = (float) Math.atan2(Math.cos(oa) * ory, -Math.sin(oa) * orx), up = -(float) Math.PI / 2;
+        float colX = padX, colY = wy1 - 9 - wh * 0.3f * Math.min(1f, rise * 4f);                      // where the camera holds it while climbing
+        float rx = colX, ry = colY, ang = up;
+        boolean behind = false, firing = fly > 0.01f && fly < 0.97f;
+        if (on) {                                                                                         // launch: up off the pad, then across into orbit
+            if (arrive > 0f) { rx += (ox - rx) * arrive; ry += (oy - ry) * arrive; ang = lerpAng(up, oang, arrive); }
+        } else if (arrive > 0f) {                                                                         // landing: turn round, burn, drop out of orbit
+            float k = 1f - arrive;                                                                        // 0 in orbit .. 1 leaving the planet behind
+            float flip = smooth(Math.min(1f, k / 0.35f)), go = smooth(Math.max(0f, (k - 0.25f) / 0.75f));
+            float retro = oang + (float) Math.PI;                                                          // engine first, against the direction it was flying
+            ang = k < 0.35f ? lerpAng(oang, retro, flip) : lerpAng(retro, up, smooth((k - 0.35f) / 0.65f));
+            rx = ox + (colX - ox) * go; ry = oy + (colY - oy) * go;
+            firing = k > 0.12f;
         }
+        if (arrive > 0.7f && (on || arrive > 0.97f)) behind = Math.sin(oa) < 0;
+        // landing legs fold out for the last moments of the descent, and stay out on the pad
+        float legs = on ? Math.max(0f, 1f - fly / 0.08f) : Math.max(0f, 1f - fly / 0.12f);
         if (fly > 0.01f && climb < 1f && gy < wy1 + 2) for (int i = 0; i < 4; i++) {                       // smoke rolling off the pad
             float q = ((now / 450f) + i / 4f) % 1f;
             NebulaTex.glow(g, padX + (i - 1.5f) * 3.5f * (0.6f + q), gy - 1 - q * 3, 2 + q * 3, 1.5f + q * 2, Gfx.argb(Math.round(120 * (1f - q) * (1f - climb)), 0xC8C4E0));
         }
-        boolean firing = fly > 0.01f && fly < 0.97f;
-        if (behind) rocket(g, rx, ry, ang, firing, now, 1f - arrive * 0.5f);
+        float thrust = on ? (arrive > 0.5f ? 0.7f : 1.4f) : (fly < 0.25f ? 0.6f + 2.4f * fly : 1.2f);   // the landing burn eases off as it settles
+        if (behind) rocket(g, rx, ry, ang, firing, now, thrust, legs);
         if (arrive > 0f) Worlds.draw(g, pcx, pcy, 5.5f, Math.round(255 * Math.min(1f, arrive * 2f) * (0.6f + 0.4f * mv)), 16, still ? 0f : now / 1000f);
-        if (!behind) rocket(g, rx, ry, ang, firing, now, arrive > 0.5f ? 0.7f : 1.4f);
+        if (!behind) rocket(g, rx, ry, ang, firing, now, thrust, legs);
         if (clip) g.disableScissor();
         // the frame over everything
         int bc = Gfx.argb(Math.round(80 + 60 * hv + 70 * pulse * mv), mv > 0.5f ? 0x9B7BFF : 0x4A4878);
@@ -80,7 +89,7 @@ final class LaunchPad {
         g.fill(x + 1, y + 1, x + 2, y + 2, bc); g.fill(x + w - 2, y + 1, x + w - 1, y + 2, bc); g.fill(x + 1, y + h - 2, x + 2, y + h - 1, bc); g.fill(x + w - 2, y + h - 2, x + w - 1, y + h - 1, bc);
     }
     /** The rocket, nose along +x before rotating: white body, pink nose and fins, a blue window, a flame while it flies. */
-    private static void rocket(GuiGraphicsExtractor g, float rx, float ry, float ang, boolean firing, long now, float boost) {
+    private static void rocket(GuiGraphicsExtractor g, float rx, float ry, float ang, boolean firing, long now, float boost, float legs) {
         Gfx.push(g); Gfx.translate(g, rx, ry); Gfx.rotate(g, ang);
         if (firing) {
             float fl = 0.6f + 0.4f * (float) Math.sin(now / 45.0); int len = Math.round((2 + 3 * fl) * boost);
@@ -90,6 +99,7 @@ final class LaunchPad {
         g.fill(-3, -1, 2, 1, 0xFFE8ECFF); g.fill(-2, -2, 1, -1, 0xFFC8CCE8); g.fill(-2, 1, 1, 2, 0xFFC8CCE8);
         g.fill(2, -1, 4, 1, 0xFFFF7AD9); g.fill(0, -1, 1, 0, 0xFF7AD8FF);
         g.fill(-4, -3, -2, -2, 0xFFFF7AD9); g.fill(-4, 2, -2, 3, 0xFFFF7AD9);
+        if (legs > 0.05f) { int l = Math.round(2 * legs); g.fill(-4 - l, -3 - l, -3, -2 - l + 1, 0xFF9A9EC8); g.fill(-4 - l, 2 + l - 1, -3, 3 + l, 0xFF9A9EC8); }
         Gfx.pop(g);
     }
     private static float lerpAng(float a0, float a1, float u) { float d = a1 - a0; while (d > Math.PI) d -= (float) (2 * Math.PI); while (d < -Math.PI) d += (float) (2 * Math.PI); return a0 + d * u; }
