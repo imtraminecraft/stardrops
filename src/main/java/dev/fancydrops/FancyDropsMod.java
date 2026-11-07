@@ -182,7 +182,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
         return ClientCommands.literal(name)
             .executes(ctx -> { openMenu = true; return Command.SINGLE_SUCCESS; })          // opened next tick so the chat screen doesn't close it again
             .then(ClientCommands.literal("achievement").executes(ctx -> { FancyScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))      // straight to the achievements sky
-            .then(ClientCommands.literal("star").then(ClientCommands.argument("id", StringArgumentType.word()).executes(ctx -> { FancyScreen.pendingStar = StringArgumentType.getString(ctx, "id"); openMenu = true; return Command.SINGLE_SUCCESS; })))   // a "New star lit" line: the sky, flown to that star
+            .then(ClientCommands.literal("star").then(ClientCommands.argument("id", StringArgumentType.word()).suggests((ctx, bd) -> suggestStars(bd)).executes(ctx -> { FancyScreen.pendingStar = StringArgumentType.getString(ctx, "id"); openMenu = true; return Command.SINGLE_SUCCESS; })))   // a "New star lit" line: the sky, flown to that star
             .then(ClientCommands.literal("achievements").executes(ctx -> { FancyScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))
             .then(ClientCommands.literal("help").executes(ctx -> help(ctx.getSource()))
                 .then(ClientCommands.literal("simulate").executes(ctx -> helpSimulate(ctx.getSource()))))
@@ -219,6 +219,16 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
 
     private static void say(FabricClientCommandSource source, String msg) { source.sendFeedback(Chat.msg(msg)); }
 
+    /** /fd star: every achievement's id, the ones whose id or name starts with what you typed, each with its name, constellation and tier. */
+    private static CompletableFuture<Suggestions> suggestStars(SuggestionsBuilder b) {
+        String rem = b.getRemaining().toLowerCase(Locale.ROOT);
+        for (LocalLedger.Def d : LocalLedger.ACH) {
+            if (!rem.isEmpty() && !d.id().startsWith(rem) && !d.name().toLowerCase(Locale.ROOT).replace(' ', '_').startsWith(rem)) continue;
+            String name = d.secret() ? "???" : d.name();
+            b.suggest(d.id(), Component.literal(name + "  \u00B7  " + Codex.nameOf(d.ch()) + "  \u00B7  " + LocalLedger.TIER[Math.max(0, Math.min(2, d.tier()))]));
+        }
+        return b.buildFuture();
+    }
     private static CompletableFuture<Suggestions> suggest(SuggestionsBuilder b, String... options) {
         for (String o : options) if (o.toLowerCase(Locale.ROOT).startsWith(b.getRemaining().toLowerCase(Locale.ROOT))) b.suggest(o);
         return b.buildFuture();

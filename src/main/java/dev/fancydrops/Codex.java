@@ -39,7 +39,8 @@ final class Codex {
     private static long openAt, closeAt, zoomAt, hoverAt, blinkAt;
     /** The opening film: the stargazer at the telescope (INTRO ms, then the page starts at openAt), the camera pushes into the lens, and
      *  the page opens out of it like an iris while the camera pulls back from the hill. Click or Esc skips it. */
-    private static final long INTRO = 2600, IRIS = 900; private static long introFrom; private static int introSounds;
+    private static final long INTRO = 2600, IRIS = 900, LONG_INTRO = 7000; private static long introFrom; private static int introSounds;
+    private static long introLen = INTRO; private static boolean longIntro, longPlayed;          // the long opening plays the first time the sky opens each time the game starts
     private static String blinkId = "";
     private static int[] from = {0, 0, 0, 0};
     private static int focus = -1, prevFocus = -1, hoverCon = -1, lastHoverCon = -1;
@@ -56,10 +57,13 @@ final class Codex {
     private static float scopeAng = -0.9f;                                       // where the stargazer's telescope points (radians)
 
     // ------------------------------------------------------------------ open / close
-    static void open(int[] btn, int chapter) {
+    static void open(int[] btn, int chapter) { open(btn, chapter, true); }
+    static void open(int[] btn, int chapter, boolean allowLong) {
         long t0 = System.currentTimeMillis(); introFrom = t0; introSounds = 0;
         boolean intro = FancyConfig.get().achIntro;
-        open = true; openAt = t0 + (intro ? INTRO : 0); closeAt = 0; from = btn.clone(); IGNITE.clear(); igSounded.clear(); ignitesPlanned = false; blinkId = "";
+        longIntro = intro && allowLong && !longPlayed; if (longIntro) longPlayed = true; introLen = longIntro ? LONG_INTRO : INTRO;
+        soloId = null;
+        open = true; openAt = t0 + (intro ? introLen : 0); closeAt = 0; from = btn.clone(); IGNITE.clear(); igSounded.clear(); ignitesPlanned = false; blinkId = "";
         focus = chapter >= 1 && chapter <= ACH.length ? chapter - 1 : -1; prevFocus = focus; zoomAt = 0;
         Achievements.refresh(true);
         sound("sky_open", 1f, 0.8f);
@@ -70,15 +74,18 @@ final class Codex {
     static void openAt(int[] btn, String achId) {
         Achievements.Profile p = Achievements.profile(); int c = -1;
         if (p != null) for (Achievements.Ach a : p.list()) if (a.id().equals(achId)) c = groupOf(a.ch());
-        open(btn, -1);
+        open(btn, -1, false);                                                                        // (the short opening: you came to see one star)
         if (c >= 0) { prevFocus = -1; focus = c; zoomAt = openAt + OPEN - 200; }
         blinkId = achId; blinkAt = openAt + OPEN + 200;
+        soloId = c >= 0 ? achId : null;                                                              // only this star answers until you go back
     }
     static void close() { if (open && closeAt == 0) { closeAt = System.currentTimeMillis(); sound("sky_close", 1f, 0.6f); } }
     static boolean busy() { return open; }
     /** The sky fully covers the menu (open and settled, not closing): the menu behind it needn't be drawn at all. */
     static boolean covering() { long n = System.currentTimeMillis(); return open && closeAt == 0 && (openAt > introFrom || n - openAt > 450); }
-    private static void fly(int c) { if (c == focus) return; prevFocus = focus; focus = c; zoomAt = System.currentTimeMillis(); sound("sky_zoom", c < 0 ? 0.85f : 1f, 0.7f); }
+    /** /fd star: the one star you came to see; the others don't react until you press back. */
+    static String soloId;
+    private static void fly(int c) { if (c < 0) soloId = null; if (soloId != null) return; if (c == focus) return; prevFocus = focus; focus = c; zoomAt = System.currentTimeMillis(); sound("sky_zoom", c < 0 ? 0.85f : 1f, 0.7f); }
 
     private static void planIgnites() {
         Achievements.Profile p = Achievements.profile(); if (p == null || ignitesPlanned) return;
@@ -120,6 +127,7 @@ final class Codex {
         if (closeT >= CLOSE) { open = false; return; }
         boolean film = openAt > introFrom;                                              // this opening has the film
         float fu = film && closeT < 0 ? now - introFrom : 1e9f;                       // ms into the opening shot
+        if (longIntro && fu < LONG_INTRO + 2000) { longTimeline(fu); } else { day = 0f; trail = 0f; sunK = 1f; title = 0f;
         if (film && introSounds < 1 && fu >= 700) { introSounds = 1; sound("sky_zoom", 0.9f, 0.7f); }
         open0 = 1f - ease(fu / 650f);                                                       // out of black, like opening your eyes
         dusk = 1f - ease((fu - 200f) / 2200f);                                              // the last of the sunset low on the horizon, fading
@@ -129,6 +137,7 @@ final class Codex {
         focusPull = 1f - ease((fu - 1700f) / 800f);
         conA = ease((fu - 1400f) / 800f);
         lineGrow = ease((fu - 1700f) / 900f);                                               // the figures draw themselves, star to star
+        }
         float grow = closeT >= 0 ? 1f - ease(closeT / CLOSE) : film ? 1f : ease(t / 420f);
         alpha = closeT >= 0 ? 1f - cl(closeT / (CLOSE * 0.8f)) : film ? 1f : cl(t / 200f);
         if (film && introSounds < 3 && t >= 0) { introSounds = 3; sound("sky_star", 1.4f, 0.6f); }
@@ -171,6 +180,7 @@ final class Codex {
         stargazer(g, 1f - cl(zoomed * 2.5f));
         if (tilting) Gfx.pop(g);
         nearDust(g, 1f - cl(zoomed * 1.5f));
+        titleCard(g);
         vignette(g);
         if (open0 > 0.002f) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(open0, 0x020208));
         g.disableScissor();
@@ -203,6 +213,8 @@ final class Codex {
         if (alpha < 1f) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(1f - alpha, 0x05060F));
         deepSky(g);
         if (milky < 1f) g.fill(sx0, sy0 - sh / 5, sx0 + sw, sy0 + sh, argb((1f - milky) * 0.92f, 0x05060F));
+        if (day > 0.002f || dusk > 0.002f && longIntro) daySky(g);
+        if (trail > 0.002f) trails(g);
         float px = (camU - aspect() / 2f) * sh * camS * 0.35f - parX(0.3f), py = (camV - 0.5f) * sh * camS * 0.35f - parY(0.3f);
         for (int i = 0; i < 70; i++) {                                           // a near layer of stars that twinkle (and move a little more)
             if (night < 1f && rnd(i * 3 + 2) > night) continue;
@@ -286,6 +298,42 @@ final class Codex {
         NebulaTex.glow(g, sx0 + sw * 0.62f, sy0 + sh * 1.02f, sw * 0.75f, sh * 0.3f, argb(0.55f * d, 0xE0607A));
         NebulaTex.glow(g, sx0 + sw * 0.72f, sy0 + sh * 1.03f, sw * 0.45f, sh * 0.16f, argb(0.75f * d, 0xFF9A5A));
         NebulaTex.glow(g, sx0 + sw * 0.5f, sy0 + sh * 0.9f, sw * 0.9f, sh * 0.5f, argb(0.25f * d, 0x3A3A8A));
+    }
+    /** The long opening's daylight: a clear sky deepening into sunset colours, over the stars (they show through as it fades). */
+    private static void daySky(GuiGraphicsExtractor g) {
+        int N = Math.max(24, sh / 3);
+        for (int i = 0; i < N; i++) {
+            float u = i / (N - 1f); int y0 = sy0 + Math.round(sh * (1f - (i + 1) / (float) N)), y1 = sy0 + Math.round(sh * (1f - i / (float) N));
+            int dayCol = mix(0xFFF2D6A0, 0xFF5A8AD0, (float) Math.pow(u, 0.6));                        // afternoon: pale gold low, blue high
+            int duskCol = u < 0.2f ? mix(0xFFFF9A50, 0xFFE0607A, u / 0.2f) : u < 0.55f ? mix(0xFFE0607A, 0xFF4A3A90, (u - 0.2f) / 0.35f) : mix(0xFF4A3A90, 0xFF141A40, (u - 0.55f) / 0.45f);
+            float a = Math.max(day, dusk * (0.95f - 0.35f * u)); int col = mix(duskCol, dayCol, day / Math.max(0.001f, Math.max(day, dusk)));
+            g.fill(sx0, Math.max(sy0, y0), sx0 + sw, Math.min(sy0 + sh, y1), argb(a, col));
+        }
+    }
+    /** A long exposure: every bright star draws an arc around the pole star, brightest at its head. */
+    private static void trails(GuiGraphicsExtractor g) {
+        float px = sx0 + sw * 0.46f, py = sy0 + sh * 0.12f, span = trail * 0.85f;
+        glow(px, py, 3f, 0xFFFFFF, trail);
+        for (int i = 0; i < 90; i++) {
+            float x = sx0 + rnd(i * 13 + 41) * sw, y = sy0 + rnd(i * 29 + 77) * sh * 0.9f, r = (float) Math.hypot(x - px, y - py); if (r < 4) continue;
+            double a0 = Math.atan2(y - py, x - px); int col = i % 7 == 0 ? 0xFFD8A8 : i % 5 == 0 ? 0xB8D0FF : i % 9 == 0 ? 0xFFB8C8 : 0xE8ECFF;
+            float br = 0.35f + 0.65f * rnd(i * 3 + 5); int segs = 7;
+            for (int k = 0; k < segs; k++) {
+                double b0 = a0 - span * k / segs, b1 = a0 - span * (k + 1) / segs;
+                line(px + (float) Math.cos(b0) * r, py + (float) Math.sin(b0) * r, px + (float) Math.cos(b1) * r, py + (float) Math.sin(b1) * r, col, trail * br * (1f - k / (float) segs) * 0.9f, -1);
+            }
+        }
+    }
+    /** The long opening's title, rising out of the stars. */
+    private static void titleCard(GuiGraphicsExtractor g) {
+        if (title < 0.01f) return;
+        String t = spaced("ACHIEVEMENTS"); float k = 2.2f, w = host.width(t) * k, cx = sx0 + sw / 2f, cy = sy0 + sh * 0.42f - (1f - title) * 8;
+        NebulaTex.glow(g, cx, cy + 8, w * 0.65f, 26, argb(0.5f * title, 0x000000));
+        NebulaTex.glow(g, cx, cy + 8, w * 0.5f, 14, argb(0.25f * title, 0xFFE9B8));
+        Gfx.push(g); Gfx.translate(g, cx - w / 2f, cy); Gfx.scale(g, k); Gfx.txt(g, font, t, 0, 0, argb(title, 0xFFE9B8), true); Gfx.pop(g);
+        String sub = "every drop is a star"; int sw2 = host.width(sub);
+        small(g, sub, Math.round(cx - sw2 * 0.375f), Math.round(cy + 24), argb(0.8f * title, 0xD8DCEC));
+        float lw = w * 0.4f * ease(title); g.fill(Math.round(cx - lw), Math.round(cy + 21), Math.round(cx + lw), Math.round(cy + 22), argb(0.7f * title, 0xFFE9B8));
     }
     /** The nearest layer: a few out-of-focus motes drifting close to the lens; they slide the most as you look around. */
     private static void nearDust(GuiGraphicsExtractor g, float a) {
@@ -483,11 +531,11 @@ final class Codex {
         float k = sh / 150f;
         // far planets, deep behind everything (they barely slide as you look around): real spheres, lit from one side, a soft
         // atmosphere on the lit limb; the big one has a tilted ring that passes in front of it and behind it
-        float fx = parX(0.12f), fy = parY(0.12f);
+        float fx = parX(0.12f), fy = parY(0.12f), pa0 = a; a = a * (1f - 0.8f * day);                // (faint in daylight)
         planet(g, sx0 + sw * 0.9f + fx, sy0 + sh * 0.36f + fy, 5.2f * k, 0xD8A070, 0x5A3A2A, 0xFFE0B8, -0.6f, 0.35f, a, true);
         planet(g, sx0 + sw * 0.5f + parX(0.06f), sy0 + sh * 0.09f + parY(0.06f), 3.4f * k, 0xC8CCD8, 0x2A2E3A, 0xF4F6FF, -0.9f, 0f, a, false);   // a pale moon
         planet(g, sx0 + sw * 0.27f + parX(0.09f), sy0 + sh * 0.2f + parY(0.09f), 1.6f * k, 0x6AA8E8, 0x14243A, 0xC8E8FF, -0.5f, 0f, a * 0.85f, false);  // a small blue world
-        int base = sy0 + sh;
+        a = pa0; int base = sy0 + sh;
         NebulaTex.glow(g, sx0 + sw * 0.7f, base, sw * 0.5f, sh * 0.16f, argb(0.22f * a * alpha, 0x6A4A9A));          // a haze of far light along the horizon
         NebulaTex.glow(g, sx0 + sw * 0.86f, base, sw * 0.12f, sh * 0.06f, argb(0.25f * a * alpha, 0xFFB070));         // a distant town's glow
         for (int i = 0; i < 4; i++) {                                                                    // thin clouds drifting slowly across, lit faintly from below
@@ -495,6 +543,11 @@ final class Codex {
             float cx = sx0 + sw * u + parX(0.15f), cy = sy0 + sh * (0.55f + 0.1f * rnd(i * 5 + 2)) + parY(0.15f);
             NebulaTex.glow(g, cx, cy, sw * (0.12f + 0.06f * rnd(i)), sh * 0.018f, argb(0.12f * a * alpha, 0x3A3A6A));
             NebulaTex.glow(g, cx, cy + sh * 0.006f, sw * 0.08f, sh * 0.008f, argb(0.08f * a * alpha, 0x8A7AB8));
+        }
+        if (longIntro && sunK < 1f) {                                                                   // the long opening: the sun going down behind the mountains
+            float sx = sx0 + sw * 0.7f, sy = sy0 + sh * (0.62f + 0.4f * sunK), sr = sh * 0.05f, sa = 1f - ease((sunK - 0.85f) / 0.15f);
+            NebulaTex.glow(g, sx, sy, sr * 9, sr * 5, argb(0.35f * sa, 0xFF8A3A)); NebulaTex.glow(g, sx, sy, sr * 3.5f, sr * 3.5f, argb(0.55f * sa, 0xFFC060));
+            disc(g, sx, sy, sr, argb(sa, mix(0xFFFFF0C0, 0xFFFF7A3A, sunK)));
         }
         NebulaTex.layer(g, "far", farC, sx0, sy0 + tilt * sh * 0.05f, sw, sh, argb(a * alpha, 0xFFFFFF));   // the mountains (baked once)
         long per = 26000; float su = (now % per) / (float) per;                                           // a satellite crossing now and then, blinking
@@ -674,6 +727,26 @@ final class Codex {
     private static final float[] DEPTH = {1.0f, 0.72f, 0.9f, 0.64f, 0.82f, 0.7f, 0.95f, 0.78f};
     private static float mpx, mpy; private static long lastPar;
     private static float dusk, night = 1f, milky = 1f, tilt, open0, focusPull, conA = 1f, lineGrow = 1f;   // the opening shot
+    private static float day, trail, sunK, title;                                                 // the long opening: daylight, star trails, the setting sun, the title
+    /**
+     * The long opening (7 s, once per game start): a whole night in one take, from the same hill. Late afternoon: the sun sinks
+     * behind the mountains and the sky burns orange and violet; night falls and the stars come out; then a long exposure: every star
+     * draws an arc around the pole star as the night wheels overhead; the exposure ends, the trails pull back into points, the title
+     * rises, and the constellations come into focus and draw themselves.
+     */
+    private static void longTimeline(float fu) {
+        open0 = 1f - ease(fu / 600f);
+        day = 1f - ease((fu - 300f) / 2200f);
+        sunK = ease(fu / 2700f);
+        dusk = ease((fu - 500f) / 1000f) * (1f - ease((fu - 2400f) / 1600f));
+        night = ease((fu - 1900f) / 1500f); milky = ease((fu - 2600f) / 1800f);
+        tilt = 0f;
+        trail = ease((fu - 3000f) / 1300f) * (1f - ease((fu - 4500f) / 800f));
+        title = ease((fu - 3700f) / 600f) * (1f - ease((fu - 4800f) / 500f));
+        conA = ease((fu - 4900f) / 700f); focusPull = 1f - ease((fu - 5100f) / 700f); lineGrow = ease((fu - 5200f) / 1100f);
+        if (introSounds < 1 && fu >= 3000) { introSounds = 1; sound("sky_zoom", 0.7f, 0.5f); }
+        if (introSounds < 2 && fu >= 4400) { introSounds = 2; sound("sky_star", 1.2f, 0.6f); }
+    }
     /** The sideways slide of a layer at depth d (pixels), from where the mouse is and a slow drift. */
     private static float parX(float d) { return 0f; }                                 // (no mouse parallax: the sky stays where it is)
     private static float parY(float d) { return 0f; }
@@ -686,7 +759,7 @@ final class Codex {
         pX = parX(dep) * still; pY = parY(dep) * still; dK = 0.62f + 0.38f * dep;
         float[] o = centre(c); float ox = X(o[0]) + pX, oy = Y(o[1]) + pY;
         float rad = 0.16f * sh * camS;
-        boolean hv = fc < 0 && zoomed < 0.05f && Math.hypot(mx - ox, my - oy) < rad;
+        boolean hv = fc < 0 && zoomed < 0.05f && soloId == null && Math.hypot(mx - ox, my - oy) < rad;
         if (hv) hoverCon = c;
         float hk = hv ? ease((now - hoverAt) / 350f) : 0f;
         int done = 0; for (Achievements.Ach a : l) if (a.done()) done++;
@@ -746,10 +819,11 @@ final class Codex {
     }
     private static void nodeOf(GuiGraphicsExtractor g, int c, Node n, boolean open, float fade, float zoomed, int fc) {
         Achievements.Ach a = n.a(); float[] o = centre(c); float x = X(o[0] + n.du()) + pX, y = Y(o[1] + n.dv()) + pY;
+        if (soloId != null && !soloId.equals(a.id())) fade *= 0.35f;                                 // /fd star: the others step back
         if (!inSky(x, y)) return;
         boolean near = fc == c && zoomed > 0.5f;
         float hr = near ? 12 : 6;
-        boolean in = Math.abs(mx - x) <= hr && Math.abs(my - y) <= hr && (near || fc < 0) && fade > 0.5f;
+        boolean in = Math.abs(mx - x) <= hr && Math.abs(my - y) <= hr && (near || fc < 0) && fade > 0.5f && (soloId == null || soloId.equals(a.id()));
         if (in) { float d = (float) Math.hypot(mx - x, my - y); if (d < hoverPickD) { hoverPickD = d; hoverPick = a.id(); } }
         boolean hv = in && a.id().equals(hoverStar);
         float tw = 0.82f + 0.18f * (float) Math.sin(now / 380.0 + n.depth() * 1.7 + c * 0.9);
@@ -909,7 +983,8 @@ final class Codex {
         String ttl = spaced("ACHIEVEMENTS");
         text(g, ttl, x, y, argb(ia, 0xFFE9B8), true);
         String cnt = p == null ? (Achievements.status.isEmpty() ? "Reading the stars..." : Achievements.status) : lit + " of " + all + " stars lit";
-        if (p != null && !LocalLedger.WAITING.isEmpty()) cnt += "  \u00B7  " + LocalLedger.WAITING.size() + " waiting for the server";
+        if (soloId != null) cnt = "Showing one star  \u00B7  press back to explore the rest";
+        else if (p != null && !LocalLedger.WAITING.isEmpty()) cnt += "  \u00B7  " + LocalLedger.WAITING.size() + " waiting for the server";
         if (p != null && Achievements.unsent > 0) cnt += "  \u00B7  " + Achievements.unsent + " drop" + (Achievements.unsent == 1 ? "" : "s") + " waiting to be counted";
         small(g, cnt, x + host.width(ttl) + 10, y + 1, argb(0.8f * ia, 0xB8C0DA));
         if (p != null && all > 0) { int bw = host.width(ttl); g.fill(x, y + 11, x + bw, y + 12, argb(0.2f * ia, 0xFFE9B8)); g.fill(x, y + 11, x + Math.round(bw * lit / (float) all), y + 12, argb(ia, 0xFFE9B8)); }
@@ -1001,13 +1076,14 @@ final class Codex {
     }
     static boolean scroll(double dy) {
         if (!open) return false;
-        if (dy != 0 && focus >= 0) fly(Math.floorMod(focus + (dy < 0 ? 1 : -1), ACH.length));
+        if (dy != 0 && focus >= 0 && soloId == null) fly(Math.floorMod(focus + (dy < 0 ? 1 : -1), ACH.length));
         return true;
     }
     static boolean key(int key) {
         if (!open) return false;
         if (System.currentTimeMillis() < openAt) { skipIntro(); return true; }
         if (key == 256) { if (focus >= 0) fly(-1); else close(); }
+        else if (soloId != null) { }
         else if (key == 262) fly(focus < 0 ? 0 : Math.floorMod(focus + 1, ACH.length));
         else if (key == 263) fly(focus < 0 ? ACH.length - 1 : Math.floorMod(focus - 1, ACH.length));
         return true;
