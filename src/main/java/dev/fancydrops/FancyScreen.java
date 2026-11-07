@@ -3242,6 +3242,7 @@ public class FancyScreen extends Screen {
         if (cosWin()) zoom *= 0.9f + 0.1f * ease(Math.min(1f, (now - cosAt) / 300f));                  // the Cosmetics window opens outwards from the menu                                    // the whole menu grows into place (and shrinks away on Esc)
         Gfx.push(g); Gfx.translate(g, px + pw / 2f, py + ph / 2f); Gfx.scale(g, zoom); Gfx.translate(g, -(px + pw / 2f), -(py + ph / 2f));
         pill(g, px, py, pw, ph, Ui.PANEL);
+        spaceBack(g, px, py, pw, ph, now);                                                         // the night sky inside the panel
         if (!cosWin()) { g.fill(px + 1, py + 2, px + sw, py + ph - 1, soft(Ui.PANEL2)); g.fill(px + sw, py + 4, px + sw + 1, py + ph - 4, Ui.BORDER); }
         g.fill(px + 2, py + 1, px + pw - 2, py + 38, 0x08FFFFFF);                                   // a faint lighter band behind the header
         rout(g, px, py, pw, ph, Ui.BORDER);
@@ -3670,7 +3671,32 @@ public class FancyScreen extends Screen {
         }
         String st = Gfx.fit(font, r.title.toUpperCase(java.util.Locale.ROOT), cw - 20); int sw0 = Gfx.w(font, st);
         Gfx.text(g, font, st, cx + 2, r.y + 8, Canvas.mix(Ui.ACCENT, Ui.DIM, 0.35f));
-        g.fill(cx + sw0 + 8, r.y + 12, cx + cw - 4, r.y + 13, Ui.BORDER);
+        int lx0 = cx + sw0 + 8, lx1 = cx + cw - 4, ly = r.y + 12;                                    // a line of a star chart: two stars joined, fading out
+        for (int x = lx0; x < lx1; x += 2) { float u = (x - lx0) / (float) Math.max(1, lx1 - lx0); g.fill(x, ly, x + 1, ly + 1, Gfx.argb(Math.round(150 * (1f - u)), Ui.BORDER & 0xFFFFFF | 0x404060)); }
+        g.fill(lx0 - 1, ly - 1, lx0 + 2, ly + 2, Gfx.argb(200, Ui.ACCENT & 0xFFFFFF)); g.fill(lx0, ly, lx0 + 1, ly + 1, 0xFFFFFFFF);
+    }
+    /** The menu's backdrop: the same night sky as the achievements (faint, so the words read), a few stars twinkling over it, a
+     *  shooting star now and then, and brass ticks at the corners like an astrolabe's rim. */
+    private void spaceBack(GuiGraphicsExtractor g, int x, int y, int w, int h, long now) {
+        int a = Math.round(255 * TR); boolean animOn = FancyConfig.get().menuAnimated;
+        g.enableScissor(x + 1, y + 1, x + w - 1, y + h - 1);
+        NebulaTex.draw(g, x, y, w, h, Gfx.argb(Math.round(a * 0.42f), 0xFFFFFF));
+        g.fill(x, y, x + w, y + h, Gfx.argb(Math.round(a * 0.35f), Ui.PANEL & 0xFFFFFF));                 // keep it dark under the words
+        for (int i = 0; i < 46; i++) {
+            int sx = x + 4 + (int) ((i * 2654435761L >>> 7) % Math.max(1, w - 8)), sy = y + 4 + (int) ((i * 40503L * 7919L >>> 5) % Math.max(1, h - 8));
+            float tw = animOn ? 0.35f + 0.65f * Math.abs((float) Math.sin(now / (700.0 + (i % 7) * 230) + i)) : 0.7f;
+            g.fill(sx, sy, sx + 1, sy + 1, Gfx.argb(Math.round(a * 0.75f * tw), i % 9 == 0 ? 0xFFE0B0 : i % 5 == 0 ? 0xB8D0FF : 0xFFFFFF));
+        }
+        if (animOn) {                                                                                       // a shooting star every 9 seconds
+            float u = (now % 9000L) / 900f;
+            if (u < 1f) { float hx = x + w * (0.15f + 0.7f * u), hy = y + h * (0.12f + 0.18f * u);
+                for (int k = 0; k < 14; k++) { float q = k / 14f; g.fill(Math.round(hx - q * 40), Math.round(hy - q * 10), Math.round(hx - q * 40) + 1, Math.round(hy - q * 10) + 1, Gfx.argb(Math.round(a * (1f - q) * (float) Math.sin(Math.PI * u)), 0xFFFFFF)); } }
+        }
+        g.disableScissor();
+        int tc = Gfx.argb(Math.round(a * 0.8f), Ui.ACCENT & 0xFFFFFF);
+        for (int[] cn : new int[][]{{x + 3, y + 3, 1, 1}, {x + w - 4, y + 3, -1, 1}, {x + 3, y + h - 4, 1, -1}, {x + w - 4, y + h - 4, -1, -1}}) {
+            for (int i = 0; i < 4; i++) { g.fill(cn[0] + cn[2] * (4 + i * 4), cn[1], cn[0] + cn[2] * (4 + i * 4) + 1, cn[1] + cn[3] * (i % 2 == 0 ? 3 : 2), tc); g.fill(cn[0], cn[1] + cn[3] * (4 + i * 4), cn[0] + cn[2] * (i % 2 == 0 ? 3 : 2), cn[1] + cn[3] * (4 + i * 4) + 1, tc); }
+        }
     }
 
     /** A strip of hazard tape: a bar of stripes along the top and bottom (each a picture, not a pile of rectangles), with the words on a plate. */

@@ -128,7 +128,9 @@ final class NebulaTex {
     }
 
     /** Draws the sky into x, y, w, h (the picture is stretched). False when no texture could be made. */
-    static boolean draw(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+    static boolean draw(GuiGraphicsExtractor g, int x, int y, int w, int h) { return draw(g, x, y, w, h, 0xFFFFFFFF); }
+    /** The same, tinted (argb: its alpha fades the sky, e.g. behind the menu). */
+    static boolean draw(GuiGraphicsExtractor g, int x, int y, int w, int h, int tint) {
         if (testDraw != null) { canvas(); testDraw.accept(new int[]{x, y, w, h}); return true; }
         if (failed) return false;
         try {
@@ -140,7 +142,7 @@ final class NebulaTex {
                 t.upload();
                 Minecraft.getInstance().getTextureManager().register(ID, t); made = true;
             }
-            g.blit(RenderPipelines.GUI_TEXTURED, ID, x, y, 0f, 0f, w, h, W, H, W, H, 0xFFFFFFFF);
+            g.blit(RenderPipelines.GUI_TEXTURED, ID, x, y, 0f, 0f, w, h, W, H, W, H, tint);
             return true;
         } catch (Throwable e) { failed = true; return false; }
     }
