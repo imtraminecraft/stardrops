@@ -36,7 +36,7 @@ final class Spotify {
     static volatile String status = "";
     private static volatile String access = ""; private static volatile long expires;
     private static volatile boolean busy, polling;
-    private static long lastPoll, lastGood, pollStart;
+    private static volatile long lastPoll, lastGood, pollStart;
     private static final java.util.concurrent.ExecutorService WORKER = java.util.concurrent.Executors.newSingleThreadExecutor(r -> { Thread t = new Thread(r, "FancyDrops Spotify"); t.setDaemon(true); t.setPriority(Thread.MIN_PRIORITY); return t; });
 
     static boolean linked() { return !FancyConfig.get().spotifyRefresh.isBlank(); }
@@ -113,7 +113,10 @@ final class Spotify {
         if (!(c.lyricsOn || c.npOn) || !linked() || busy) return;
         long now = System.currentTimeMillis();
         if (playing && lastGood > 0 && now - lastGood > 10_000) { progressMs = position(); progressAt = now; playing = false; status = "Lost touch with Spotify."; }   // no answer for 10 s: stop the clock, don't pretend it plays
-        if (playing && track != null && track.durationMs() > 0 && position() >= track.durationMs() - 200 && now - lastPoll > 600) lastPoll = 0;              // the song just ended: ask at once what's next
+        if (playing && track != null && track.durationMs() > 0 && position() >= track.durationMs() - 200) {          // the song just ended: ask what's next (not more than once a second)
+            if (now - lastPoll > 1000) lastPoll = 0;
+            if (now - lastGood > 4000 && now - progressAt > track.durationMs() - progressMs + 4000) { progressMs = track.durationMs(); progressAt = now; playing = false; status = "Waiting for Spotify..."; }   // nothing new 4 s after the end: don't sit on the last line pretending it plays
+        }
         if (polling) { if (now - pollStart < 12_000) return; polling = false; }                                       // a request that never came back no longer blocks the next one
         if (now - lastPoll < 3000) return; lastPoll = now;
         polling = true; pollStart = now; WORKER.execute(() -> { try { poll(); } finally { polling = false; } });
@@ -124,10 +127,10 @@ final class Spotify {
             long sentAt = System.currentTimeMillis();
             HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create("https://api.spotify.com/v1/me/player/currently-playing")).timeout(java.time.Duration.ofSeconds(6)).header("Authorization", "Bearer " + access).GET().build(), HttpResponse.BodyHandlers.ofString());
             if (r.statusCode() == 429) { lastPoll = System.currentTimeMillis() + 7000; status = "Spotify asked to slow down."; return; }
+            if (r.statusCode() == 401) { access = ""; expires = 0; lastPoll = 0; return; }                 // the login ran out: refresh it and ask again straight away
+            if (r.statusCode() != 200 && r.statusCode() != 204) { status = "Spotify answered " + r.statusCode(); return; }   // an error is not an answer: after 10 s of these the clock stops (tick)
             lastGood = System.currentTimeMillis();
             if (r.statusCode() == 204 || r.body().isBlank()) { playing = false; status = "Nothing playing."; return; }
-            if (r.statusCode() == 401) { access = ""; return; }
-            if (r.statusCode() != 200) { status = "Spotify answered " + r.statusCode(); return; }
             JsonObject o = JsonParser.parseString(r.body()).getAsJsonObject();
             if (!o.has("item") || o.get("item").isJsonNull()) { playing = false; return; }
             JsonObject it = o.getAsJsonObject("item");
