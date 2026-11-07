@@ -104,11 +104,17 @@ final class Spotify {
         if (!access.isEmpty() && System.currentTimeMillis() < expires) return true;
         FancyConfig c = FancyConfig.get(); if (c.spotifyRefresh.isBlank() || c.spotifyClient.isBlank()) return false;
         try { keep(post("grant_type=refresh_token&refresh_token=" + enc(c.spotifyRefresh) + "&client_id=" + enc(c.spotifyClient.trim()))); return true; }
-        catch (Throwable e) { status = "Couldn't refresh the login: " + e.getMessage(); return false; }
+        catch (IllegalStateException e) {                                                          // Spotify refused the saved login (revoked, or replaced by a newer one): it can't come back, link again
+            status = "Spotify ended the login (" + e.getMessage() + "). Press Link in Visuals > Spotify."; c.spotifyRefresh = ""; FancyConfig.save(); access = ""; track = null; playing = false;
+            System.err.println("[FancyDrops] spotify: " + status); return false;
+        }
+        catch (Throwable e) { status = "Couldn't refresh the login: " + e; return false; }
     }
 
     // ------------------------------------------------------------------ what is playing (asked every 3 s from a worker thread, only while lyrics are on)
+    private static String logged = "";
     static void tick() {
+        if (!status.equals(logged)) { logged = status; System.err.println("[FancyDrops] spotify: " + status); }      // every change of state goes to latest.log, so a fault can be traced
         FancyConfig c = FancyConfig.get();
         if (!(c.lyricsOn || c.npOn) || !linked() || busy) return;
         long now = System.currentTimeMillis();
@@ -128,7 +134,7 @@ final class Spotify {
             HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create("https://api.spotify.com/v1/me/player/currently-playing")).timeout(java.time.Duration.ofSeconds(6)).header("Authorization", "Bearer " + access).GET().build(), HttpResponse.BodyHandlers.ofString());
             if (r.statusCode() == 429) { lastPoll = System.currentTimeMillis() + 7000; status = "Spotify asked to slow down."; return; }
             if (r.statusCode() == 401) { access = ""; expires = 0; lastPoll = 0; return; }                 // the login ran out: refresh it and ask again straight away
-            if (r.statusCode() != 200 && r.statusCode() != 204) { status = "Spotify answered " + r.statusCode(); return; }   // an error is not an answer: after 10 s of these the clock stops (tick)
+            if (r.statusCode() != 200 && r.statusCode() != 204) { status = "Spotify answered " + r.statusCode() + ": " + r.body().replaceAll("\\s+", " ").substring(0, Math.min(160, r.body().replaceAll("\\s+", " ").length())); return; }   // an error is not an answer: after 10 s of these the clock stops (tick)
             lastGood = System.currentTimeMillis();
             if (r.statusCode() == 204 || r.body().isBlank()) { playing = false; status = "Nothing playing."; return; }
             JsonObject o = JsonParser.parseString(r.body()).getAsJsonObject();
@@ -148,7 +154,7 @@ final class Spotify {
             progressMs = prog; progressAt = (sentAt + System.currentTimeMillis()) / 2; playing = pl;     // Spotify read the position halfway through the request
             if (track == null || !track.id().equals(tr.id())) { track = tr; Lyrics.load(tr); AlbumArt.load(tr.art()); }
             status = (pl ? "Playing: " : "Paused: ") + tr.name() + " - " + tr.artists();
-        } catch (Throwable e) { status = "Couldn't reach Spotify."; }
+        } catch (Throwable e) { status = "Couldn't reach Spotify: " + e; }
     }
 
     // ------------------------------------------------------------------ controls (keys in Options > Controls > FancyDrops: Music; Spotify Premium only)
