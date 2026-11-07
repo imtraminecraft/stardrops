@@ -10,7 +10,7 @@ import net.minecraft.network.chat.HoverEvent;
 import java.util.ArrayDeque;
 
 /**
- * A new star: a chat line you can click (it runs /fd star &lt;id&gt;, which opens the sky flown to that star, blinking) and a card
+ * A new star: a chat line you can click (it runs /sd star &lt;id&gt;, which opens the sky flown to that star, blinking) and a card
  * that slides in at the top right. The card is a little patch of night sky: the star ignites in its constellation's colour with
  * a flash and rays, "NEW STAR LIT" in the tier's colour, the achievement's name, and which constellation it belongs to.
  * Several in a row queue up and show one after another.
@@ -34,7 +34,7 @@ final class StarToast {
             .append(Chat.color("  ·  " + group + "  ·  " + LocalLedger.TIER[t], Chat.DIM));
         if (!reward.isEmpty()) { CosmeticData.Def d = CosmeticData.byId(reward); if (d != null) msg.append(Chat.color("  ·  unlocks " + d.name(), Chat.DIM)); }
         msg.append(Chat.color("  [View]", 0xFFE9B8).withStyle(s -> s.withUnderlined(true)));
-        msg.withStyle(s -> s.withClickEvent(new ClickEvent.RunCommand("/fd star " + id)).withHoverEvent(new HoverEvent.ShowText(hover)));
+        msg.withStyle(s -> s.withClickEvent(new ClickEvent.RunCommand("/sd star " + id)).withHoverEvent(new HoverEvent.ShowText(hover)));
         mc.player.sendSystemMessage(msg);
         SoundFx.achievement();
         QUEUE.add(new Lit(id, name, group, col, t, reward));

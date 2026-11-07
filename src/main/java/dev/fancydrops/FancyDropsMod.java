@@ -39,7 +39,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
     public static final String CHANNEL = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("fancydrops")
             .map(m -> { try { return m.getMetadata().getCustomValue("fancydrops:channel").getAsString(); } catch (Throwable t) { return "dev"; } })
             .map(v -> v.equalsIgnoreCase("main") ? "Main" : "Dev").orElse("Dev");
-    private static volatile boolean openMenu;
+    private static volatile boolean openMenu, openEdit;
     public static volatile boolean reopenMenu;   // set by the Preview buttons: menu closes, reopens when the scene ends
 
     @Override
@@ -66,7 +66,8 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
             String[] acts = {"toggle", "next", "previous"};
             for (int i = 0; i < 3; i++) if (music[i] != null) while (music[i].consumeClick()) Spotify.control(acts[i]);
             for (int i = 3; i < 5; i++) if (music[i] != null) while (music[i].consumeClick()) Lyrics.nudge(mc, i == 3 ? 100 : -100);   // the words a little earlier / later, for this song
-            if (openMenu) { openMenu = false; mc.setScreenAndShow(new FancyScreen()); }   // 26.2: setScreenAndShow
+            if (openMenu) { openMenu = false; mc.setScreenAndShow(new FancyScreen()); }
+            if (openEdit) { openEdit = false; mc.setScreenAndShow(new HudEditScreen(null, HudEditScreen.ALL)); }   // /sd edit   // 26.2: setScreenAndShow
             if (reopenMenu && !AnimationManager.isPlaying()) { reopenMenu = false; mc.setScreenAndShow(new FancyScreen()); }
             DropListener.tick(mc);
             AuraWorld.tick(mc);
@@ -174,8 +175,8 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
 
 
     private static void registerCommands(com.mojang.brigadier.CommandDispatcher<FabricClientCommandSource> dispatcher) {
-        dispatcher.register(buildRoot("fancydrops"));
-        dispatcher.register(buildRoot("fd"));      // short alias, identical to /fancydrops
+        dispatcher.register(buildRoot("stardrops"));
+        dispatcher.register(buildRoot("sd"));      // short alias, identical to /stardrops
     }
 
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildRoot(String name) {
@@ -186,6 +187,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
             .then(ClientCommands.literal("achievements").executes(ctx -> { FancyScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))
             .then(ClientCommands.literal("help").executes(ctx -> help(ctx.getSource()))
                 .then(ClientCommands.literal("simulate").executes(ctx -> helpSimulate(ctx.getSource()))))
+            .then(ClientCommands.literal("edit").executes(ctx -> { openEdit = true; return Command.SINGLE_SUCCESS; }))   // move every HUD at once
             .then(ClientCommands.literal("mute").executes(ctx -> {                        // every sound on or off
                 FancyConfig c = FancyConfig.get(); c.sound = !c.sound; FancyConfig.save();
                 say(ctx.getSource(), c.sound ? "Sounds on (" + c.volume + "%)" : "Sounds muted");
@@ -197,11 +199,11 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
                 return Command.SINGLE_SUCCESS;
             }))
             .then(simLiteral(ClientCommands.literal("simulate")))
-            .then(ClientCommands.argument("search", StringArgumentType.greedyString())                // /fd <words>: opens the menu with the search filled in
+            .then(ClientCommands.argument("search", StringArgumentType.greedyString())                // /sd <words>: opens the menu with the search filled in
                 .executes(ctx -> { String q = StringArgumentType.getString(ctx, "search").trim(); if (!q.isEmpty()) FancyScreen.pendingSearch = q; openMenu = true; return Command.SINGLE_SUCCESS; }));
     }
 
-    /** /fd simulate <Mythological|Slayer|Farming|Experiments> ...: one literal per category, each with Tab completion. */
+    /** /sd simulate <Mythological|Slayer|Farming|Experiments> ...: one literal per category, each with Tab completion. */
     private static LiteralArgumentBuilder<FabricClientCommandSource> simLiteral(LiteralArgumentBuilder<FabricClientCommandSource> sim) {
         sim.executes(ctx -> { say(ctx.getSource(), "Use " + SIM_USAGE); return Command.SINGLE_SUCCESS; });
         for (String mode : new String[]{"Mythological", "Slayer", "Farming", "Experiments", "Fishing", "Crimson", "Mobs", "Nucleus", "Corpse", "Fiesta", "End", "Dyes"}) {
@@ -219,7 +221,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
 
     private static void say(FabricClientCommandSource source, String msg) { source.sendFeedback(Chat.msg(msg)); }
 
-    /** /fd star: every achievement's id, the ones whose id or name starts with what you typed, each with its name, constellation and tier. */
+    /** /sd star: every achievement's id, the ones whose id or name starts with what you typed, each with its name, constellation and tier. */
     private static CompletableFuture<Suggestions> suggestStars(SuggestionsBuilder b) {
         String rem = b.getRemaining().toLowerCase(Locale.ROOT);
         for (LocalLedger.Def d : LocalLedger.ACH) {
@@ -241,30 +243,31 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
     private static int help(FabricClientCommandSource s) {
         s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
         s.sendFeedback(waveTitle("Stardrops").copy().append(Chat.color("  \u00B7  Quick guide", Chat.DIM)));
-        helpLine(s, "/fd", "Open the menu");
-        helpLine(s, "/fd <words>", "Open the menu and search for them (for example /fd minos)");
-        helpLine(s, "/fd achievement", "Open the achievements");
-        helpLine(s, "/fd mute", "Turn every sound on or off");
-        helpLine(s, "/fd toggle", "Turn the whole mod on or off");
-        helpLine(s, "/fd help simulate", "Category: every /fd simulate command");
+        helpLine(s, "/sd", "Open the menu");
+        helpLine(s, "/sd <words>", "Open the menu and search for them (for example /sd minos)");
+        helpLine(s, "/sd achievement", "Open the achievements");
+        helpLine(s, "/sd edit", "Move and resize every HUD (Now Playing, lyrics, the celestial clock)");
+        helpLine(s, "/sd mute", "Turn every sound on or off");
+        helpLine(s, "/sd toggle", "Turn the whole mod on or off");
+        helpLine(s, "/sd help simulate", "Category: every /sd simulate command");
         s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
         return Command.SINGLE_SUCCESS;
     }
 
-    /** /fd help simulate: every simulate command. */
+    /** /sd help simulate: every simulate command. */
     private static int helpSimulate(FabricClientCommandSource s) {
         s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
         s.sendFeedback(waveTitle("Stardrops").copy().append(Chat.color("  \u00B7  Simulate", Chat.DIM)));
-        helpLine(s, "/fd simulate Mythological <Mob|Treasure> <Drop> <mf>", "Play a pretend drop through the real animation");
-        helpLine(s, "/fd simulate Slayer <Boss> <Drop> [Drop 2] <mf>", "The same for a slayer boss: one or two drops (Nothing for no drop)");
-        helpLine(s, "/fd simulate Farming <Rare Crops|Harvest Feast|Harvest Bounty|Pest Drops> <Drop> <overbloom>", "A pretend crop or pest drop");
-        helpLine(s, "/fd simulate Experiments <Drop> [Drop 2]", "A pretend Experimentation Table reward: one or two items");
-        helpLine(s, "/fd simulate Fishing <Sea Creature> <Drop> [Drop 2]", "A pretend sea creature drop");
-        helpLine(s, "/fd simulate Crimson <Boss> <Drop> [Drop 2]", "A pretend Crimson Isle boss drop");
-        helpLine(s, "/fd simulate Mobs <Mob> <Drop> [Drop 2]", "A pretend rare mob drop");
-        helpLine(s, "/fd simulate Dyes <Dye> [Dye 2]", "A pretend dye drop");
+        helpLine(s, "/sd simulate Mythological <Mob|Treasure> <Drop> <mf>", "Play a pretend drop through the real animation");
+        helpLine(s, "/sd simulate Slayer <Boss> <Drop> [Drop 2] <mf>", "The same for a slayer boss: one or two drops (Nothing for no drop)");
+        helpLine(s, "/sd simulate Farming <Rare Crops|Harvest Feast|Harvest Bounty|Pest Drops> <Drop> <overbloom>", "A pretend crop or pest drop");
+        helpLine(s, "/sd simulate Experiments <Drop> [Drop 2]", "A pretend Experimentation Table reward: one or two items");
+        helpLine(s, "/sd simulate Fishing <Sea Creature> <Drop> [Drop 2]", "A pretend sea creature drop");
+        helpLine(s, "/sd simulate Crimson <Boss> <Drop> [Drop 2]", "A pretend Crimson Isle boss drop");
+        helpLine(s, "/sd simulate Mobs <Mob> <Drop> [Drop 2]", "A pretend rare mob drop");
+        helpLine(s, "/sd simulate Dyes <Dye> [Dye 2]", "A pretend dye drop");
         s.sendFeedback(Component.literal(" "));
-        s.sendFeedback(Chat.color("Example  ", Chat.DIM).append(Chat.color("/fd simulate Mythological Minos Hunter Daedalus Stick 250", Chat.COMMAND)));
+        s.sendFeedback(Chat.color("Example  ", Chat.DIM).append(Chat.color("/sd simulate Mythological Minos Hunter Daedalus Stick 250", Chat.COMMAND)));
         s.sendFeedback(Chat.color("Tab completes names. Use Nothing as the drop for a ritual that gave nothing. The magic find goes last and defaults to 250.", Chat.DIM));
         s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
         return Command.SINGLE_SUCCESS;
@@ -286,23 +289,23 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
         return out;
     }
 
-    private static final String SIM_USAGE = "/fd simulate <Mythological|Slayer|Farming|Experiments|Fishing|Crimson|Mobs|Dyes> ...";
+    private static final String SIM_USAGE = "/sd simulate <Mythological|Slayer|Farming|Experiments|Fishing|Crimson|Mobs|Dyes> ...";
     private static final String[] MF_TIPS = {"0", "100", "250", "400"}, OB_TIPS = {"0", "25", "100", "250"};
 
     private static String usage(String mode) {
         return switch (mode) {
-            case "Slayer" -> "/fd simulate Slayer <Boss> <Drop> [Drop 2] <mf>";
-            case "Farming" -> "/fd simulate Farming <Rare Crops|Harvest Feast|Harvest Bounty|Pest Drops> <Drop> <overbloom>";
-            case "Experiments" -> "/fd simulate Experiments <Drop> [Drop 2]";
-            case "Fishing" -> "/fd simulate Fishing <Sea Creature> <Drop> [Drop 2]";
-            case "Crimson" -> "/fd simulate Crimson <Boss> <Drop> [Drop 2]";
-            case "Mobs" -> "/fd simulate Mobs <Mob> <Drop> [Drop 2]";
-            case "Nucleus" -> "/fd simulate Nucleus <Drop> [Drop 2]";
-            case "Corpse" -> "/fd simulate Corpse <Drop> [Drop 2]";
-            case "Fiesta" -> "/fd simulate Fiesta <Drop>";
-            case "End" -> "/fd simulate End <Drop> [Drop 2]";
-            case "Dyes" -> "/fd simulate Dyes <Dye> [Dye 2]";
-            default -> "/fd simulate Mythological <Mob|Treasure> <Drop> <mf>";
+            case "Slayer" -> "/sd simulate Slayer <Boss> <Drop> [Drop 2] <mf>";
+            case "Farming" -> "/sd simulate Farming <Rare Crops|Harvest Feast|Harvest Bounty|Pest Drops> <Drop> <overbloom>";
+            case "Experiments" -> "/sd simulate Experiments <Drop> [Drop 2]";
+            case "Fishing" -> "/sd simulate Fishing <Sea Creature> <Drop> [Drop 2]";
+            case "Crimson" -> "/sd simulate Crimson <Boss> <Drop> [Drop 2]";
+            case "Mobs" -> "/sd simulate Mobs <Mob> <Drop> [Drop 2]";
+            case "Nucleus" -> "/sd simulate Nucleus <Drop> [Drop 2]";
+            case "Corpse" -> "/sd simulate Corpse <Drop> [Drop 2]";
+            case "Fiesta" -> "/sd simulate Fiesta <Drop>";
+            case "End" -> "/sd simulate End <Drop> [Drop 2]";
+            case "Dyes" -> "/sd simulate Dyes <Dye> [Dye 2]";
+            default -> "/sd simulate Mythological <Mob|Treasure> <Drop> <mf>";
         };
     }
     /** The sources a mode lists by name (a boss, a mob, a farming page); the Table has none, its drops come straight after the word. */
@@ -321,7 +324,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
         return t.regionMatches(true, 0, name, 0, n) && (t.length() == n || Character.isWhitespace(t.charAt(n))) ? t.substring(n).trim() : null;
     }
 
-    /** /fd simulate <mode> ...: the source (a mob, a boss, a farming page), one drop (two for Slayer and Experiments; Nothing for none), then the magic find or Overbloom. */
+    /** /sd simulate <mode> ...: the source (a mob, a boss, a farming page), one drop (two for Slayer and Experiments; Nothing for none), then the magic find or Overbloom. */
     private static int simulate(FabricClientCommandSource source, String args, String mode) {
         String t = args.trim(); boolean exp = mode.equals("Experiments"), farm = mode.equals("Farming");
         String extraCat = switch (mode) { case "Fishing" -> "fishing"; case "Crimson" -> "crimson"; case "Mobs" -> "mobs"; case "Nucleus" -> "nucleus"; case "Corpse" -> "corpse"; case "Fiesta" -> "fiesta"; case "End" -> "dragon"; case "Dyes" -> "dyes"; default -> null; };

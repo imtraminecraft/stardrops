@@ -8,7 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-/** Player settings (toggled in /fancydrops). Saved to config/fancydrops.json. */
+/** Player settings (toggled in /stardrops). Saved to config/fancydrops.json. */
 public class FancyConfig {
     // ------------------------------------------------------------------ the shapes
 
@@ -144,6 +144,7 @@ public class FancyConfig {
     public java.util.Map<String, Integer> songOffset = new java.util.LinkedHashMap<>();   // a timing fix for one song (Spotify id -> ms), on top of lyricsOffset
     /** The timing fix for the song playing now: yours for every song plus this song's own. */
     static int lyricsShift() { FancyConfig c = get(); Spotify.Track t = Spotify.track; Integer s = t == null || c.songOffset == null ? null : c.songOffset.get(t.id()); return c.lyricsOffset + (s == null ? 0 : s); }
+    public int cosClockX = 26, cosClockY = 24, cosClockSize = 100;   // where the celestial clock sits (its centre, gui pixels) and its size
     public boolean cosShooting = true, cosShootNight = true, cosClock = false, cosNight = true, cosAurora = false, cosMeteor = true;   // Visuals > Cosmos
     public boolean ambGlow = false, ambNotes = false, ambBars = false, ambWave = false, lyricsStars = true; public int ambGlowStrength = 60;   // Ambience (Visuals > Ambience)
     public boolean npOn = true; public int npScale = 100, npHidePaused = 1, npBg = 60;   // npBg: how solid the card's background is, 20..70 %
@@ -188,7 +189,7 @@ public class FancyConfig {
         c.titleScale = clamp(c.titleScale, 0.5f, 1.5f); c.subScale = clamp(c.subScale, 0.5f, 1.5f); c.subDelay = clamp(c.subDelay, 0f, 3f);
         c.animScale = clamp(c.animScale, 0.5f, 1.5f); c.normalSize = Math.max(50, Math.min(100, c.normalSize)); c.itemSpin = clamp(c.itemSpin, 0f, 2f); c.itemGlow = clamp(c.itemGlow, 0f, 1.5f);
         c.barPx = Math.max(5, Math.min(15, c.barPx));
-        c.lyricsStyle = Math.max(0, Math.min(3, c.lyricsStyle)); c.npLine = c.npLine == 2 ? 2 : 1; c.npBg = c.npBg == 0 ? 60 : Math.max(20, Math.min(70, c.npBg)); c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
+        c.lyricsStyle = Math.max(0, Math.min(3, c.lyricsStyle)); c.npLine = c.npLine == 2 ? 2 : 1; c.npBg = c.npBg == 0 ? 60 : Math.max(20, Math.min(70, c.npBg)); c.cosClockSize = c.cosClockSize == 0 ? 100 : Math.max(60, Math.min(160, c.cosClockSize)); c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
         c.mythPet = Math.max(0, Math.min(5, c.mythPet)); c.mythSpade = Math.max(0, Math.min(2, c.mythSpade));
         c.menuTranslucency = Math.max(0, Math.min(70, c.menuTranslucency)); c.previewAt = Math.max(0, Math.min(2, c.previewAt));
         c.animPos = Math.max(0, Math.min(2, c.animPos)); c.textPos = Math.max(0, Math.min(1, c.textPos));

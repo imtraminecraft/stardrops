@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.function.*;
 
 /**
- * /fancydrops menu: a sidebar with six pages, and cards on the right.
+ * /stardrops menu: a sidebar with six pages, and cards on the right.
  * Every page is built from rows (title + optional second line + controls on the right); sections can be folded open like dropdowns.
  */
 public class FancyScreen extends Screen {
@@ -318,7 +318,7 @@ public class FancyScreen extends Screen {
     private final long born;
     private long closeAt;                                    // set when Esc is pressed: the menu fades out, then closes
 
-    /** Set by /fd stats and /fd <search>: the next menu opens on the Stats page, or with this text in the search box. */
+    /** Set by /sd stats and /sd <search>: the next menu opens on the Stats page, or with this text in the search box. */
     private int codexPend = -2;          // the Collection opens on this chapter at the next frame (-2 = no)
     private static int musicSel;                                                     // Visuals > Music: which of Now Playing / Lyrics / Ambience / Spotify
     static boolean pendingStats, pendingCos; static String pendingSearch, pendingTab, pendingStar; private String codexStar;
@@ -337,12 +337,12 @@ public class FancyScreen extends Screen {
     public FancyScreen() {
         super(Component.literal("Stardrops"));
         prefetchAll();
-        if (!skipIntro) { tab = Tab.HOME; subSel[Tab.HOME.ordinal()] = -1; dropSrc = null; dropSrcName = null; scroll = 0; query = ""; }          // a fresh /fd opens on the Home page itself, never on Resources
+        if (!skipIntro) { tab = Tab.HOME; subSel[Tab.HOME.ordinal()] = -1; dropSrc = null; dropSrcName = null; scroll = 0; query = ""; }          // a fresh /sd opens on the Home page itself, never on Resources
         if (pendingStats) { pendingStats = false; codexPend = 0; }
         if (pendingStar != null) { codexStar = pendingStar; pendingStar = null; }
-        if (pendingTab != null) { Tab pt = pendingTab.equals("sounds") ? Tab.SOUNDS : Tab.ANIMATIONS; pendingTab = null; tab = pt; subSel[pt.ordinal()] = -1; scroll = 0; query = ""; }          // /fd editor
+        if (pendingTab != null) { Tab pt = pendingTab.equals("sounds") ? Tab.SOUNDS : Tab.ANIMATIONS; pendingTab = null; tab = pt; subSel[pt.ordinal()] = -1; scroll = 0; query = ""; }          // /sd editor
         if (pendingCos) { pendingCos = false; openCos(); }
-        if (pendingSearch != null) { query = pendingSearch; pendingSearch = null; scroll = 0; }          // a fresh /fd opens on Home; coming back from a preview keeps your page
+        if (pendingSearch != null) { query = pendingSearch; pendingSearch = null; scroll = 0; }          // a fresh /sd opens on Home; coming back from a preview keeps your page
         born = skipIntro ? 0L : System.currentTimeMillis();
         skipIntro = false;
     }
@@ -409,7 +409,7 @@ public class FancyScreen extends Screen {
         addRenderableWidget(hexField);
         hexField.setVisible(false);
         formatField.setVisible(false); addField.setVisible(false); adminField.setVisible(false); thrField.setVisible(false); tokenField.setVisible(false); spotifyField.setVisible(false);
-        if (pendingCos) { pendingCos = false; openCos(); }                       // /fd cosmetics
+        if (pendingCos) { pendingCos = false; openCos(); }                       // /sd cosmetics
     }
 
     private void beginTyping(Slider s) {
@@ -2743,7 +2743,7 @@ public class FancyScreen extends Screen {
     private void soundSettings(FancyConfig c) {
         rows.add(backRow("Sounds", "Back to the Sounds page", Ui.ACCENT, () -> openPage(-1, null, null)));
         rows.add(section("Sound"));
-        rows.add(toggle(":sounds:", "Sounds", "Master switch (also /fd mute)", () -> c.sound, v -> { c.sound = v; SoundFx.stopPreviews(); waveKey = null; }));
+        rows.add(toggle(":sounds:", "Sounds", "Master switch (also /sd mute)", () -> c.sound, v -> { c.sound = v; SoundFx.stopPreviews(); waveKey = null; }));
         Row vo = row(0, ":bell:", "Volume", "Applies to every Stardrops sound", Ui.ACCENT);
         vo.ctls.add(new Slider(0, 100, 1, () -> c.volume, v -> c.volume = (int) Math.round(v), () -> c.volume + "%").typed(1)); rows.add(vo);
         rows.add(toggle(":disc:", "Stardrops sound set", "Off plays Minecraft's own sounds instead, picked separately", () -> c.customSounds, v -> { c.customSounds = v; SoundFx.stopPreviews(); waveKey = null; }));
@@ -2869,14 +2869,14 @@ public class FancyScreen extends Screen {
             return;
         }
         if (ms == 2) {
-            rows.add(note("Atmosphere in the album's colours, only while a song plays. Everything fades away during drop animations.", 0xFFB48CFF));
+            rows.add(note("The space around you, in the album's colours, only while a song plays. Everything fades away during drop animations.", 0xFFB48CFF));
             rows.add(section("Screen"));
-            rows.add(toggle(":amb_glow:", "Album glow", "The edges of your screen glow softly, breathing", () -> c.ambGlow, v -> c.ambGlow = v));
-            if (c.ambGlow) { Row gs = row(0, ":amb_strength:", "Glow strength", "How strong the light is", Ui.ACCENT); gs.ctls.add(new Slider(10, 100, 5, () -> c.ambGlowStrength, v -> c.ambGlowStrength = (int) v, () -> c.ambGlowStrength + "%").typed(1)); rows.add(gs); }
-            rows.add(toggle(":amb_viz:", "Visualizer", "Dancing bars along the bottom, either side of the hotbar", () -> c.ambBars, v -> c.ambBars = v));
-            rows.add(toggle(":amb_notes:", "Music notes", "Notes drift up beside your hotbar", () -> c.ambNotes, v -> c.ambNotes = v));
+            rows.add(toggle(":amb_glow:", "Nebula", "Clouds of nebula drift along the edges of your screen", () -> c.ambGlow, v -> c.ambGlow = v));
+            if (c.ambGlow) { Row gs = row(0, ":amb_strength:", "Nebula strength", "How bright the clouds are", Ui.ACCENT); gs.ctls.add(new Slider(10, 100, 5, () -> c.ambGlowStrength, v -> c.ambGlowStrength = (int) v, () -> c.ambGlowStrength + "%").typed(1)); rows.add(gs); }
+            rows.add(toggle(":amb_viz:", "Star equalizer", "Columns of stars rise and fall to the beat beside your hotbar", () -> c.ambBars, v -> c.ambBars = v));
+            rows.add(toggle(":amb_notes:", "Comets", "Little comets curve up beside your hotbar and burst into sparks", () -> c.ambNotes, v -> c.ambNotes = v));
             rows.add(section("Moments"));
-            rows.add(toggle(":amb_wave:", "Song wave", "A wave of colour sweeps across when a new song starts", () -> c.ambWave, v -> c.ambWave = v));
+            rows.add(toggle(":amb_wave:", "Supernova", "A flash and a ring of light burst across the screen when a new song starts", () -> c.ambWave, v -> c.ambWave = v));
             return;
         }
         Row lk = row(0, ":sounds:", Spotify.linked() ? "Linked to Spotify" : "Log in with Spotify", Spotify.status.isEmpty() ? (Spotify.linked() ? "Ready" : "Opens your browser once") : Spotify.status, 0xFF1ED760);

@@ -580,10 +580,10 @@ final class IconArt {
                 for (int q = 0; q < 8; q++) { double an = q * Math.PI / 4 + f * 0.8; pxa(8 + (int) Math.round(Math.cos(an) * 7), 8 + (int) Math.round(Math.sin(an) * 7), 0xE8D8FF, 0.4f + 0.4f * tri((f + q / 8f) % 1f)); }
                 outline();
             }
-            case "amb_glow" -> {                                                             // Album glow: an album cover with its colours glowing out round it
-                glow(8, 8, 8, hue(0.78f + 0.1f * sn(f), 0.6f, 1f), 0.3f + 0.15f * t);
-                bev(3, 3, 10, 10, 0x2A2A44); rect(4, 4, 8, 4, 0xE86A9A); rect(4, 8, 8, 4, 0x6A8AE8); ball(8, 8, 2, 0xFFE9B8);
-                outline();
+            case "amb_glow" -> {                                                             // Nebula: a drifting cloud with stars in it
+                glow(6 + sn(f) * 1.5f, 7, 6, 0x9B7BFF, 0.45f); glow(10 - sn(f) * 1.5f, 9, 5, 0xFF7AD9, 0.4f);
+                pxa(4, 4, 0xFFFFFF, 0.6f + 0.4f * t); pxa(11, 5, 0xFFFFFF, 0.9f); pxa(8, 11, 0xFFFFFF, 1f - 0.4f * t); pxa(13, 12, 0xFFFFFF, 0.6f);
+                rect(7, 7, 2, 1, 0xFFFFFF); rect(7, 6, 1, 3, 0xFFFFFF);
             }
             case "amb_strength" -> {                                                         // Glow strength: a sun whose rays grow and shrink
                 int r = 2 + Math.round(t * 2);
@@ -591,18 +591,19 @@ final class IconArt {
                 ball(8, 8, 3.5f, 0xFFE38A);
                 outline();
             }
-            case "amb_viz" -> {                                                              // Visualizer: bars bouncing to the beat
-                for (int q = 0; q < 5; q++) { int h = 3 + Math.round(9 * (0.5f + 0.5f * (float) Math.sin(f * 6.2832f * (q % 2 == 0 ? 2 : 3) + q * 1.3f))); bev(1 + q * 3, 15 - h, 2, h, hue(0.75f - q * 0.06f, 0.55f, 1f)); }
-                outline();
+            case "amb_viz" -> {                                                              // Star equalizer: columns of stars, the top one brightest
+                for (int q = 0; q < 5; q++) { int cnt = 1 + Math.round(3 * (0.5f + 0.5f * (float) Math.sin(f * 6.2832f * (q % 2 == 0 ? 2 : 3) + q * 1.3f)));
+                    for (int k = 0; k < cnt; k++) { boolean top = k == cnt - 1; int x = 2 + q * 3, y = 14 - k * 3; if (top) { px(x, y, 0xFFFFFF); pxa(x - 1, y, 0xC8B4FF, 0.7f); pxa(x + 1, y, 0xC8B4FF, 0.7f); pxa(x, y - 1, 0xC8B4FF, 0.7f); } else px(x, y, hue(0.75f - q * 0.05f, 0.45f, 1f)); } }
             }
-            case "amb_notes" -> {                                                            // Music notes: two notes floating up
-                for (int q = 0; q < 2; q++) { float v = (f + q * 0.5f) % 1f; int x = 3 + q * 7, y = 12 - Math.round(v * 6);
-                    ball(x, y, 1.6f, q == 0 ? 0xB48CFF : 0x8AD8FF); ln(x + 1, y - 1, x + 1, y - 6, 0xE8E8FF); ln(x + 1, y - 6, x + 3, y - 5, 0xE8E8FF); }
-                outline();
+            case "amb_notes" -> {                                                            // Comets: two comets curving up, trailing light
+                for (int q = 0; q < 2; q++) { float v = (f + q * 0.5f) % 1f; int hx = 3 + q * 6 + Math.round(v * 4), hy = 13 - Math.round(v * 9);
+                    for (int k = 1; k < 5; k++) pxa(hx - k / 2, hy + k, q == 0 ? 0xB48CFF : 0xFF7AD9, 1f - k / 5f);
+                    rect(hx, hy, 2, 2, 0xFFFFFF); }
             }
-            case "amb_wave" -> {                                                             // Song wave: a wave of light running across
-                for (int x = 0; x < 16; x++) { int y = 8 + Math.round((float) Math.sin(x * 0.7f - f * 6.2832f) * 3.5f); px(x, y, hue(0.75f + x * 0.01f, 0.5f, 1f)); pxa(x, y + 1, 0x6A4AB0, 0.6f); }
-                outline();
+            case "amb_wave" -> {                                                             // Supernova: a bright core and a ring bursting outward
+                float u = f % 1f; float r = 1.5f + u * 6.5f;
+                for (int q = 0; q < 20; q++) { double an = q * Math.PI / 10; pxa(Math.round(8 + (float) Math.cos(an) * r), Math.round(8 + (float) Math.sin(an) * r), q % 2 == 0 ? 0xFF7AD9 : 0xC8B4FF, 1f - u * 0.7f); }
+                glow(8, 8, 3, 0xFFFFFF, 0.5f * (1f - u)); ball(8, 8, 1.5f, 0xFFF4D8);
             }
             case "spot" -> {                                                                 // Spotify page: a pair of headphones, a beat pulsing between them
                 for (int x = 3; x < 13; x++) { double a = (x - 8) / 5.0; px(x, (int) Math.round(6 - Math.sqrt(Math.max(0, 1 - a * a)) * 4), 0xD8E8DA); }

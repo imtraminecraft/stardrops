@@ -5,11 +5,11 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
- * Ambience (Visuals > Ambience), while a song plays. Everything takes the album cover's colours.
- *   ALBUM GLOW: the edges of the screen glow softly, breathing slowly.
- *   VISUALIZER: a row of dancing bars along the bottom of the screen, on both sides of the hotbar.
- *   MUSIC NOTES: notes drift up beside the hotbar, swaying.
- *   SONG WAVE: when a new song starts, a wave of its colour sweeps across the screen.
+ * Ambience (Visuals > Music > Ambience), while a song plays: the space around you, in the album cover's colours.
+ *   NEBULA: soft clouds of nebula drift slowly along the edges of the screen, breathing with the music.
+ *   STAR EQUALIZER: either side of the hotbar, columns of little stars rise and fall to the beat, the top star of each brightest.
+ *   COMETS: small comets curve up from beside the hotbar, trailing light, and burst into sparks as they fade.
+ *   SUPERNOVA: when a new song starts, a flash and a ring of light expand out across the screen.
  *   WORD SPARKLES: tiny stars burst from each word of the lyrics as it is sung (drawn by LyricsHud).
  * All of it fades away while a drop animation plays or the music is paused.
  */
@@ -30,51 +30,74 @@ final class AmbienceHud {
     }
 
     static void draw(GuiGraphicsExtractor g, Font font, int W, int H, long now, float on, FancyConfig c, long sinceSong, int acc) {
-        int lite = Ritual.mixc(acc, 0xFFFFFF, 0.45f), deep = Ritual.mixc(acc, 0x000000, 0.25f);
+        int lite = Ritual.mixc(acc, 0xFFFFFF, 0.45f), neb1 = Ritual.mixc(acc, 0x9B7BFF, 0.45f), neb2 = Ritual.mixc(acc, 0xFF7AD9, 0.4f);
         float ts = (now % 3_600_000L) / 1000f;                                            // seconds, kept small (a float can't hold today's time in ms precisely)
-        if (c.ambGlow) {                                                                 // soft light along each edge: four long glows, breathing
-            float br = (0.75f + 0.25f * (float) Math.sin(ts * 0.45f)) * on * c.ambGlowStrength / 100f;
-            int a = Math.round(120 * br);
-            NebulaTex.glow(g, W / 2f, 0, W * 0.62f, H * 0.09f, Gfx.argb(Math.round(a * 0.7f), acc));
-            NebulaTex.glow(g, W / 2f, H, W * 0.62f, H * 0.11f, Gfx.argb(a, acc));
-            NebulaTex.glow(g, 0, H / 2f, W * 0.07f, H * 0.62f, Gfx.argb(a, deep));
-            NebulaTex.glow(g, W, H / 2f, W * 0.07f, H * 0.62f, Gfx.argb(a, deep));
+        if (c.ambGlow) {                                                                 // nebula clouds drifting along the edges
+            float str = on * c.ambGlowStrength / 100f;
+            for (int i = 0; i < 7; i++) {
+                float u = i / 7f, drift = ts * (0.012f + 0.006f * (i % 3)) + i * 0.37f;
+                float along = (u + drift) % 1f, br = 0.65f + 0.35f * (float) Math.sin(ts * 0.5f + i * 1.7f);
+                float x, y; int edge = i % 4;                                            // top, right, bottom, left: each cloud keeps to its edge
+                if (edge == 0) { x = W * along; y = H * 0.02f; } else if (edge == 2) { x = W * (1f - along); y = H * 0.98f; }
+                else if (edge == 1) { x = W * 0.99f; y = H * along; } else { x = W * 0.01f; y = H * (1f - along); }
+                int col = i % 2 == 0 ? neb1 : neb2;
+                NebulaTex.glow(g, x, y, W * 0.22f, H * 0.16f, Gfx.argb(Math.round(150 * br * str), col));
+                NebulaTex.glow(g, x + W * 0.03f, y, W * 0.09f, H * 0.07f, Gfx.argb(Math.round(110 * br * str), lite));
+            }
+            for (int i = 0; i < 18; i++) {                                               // stars caught in the clouds
+                float tw = 0.3f + 0.7f * Math.abs((float) Math.sin(ts * (1.1f + rnd(i) * 1.6f) + i)), u = rnd(i * 7 + 1);
+                int edge = i % 4; float x = edge == 1 ? W - 2 - rnd(i * 3) * W * 0.06f : edge == 3 ? 2 + rnd(i * 3) * W * 0.06f : W * u;
+                float y = edge == 0 ? 2 + rnd(i * 5) * H * 0.06f : edge == 2 ? H - 2 - rnd(i * 5) * H * 0.06f : H * u;
+                g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, Gfx.argb(Math.round(190 * tw * str), 0xFFFFFF));
+            }
         }
-        if (c.ambBars) {                                                                 // a visualizer along the bottom, either side of the hotbar
-            int n = 16, bw = 5, gap = 2, hot = 100;
+        if (c.ambBars) {                                                                 // the star equalizer, either side of the hotbar
+            int n = 14, gap = 7, hot = 100;
             for (int side = -1; side <= 1; side += 2) for (int i = 0; i < n; i++) {
-                float x = W / 2f + side * (hot + i * (bw + gap)); if (x < 0 || x > W) continue;
-                float lvl = Math.abs((float) Math.sin(ts * (5.9f - i * 0.2f) + i * 0.7f + side) * (float) Math.sin(ts * (2.3f - i * 0.05f) + i * 1.9f)) * (1f - i / (float) n * 0.6f);
-                int bh = Math.max(1, Math.round((3 + 20 * lvl) * on)), x0 = Math.round(side < 0 ? x - bw : x);
-                g.fill(x0, H - bh, x0 + bw, H, Gfx.argb(Math.round(150 * on), Ritual.mixc(acc, lite, i / (float) n)));
-            }
-        }
-        if (c.ambNotes) {                                                                // notes float up from both sides of the hotbar in curling paths,
-            for (int i = 0; i < 8; i++) {                                                    // growing then shrinking, turning from the album's colour to white, with a faint trail
-                float per = 3.0f + (i % 4) * 0.55f, u = ((ts + i * 0.91f) % per) / per;
-                float a = (float) Math.sin(Math.PI * Math.min(1f, u * 1.15f)) * on; if (a < 0.06f) continue;
-                boolean left = i % 2 == 0; float dir = left ? -1 : 1, bx = W / 2f + dir * (100 + 14 * (i / 2 % 3)), by = H - 26;
-                String n = i % 3 == 0 ? "\u266B" : "\u266A";
-                for (int tr = 2; tr >= 0; tr--) {                                            // the trail: two fainter copies a moment behind
-                    float uu = Math.max(0f, u - tr * 0.035f);
-                    float x = bx + dir * (uu * 30 + (float) Math.sin(uu * 7 + i) * 8), y = by - uu * 78 - (float) Math.sin(uu * 3.14f) * 6;
-                    float sc = (0.8f + 0.7f * (float) Math.sin(Math.PI * uu)) * (1f - tr * 0.18f), rot = dir * (float) Math.sin(uu * 5 + i) * 0.45f;
-                    int col = Ritual.mixc(i % 2 == 0 ? acc : lite, 0xFFFFFF, uu * 0.7f);
-                    Gfx.push(g); Gfx.translate(g, x, y); Gfx.rotate(g, rot); Gfx.scale(g, sc);
-                    Gfx.txt(g, font, n, -3, -4, Gfx.argb(Math.round((tr == 0 ? 240 : 70 / tr) * a), col), tr == 0);
-                    Gfx.pop(g);
+                float x = W / 2f + side * (hot + 3 + i * gap); if (x < 2 || x > W - 2) continue;
+                float lvl = Math.abs((float) Math.sin(ts * (5.9f - i * 0.2f) + i * 0.7f + side) * (float) Math.sin(ts * (2.3f - i * 0.05f) + i * 1.9f)) * (1f - i / (float) n * 0.55f);
+                int stars = 1 + Math.round(5 * lvl * on); int xi = Math.round(x);
+                for (int k = 0; k < stars; k++) {
+                    int y = H - 3 - k * 4; boolean top = k == stars - 1; int col = Ritual.mixc(acc, lite, k / 6f);
+                    g.fill(xi, y, xi + 1, y + 1, Gfx.argb(Math.round((top ? 240 : 150) * on), top ? 0xFFFFFF : col));
+                    if (top) { g.fill(xi - 1, y, xi + 2, y + 1, Gfx.argb(Math.round(110 * on), col)); g.fill(xi, y - 1, xi + 1, y + 2, Gfx.argb(Math.round(110 * on), col));
+                               NebulaTex.glow(g, xi + 0.5f, y + 0.5f, 3.5f, 3.5f, Gfx.argb(Math.round(90 * on * lvl), lite)); }
                 }
-                if (u > 0.85f && u < 1f) { float pu = (u - 0.85f) / 0.15f; float x = bx + dir * (u * 30 + (float) Math.sin(u * 7 + i) * 8), y = by - u * 78;   // a little burst as it fades
-                    for (int k = 0; k < 4; k++) { double an = k * Math.PI / 2 + i; g.fill(Math.round(x + (float) Math.cos(an) * 6 * pu), Math.round(y + (float) Math.sin(an) * 6 * pu), Math.round(x + (float) Math.cos(an) * 6 * pu) + 1, Math.round(y + (float) Math.sin(an) * 6 * pu) + 1, Gfx.argb(Math.round(200 * (1 - pu) * on), lite)); } }
             }
         }
-        if (c.ambWave && sinceSong < 1600) {                                             // a new song: a wave of its colour sweeps across
-            float u = sinceSong / 1600f, a = (float) Math.sin(Math.PI * u) * on;
-            float x = -W * 0.2f + W * 1.4f * ease(u);
-            NebulaTex.glow(g, x, H / 2f, W * 0.22f, H * 0.9f, Gfx.argb(Math.round(110 * a), acc));
-            NebulaTex.glow(g, x, H / 2f, W * 0.05f, H * 0.7f, Gfx.argb(Math.round(140 * a), lite));
+        if (c.ambNotes) {                                                                // comets curving up beside the hotbar
+            for (int i = 0; i < 6; i++) {
+                float per = 3.4f + (i % 3) * 0.7f, u = ((ts + i * 1.13f) % per) / per;
+                float a = (float) Math.sin(Math.PI * Math.min(1f, u * 1.1f)) * on; if (a < 0.05f) continue;
+                boolean left = i % 2 == 0; float dir = left ? -1 : 1, bx = W / 2f + dir * (104 + 16 * (i / 2 % 3)), by = H - 22;
+                int col = Ritual.mixc(i % 3 == 0 ? neb2 : acc, 0xFFFFFF, 0.25f);
+                for (int k = 14; k >= 0; k--) {                                          // the tail, then the head
+                    float uu = Math.max(0f, u - k * 0.012f);
+                    float x = bx + dir * (uu * 46 + (float) Math.sin(uu * 4 + i) * 6), y = by - uu * 90;
+                    float fade = 1f - k / 15f;
+                    if (k == 0) { NebulaTex.glow(g, x, y, 5, 5, Gfx.argb(Math.round(150 * a), col)); g.fill(Math.round(x), Math.round(y), Math.round(x) + 2, Math.round(y) + 2, Gfx.argb(Math.round(250 * a), 0xFFFFFF)); }
+                    else g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, Gfx.argb(Math.round(200 * a * fade * fade), Ritual.mixc(0xFFFFFF, col, k / 14f)));
+                }
+                if (u > 0.86f) { float pu = (u - 0.86f) / 0.14f, x = bx + dir * (u * 46 + (float) Math.sin(u * 4 + i) * 6), y = by - u * 90;     // it bursts into sparks
+                    for (int k = 0; k < 6; k++) { double an = k * Math.PI / 3 + i; float d = 8 * pu; g.fill(Math.round(x + (float) Math.cos(an) * d), Math.round(y + (float) Math.sin(an) * d), Math.round(x + (float) Math.cos(an) * d) + 1, Math.round(y + (float) Math.sin(an) * d) + 1, Gfx.argb(Math.round(220 * (1 - pu) * on), lite)); } }
+            }
+        }
+        if (c.ambWave && sinceSong < 1800) {                                             // a new song: a supernova
+            float u = sinceSong / 1800f, a = (1f - u) * on, flash = Math.max(0f, 1f - u * 4f) * on;
+            float cx = W / 2f, cy = H * 0.42f, r = 6 + ease(u) * Math.max(W, H) * 0.55f;
+            NebulaTex.glow(g, cx, cy, 24 + 50 * u, 24 + 50 * u, Gfx.argb(Math.round(220 * flash), 0xFFFFFF));      // the flash
+            NebulaTex.glow(g, cx, cy, r * 0.9f, r * 0.8f, Gfx.argb(Math.round(45 * a), neb1));                    // the glow it leaves
+            int n = Math.min(260, Math.max(24, Math.round(r * 0.9f)));
+            for (int i = 0; i < n; i++) {                                                // the shock ring: a soft band of light, bright dots riding it
+                double an = Math.PI * 2 * i / n; float x = cx + (float) Math.cos(an) * r, y = cy + (float) Math.sin(an) * r * 0.85f;
+                if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
+                int col = Ritual.mixc(neb1, neb2, 0.5f + 0.5f * (float) Math.sin(an * 3));
+                if (i % 4 == 0) NebulaTex.glow(g, x, y, 7 + 10 * u, 7 + 10 * u, Gfx.argb(Math.round(70 * a), col));
+                g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, Gfx.argb(Math.round(230 * a), i % 3 == 0 ? 0xFFFFFF : lite));
+            }
         }
     }
+    private static float rnd(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }
     /** Stars that burst from a word as it lands (Word sparkles): little four-pointed twinkles flying up and out. u: 0..1 since it landed; k: size. */
     static void sparkle(GuiGraphicsExtractor g, float cx, float cy, float w, float u, float a, int seed, float k) {
         if (u >= 1f || a < 0.02f) return;

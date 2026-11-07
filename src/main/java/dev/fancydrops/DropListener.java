@@ -325,7 +325,7 @@ public final class DropListener {
     /** Menu "play" button of a slayer drop (the Drop Library). */
     public static void playSlayerDrop(DropData.Source src, DropData.Drop dr) { launchSlayer(src, dr, null, null, "+250%", -1); }
 
-    /** /fd simulate Slayer [Boss] [Drop | Nothing] [Drop 2] [mf]: a pretend slayer drop (or two), from a named boss or any. */
+    /** /sd simulate Slayer [Boss] [Drop | Nothing] [Drop 2] [mf]: a pretend slayer drop (or two), from a named boss or any. */
     static void simulateSlayer(int mf, String name, Consumer<String> reply) {
         DropData.Source from = null;
         for (DropData.Source s : SlayerData.ALL) {
@@ -373,7 +373,7 @@ public final class DropListener {
         if (dr2 != null) { Item it2 = dropItem(src, dr2, "+250%", true); it2.chance = dr2.chance; previewPrice(it2); a.add(it2); }
         AnimationManager.play(a);
     }
-    /** /fd simulate Fishing|Crimson|Mobs|Dyes [Creature] [Drop] [Drop 2]: a pretend drop of the newer libraries. */
+    /** /sd simulate Fishing|Crimson|Mobs|Dyes [Creature] [Drop] [Drop 2]: a pretend drop of the newer libraries. */
     static void simulateExtra(String cat, String name, Consumer<String> reply) {
         List<DropData.Source> pool = new ArrayList<>();
         for (DropData.Source s : ExtraData.ALL) if (cat.equals("fishing") ? s.group.startsWith("fish_") : s.group.equals(cat)) pool.add(s);          // cat: fishing, crimson, mobs or dyes
@@ -429,7 +429,7 @@ public final class DropListener {
         AnimationManager.play(a);
     }
 
-    /** /fd simulate Farming [Rare Crops|Harvest Feast|Pest Drops] [Drop] [overbloom]: a pretend farming drop (a random one when none is named). */
+    /** /sd simulate Farming [Rare Crops|Harvest Feast|Pest Drops] [Drop] [overbloom]: a pretend farming drop (a random one when none is named). */
     static void simulateFarm(int ob, String name, Consumer<String> reply) {
         DropData.Source from = null;
         for (DropData.Source s : FarmData.ALL) {
@@ -496,7 +496,7 @@ public final class DropListener {
         AnimationManager.play(an);
     }
 
-    /** /fd simulate Experiments [Drop 1] [Drop 2]: a pretend Table reward with one or two items (random when none is named). */
+    /** /sd simulate Experiments [Drop 1] [Drop 2]: a pretend Table reward with one or two items (random when none is named). */
     static void simulateExp(String name, Consumer<String> reply) {
         List<DropData.Drop> pool = ExperimentData.SOURCE.drops;
         if (pool.isEmpty()) { reply.accept("No Experimentation Table drops loaded."); return; }
@@ -643,7 +643,7 @@ public final class DropListener {
         reply.accept("Sent to /" + cmd.trim() + ": " + msg);
     }
 
-    // ------------------------------------------------------------------ menu plays and /fd simulate
+    // ------------------------------------------------------------------ menu plays and /sd simulate
 
     private static void previewPrice(Item it) {
         ItemIcons.prefetch(it.id);
@@ -770,7 +770,7 @@ public final class DropListener {
         return out;
     }
 
-    /** /fd simulate Mythological [Creature] [Drop | Nothing] [mf]: a pretend Mythological drop, from a named creature or any. */
+    /** /sd simulate Mythological [Creature] [Drop | Nothing] [mf]: a pretend Mythological drop, from a named creature or any. */
     static void simulateMyth(int mf, String name, Consumer<String> reply) {
         DropData.Source from = null;
         for (DropData.Source s : MythData.ALL) {
@@ -789,7 +789,7 @@ public final class DropListener {
         launchMyth(src, picks.get(0), "+" + mf + "%", -1);
     }
 
-    /** /fd simulate Treasure [Drop]: a pretend Griffin burrow treasure (a random one when no name is given). */
+    /** /sd simulate Treasure [Drop]: a pretend Griffin burrow treasure (a random one when no name is given). */
     static void simulateTreasure(String name, int mf, Consumer<String> reply) {
         List<DropData.Drop> pool = new ArrayList<>(); java.util.Set<String> seen = new java.util.HashSet<>();
         for (int sp = 0; sp < 3; sp++) for (DropData.Drop d : TreasureData.drops(sp)) if (seen.add(d.name)) pool.add(d);

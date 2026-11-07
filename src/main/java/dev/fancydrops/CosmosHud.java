@@ -15,6 +15,9 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 final class CosmosHud {
     private CosmosHud() {}
 
+    static boolean preview;                                                  // the HUD editor: draw the clock even when it is off
+    private static int[] clockBox = {0, 0, 0, 0};
+    static int[] clockBox() { return clockBox; }
     private static long nextShoot, shootAt = -99999, meteorAt = -99999; private static float shootY, shootDir, away; private static long lastFrame;
     private static final java.util.Random R = new java.util.Random();
 
@@ -24,7 +27,7 @@ final class CosmosHud {
     static void render(GuiGraphicsExtractor g) {
         FancyConfig c = FancyConfig.get(); Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
-        if (!(c.cosShooting || c.cosClock || c.cosNight || c.cosAurora || c.cosMeteor)) return;
+        if (!(c.cosShooting || c.cosClock || c.cosNight || c.cosAurora || c.cosMeteor || preview)) return;
         long now = System.currentTimeMillis(); float dt = Math.min(0.1f, (now - (lastFrame == 0 ? now : lastFrame)) / 1000f); lastFrame = now;
         away += ((AnimationManager.isPlaying() ? 1f : 0f) - away) * Math.min(1f, dt * 6f);
         int W = g.guiWidth(), H = g.guiHeight();
@@ -39,7 +42,9 @@ final class CosmosHud {
             if (now >= nextShoot) { shootAt = now; shootY = 0.05f + R.nextFloat() * 0.25f; shootDir = R.nextBoolean() ? 1f : -1f; nextShoot = now + 15000 + R.nextInt(40000); }
             if (now - shootAt < 900) shooting(g, W, H, (now - shootAt) / 900f, vis);
         }
-        if (c.cosClock) clock(g, day, ticks, vis);
+        if (c.cosClock || preview) { float k = c.cosClockSize / 100f; int cx = c.cosClockX, cy = c.cosClockY;
+            clockBox = new int[]{Math.round(cx - 22 * k), Math.round(cy - 23 * k), Math.round(cx + 23 * k), Math.round(cy + 2 * k)};
+            Gfx.push(g); Gfx.translate(g, cx - 26 * k, cy - 24 * k); Gfx.scale(g, k); clock(g, day, ticks, preview ? 1f : vis); Gfx.pop(g); }
     }
     /** 0 by day, 1 deep in the night, easing through dusk and dawn (Minecraft: night is about 13000..23000 ticks). */
     private static float nightness(float day) {

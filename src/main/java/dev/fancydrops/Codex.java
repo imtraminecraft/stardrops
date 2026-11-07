@@ -83,7 +83,7 @@ final class Codex {
     static boolean busy() { return open; }
     /** The sky fully covers the menu (open and settled, not closing): the menu behind it needn't be drawn at all. */
     static boolean covering() { long n = System.currentTimeMillis(); return open && closeAt == 0 && (openAt > introFrom || n - openAt > 450); }
-    /** /fd star: the one star you came to see; the others don't react until you press back. */
+    /** /sd star: the one star you came to see; the others don't react until you press back. */
     static String soloId;
     private static void fly(int c) { if (c < 0) soloId = null; if (soloId != null) return; if (c == focus) return; prevFocus = focus; focus = c; zoomAt = System.currentTimeMillis(); sound("sky_zoom", c < 0 ? 0.85f : 1f, 0.7f); }
 
@@ -790,7 +790,7 @@ final class Codex {
     }
     private static void nodeOf(GuiGraphicsExtractor g, int c, Node n, boolean open, float fade, float zoomed, int fc) {
         Achievements.Ach a = n.a(); float[] o = centre(c); float x = X(o[0] + n.du()) + pX, y = Y(o[1] + n.dv()) + pY;
-        if (soloId != null && !soloId.equals(a.id())) fade *= 0.35f;                                 // /fd star: the others step back
+        if (soloId != null && !soloId.equals(a.id())) fade *= 0.35f;                                 // /sd star: the others step back
         if (!inSky(x, y)) return;
         boolean near = fc == c && zoomed > 0.5f;
         float hr = near ? 12 : 6;
