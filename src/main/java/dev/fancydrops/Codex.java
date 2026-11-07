@@ -28,7 +28,7 @@ final class Codex {
     //      Drop Library, round it like the points of a star. Lanes of light run from the heart to each group and fill as you complete it.
     private static final String[] ACH = {"core", "myth", "mob", "farm", "fish", "dye", "time", "mine"};
     private static final String[] ACH_NAME = {"Every Drop", "Mythological", "Mob Drops", "Farming", "Fishing", "Table & Dyes", "Playtime", "Mining"};
-    private static final String[] FIGURE = {"The Pole Star", "The Griffin", "The Sword", "The Sheaf", "The Fish", "The Drop", "The Hourglass", "The Pickaxe"};
+    private static final String[] FIGURE = {"Ursa Major, the Great Bear", "Orion, the Hunter", "Scorpius, the Scorpion", "Virgo, the Maiden", "Pisces, the Fishes", "Cassiopeia, the Queen", "Cygnus, the Swan", "Taurus, the Bull"};   // each group is drawn as this real constellation
     private static final int[] ACH_COL = {0xFFFFD27A, 0xFF55D8FF, 0xFFFF6A6A, 0xFF8CE86A, 0xFF4FC3FF, 0xFFFF72C6, 0xFFA9B4FF, 0xFF55D8FF};
     private static final String[] QUOTE = {"Every find, written down.", "Dig, and the earth answers.", "They drop what they guard.", "The harvest remembers.", "Patience, then a splash.", "Every colour has a story.", "Time flies when the drops are good.", "Strike the rock, and listen."};
     private static final float[][] HOME = {{0.42f, 0.56f}, {0.37f, 0.17f}, {0.79f, 0.78f}, {0.59f, 0.77f}, {0.22f, 0.67f}, {0.19f, 0.27f}, {0.6f, 0.21f}, {0.85f, 0.4f}};      // fractions of the width, of the height
@@ -54,7 +54,7 @@ final class Codex {
     private static final Map<String, Long> IGNITE = new HashMap<>();
     private static final Set<String> igSounded = new HashSet<>();
     private static boolean ignitesPlanned;
-    private static float scopeAng = -0.9f;                                       // where the stargazer's telescope points (radians)
+    private static float scopeAng = -0.9f; private static long scopeAt;                                       // where the stargazer's telescope points (radians)
 
     // ------------------------------------------------------------------ open / close
     static void open(int[] btn, int chapter) { open(btn, chapter, true); }
@@ -399,15 +399,12 @@ final class Codex {
         int sil = argb(a * alpha, 0x05040A);
         NebulaTex.layer(g, "land", landC, sx0, sy0, sw, sh, argb(a * alpha, 0xFFFFFF));          // the hill, its grass and the firs (baked once)
         float hx = sx0 + sw * 0.12f, hy = ground(hx) + 1;
-        // Minecraft, by night: Steve sitting on a red carpet, looking up through a spyglass, a cat lying by a lantern, a chest beside them.
-        // Everything is made of boxes in Minecraft's own proportions (one "pixel" of a skin = p), shaded for the dark and lit warm by the lantern.
+        // Minecraft, by night: a figure sitting on the hill beside a telescope on its tripod, a cat sitting right beside them, a
+        // lantern a little way off. All silhouettes (only the lantern keeps its colour), built from upright boxes so the outline stays
+        // clean; only the telescope's tube turns (smoothly) and the head tips a little to follow it.
         float p = 0.8f * k, fl = 0.8f + 0.2f * (float) Math.sin(now / 90.0) * (float) Math.sin(now / 37.0);
-        for (float cx = hx - 36 * p; cx < hx + 16 * p; cx += 2 * p) {                               // the red carpet, its weave in two reds
-            int c = (Math.round((cx - hx) / (2 * p)) & 1) == 0 ? 0xA02424 : 0x8A1C1C;
-            mcBox(cx, ground(cx + p) - 1.1f * p, 0, 0, 0, 2.05f * p, 1.1f * p, c, 0.35f, a);
-        }
         // the lantern: an iron frame, its flame inside, a hook on top; a pool of warm light on the grass
-        float lx = hx - 33 * p, lgy = ground(lx) - 0.5f * p, ly = lgy - 3.5f * p;
+        float lx = hx - 30 * p, lgy = ground(lx) - 0.5f * p, ly = lgy - 3.5f * p;
         NebulaTex.glow(g, lx + 3 * p, lgy + 2 * p, 34 * p * fl, 7 * p, argb(0.3f * a * alpha, 0xFFA040));
         glow(lx, ly, 30 * p * fl, 0xFFB050, 0.3f * a);
         mcBox(lx - 3 * p, lgy - 7 * p, 0, 0, 0, 6 * p, 7 * p, 0x3A3A44, 0.5f, a); mcBox(lx - 2 * p, lgy - 6 * p, 0, 0, 0, 4 * p, 5 * p, mix(0xFFFFB050, 0xFFFFE08A, fl), 1f, a);
@@ -415,49 +412,48 @@ final class Codex {
         glow(lx, ly, 6 * p, 0xFFD890, 0.6f * a * fl);
         for (int i = 0; i < 2; i++) { float mt = now / (700f + i * 230f) + i * 2.1f; float mxp = lx + (float) Math.cos(mt) * (5 + i * 3) * p, myp = ly - 4 * p + (float) Math.sin(mt * 1.7f) * 4 * p;      // two moths round it
             g.fill(Math.round(mxp), Math.round(myp), Math.round(mxp) + 1, Math.round(myp) + 1, argb(0.8f * a * alpha, 0xFFE8C0)); }
-        // the cat, sitting up beside the lantern looking at the sky with him: an upright body, a head with two pointed ears, a tail
-        // curled round its paws whose tip flicks now and then (a clear silhouette). (No chest: as a silhouette it was just a box.)
-        float cx0 = hx - 24 * p, cgy = ground(cx0 + 2 * p) + 0.3f * p, flick = (now % 5000L) < 600 ? (float) Math.sin((now % 5000L) / 600.0 * Math.PI * 2) * 0.5f : 0f;
+        // where the telescope looks: the constellation under your mouse, or a slow drift across the sky; eased so it turns smoothly
+        float mountX = hx + 13 * p, mountY = ground(mountX) - 13 * p;
+        float want;
+        if (film) want = -1.05f;
+        else if (hoverCon >= 0) { float[] o = centre(hoverCon); want = (float) Math.atan2(Y(o[1]) - mountY, X(o[0]) - mountX); }
+        else want = -0.95f + 0.2f * (float) Math.sin(now / 6000.0);
+        want = Math.max(-1.45f, Math.min(-0.45f, want));
+        float dtS = Math.min(0.05f, Math.max(0f, (now - scopeAt) / 1000f)); scopeAt = now;
+        scopeAng += (want - scopeAng) * (film ? 0.2f : Math.min(1f, dtS * 2.2f));
+        float breath = (float) Math.sin(now / 1400.0) * 0.25f * p;
+        // the figure: sitting with knees up, leaning forward a little to the eyepiece; the head tips with the telescope
+        float gx0 = hx, gy0 = ground(gx0);
+        mcBox(gx0 - 3 * p, gy0 - 5 * p, 0, 0, 0, 6 * p, 5 * p, 0x05040A, 0f, a);                              // seat / hips
+        mcBox(gx0 + 2 * p, gy0 - 8 * p, 0, 0, 0, 3 * p, 4 * p, 0x05040A, 0f, a);                              // knee, up
+        mcBox(gx0 + 4 * p, gy0 - 8 * p, 0, 0, 0, 3 * p, 8 * p, 0x05040A, 0f, a);                              // shin, down to the ground
+        mcBox(gx0 - 3 * p, gy0 - 16 * p + breath, 0, 0, 0, 5 * p, 11.5f * p, 0x05040A, 0f, a);               // body
+        float tilt = Math.max(-0.35f, Math.min(0.2f, (scopeAng + 0.95f) * 0.4f));
+        float hcx = gx0 - 0.5f * p, hcy = gy0 - 19.5f * p + breath;
+        mcBox(hcx, hcy, tilt, -3.5f * p, -3.5f * p, 7 * p, 7 * p, 0x05040A, 0f, a);                          // head
+        headXs = hcx; headYs = hcy;
+        // the telescope: a tripod standing on the hill, the tube turning on its mount, eyepiece toward the figure
+        float gL = ground(mountX - 5 * p), gR = ground(mountX + 6 * p), gM = ground(mountX + 1 * p);
+        for (float[] lg : new float[][]{{mountX - 5 * p, gL + p}, {mountX + 6 * p, gR + p}, {mountX + 1 * p, gM + p}}) { float la2 = (float) Math.atan2(lg[1] - mountY, lg[0] - mountX), ll = (float) Math.hypot(lg[0] - mountX, lg[1] - mountY); mcBox(mountX, mountY, la2, 0, -0.6f * p, ll, 1.2f * p, 0x05040A, 0f, a); }   // the tripod's legs
+        mcBox(mountX - 1 * p, mountY - 1 * p, 0, 0, 0, 2 * p, 2 * p, 0x05040A, 0f, a);                      // the mount
+        float ca = (float) Math.cos(scopeAng), sa = (float) Math.sin(scopeAng);
+        mcBox(mountX, mountY, scopeAng, -6 * p, -1.3f * p, 16 * p, 2.6f * p, 0x05040A, 0f, a);              // the tube
+        mcBox(mountX, mountY, scopeAng, 7 * p, -1.7f * p, 3 * p, 3.4f * p, 0x05040A, 0f, a);                 // the dew shield at the front
+        mcBox(mountX, mountY, scopeAng, -8 * p, -0.6f * p, 2 * p, 1.2f * p, 0x05040A, 0f, a);               // the eyepiece
+        // the arm, from the shoulder to the tube near the eyepiece (it steadies it)
+        float shX = gx0 + 1 * p, shY = gy0 - 14 * p + breath, hdX = mountX - ca * 4 * p, hdY = mountY - sa * 4 * p;
+        float aa = (float) Math.atan2(hdY - shY, hdX - shX), al = (float) Math.hypot(hdX - shX, hdY - shY);
+        mcBox(shX, shY, aa, 0, -1.2f * p, al, 2.4f * p, 0x05040A, 0f, a);
+        // the cat, sitting up right beside them (between them and the lantern), looking up too; its tail curls round its paws and flicks
+        float cx0 = gx0 - 8 * p, cgy = ground(cx0) + 0.3f * p, flick = (now % 5000L) < 600 ? (float) Math.sin((now % 5000L) / 600.0 * Math.PI * 2) * 0.5f : 0f;
         mcBox(cx0 - 3 * p, cgy - 6 * p, 0, 0, 0, 6 * p, 6 * p, 0x05040A, 0f, a);                            // haunches
         mcBox(cx0 - 1 * p, cgy - 9 * p, 0, 0, 0, 4 * p, 4 * p, 0x05040A, 0f, a);                            // chest
         mcBox(cx0 - 1.5f * p, cgy - 13 * p, 0, 0, 0, 5 * p, 4.5f * p, 0x05040A, 0f, a);                      // head
         mcBox(cx0 - 1.5f * p, cgy - 14.5f * p, 0, 0, 0, 1.5f * p, 1.5f * p, 0x05040A, 0f, a); mcBox(cx0 + 2 * p, cgy - 14.5f * p, 0, 0, 0, 1.5f * p, 1.5f * p, 0x05040A, 0f, a);   // ears
         mcBox(cx0 - 3 * p, cgy - 1.2f * p, 0, -4 * p, 0, 5 * p, 1.2f * p, 0x05040A, 0f, a);                  // tail, round the paws
         mcBox(cx0 - 7 * p, cgy - 1.2f * p, -1.2f + flick, 0, 0, 2.5f * p, 1.2f * p, 0x05040A, 0f, a);      // its tip
-        // Steve, sitting with his legs out on the carpet, looking up through a spyglass at the constellation under your mouse
-        float want;
-        if (film) want = -1.05f;
-        else if (hoverCon >= 0) { float[] o = centre(hoverCon); want = (float) Math.atan2(Y(o[1]) - (hy - 26 * p), X(o[0]) - (hx + 2 * p)); }
-        else want = -0.95f + 0.25f * (float) Math.sin(now / 5000.0);
-        want = Math.max(-2.2f, Math.min(-0.35f, want));
-        scopeAng += (want - scopeAng) * (film ? 0.2f : 0.08f);
-        float lk = (now % 14000L) / 1000f, rest = lk > 10.5f && lk < 13.5f ? (float) Math.sin(Math.PI * (lk - 10.5f) / 3f) : 0f; rest = rest * rest * (3 - 2 * rest);   // now and then he lowers it and just looks
-        float hipX = hx, hipY = hy - 4 * p, lean = -0.2f;
-        double up = -Math.PI / 2 + lean; float ux = (float) Math.cos(up), uy = (float) Math.sin(up);
-        float shX = hipX + ux * 11 * p, shY = hipY + uy * 11 * p, hcX = hipX + ux * 16.5f * p, hcY = hipY + uy * 16.5f * p;
-        float look = (scopeAng + (float) Math.PI / 2) * 0.55f - (float) Math.PI / 2 + (float) Math.PI / 2 * 0.45f;   // the head pitches up part of the way; the spyglass does the rest
-        look = look * (1f - rest * 0.3f);
-        float slope = (float) Math.atan2(ground(hipX + 12 * p) - ground(hipX), 12 * p);                  // legs lie along the slope of the hill
-        mcBox(hipX, hipY, slope, -1 * p, 0, 13 * p, 4 * p, 0x3A3AA8, 0.42f, a);                            // legs
-        mcBox(hipX, hipY, slope, 10 * p, 0, 2 * p, 4 * p, 0x5A5A5A, 0.42f, a);                               // shoes
-        mcBox(hipX, hipY, (float) up, 0, -2 * p, 12 * p, 4 * p, 0x12AAAA, 0.42f, a);                        // body (the cyan shirt)
-        float hfx = (float) Math.cos(look), hfy = (float) Math.sin(look), dx = -hfy, dy = hfx;                // the head's forward and "down"
-        float eyeX = hcX + hfx * 4 * p - dx * 1 * p, eyeY = hcY + hfy * 4 * p - dy * 1 * p;
-        float sgA = scopeAng + (0f - scopeAng) * rest, sgX = eyeX + (hipX + 7 * p - eyeX) * rest, sgY = eyeY + (hipY - 3 * p - eyeY) * rest;     // the spyglass: at his eye, or resting in his lap
-        float gx = (float) Math.cos(sgA), gy = (float) Math.sin(sgA);
-        float handX = sgX + gx * 2 * p + (float) -gy * 1.2f * p, handY = sgY + gy * 2 * p + gx * 1.2f * p;
-        float ax = handX - shX, ay = handY - shY, al = (float) Math.hypot(ax, ay), aa = (float) Math.atan2(ay, ax);
-        mcBox(shX, shY, aa, 0, -2 * p, Math.max(4 * p, al - 2 * p), 4 * p, 0x12AAAA, 0.45f, a);              // the arm holding it (a cyan sleeve, the hand)
-        mcBox(shX, shY, aa, Math.max(4 * p, al - 2 * p), -2 * p, 3 * p, 4 * p, 0xC8946A, 0.5f, a);
-        headXs = hcX; headYs = hcY;
-        mcBox(hcX, hcY, look, -4 * p, -4 * p, 8 * p, 8 * p, 0xC8946A, 0.5f, a);                              // head (skin)
-        mcBox(hcX, hcY, look, -4 * p, -4 * p, 8 * p, 2 * p, 0x4A2E1A, 0.5f, a); mcBox(hcX, hcY, look, -4 * p, -2 * p, 2 * p, 4 * p, 0x4A2E1A, 0.5f, a);   // hair: the top and the back
-        mcBox(hcX, hcY, look, 2 * p, 0, 2 * p, 1 * p, 0x6A4030, 0.5f, a);                                    // a bit of beard
-        mcBox(sgX, sgY, sgA, 0, -1 * p, 7 * p, 2 * p, 0xC87A4A, 0.6f, a);                                    // the copper tube
-        mcBox(sgX, sgY, sgA, 2 * p, -1 * p, 0.8f * p, 2 * p, 0x8A4A2A, 0.6f, a); mcBox(sgX, sgY, sgA, 5 * p, -1 * p, 0.8f * p, 2 * p, 0x8A4A2A, 0.6f, a);
-        mcBox(sgX, sgY, sgA, 7 * p, -1.2f * p, 1 * p, 2.4f * p, 0x9A6AE0, 0.9f, a);                             // the lens
-        float tx1 = sgX + gx * 8 * p, ty1 = sgY + gy * 8 * p; lensX = tx1; lensY = ty1;
-        glow(tx1, ty1, 4 * p, 0xBFD8FF, (hoverCon >= 0 || film ? 0.5f : 0.25f) * a * (1f - rest));
+        float tx1 = mountX + ca * 10 * p, ty1 = mountY + sa * 10 * p; lensX = tx1; lensY = ty1;
+        glow(tx1, ty1, 4 * p, 0xBFD8FF, (hoverCon >= 0 || film ? 0.45f : 0.2f) * a);
         float tx1b = tx1, ty1b = ty1;
         for (int i = 0; i < (film ? 0 : 4); i++) {                                                   // a few fireflies blinking low over the grass
             float u = (now % 3_600_000L) / 1000f, fx = sx0 + sw * (0.03f + 0.28f * rnd(i * 7)) + (float) Math.sin(u * 0.35f + i) * 6 * k, fy = ground(fx) - (5 + 10 * rnd(i * 3)) * k + (float) Math.sin(u * 0.6f + i * 2) * 2 * k;
@@ -653,44 +649,56 @@ final class Codex {
         for (float[] st : OUTLINE[c]) for (int i = 2; i < st.length; i += 2) { float l = (float) Math.hypot(st[i] - st[i - 2], st[i + 1] - st[i - 1]); if (want <= l) { float u = want / l; return new float[]{st[i - 2] + (st[i] - st[i - 2]) * u, st[i - 1] + (st[i + 1] - st[i - 1]) * u}; } want -= l; }
         return new float[]{0, 0};
     }
-    /** Every group's stars, scattered the way real stars are (seeded per group, so they never move): an irregular, stretched
-     *  cloud with a minimum spacing, joined by its shortest links (a minimum spanning tree). Nothing about it reads as an order:
-     *  any star can be lit at any time. parent = the star it is joined to (-1 for the first), depth = its index (a seed). */
+    /*
+     * Every group is a real constellation, its stars where they sit in the sky (roughly, y down, in units of the figure's radius),
+     * each with the star it is drawn joined to. The achievements take the stars in order; a group with more achievements than the
+     * figure has stars puts the extras halfway along its lines, and one with fewer leaves the faintest off.
+     *   Every Drop: Ursa Major (with Polaris, the heart, where the pointer stars aim)   Mythological: Orion, the hunter
+     *   Mob Drops: Scorpius   Farming: Virgo (Spica, the ear of wheat)   Fishing: Pisces   Table & Dyes: Cassiopeia
+     *   Playtime: Cygnus, the Northern Cross   Mining: Taurus
+     */
+    private static final float[][] SKY_AT = new float[8][], SKY_PAR = new float[8][];
+    private static void sky(int c, float[] xy, int... par) { SKY_AT[c] = xy; float[] pp = new float[par.length]; for (int i = 0; i < par.length; i++) pp[i] = par[i]; SKY_PAR[c] = pp; }
+    static {
+        float[] uma = {.15f, -.25f, .15f, .12f, -.2f, .1f, -.25f, -.2f, -.5f, -.3f, -.75f, -.38f, -1f, -.5f, .45f, -.45f, .8f, -.4f, .45f, -.15f, .6f, .1f,
+                       .85f, .55f, .7f, .5f, -.1f, .38f, .05f, .55f, .15f, .78f, .25f, .8f, -.35f, .7f, -.45f, .78f, .5f, -.7f, .8f, -.6f};
+        for (int i = 0; i < uma.length; i += 2) { uma[i] = uma[i] * 0.72f - 0.08f; uma[i + 1] = uma[i + 1] * 0.72f + 0.45f; }   // Polaris (the heart) at the middle, above the pointers
+        sky(0, uma, -1, 0, 1, 2, 3, 4, 5, 0, 7, 7, 9, 12, 10, 2, 13, 14, 15, 13, 17, 7, 19);
+        sky(1, new float[]{-.45f, -.55f, .4f, -.45f, 0f, -.9f, -.15f, .05f, 0f, 0f, .15f, -.05f, -.4f, .75f, .45f, .7f, -.7f, -.95f, .85f, -.75f, .95f, -.15f},
+               -1, 5, 0, 0, 3, 4, 3, 5, 0, 1, 9);
+        sky(2, new float[]{.1f, -.25f, .3f, -.4f, .55f, -.55f, .6f, -.85f, .7f, -.3f, -.05f, -.05f, -.15f, .2f, -.2f, .45f, -.25f, .65f, -.4f, .82f, -.65f, .85f, -.85f, .7f, -.8f, .5f, -.6f, .42f},
+               -1, 0, 1, 2, 2, 0, 5, 6, 7, 8, 9, 10, 11, 12);
+        sky(3, new float[]{.1f, .75f, 0f, .3f, -.2f, 0f, .05f, -.2f, .25f, -.55f, -.5f, -.05f, -.85f, -.15f, -.95f, -.45f, .4f, .15f, .65f, 0f, .75f, .45f, .95f, .6f, .8f, -.35f},
+               -1, 0, 1, 2, 3, 2, 5, 6, 1, 8, 9, 10, 9);
+        sky(4, new float[]{0f, .8f, -.3f, .55f, -.55f, .3f, -.75f, 0f, -.95f, -.2f, -.7f, -.38f, .2f, .35f, .4f, -.15f, .55f, -.65f},
+               -1, 0, 1, 2, 3, 4, 0, 6, 7);
+        sky(5, new float[]{-1f, -.2f, -.5f, .35f, 0f, -.05f, .5f, .4f, 1f, -.3f}, -1, 0, 1, 2, 3);
+        sky(6, new float[]{0f, 0f, .05f, -.85f, .02f, .35f, 0f, .65f, -.05f, .95f, .45f, .15f, .8f, .45f, .95f, .7f, -.45f, -.15f, -.75f, -.4f, -.9f, -.62f},
+               -1, 0, 0, 2, 3, 0, 5, 6, 0, 8, 9);
+        sky(7, new float[]{.1f, .4f, -.05f, .2f, -.2f, .05f, -.95f, -.55f, .2f, .2f, .3f, 0f, -.35f, -.9f, .75f, .55f, .9f, -.55f},
+               -1, 0, 1, 2, 0, 4, 5, 0, 5);
+    }
     private static List<Node> tree(int c) {
         Achievements.Profile p = Achievements.profile();
         if (treesFor != p) { TREES.clear(); treesFor = p; }
         return TREES.computeIfAbsent(ACH[c], id -> {
             List<Achievements.Ach> l = new ArrayList<>(achOf(id));
             l.sort(Comparator.comparing(Achievements.Ach::id));
-            java.util.Random rr = new java.util.Random(0x5EEDL * 31 + c * 7919L + l.size());
-            java.util.Collections.shuffle(l, rr);
-            int n = l.size(); float R = figR(c);
-            double rot = rr.nextDouble() * Math.PI, asp = 0.5 + 0.45 * rr.nextDouble();
-            float minD = (float) (R * 1.75 / Math.sqrt(Math.max(1, n)));
-            float[][] at = new float[n][];
-            for (int i = 0; i < n; i++) {
-                float[] best = null; float bestD = -1;
-                for (int k = 0; k < 80; k++) {
-                    double r = R * Math.pow(rr.nextDouble(), 0.62) * (rr.nextDouble() < 0.18 ? 1.3 : 1.0), an = rr.nextDouble() * Math.PI * 2;
-                    double x0 = Math.cos(an) * r, y0 = Math.sin(an) * r * asp;
-                    float x = (float) (x0 * Math.cos(rot) - y0 * Math.sin(rot)), y = (float) (x0 * Math.sin(rot) + y0 * Math.cos(rot));
-                    float d = c == 0 ? (float) Math.hypot(x, y) * 1.4f : 9f;                     // (Every Drop keeps its middle clear for the heart)
-                    for (int j = 0; j < i; j++) d = Math.min(d, (float) Math.hypot(x - at[j][0], y - at[j][1]));
-                    if (d > bestD) { bestD = d; best = new float[]{x, y}; }
-                    if (d >= minD) break;
-                }
-                at[i] = best;
+            int n = l.size(); float R = figR(c); float[] xy = SKY_AT[c], pp = SKY_PAR[c]; int m = xy.length / 2;
+            float[][] at = new float[n][]; int[] par = new int[n];
+            for (int i = 0; i < Math.min(n, m); i++) {
+                at[i] = new float[]{xy[i * 2], xy[i * 2 + 1]};
+                int q = Math.round(pp[i]);
+                while (q >= n) q = Math.round(pp[q]);                                   // its partner is one of the stars left off: join the next one in
+                par[i] = q;
             }
-            int[] par = new int[n]; boolean[] in = new boolean[n]; float[] dist = new float[n];
-            java.util.Arrays.fill(par, -1); java.util.Arrays.fill(dist, Float.MAX_VALUE);
-            if (n > 0) dist[0] = 0;
-            for (int it = 0; it < n; it++) {                                                     // Prim: grow the tree by its shortest link each time
-                int u = -1; for (int i = 0; i < n; i++) if (!in[i] && (u < 0 || dist[i] < dist[u])) u = i;
-                in[u] = true;
-                for (int v = 0; v < n; v++) if (!in[v]) { float d = (float) Math.hypot(at[u][0] - at[v][0], at[u][1] - at[v][1]); if (d < dist[v]) { dist[v] = d; par[v] = u; } }
+            for (int i = m; i < n; i++) {                                                   // more achievements than stars: halfway along the lines
+                int j = 1 + (i - m) % Math.max(1, m - 1), q = Math.max(0, Math.round(pp[j]));
+                float sh2 = 0.06f * ((i - m) / Math.max(1, m - 1) + 1);
+                at[i] = new float[]{(xy[j * 2] + xy[q * 2]) / 2 + sh2, (xy[j * 2 + 1] + xy[q * 2 + 1]) / 2 - sh2}; par[i] = j;
             }
             List<Node> out = new ArrayList<>();
-            for (int i = 0; i < n; i++) out.add(new Node(l.get(i), at[i][0], at[i][1], par[i], i));
+            for (int i = 0; i < n; i++) out.add(new Node(l.get(i), at[i][0] * R, at[i][1] * R, par[i], i));
             return out;
         });
     }
@@ -766,7 +774,8 @@ final class Codex {
             String sub = done + " / " + l.size(); int subW = Math.round(host.width(sub) * 0.6f);
             Gfx.push(g); Gfx.translate(g, ox - subW / 2f, by0 + 3); Gfx.scale(g, 0.6f); Gfx.txt(g, font, sub, 0, 0, argb(la * 0.8f, full ? col : 0xA8B2D0), false); Gfx.pop(g);
             if (full) small(g, "✦ COMPLETE ✦", Math.round(ox - host.width("✦ COMPLETE ✦") * 0.375f), ty - 9, argb(la, col));
-            if (hk > 0f) { String fg = FIGURE[c]; small(g, fg, Math.round(ox - host.width(fg) * 0.375f), above ? ty - 10 : ty + 21, argb(la * hk, col)); }
+            { String fg = FIGURE[c]; int fw = Math.round(host.width(fg) * 0.55f);                       // which constellation it is
+              Gfx.push(g); Gfx.translate(g, ox - fw / 2f, by0 + 10); Gfx.scale(g, 0.55f); Gfx.txt(g, font, fg, 0, 0, argb(la * (0.45f + 0.45f * hk), mix(col, 0xFFFFFFFF, 0.3f)), false); Gfx.pop(g); }
             ox = hx0; if (fc < 0) HITS.add(new Object[]{Math.round(ox - rad), Math.round(oy - rad), Math.round(ox + rad), Math.round(oy + rad + 30), (Runnable) () -> fly(c)});
         }
     }
