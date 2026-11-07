@@ -76,6 +76,7 @@ public final class AnimationManager {
      *  instead of queueing: they join a waiting animation, or the playing one while its items have not appeared yet. */
     public static void play(Anim a) {
         if (a == null) return;
+        if (a.type == RNG) CosmosHud.meteor();                                   // Visuals > Cosmos: a meteor burns across the moment an RNG drop lands
         if (a.item != null) {
             Anim last = QUEUE.peekLast();
             if (last != null && canStack(last, a)) { stack(last, a, false); return; }

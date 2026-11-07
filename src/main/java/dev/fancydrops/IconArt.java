@@ -496,6 +496,45 @@ final class IconArt {
                 outline();
                 glint(13, 9 + dn, 1, 0xFFFFFF, t);
             }
+            case "visuals" -> {                                                              // Visuals: an eye-piece view: a ringed planet in a round lens, a star glinting
+                ball(8, 8, 7f, 0x1A1848); ball(8, 8, 6f, 0x0B0C26);
+                ball(8, 8, 3f, 0x9B7BFF); ball(7, 7, 1.5f, 0xD8C8FF);
+                ln(2, 10, 14, 6, 0xFF7AD9);
+                float tw = sn(f * 2) * 0.5f + 0.5f; pxa(12, 3, 0xFFFFFF, tw); pxa(4, 4, 0xFFFFFF, 1 - tw); pxa(11, 12, 0xC8B4FF, tw);
+                outline();
+                glint(5, 5, 1, 0xFFFFFF, t);
+            }
+            case "cosmos" -> {                                                               // Cosmos: a crescent moon, stars, a shooting star
+                ball(6, 9, 4.5f, 0xE8ECFF); ball(8, 8, 4f, 0x00000000);
+                float u = ((f % 1f) + 1f) % 1f; int sx = Math.round(4 + u * 10), sy = Math.round(2 + u * 3);
+                ln(sx - 3, sy - 1, sx, sy, 0xC8B4FF); px(sx, sy, 0xFFFFFF);
+                pxa(13, 11, 0xFFFFFF, sn(f * 3) * 0.5f + 0.5f); pxa(11, 14, 0xFF7AD9, 0.8f); pxa(2, 3, 0xFFFFFF, 0.7f);
+                outline();
+            }
+            case "cos_shoot" -> {                                                            // Shooting stars: a meteor with its tail
+                float u = ((f % 1f) + 1f) % 1f; int hx = Math.round(5 + u * 7), hy = Math.round(5 + u * 5);
+                for (int i = 1; i < 6; i++) pxa(hx - i, hy - i, i < 3 ? 0xFFFFFF : 0xC8B4FF, 1f - i / 6f);
+                rect(hx, hy, 2, 2, 0xFFFFFF); pxa(3, 12, 0xFFFFFF, 0.7f); pxa(13, 3, 0xFFFFFF, 0.6f);
+            }
+            case "cos_night" -> {                                                            // Starry corners: a corner of the screen with stars
+                rect(1, 1, 14, 1, 0x4A4890); rect(1, 1, 1, 14, 0x4A4890);
+                for (int i = 0; i < 5; i++) { float tw = sn(f * 2 + i) * 0.5f + 0.5f; pxa(3 + i * 2, 3 + (i * 3) % 5, 0xFFFFFF, tw); }
+                pxa(4, 9, 0xD8C8FF, 0.8f); pxa(8, 8, 0xFFFFFF, 0.6f);
+            }
+            case "cos_aurora" -> {                                                           // Aurora: waving ribbons of light
+                for (int x = 1; x < 15; x++) { int y = 6 + Math.round(sn(x * 0.5f + f * 2) * 2); rect(x, y, 1, 3, x < 8 ? 0x9B7BFF : 0x5AF0B0); pxa(x, y - 1, 0xFFFFFF, 0.3f); }
+                pxa(3, 13, 0xFFFFFF, 0.7f); pxa(12, 14, 0xFFFFFF, 0.6f);
+            }
+            case "cos_meteor" -> {                                                           // Meteor on RNG: a big burning meteor
+                ball(10, 10, 3f, 0xFFE8A0); ball(10, 10, 1.6f, 0xFFFFFF);
+                ln(1, 3, 8, 8, 0xFF9A4A); ln(2, 2, 9, 8, 0xFF7AD9); ln(3, 1, 9, 7, 0xFFC870);
+                outline();
+            }
+            case "cos_clock" -> {                                                            // Celestial clock: a half dial, the sun on its arc
+                rect(1, 11, 14, 1, 0x6A68B0);
+                for (int i = 0; i <= 8; i++) { double an = Math.PI + Math.PI * i / 8.0; px(Math.round(8 + (float) Math.cos(an) * 6), Math.round(11 + (float) Math.sin(an) * 6), 0x9B7BFF); }
+                float u = ((f % 1f) + 1f) % 1f; double an = Math.PI + Math.PI * u; ball(8 + (float) Math.cos(an) * 6, 11 + (float) Math.sin(an) * 6, 1.6f, 0xFFE07A);
+            }
             case "sty_pop" -> {                                                              // Starlight: a star flaring, opening into a word
                 float fl = sn(f) * 0.5f + 0.5f;
                 rect(3, 11, 10, 1, 0xEEF2FF); rect(4, 13, 7, 1, 0x8A94C0);

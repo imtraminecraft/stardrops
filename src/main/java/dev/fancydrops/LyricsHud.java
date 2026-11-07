@@ -75,7 +75,8 @@ final class LyricsHud {
                 int idx = li + d; if (idx < 0 || idx >= L.size()) continue;
                 if (d == 2 && glide < 0.01f) continue;
                 if (d < 0 && !c.lyricsPrev) continue;                                       // the lines already sung, only if you want them
-                float y = cy + d * step + glide * step, dist = Math.abs(d + glide);
+                float extra = li >= 0 && li < L.size() ? Math.max(0f, rowsBelow(f, L, li, maxW, k * 1.15f) - 10 * k * 1.15f * 1.2f) : 0f;   // a middle line on two rows pushes its neighbours apart
+                float y = cy + d * step + glide * step + Math.signum(d) * extra, dist = Math.abs(d + glide);
                 float a = Math.max(0f, 1f - dist * 0.55f) * vis, sc = k * (1.15f - Math.min(1f, dist) * 0.4f);
                 if (a < 0.03f) continue;
                 if (d == 0) { line(g, f, L, idx, Long.MAX_VALUE / 4, cx, y, sc, a, maxW, c, true); beatUnder(g, f, L, idx, cx, y + rowsBelow(f, L, idx, maxW, sc) + 2 * k, sc, a, maxW, pos); }
@@ -89,10 +90,12 @@ final class LyricsHud {
         }
     }
     /** How far below the line's middle its last row ends. */
+    private static final float ROW_C = 20;                                                   // Constellation's row height: room for the stars between rows
     private static float rowsBelow(Font f, List<Lyrics.Line> L, int li, int maxW, float k) {
         if (li < 0 || li >= L.size()) return 10 * k;
         float[] q = new float[2]; List<String> rows = rowsOf(f, L.get(li).text(), maxW, k * 1.2f, q); float kk = q[0];
-        return (rows.size() - 1) * 12 * kk / 2f + 10 * kk;
+        float rowH = FancyConfig.get().lyricsStyle == KARAOKE ? ROW_C : 12;
+        return (rows.size() - 1) * rowH * kk / 2f + 10 * kk;
     }
     /** The beat line under a line of lyrics, about as wide as the words. */
     private static void beatUnder(GuiGraphicsExtractor g, Font f, List<Lyrics.Line> L, int li, float cx, float y, float k, float a, int maxW, long pos) {
@@ -121,44 +124,14 @@ final class LyricsHud {
     private static int at(List<Lyrics.Line> l, long ms) { int i = -1; for (int k = 0; k < l.size(); k++) { if (l.get(k).atMs() <= ms) i = k; else break; } return i; }
     private static final List<Lyrics.Line> DEMO = List.of(new Lyrics.Line(0, "The words of the song you're playing"), new Lyrics.Line(3000, "light and easy to read"), new Lyrics.Line(6000, "drag them anywhere you like"));
 
-    /**
-     * When the letter at offset ch of a line is sung. LRCLIB only times whole lines, so the words inside are paced the way people
-     * sing: every letter takes a beat, every syllable a little more, and a comma, dash or full stop is a held note or a breath
-     * ("Home, home, where I wanted to go" waits on each "home"). The line is spread over the time until the next line (most of it),
-     * except after a long gap (an instrumental), where it is sung at a natural pace and then simply waits.
-     */
-    private static long wordAt(String text, long start, long end, int ch) {
-        long[] exact = Lyrics.wordTimes(start, text);                                        // word-timed lyrics: exactly when each letter is sung
-        if (exact != null) return exact[Math.max(0, Math.min(exact.length - 1, ch))];
-        float[] cum = PACE.computeIfAbsent(text, LyricsHud::pace);
-        int n = cum.length - 1; float tot = Math.max(1f, cum[n]);
-        long gap = Math.max(300, end - start);
-        long span = Math.max(300, Math.min((long) (gap * 0.92f), (long) (tot * 105 + 600)));
-        if (gap <= 7000) span = Math.max(span, (long) (gap * 0.85f));
-        return start + (long) (span * cum[Math.max(0, Math.min(n, ch))] / tot);
-    }
-    private static final java.util.Map<String, float[]> PACE = new java.util.HashMap<>();
-    /** cum[i] = how much of the line is sung before letter i (in letter-beats). */
-    private static float[] pace(String t) {
-        float[] cum = new float[t.length() + 1]; float acc = 0; boolean prevVowel = false;
-        for (int i = 0; i < t.length(); i++) {
-            cum[i] = acc; char c = Character.toLowerCase(t.charAt(i));
-            boolean vowel = "aeiouy".indexOf(c) >= 0;
-            if (Character.isLetterOrDigit(c)) { acc += 1f; if (vowel && !prevVowel) acc += 1.6f; }       // a letter; a new syllable
-            else if (c == ' ') acc += 0.6f;
-            else if (c == ',' || c == ';' || c == ':') acc += 7f;                                             // a held note / a breath
-            else if (c == '.' || c == '!' || c == '?' || c == '-' || c == '\u2014' || c == '\u2026') acc += 5f;
-            prevVowel = vowel;
-        }
-        cum[t.length()] = acc;
-        if (PACE.size() > 400) PACE.clear();
-        return cum;
-    }
 
     /** The rows of a line (at most two) and the scale that fits them. */
+    private static String wrapFor; private static int wrapW; private static List<String> wrapRows; private static int wrapWidest;
     private static List<String> rowsOf(Font f, String text, int maxW, float k, float[] kk) {
-        List<String> rows = wrap(f, text, maxW); int widest = 0; for (String r : rows) widest = Math.max(widest, f.width(r));
-        kk[0] = widest > maxW ? k * maxW / (float) widest : k; kk[1] = widest; return rows;
+        List<String> rows; int widest;
+        if (text.equals(wrapFor) && maxW == wrapW) { rows = wrapRows; widest = wrapWidest; }                // (measured once per line, not several times a frame)
+        else { rows = wrap(f, text, Math.round(maxW / 1.2f)); widest = 0; for (String r : rows) widest = Math.max(widest, f.width(r)); wrapFor = text; wrapW = maxW; wrapRows = rows; wrapWidest = widest; }
+        float fit = maxW / 1.2f; kk[0] = widest > fit ? k * fit / (float) widest : k; kk[1] = widest; return rows;   // (k is 1.2x the base size: rows never pass the lyric area)
     }
     /** The shade behind a line: soft, wide, never a box. */
     private static void shade(GuiGraphicsExtractor g, float cx, float cy, float w, float kk, int rows, float a) {
@@ -185,7 +158,7 @@ final class LyricsHud {
         int wi = 0;
         for (String row : rows) {
             float x = cx - f.width(row) * kk / 2f;
-            for (String w : row.split(" ")) {
+            for (String w : words(row)) {
                 float ww = f.width(w) * kk;
                 if (!w.isEmpty()) {
                     float u = (t - wi * 0.05f) / 0.42f, mx = x + ww / 2f, my = y0 + 4 * kk;
@@ -212,27 +185,28 @@ final class LyricsHud {
         FancyConfig c = FancyConfig.get();
         String text = L.get(li).text(); if (text.isBlank()) return;
         float[] q = new float[2]; List<String> rows = rowsOf(f, text, maxW, k * 1.2f, q); float kk = q[0];
-        float t = age(li), rowH = 14 * kk, y0 = cy - (rows.size() - 1) * rowH / 2f;
+        float t = age(li), rowH = ROW_C * kk, y0 = cy - (rows.size() - 1) * rowH / 2f;
         if (c.lyricsShade) shade(g, cx, cy, q[1] * kk, kk, rows.size(), a);
         if (c.lyricsGlow) NebulaTex.glow(g, cx, cy + 2 * kk, q[1] * kk * 0.6f + 14, 11 * kk * rows.size(), Gfx.argb(Math.round(a * 70), nebula()));
         if (c.lyricsStars && t < 1f) AmbienceHud.sparkle(g, cx, cy - 3 * kk, q[1] * kk, t, a * 0.7f, li * 17 & 0xFFFF, kk);
-        List<float[]> stars = new ArrayList<>(); int acc = colour();
+        List<float[]> stars = new ArrayList<>(); int acc = colour(), rowIx = 0;
         for (String row : rows) {
             float x = cx - f.width(row) * kk / 2f;
-            for (String w : row.split(" ")) {
+            for (String w : words(row)) {
                 float ww = f.width(w) * kk;
                 if (!w.isEmpty()) {
                     int i = stars.size(); float sy = y0 - 4 * kk - (rnd(li * 13 + i) * 3f) * kk;       // the stars sit at slightly different heights, like a real chart
-                    stars.add(new float[]{x + ww / 2f, sy, i});
+                    stars.add(new float[]{x + ww / 2f, sy, i, rowIx});
                     float v = Math.max(0f, Math.min(1f, (t - 0.1f - i * 0.06f) / 0.35f));
                     outlined(g, f, w, x + ww / 2f, y0, kk, a * v, Ritual.mixc(STARLIGHT, acc, 0.15f));
                 }
                 x += ww + f.width(" ") * kk;
             }
-            y0 += rowH;
+            y0 += rowH; rowIx++;
         }
-        for (int i = 1; i < stars.size(); i++) {                                                // the lines of the chart, drawn left to right
+        for (int i = 1; i < stars.size(); i++) {                                                // the lines of the chart, drawn left to right (each row its own)
             float[] s0 = stars.get(i - 1), s1 = stars.get(i);
+            if (s0[3] != s1[3]) continue;
             float gr = Math.max(0f, Math.min(1f, (t - i * 0.06f) / 0.18f)); if (gr <= 0f) continue;
             float ex = s0[0] + (s1[0] - s0[0]) * gr, ey = s0[1] + (s1[1] - s0[1]) * gr, len = (float) Math.hypot(ex - s0[0], ey - s0[1]);
             if (len < 1f) continue;
@@ -261,6 +235,9 @@ final class LyricsHud {
         if (f.width(s) > maxW) s = f.plainSubstrByWidth(s, maxW - 8) + "…";
         outlined(g, f, s, cx, y, k, a, 0xC8D2F0);
     }
+    /** A row's words, split once and kept (the HUD draws the same rows every frame). */
+    private static final java.util.Map<String, String[]> SPLIT = new java.util.HashMap<>();
+    private static String[] words(String row) { String[] w = SPLIT.get(row); if (w == null) { if (SPLIT.size() > 200) SPLIT.clear(); w = row.split(" "); SPLIT.put(row, w); } return w; }
     /** Up to two rows, split at the space nearest the middle. */
     private static List<String> wrap(Font f, String s, int maxW) {
         List<String> l = new ArrayList<>();
@@ -309,24 +286,15 @@ final class LyricsHud {
         if (li >= 0 && li < L.size()) dockText(g, f, L, li, Long.MAX_VALUE / 4, tx0, tw, y + sh / 2f - 4 + 6 * (1f - roll), Math.round(a * roll), acc);
         if (FancyConfig.get().lyricsBar) nextBar(g, L, li, sx + 17 + (sw - 24) / 2f, above ? y + sh - 2.5f : y + 1.5f, sw - 30, 0.7f, a / 255f, acc, pos);        // until the next line, along the inner edge
     }
-    /** One line in the strip, left to right: sung letters in the album's colour, the rest grey, scaled down to fit. */
+    /** One line in the strip, lit in the album's colour, scaled down to fit. */
     private static void dockText(GuiGraphicsExtractor g, Font f, List<Lyrics.Line> L, int li, long pos, int x, int tw, float y, int a, int acc) {
         if (a < 6) return;
         String text = L.get(li).text(); long start = L.get(li).atMs(), end = li + 1 < L.size() ? L.get(li + 1).atMs() : start + 5000;
         float k = Math.max(0.62f, Math.min(0.9f, tw / (float) Math.max(1, f.width(text))));
         if (f.width(text) * k > tw) text = f.plainSubstrByWidth(text, Math.round(tw / k) - f.width("…")) + "…";
-        float cx = x + (tw - f.width(text) * k) / 2f; int total = text.length(); int sung = Ritual.mixc(acc, 0xFFFFFF, 0.3f);
+        float cx = x + (tw - f.width(text) * k) / 2f;
         Gfx.push(g); Gfx.translate(g, cx, y + (1f - k) * 4); Gfx.scale(g, k);
-        int px = 0; StringBuilder run = new StringBuilder(); int runCol = 0, runX = 0;
-        for (int i = 0; i <= total; i++) {
-            int col = 0;
-            if (i < total) { long ca = wordAt(text, start, end, i); col = pos >= ca ? 1 : 2; }
-            if (i == total || col != runCol) {
-                if (run.length() > 0) Gfx.txt(g, f, run.toString(), runX, 0, Gfx.argb(runCol == 1 ? a : Math.round(a * 0.55f), runCol == 1 ? sung : 0xC6CAD6), true);
-                run.setLength(0); runCol = col; runX = px;
-            }
-            if (i < total) { String ch = String.valueOf(text.charAt(i)); run.append(ch); px += f.width(ch); }
-        }
+        Gfx.txt(g, f, text, 0, 0, Gfx.argb(a, Ritual.mixc(acc, 0xFFFFFF, 0.3f)), true);
         Gfx.pop(g);
     }
 

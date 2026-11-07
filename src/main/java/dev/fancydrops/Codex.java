@@ -610,46 +610,6 @@ final class Codex {
 
     // ------------------------------------------------------------------ the opening film
     private static void skipIntro() { long n = System.currentTimeMillis(); long d = openAt - n; if (d <= 0) return; openAt = n; if (zoomAt > 0) zoomAt -= d; blinkAt -= d; introSounds = 3; }
-    /** u ms into the film: the stargazer close up, then the camera pushes into the telescope's lens until the lens fills the screen. */
-    private static void intro(GuiGraphicsExtractor g, long u) {
-        int fw = Math.round(Math.min(W - 24, H * 2.0f)), fh = Math.round(Math.min(H - 24, fw / 1.7f));
-        sw = fw; sh = fh; sx0 = Math.round(W / 2f - sw / 2f); sy0 = Math.round(H / 2f - sh / 2f);
-        float[] cam = camOf(-1); camU = cam[0]; camV = cam[1]; camS = cam[2]; warp = 0; alpha = 1f;
-        g.fill(0, 0, W, H, argb(cl(u / 250f) * 0.72f, 0x02010A));
-        float fadeIn = cl(u / 350f);
-        g.enableScissor(sx0, sy0, sx0 + sw, sy0 + sh);
-        sky(g);
-        float push = cl((u - 900f) / (INTRO - 900f)), pe = push * push * push;                       // 0..900 ms: the close-up, then the push into the lens
-        if (introSounds < 1 && u >= 900) { introSounds = 1; sound("sky_zoom", 1.1f, 0.8f); }
-        float k0 = 3.4f + 0.5f * cl(u / 900f), kz = k0 * (float) Math.pow(70f / k0, pe);
-        if (u < 40 || lensX == 0) stargazer(g, 0f, true);                                           // (nothing drawn: works out where the lens is; once)
-        float fx0 = (headXs + lensX) / 2f, fy0 = (headYs + lensY) / 2f, fx = fx0 + (lensX - fx0) * ease(push * 1.6f), fy = fy0 + (lensY - fy0) * ease(push * 1.6f);
-        float tx = sx0 + sw * (0.42f + 0.08f * ease(push)), ty = sy0 + sh * (0.58f - 0.08f * ease(push));
-        Gfx.push(g); Gfx.translate(g, tx, ty); Gfx.scale(g, kz); Gfx.translate(g, -fx, -fy);
-        stargazer(g, fadeIn, true);
-        Gfx.pop(g);
-        float lensGlow = cl((push - 0.55f) / 0.45f);                                                 // the lens's light swells to fill the screen
-        if (lensGlow > 0f) { float lx = tx + (lensX - fx) * kz, ly = ty + (lensY - fy) * kz; glow(lx, ly, Math.max(sw, sh) * (0.2f + lensGlow), 0xCFE0FF, lensGlow); g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(lensGlow * lensGlow * 0.85f, 0xE8F0FF)); }
-        if (u < 900) {                                                                                 // a line of words while they look
-            float ta = cl(u / 300f) * cl((900 - u) / 250f); String cap = "✦  looking up  ✦"; int cw = host.width(cap);
-            text(g, cap, Math.round(sx0 + sw * 0.62f - cw / 2f), Math.round(sy0 + sh * 0.8f), argb(ta * 0.85f, 0xE9D9A8), true);
-        }
-        g.disableScissor();
-        frame(g);
-    }
-    /** The lens's edge while the page opens out of it: dark outside the circle, a brass rim on it. */
-    private static void lensMask(GuiGraphicsExtractor g, float cx, float cy, float r, float a) {
-        int c = argb(cl(a * 1.6f), 0x02010A);
-        int top = Math.max(sy0, Math.round(cy - r)), bot = Math.min(sy0 + sh, Math.round(cy + r));
-        if (top > sy0) g.fill(sx0, sy0, sx0 + sw, top, c); if (bot < sy0 + sh) g.fill(sx0, bot, sx0 + sw, sy0 + sh, c);   // whole bands above and below: one fill each
-        for (int y = top; y < bot; y += 3) {
-            float dy = y + 1.5f - cy;
-            int hw = Math.round((float) Math.sqrt(Math.max(0f, r * r - dy * dy)));
-            g.fill(sx0, y, Math.round(cx) - hw, Math.min(bot, y + 3), c); g.fill(Math.round(cx) + hw, y, sx0 + sw, Math.min(bot, y + 3), c);
-        }
-        ring(cx, cy, r, argb(a, 0xA88BFF), 1f); ring(cx, cy, r + 3, argb(a * 0.5f, 0xB08A3A), 1f);
-        glow(cx, cy - r, r * 0.6f, 0xE8F0FF, 0.25f * a);
-    }
 
     // ------------------------------------------------------------------ the skill tree of a constellation
     /** One node of a chapter's tree: an achievement, where it sits (sky units from the chapter centre), the node before it on its branch (-1 = the heart). */

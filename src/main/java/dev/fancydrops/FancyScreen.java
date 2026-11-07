@@ -23,7 +23,7 @@ public class FancyScreen extends Screen {
         ANIMATIONS("Animations", "firework_rocket", "Change how every drop looks and plays"),
         SOUNDS("Sounds", "note_block", "Volume and the sound of every moment"),
         CHAT("Chat", "writable_book", "Announce rare drops to your party or co-op"),
-        VISUALS("Visuals", "spyglass", "Now Playing, lyrics and your HUD"),
+        VISUALS("Visuals", "spyglass", "Your music and the sky around you"),
         GENERAL("Settings", "comparator", "Menu, prices and data"),
         COSMETICS("Cosmetics", "nether_star", "Name icons, name effects and auras");
         final String label, icon, sub;
@@ -320,6 +320,7 @@ public class FancyScreen extends Screen {
 
     /** Set by /fd stats and /fd <search>: the next menu opens on the Stats page, or with this text in the search box. */
     private int codexPend = -2;          // the Collection opens on this chapter at the next frame (-2 = no)
+    private static int musicSel;                                                     // Visuals > Music: which of Now Playing / Lyrics / Ambience / Spotify
     static boolean pendingStats, pendingCos; static String pendingSearch, pendingTab, pendingStar; private String codexStar;
 
     private static boolean prefetchedAll;
@@ -1581,7 +1582,7 @@ public class FancyScreen extends Screen {
             case ANIMATIONS -> Icons.draw(g, "animations", x, y, now);
             case SOUNDS -> Icons.draw(g, "sounds", x, y, now);
             case CHAT -> Icons.draw(g, "chat", x, y, now);
-            case VISUALS -> Icons.draw(g, "note", x, y, now);
+            case VISUALS -> Icons.draw(g, "visuals", x, y, now);
             case GENERAL -> Icons.draw(g, "settings", x, y, now);
             case COSMETICS -> Icons.draw(g, "sparkle", x, y, now);
             default -> Gfx.item(g, t.icon, x, y);
@@ -2283,7 +2284,7 @@ public class FancyScreen extends Screen {
             case HOME -> l.add(new SubPage("Resources", ":res_heart:", 0xFFFF6B8A, false));
             case DROPS, ANIMATIONS, SOUNDS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), c.wip())); }
             case CHAT -> { l.add(new SubPage("Message & Channel", ":format:", 0xFFFFC857, false)); l.add(new SubPage("Chat Enabled", ":bell:", 0xFF7BE05A, false)); }
-            case VISUALS -> { l.add(new SubPage("Now Playing", ":disc:", 0xFF1ED760, false)); l.add(new SubPage("Lyrics", ":note:", 0xFFFFC8A0, false)); l.add(new SubPage("Ambience", ":amb:", 0xFFB48CFF, false)); l.add(new SubPage("Spotify", ":spot:", 0xFF1DB954, false)); }
+            case VISUALS -> { l.add(new SubPage("Music", ":note:", 0xFF1ED760, false)); l.add(new SubPage("Cosmos", ":cosmos:", 0xFF9B7BFF, false)); }
             case GENERAL -> {
                 l.add(new SubPage("Menu", ":menu:", 0xFFB0B6C2, false)); l.add(new SubPage("Cosmetics", ":cosmetics:", 0xFFC77DFF, false));
                 l.add(new SubPage("Prices", ":coin:", 0xFFFFC857, false)); l.add(new SubPage("Drop Data", ":refresh:", 0xFF56D8FF, false));
@@ -2782,19 +2783,37 @@ public class FancyScreen extends Screen {
     // ---- Chat
 
     // ---- Visuals: Now Playing, Lyrics, Spotify
+    /** Visuals > Cosmos: the sky around you while you play. */
+    private void cosmosPage(FancyConfig c) {
+        rows.add(note("The sky around you while you play, drawn lightly over the game. Everything fades away during drop animations.", 0xFF9B7BFF));
+        rows.add(section("Night sky"));
+        rows.add(toggle(":cos_shoot:", "Shooting stars", "Now and then a meteor streaks across the top of your screen", () -> c.cosShooting, v -> c.cosShooting = v));
+        if (c.cosShooting) rows.add(toggle(":clock:", "Only at night", "Only once it's dark in your world", () -> c.cosShootNight, v -> c.cosShootNight = v));
+        rows.add(toggle(":cos_night:", "Starry corners", "At night, faint stars twinkle in the top corners of your screen", () -> c.cosNight, v -> c.cosNight = v));
+        rows.add(toggle(":cos_aurora:", "Aurora", "At night, a soft ribbon of violet and green light sways across the top", () -> c.cosAurora, v -> c.cosAurora = v));
+        rows.add(section("Moments"));
+        rows.add(toggle(":cos_meteor:", "Meteor on RNG", "A big meteor burns across your screen the moment an RNG drop lands", () -> c.cosMeteor, v -> c.cosMeteor = v));
+        rows.add(section("Instruments"));
+        rows.add(toggle(":cos_clock:", "Celestial clock", "A little dial, top left: the sun and moon on their arc at the real time, the moon's phase", () -> c.cosClock, v -> c.cosClock = v));
+    }
     private void visualsPage(FancyConfig c) {
         String[] wheres = {"Starlight", "Constellation", "Drift", "Sung line"};
         int ambOn = (c.ambGlow ? 1 : 0) + (c.ambBars ? 1 : 0) + (c.ambNotes ? 1 : 0) + (c.ambWave ? 1 : 0);
         if (searching || landing()) {
-            rows.add(hero(":note:", "Visuals", "Your music in the game: what's playing, the words floating in front of you, and a little atmosphere in the album's colours.", 0xFF1ED760));
-            String[] lb = {"Now Playing", "Lyrics", "Ambience", "Spotify"};
-            String[] sb = {c.npOn ? "On \u00B7 " + c.npScale + "%" : "Off", c.lyricsOn ? wheres[c.lyricsStyle] : "Off", ambOn == 0 ? "Off" : ambOn + " of 4 on", Spotify.linked() ? "Linked" : "Not linked yet"};
-            rows.add(picker("", "", lb, sb, new String[]{":disc:", ":note:", ":amb:", ":spot:"}, new int[]{0xFF1ED760, 0xFFFFC8A0, 0xFFB48CFF, 0xFF1DB954}, null, 2, () -> -1, i -> openPage(i, null, null)));
-            if (!Spotify.linked()) rows.add(note("Start with Spotify: link it once and everything here comes alive.", 0xFF1ED760));
-            else if (!Spotify.status.isEmpty()) rows.add(note(Spotify.status, 0xFF8A93B0));
+            rows.add(hero(":visuals:", "Visuals", "How Stardrops looks while you play: your music on screen, and the sky around you.", 0xFF9B7BFF));
+            int cosOn = (c.cosShooting ? 1 : 0) + (c.cosClock ? 1 : 0) + (c.cosNight ? 1 : 0) + (c.cosMeteor ? 1 : 0) + (c.cosAurora ? 1 : 0);
+            rows.add(picker("", "", new String[]{"Music", "Cosmos"}, new String[]{Spotify.linked() ? (c.npOn ? "Now Playing on" : "Linked") : "Spotify not linked yet", cosOn == 0 ? "Off" : cosOn + " of 5 on"},
+                new String[]{":note:", ":cosmos:"}, new int[]{0xFF1ED760, 0xFF9B7BFF}, null, 2, () -> -1, i -> openPage(i, null, null)));
+            if (!Spotify.linked()) rows.add(note("Music starts with Spotify: link it once and everything there comes alive.", 0xFF1ED760));
             return;
         }
-        if (curSub() == 0) {
+        if (curSub() == 1) { cosmosPage(c); return; }
+        // Music: Now Playing, Lyrics, Ambience and Spotify, picked here
+        String[] lb = {"Now Playing", "Lyrics", "Ambience", "Spotify"};
+        String[] sb = {c.npOn ? "On \u00B7 " + c.npScale + "%" : "Off", c.lyricsOn ? wheres[c.lyricsStyle] : "Off", ambOn == 0 ? "Off" : ambOn + " of 4 on", Spotify.linked() ? "Linked" : "Not linked yet"};
+        rows.add(picker("", "", lb, sb, new String[]{":disc:", ":note:", ":amb:", ":spot:"}, new int[]{0xFF1ED760, 0xFFFFC8A0, 0xFFB48CFF, 0xFF1DB954}, null, 4, () -> musicSel, i -> { musicSel = i; scroll = 0; }));
+        int ms = musicSel;
+        if (ms == 0) {
             rows.add(toggle(":disc:", "Now Playing", "The song you're playing, on your screen", () -> c.npOn, v -> c.npOn = v));
             if (!c.npOn) return;
             rows.add(section("Place"));
@@ -2808,7 +2827,7 @@ public class FancyScreen extends Screen {
             rows.add(note("It waits below boss bars and steps aside during drop animations.", 0xFF8A93B0));
             return;
         }
-        if (curSub() == 1) {
+        if (ms == 1) {
             rows.add(toggle(":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v));
             if (!c.lyricsOn) { if (!Lyrics.status.isEmpty()) rows.add(note(Lyrics.status, 0xFF8A93B0)); return; }
             rows.add(section("Style"));
@@ -2847,7 +2866,7 @@ public class FancyScreen extends Screen {
             rows.add(note(Lyrics.status.isEmpty() ? "The words take the album cover's colour and step aside during drop animations." : Lyrics.status, 0xFF8A93B0));
             return;
         }
-        if (curSub() == 2) {
+        if (ms == 2) {
             rows.add(note("Atmosphere in the album's colours, only while a song plays. Everything fades away during drop animations.", 0xFFB48CFF));
             rows.add(section("Screen"));
             rows.add(toggle(":amb_glow:", "Album glow", "The edges of your screen glow softly, breathing", () -> c.ambGlow, v -> c.ambGlow = v));
@@ -3370,38 +3389,11 @@ public class FancyScreen extends Screen {
             float mv = anim("masterSw", on ? 1f : 0f, 30f), hv = anim("masterHv", mh ? 1f : 0f, 48f);
             int w = b[2] - b[0], h = b[3] - b[1];
             float pulse = STILL ? 0.5f : 0.5f + 0.5f * (float) Math.sin(fxNow / 420.0);
-            pill(g, b[0], b[1], w, h, Canvas.mix(Canvas.mix(Ui.PANEL2, 0xFF1D2338, mv), 0xFF23283A, hv * 0.8f));
-            rout(g, b[0], b[1], w, h, Gfx.argb(Math.round(70 + 60 * hv + 70 * pulse * mv), mv > 0.5f ? 0x62E6A8 : 0xE5484D));
-            Gfx.text(g, font, "Active", b[0] + 7, b[1] + 3, Canvas.mix(0xFF9A9AA8, Ui.TEXT, mv));
-            Gfx.text(g, font, on ? "ON" : "OFF", b[0] + 7, b[1] + 12, Canvas.mix(0xFFE5484D, 0xFF62E6A8, mv));
-            // a lever in a lit slot: thrown from the left (off, red) to the right (on, green); it eases over and the knob glows
+            // Launch control: off, the rocket sits docked on its pad; on, it blasts off and circles a little planet. Switching
+            // plays the launch (or the landing): flame, smoke puffs, the climb into orbit.
             if (on != masterLast) { masterLast = on; masterAt = now; }
-            float tt = Math.min(1.4f, (now - masterAt) / 1000f), target = on ? 1f : 0f;
-            float ep = Math.min(1f, tt / 0.22f); ep = 1f - (1f - ep) * (1f - ep);                      // a plain ease-out: no bounce
-            float pos = target + ((on ? 0f : 1f) - target) * (1f - ep);
-            if (masterAt == 0L) pos = target;
-            int sx0 = b[0] + 46, sx1 = b[2] - 7, lvY = b[1] + 16, slotW = sx1 - sx0;                      // the slot the lever runs in
-            pill(g, sx0 - 3, lvY - 4, slotW + 6, 9, 0xFF080A10); rout(g, sx0 - 3, lvY - 4, slotW + 6, 9, Canvas.mix(0xFF3A4054, on ? 0xFF62E6A8 : 0xFFE5484D, 0.35f + 0.3f * pulse * mv));
-            int segs = 7;
-            for (int sg = 0; sg < segs; sg++) {                                                           // little lights along the slot: they fill up as the lever goes over
-                float lu = sg / (float) (segs - 1); boolean lit = lu <= pos + 0.02f; int lc = Canvas.mix(0xFFE5484D, 0xFF3FD18A, lu);
-                int lxx = sx0 + 2 + Math.round(lu * (slotW - 6));
-                g.fill(lxx, lvY - 1, lxx + 3, lvY + 2, lit ? lc : 0xFF1B1F2C);
-                if (lit) g.fill(lxx, lvY - 1, lxx + 3, lvY, Canvas.mix(lc, 0xFFFFFFFF, 0.45f));
-            }
-            float kp = Math.max(0f, Math.min(1f, pos));
-            int kx = sx0 + 2 + Math.round(kp * (slotW - 6)) + 1;
-            double lean = Math.toRadians(-26 + 52 * kp); int ky0 = lvY + 1, handle = 11;                      // the handle leans with the throw
-            int hx = kx + (int) Math.round(Math.sin(lean) * handle), hy = ky0 - (int) Math.round(Math.cos(lean) * handle);
-            for (int st = 0; st <= handle; st++) {
-                int ltx = kx + (int) Math.round(Math.sin(lean) * st), lty = ky0 - (int) Math.round(Math.cos(lean) * st);
-                g.fill(ltx, lty, ltx + 2, lty + 2, 0xFF6A7088); g.fill(ltx, lty, ltx + 1, lty + 1, 0xFFC9CFE0);
-            }
-            int kc = Canvas.mix(0xFFE5484D, 0xFF3FD18A, Math.max(0f, Math.min(1f, kp)));
-            if (mv > 0.05f) for (int gl = 3; gl >= 1; gl--) pill(g, hx - 1 - gl * 2, hy - 1 - gl * 2, 6 + gl * 4, 6 + gl * 4, Gfx.argb(Math.round((18 + 26 * pulse) * mv / gl), kc & 0xFFFFFF));      // the knob glows while it is on
-            g.fill(hx - 2, hy - 2, hx + 4, hy + 4, 0xFF0C0E14); g.fill(hx - 1, hy - 1, hx + 3, hy + 3, kc); g.fill(hx - 1, hy - 1, hx + 1, hy, Canvas.mix(kc, 0xFFFFFFFF, 0.6f));
-            g.fill(kx - 2, ky0 - 1, kx + 3, ky0 + 3, 0xFF8A90A6); g.fill(kx - 1, ky0, kx + 2, ky0 + 2, 0xFFD6DAE8);          // the pivot bolt
-            if (on && !STILL) { int sw = b[0] + 2 + (int) (((now % 2600L) / 2600f) * (w - 4)); g.enableScissor(b[0] + 1, b[1] + 1, b[2] - 1, b[3] - 1); for (int i = 0; i < 6; i++) g.fill(sw + i, b[1] + 1, sw + i + 1, b[3] - 1, Gfx.argb(Math.round(26 * (1f - Math.abs(i - 3) / 3f)), 0xFFFFFF)); g.disableScissor(); }
+            float tt = masterAt == 0L ? 9f : (now - masterAt) / 1000f, fly = on ? ease(Math.min(1f, tt / 1.1f)) : 1f - ease(Math.min(1f, tt / 0.9f));
+            LaunchPad.draw(g, font, b[0], b[1], w, h, on, fly, mv, hv, pulse, now, STILL);
         }
         // page header
         Gfx.text(g, font, Gfx.fit(font, pageTitle(), cw - 134), cx, py + 9, Ui.TEXT);                      // the title alone: no line of words under it

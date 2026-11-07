@@ -83,7 +83,7 @@ final class Achievements {
         fetching = true; fetchedAt = now;
         CompletableFuture.runAsync(() -> {
             try {
-                var res = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(b + "/profile/" + Cosmetics.code(me))).header("User-Agent", "FancyDrops").GET().build(), HttpResponse.BodyHandlers.ofString());
+                var res = Net.HTTP.send(HttpRequest.newBuilder(URI.create(b + "/profile/" + Cosmetics.code(me))).header("User-Agent", "FancyDrops").GET().build(), HttpResponse.BodyHandlers.ofString());
                 if (res.statusCode() != 200) { status = res.statusCode() == 404 ? "The ledger is being updated. Back soon." : "The ledger server answered " + res.statusCode() + "."; System.err.println("[FancyDrops] ledger: GET /profile answered " + res.statusCode() + " (the worker needs tools/worn-worker.js deployed)"); failedAt = System.currentTimeMillis(); return; }
                 profile = parse(JsonParser.parseString(res.body()).getAsJsonObject()); status = ""; CosmeticData.changed();
             } catch (Throwable t) { status = "Can't reach the ledger right now."; failedAt = System.currentTimeMillis(); }
@@ -145,7 +145,7 @@ final class Achievements {
             try {
                 JsonObject o = signed(mc, me, name, token);
                 com.google.gson.JsonArray arr = new com.google.gson.JsonArray(); for (JsonObject e : batch) arr.add(e); o.add("events", arr);
-                var res = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(b + "/event")).header("User-Agent", "FancyDrops").header("Content-Type", "application/json")
+                var res = Net.HTTP.send(HttpRequest.newBuilder(URI.create(b + "/event")).header("User-Agent", "FancyDrops").header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(o.toString())).build(), HttpResponse.BodyHandlers.ofString());
                 if (res.statusCode() != 200) { System.err.println("[FancyDrops] ledger: " + res.statusCode() + " " + res.body()); requeue(batch, res.statusCode() == 403 ? "Drops are waiting: the server couldn't confirm it's you (" + res.body() + ")" : "Drops are waiting: the server said " + res.statusCode()); return; }
                 savePending(List.of()); syncNote = "";

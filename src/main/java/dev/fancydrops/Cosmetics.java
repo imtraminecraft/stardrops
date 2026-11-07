@@ -64,7 +64,7 @@ final class Cosmetics {
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             String msg;
             try {
-                var http = java.net.http.HttpClient.newHttpClient();
+                var http = Net.HTTP;
                 String api = "https://api.github.com/repos/imtraminecraft/fancydrops/contents/cosmetics.json";
                 var get = http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(api + "?ref=main")).header("User-Agent", "FancyDrops").header("Accept", "application/vnd.github+json").header("Authorization", "Bearer " + token).GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 String sha = null;
@@ -105,7 +105,7 @@ final class Cosmetics {
         remoteAt = now;
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                var res = java.net.http.HttpClient.newHttpClient().send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(REMOTE_URL)).header("User-Agent", "FancyDrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(REMOTE_URL)).header("User-Agent", "FancyDrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 if (res.statusCode() != 200) return;
                 Map<String, Set<String>> m = new HashMap<>();
                 for (var e : BUILTIN.entrySet()) m.put(e.getKey(), new HashSet<>(e.getValue()));
@@ -140,7 +140,7 @@ final class Cosmetics {
         if (u == null || now - wornAt < 60_000L) return; wornAt = now;
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                var res = java.net.http.HttpClient.newHttpClient().send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "FancyDrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "FancyDrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 if (res.statusCode() != 200) { System.err.println("[FancyDrops] worn list: " + res.statusCode()); return; }
                 Map<String, String[]> m = new HashMap<>();
                 for (var e : com.google.gson.JsonParser.parseString(res.body()).getAsJsonObject().entrySet()) {
@@ -169,7 +169,7 @@ final class Cosmetics {
                 mc.services().sessionService().joinServer(me, token, sid.toString());           // proves to Mojang (and so to the server) that this pick comes from you
                 com.google.gson.JsonObject o = new com.google.gson.JsonObject();
                 o.addProperty("name", name); o.addProperty("serverId", sid.toString()); o.addProperty("suffix", sx); o.addProperty("fx", fx); o.addProperty("aura", au);
-                var res = java.net.http.HttpClient.newHttpClient().send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "FancyDrops").header("Content-Type", "application/json")
+                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "FancyDrops").header("Content-Type", "application/json")
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString(o.toString())).build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 System.err.println("[FancyDrops] shared your cosmetics (" + (sx.isEmpty() ? "-" : sx) + ", " + (fx.isEmpty() ? "-" : fx) + ", " + (au.isEmpty() ? "-" : au) + "): " + res.statusCode() + " " + res.body());
                 wornAt = 0;

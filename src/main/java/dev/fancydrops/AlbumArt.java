@@ -24,7 +24,7 @@ final class AlbumArt {
         forUrl = url; ready = false;
         Thread t = new Thread(() -> {
             try {
-                byte[] b = HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "FancyDrops").GET().build(), HttpResponse.BodyHandlers.ofByteArray()).body();
+                byte[] b = Net.HTTP.send(HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "FancyDrops").GET().build(), HttpResponse.BodyHandlers.ofByteArray()).body();
                 java.awt.image.BufferedImage src = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(b));      // album pictures are JPEG: read with Java, then copy into a texture
                 if (src == null || !url.equals(forUrl)) return;
                 int S = 64; java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(S, S, java.awt.image.BufferedImage.TYPE_INT_ARGB);
