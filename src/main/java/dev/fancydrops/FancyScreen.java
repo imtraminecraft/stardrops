@@ -2856,7 +2856,7 @@ public class FancyScreen extends Screen {
                 rows.add(toggle(":amb_glow:", "Nebula glow", "A soft nebula behind the words, tinted by the album", () -> c.lyricsGlow, v -> c.lyricsGlow = v));
                 rows.add(toggle(":format:", "Backdrop", "A dark shade behind the words, so they read anywhere", () -> c.lyricsShade, v -> c.lyricsShade = v));
             }
-            rows.add(toggle(":lyr_intro:", "Song intro", "A ringed planet rises with the song's name", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
+            rows.add(toggle(":lyr_intro:", "Song intro", "A hyperspace arrival: the title decodes in, then it jumps to lightspeed", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
             Row off = row(0, ":lyr_timing:", "Timing", "Words early or late? Nudge them", Ui.ACCENT);
             off.ctls.add(new Slider(-1500, 1500, 50, () -> c.lyricsOffset, v -> c.lyricsOffset = (int) v, () -> (c.lyricsOffset > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", c.lyricsOffset / 1000.0))); rows.add(off);
             Spotify.Track st = Spotify.track;

@@ -392,7 +392,7 @@ final class Codex {
     }
     private static void stargazer(GuiGraphicsExtractor g, float a) { stargazer(g, a, false); }
     /** Over the stargazer, the cat, the lantern or the telescope (bottom left): not over a constellation. */
-    private static boolean overScene(float x, float y) { float k = sh / 150f, p = 0.8f * k, hx = sx0 + sw * 0.12f; return x < hx + 30 * p && x > sx0 && y > ground(x) - 34 * p; }
+    private static boolean overScene(float x, float y) { float k = sh / 150f, p = 0.8f * k, hx = sx0 + sw * 0.12f; return x < hx + 40 * p && x > sx0 && y > ground(x) - 34 * p; }
     /** film: the scope holds still on the sky (the opening), and the lens is remembered for the camera. */
     private static float lensX, lensY, headXs, headYs;
     private static void stargazer(GuiGraphicsExtractor g, float a, boolean film) {
@@ -415,7 +415,7 @@ final class Codex {
         for (int i = 0; i < 2; i++) { float mt = now / (700f + i * 230f) + i * 2.1f; float mxp = lx + (float) Math.cos(mt) * (5 + i * 3) * p, myp = ly - 4 * p + (float) Math.sin(mt * 1.7f) * 4 * p;      // two moths round it
             g.fill(Math.round(mxp), Math.round(myp), Math.round(mxp) + 1, Math.round(myp) + 1, argb(0.8f * a * alpha, 0xFFE8C0)); }
         // the telescope on its tripod, a little to the right, turning smoothly to the constellation under your mouse
-        float mountX = hx + 17 * p, mountY = ground(mountX) - 13 * p;
+        float mountX = hx + 29 * p, mountY = ground(mountX) - 13 * p;
         float want;
         if (film) want = -1.05f;
         else if (hoverCon >= 0) { float[] o = centre(hoverCon); want = (float) Math.atan2(Y(o[1]) - mountY, X(o[0]) - mountX); }
@@ -424,44 +424,46 @@ final class Codex {
         float dtS = Math.min(0.05f, Math.max(0f, (now - scopeAt) / 1000f)); scopeAt = now;
         scopeAng += (want - scopeAng) * (film ? 0.2f : Math.min(1f, dtS * 2.2f));
         float ca = (float) Math.cos(scopeAng), sa = (float) Math.sin(scopeAng);
-        // now and then they reach down and pet the cat (a few seconds, at random moments)
+        // now and then they reach over and pet the cat (a few seconds, at random moments)
         long slot = now / 9000L; float pet = 0f;
         if (!film && rnd((int) (slot * 7 + 3)) < 0.65f) { long st = slot * 9000L + (long) (rnd((int) (slot * 13 + 1)) * 4500); float u = (now - st) / 3200f; if (u > 0f && u < 1f) pet = Math.min(1f, Math.min(u / 0.18f, (1f - u) / 0.18f)); }
         if (petForce >= 0f) pet = petForce;                                                            // (the bench)
         pet = pet * pet * (3 - 2 * pet);
-        float stroke = pet * (float) Math.sin(now / 260.0) * 2.2f * p;                                  // the hand moving along its back
-        float breath = (float) Math.sin(now / 1400.0) * 0.25f * p;
-        // the cat, lying down beside them: a long low body, its head up at the far end, its tail curled behind; it lifts its head when petted
-        float cx0 = hx - 13 * p, cgy = ground(cx0) + 0.3f * p, flick = (now % 5000L) < 700 ? (float) Math.sin((now % 5000L) / 700.0 * Math.PI * 2) * 0.5f : 0f;
-        flick += pet * (float) Math.sin(now / 180.0) * 0.4f;                                           // its tail swishes while it is petted
-        float lift = pet * 1.2f * p;
-        // shadows first (cast away from the lantern, across the lit grass), then the shapes, then their lantern-lit edges
-        shadow(cx0 - 6 * p, 12 * p, 4 * p, lx, a);
-        shadow(hx - 3 * p, 8 * p, 24 * p, lx, a);
+        float stroke = pet * (float) Math.sin(now / 260.0) * 1.6f;                                     // the hand moving along its back (skin pixels)
+        float breath = 0.25f + 0.25f * (float) Math.sin(now / 1500.0);
+        // One frame for both, lying along the hill: x along the ground (right), y up from it, in Minecraft skin pixels (u each).
+        float su = 0.95f * p, bx = hx - 8 * p, by = ground(bx), bang = (float) Math.atan2(ground(bx + 30 * su) - by, 30 * su);
+        float flick = (now % 5000L) < 700 ? (float) Math.sin((now % 5000L) / 700.0 * Math.PI * 2) * 0.5f : 0f;
+        flick += pet * (float) Math.sin(now / 180.0) * 0.5f;
+        float lift = pet * 1.2f;
+        // shadows across the lit grass, away from the lantern
+        shadow(bx - 15 * su, 13 * su, 6 * su, lx, a);
+        shadow(fx(0), 32 * su, 10 * su, lx, a);
         shadow(mountX - 5 * p, 11 * p, 14 * p, lx, a * 0.7f);
-        mcBox(cx0 - 6 * p, cgy - 4 * p, 0, 0, 0, 11 * p, 4 * p, 0x05040A, 0f, a);                            // body
-        mcBox(cx0 - 8.5f * p, cgy - 6.5f * p - lift, 0, 0, 0, 4.5f * p, 4.5f * p, 0x05040A, 0f, a);           // head (at the lantern end)
-        mcBox(cx0 - 8.5f * p, cgy - 8 * p - lift, 0, 0, 0, 1.4f * p, 1.6f * p, 0x05040A, 0f, a); mcBox(cx0 - 5.4f * p, cgy - 8 * p - lift, 0, 0, 0, 1.4f * p, 1.6f * p, 0x05040A, 0f, a);   // ears
-        mcBox(cx0 - 5 * p, cgy - 1.2f * p, 0, 0, 0, 2 * p, 1.2f * p, 0x05040A, 0f, a);                       // front paws
-        mcBox(cx0 + 4.5f * p, cgy - 1.4f * p, -0.12f + flick * 0.6f, 0, 0, 4 * p, 1.3f * p, 0x05040A, 0f, a);  // the tail, along the grass
-        mcBox(cx0 + 8.2f * p, cgy - 1.9f * p, -0.9f + flick, 0, 0, 2 * p, 1.2f * p, 0x05040A, 0f, a);       // its tip, curling up
-        // the figure (Minecraft proportions, side on): sitting with legs out on the grass, leaning back a little, looking up at the sky
-        float gx0 = hx, gy0 = ground(gx0), slope = (float) Math.atan2(ground(gx0 + 12 * p) - gy0, 12 * p);
-        mcBox(gx0, gy0 - 4 * p, slope, 0, 0, 12 * p, 4 * p, 0x05040A, 0f, a);                              // legs, out in front
-        float lean = -0.12f - 0.04f * pet;                                                               // leans toward the cat to pet it
-        float upA = -(float) Math.PI / 2 + lean, ux = (float) Math.cos(upA), uy = (float) Math.sin(upA);
-        float hipX = gx0 + 2 * p, hipY = gy0 - 2 * p + breath * 0.3f;
-        mcBox(hipX, hipY, upA, 0, -2 * p, 12 * p, 4 * p, 0x05040A, 0f, a);                                   // body
-        float hcX = hipX + ux * 16 * p, hcY = hipY + uy * 16 * p + breath;
-        float gaze = -0.45f + 0.08f * (float) Math.sin(now / 4300.0) + pet * 0.55f;                    // looking up at the stars (down at the cat while petting)
-        mcBox(hcX, hcY, gaze, -4 * p, -4 * p, 8 * p, 8 * p, 0x05040A, 0f, a);                                // head
-        headXs = hcX; headYs = hcY;
-        // the arm: resting back on the grass, propping them up; or reaching down to the cat's back
-        float shX = hipX + ux * 10.5f * p, shY = hipY + uy * 10.5f * p;
-        float restX = gx0 + 7 * p, restY = gy0 - 4.5f * p, petX = cx0 + 1 * p + stroke, petY = cgy - 4.2f * p - lift * 0.3f;
-        float hdX = restX + (petX - restX) * pet, hdY = restY + (petY - restY) * pet;
-        float aa = (float) Math.atan2(hdY - shY, hdX - shX), al = (float) Math.hypot(hdX - shX, hdY - shY);
-        mcBox(shX, shY, aa, 0, -2 * p, al, 4 * p, 0x05040A, 0f, a);
+        frame(bx - 17 * su, su);
+        // the cat, curled up by their head: a round loaf, its head toward the lantern, its tail wrapped along the front
+        fb(2, 0, 11, 4.5f, a); fb(3, 4.5f, 9, 1, a);                                               // body, its rounded back
+        fb(-1.5f, 2.5f + lift, 5, 4.5f, a);                                                          // head
+        fb(-1.5f, 7 + lift, 1.4f, 1.6f, a); fb(1.9f, 7 + lift, 1.4f, 1.6f, a);                     // ears
+        fbr(12.5f, 0.3f, -0.15f + flick * 0.5f, 4, 1.3f, a);                                           // tail, along the grass by their head
+        frim(-1.5f, 2.5f + lift, 4.5f, lx, a); frim(2, 0, 4.5f, lx, a * 0.8f);
+        float[] catBack = fp(7 + 0, 5.2f + lift * 0.3f);
+        frame(bx, su, 32);
+        // the figure: lying on their back, head by the cat, hands behind the head, one knee up
+        fb(0, 0, 8, 8, a);                                                                             // head
+        fb(8, 0, 12, 4 + breath, a);                                                                   // body (rising and falling a little)
+        fb(20, 0, 12, 4, a);                                                                           // the straight leg
+        fbr(20, 1, -0.95f, 9.5f, 4, a); fbr(25.5f, 8.6f, 1.05f, 9.5f, 4, a);                                // the other: thigh up to the knee, shin down
+        // the arm: folded behind the head, or reaching over to stroke the cat
+        float[] cb = toFrame(catBack[0], catBack[1]); float shx = 10, shy = 3.5f, rx = 3, ry = 9.5f, px2 = cb[0] + stroke, py2 = cb[1];
+        float hx2 = rx + (px2 - rx) * pet, hy2 = ry + (py2 - ry) * pet;
+        fbar(shx, shy, hx2, hy2, 3.6f, a);
+        if (pet < 0.5f) fbar(10, 2, 5, 8.5f, 3.6f, a * (1f - pet * 2f));                              // the other arm, behind the head
+        // the lantern's light on the edges that face it
+        frim(0, 0, 8, lx, a * 0.8f);
+        if (pet > 0.3f) for (int i = 0; i < 3; i++) {                                                    // a little warmth rising off the cat while it is petted
+            float q = ((now / 900f) + i / 3f) % 1f; float[] w = {catBack[0] + (i - 1) * 3 * su, catBack[1] - (2 + q * 8) * su}; glow(w[0], w[1], 2 * p, 0xFFD8A0, 0.5f * (1f - q) * pet * a);
+        }
         // the telescope
         float gL = ground(mountX - 5 * p), gR = ground(mountX + 6 * p), gM = ground(mountX + 1 * p);
         for (float[] lg : new float[][]{{mountX - 5 * p, gL + p}, {mountX + 6 * p, gR + p}, {mountX + 1 * p, gM + p}}) { float la2 = (float) Math.atan2(lg[1] - mountY, lg[0] - mountX), ll = (float) Math.hypot(lg[0] - mountX, lg[1] - mountY); mcBox(mountX, mountY, la2, 0, -0.6f * p, ll, 1.2f * p, 0x05040A, 0f, a); }
@@ -469,12 +471,6 @@ final class Codex {
         mcBox(mountX, mountY, scopeAng, -6 * p, -1.3f * p, 16 * p, 2.6f * p, 0x05040A, 0f, a);
         mcBox(mountX, mountY, scopeAng, 7 * p, -1.7f * p, 3 * p, 3.4f * p, 0x05040A, 0f, a);
         mcBox(mountX, mountY, scopeAng, -8 * p, -0.6f * p, 2 * p, 1.2f * p, 0x05040A, 0f, a);
-        // the lantern's light catching the edges that face it (warm, fainter the further away)
-        rim(cx0 - 8.5f * p, cgy - 6.5f * p - lift, 4.5f * p, lx, a, p); rim(cx0 - 6 * p, cgy - 2 * p, 2 * p, lx, a, p);
-        rimBox(hipX, hipY, upA, 0, -2 * p, 12 * p, 0.7f * p, lx, a * 0.7f, p); rimBox(hcX, hcY, gaze, -4 * p, -4 * p, 0.7f * p, 8 * p, lx, a * 0.8f, p);   // the back of the body and of the head
-        if (pet > 0.3f) for (int i = 0; i < 3; i++) {                                                    // a little warmth rising off the cat while it is petted
-            float q = ((now / 900f) + i / 3f) % 1f; glow(cx0 - 2 * p + (i - 1) * 3 * p, cgy - 6 * p - q * 8 * p, 2 * p, 0xFFD8A0, 0.5f * (1f - q) * pet * a);
-        }
         float tx1 = mountX + ca * 10 * p, ty1 = mountY + sa * 10 * p; lensX = tx1; lensY = ty1;
         glow(tx1, ty1, 4 * p, 0xBFD8FF, (hoverCon >= 0 || film ? 0.45f : 0.2f) * a);
         float tx1b = tx1, ty1b = ty1;
@@ -501,6 +497,24 @@ final class Codex {
         int c = argb(0.75f * near * a * alpha, 0xFFB060);
         G.fill(Math.round(x), Math.round(y), Math.round(x + Math.max(1f, p * 0.6f)), Math.round(y + h), c);
     }
+    // the hill frame for the figure and the cat: origin, angle along the ground, one skin pixel
+    private static float BX, BY, BA, BU;
+    /** Puts the hill frame at screen x x0, along the slope there, u per skin pixel. */
+    private static void frame(float x0, float u) { frame(x0, u, 16); }
+    private static void frame(float x0, float u, float len) { BX = x0; BY = ground(x0) + 0.5f * u; BA = (float) Math.atan2(ground(x0 + (len - 2) * u) - ground(x0 - 2 * u), len * u); BU = u; }
+    /** A screen point in the current hill frame's coordinates. */
+    private static float[] toFrame(float wx, float wy) { float c = (float) Math.cos(BA), s2 = (float) Math.sin(BA), dx = wx - BX, dy = wy - BY; float lx = dx * c + dy * s2, ly = -dx * s2 + dy * c; return new float[]{lx / BU, -ly / BU}; }
+    private static float[] fp(float x, float y) { float c = (float) Math.cos(BA), s2 = (float) Math.sin(BA); float lx = x * BU, ly = -y * BU; return new float[]{BX + lx * c - ly * s2, BY + lx * s2 + ly * c}; }
+    private static float fx(float x) { return fp(x, 0)[0]; }
+    /** A box in the hill frame: from (x, y) up, w along, h up. */
+    private static void fb(float x, float y, float w, float h, float a) { mcBox(BX, BY, BA, x * BU, -(y + h) * BU, w * BU, h * BU, 0x05040A, 0f, a); }
+    /** A box turned by ang (radians, up is negative) about its base corner (x, y). */
+    private static void fbr(float x, float y, float ang, float w, float h, float a) { float[] q = fp(x, y); mcBox(q[0], q[1], BA + ang, 0, -h * BU, w * BU, h * BU, 0x05040A, 0f, a); }
+    /** A limb from (x0, y0) to (x1, y1), th thick. */
+    private static void fbar(float x0, float y0, float x1, float y1, float th, float a) { float[] p0 = fp(x0, y0), p1 = fp(x1, y1); float an = (float) Math.atan2(p1[1] - p0[1], p1[0] - p0[0]), l = (float) Math.hypot(p1[0] - p0[0], p1[1] - p0[1]); mcBox(p0[0], p0[1], an, -th * BU / 2, -th * BU / 2, l + th * BU / 2, th * BU, 0x05040A, 0f, a); }
+    /** Warm lantern light on the left edge of a box in the hill frame. */
+    private static void frim(float x, float y, float h, float lx, float a) { float[] q = fp(x, y); float near = Math.max(0f, 1f - Math.abs(q[0] - lx) / (BU * 70f)); if (near < 0.02f) return;
+        Gfx.push(G); Gfx.translate(G, q[0], q[1]); Gfx.rotate(G, BA); G.pose().scale(Math.max(1f, BU * 0.8f), h * BU); G.fill(0, -1, 1, 0, argb(0.6f * near * a * alpha, 0xFFB060)); Gfx.pop(G); }
     /** The lantern's light along one edge of a turned box (same arguments as mcBox for the strip). */
     private static void rimBox(float px, float py, float ang, float lx0, float ly0, float w, float h, float lx, float a, float p) {
         float near = Math.max(0f, 1f - Math.abs(px - lx) / (p * 45f)); if (near < 0.02f) return;

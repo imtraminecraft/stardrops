@@ -6,8 +6,8 @@
 // serverId, and this server asks Mojang (hasJoined) which account that was.
 //
 //   GET  /worn                 every player's worn cosmetics      { code: { s, f, a, t } }
-//   POST /worn                 { name, serverId, suffix, fx, aura }   (only cosmetics you own are accepted)
-//   POST /event                { name, serverId, events: [ { g, src, id, item, r, rng, v, n } ] }   drops you found (an empty list is a heartbeat: playtime)
+//   POST /worn                 { name, serverId, uuid, key, suffix, fx, aura }   (only cosmetics you own are accepted)
+//   POST /event                { name, serverId, uuid, key, events: [ { g, src, id, item, r, rng, v, n } ] }   drops you found (an empty list is a heartbeat: playtime)
 //
 // The server trusts as little as it can: a drop's coins are capped at what the item really sells for (Hypixel's bazaar and the
 // lowest BIN prices, cached here), there are daily limits per player, and playtime is counted by this server from the gaps between
@@ -79,21 +79,34 @@ async function codeOf(uuid) {
   const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(uuid));
   return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
-/** Asks Mojang which account just called joinServer with this serverId. Returns its code, or null. */
-async function verify(b) {
-  const name = String(b.name || ""), serverId = String(b.serverId || "");
+/**
+ * Who is asking. First choice: Mojang (hasJoined) says which account just called joinServer with this serverId. But Mojang's
+ * session server often refuses Cloudflare workers outright (403), so every player also has an account key: a random secret the mod
+ * makes once and keeps on their computer. Whenever Mojang does confirm someone, their key is tied to their account here; when
+ * Mojang refuses, the key alone is accepted if it matches (and the first key seen for an account is the one kept). Someone else
+ * cannot send as you without your key file. Returns the player's code, or null (verify.why says why).
+ */
+async function verify(b, env) {
+  const name = String(b.name || ""), serverId = String(b.serverId || ""), uuid = String(b.uuid || "").toLowerCase(), key = String(b.key || "");
   if (!/^[A-Za-z0-9_]{1,16}$/.test(name) || !/^[0-9a-f]{8,64}$/.test(serverId)) { verify.why = "bad request"; return null; }
-  // Mojang's session server is shared by every Cloudflare worker and often answers 429 (too many requests) or 204 for a moment:
-  // ask again a few times before giving up, and say why in the answer so the game's log shows it.
-  for (let i = 0; i < 5; i++) {
+  const keyOk = /^[0-9a-f]{64}$/.test(key), kh = keyOk ? await codeOf("key|" + key) : null;
+  for (let i = 0; i < 3; i++) {
     const r = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=${encodeURIComponent(name)}&serverId=${serverId}`, { headers: { "user-agent": "FancyDrops-worker" } });
     if (r.status === 200) {
       const id = (await r.json()).id;
-      return codeOf(`${id.slice(0, 8)}-${id.slice(8, 12)}-${id.slice(12, 16)}-${id.slice(16, 20)}-${id.slice(20)}`.toLowerCase());
+      const code = await codeOf(`${id.slice(0, 8)}-${id.slice(8, 12)}-${id.slice(12, 16)}-${id.slice(16, 20)}-${id.slice(20)}`.toLowerCase());
+      if (kh) await env.WORN.put("key:" + code, kh);                                        // Mojang vouched for them: this is their key now
+      return code;
     }
     verify.why = "mojang " + r.status;
+    if (r.status === 403) break;                                                              // blocked, not busy: asking again won't help
     await new Promise((res) => setTimeout(res, 300 + i * 400));
   }
+  if (!kh || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(uuid)) { verify.why += ", no account key"; return null; }
+  const code = await codeOf(uuid), have = await env.WORN.get("key:" + code);
+  if (!have) { await env.WORN.put("key:" + code, kh); return code; }                       // first time we see this account: its key is kept
+  if (have === kh) return code;
+  verify.why += ", account key doesn't match";
   return null;
 }
 /** Cosmetics given by hand (cosmetics.json), cached for 5 minutes. */
@@ -135,7 +148,7 @@ export default {
     if (req.method !== "POST" || (path !== "/worn" && path !== "/event")) return new Response("FancyDrops", { status: 404 });
     let b;
     try { b = await req.json(); } catch { return new Response("bad json", { status: 400 }); }
-    const code = await verify(b);
+    const code = await verify(b, env);
     if (!code) return new Response("not verified (" + (verify.why || "?") + ")", { status: 403 });
 
     if (path === "/worn") {

@@ -165,10 +165,8 @@ final class Cosmetics {
         publishing = true;
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                byte[] rb = new byte[20]; new java.security.SecureRandom().nextBytes(rb); StringBuilder sid = new StringBuilder(); for (byte b : rb) sid.append(String.format("%02x", b));
-                mc.services().sessionService().joinServer(me, token, sid.toString());           // proves to Mojang (and so to the server) that this pick comes from you
-                com.google.gson.JsonObject o = new com.google.gson.JsonObject();
-                o.addProperty("name", name); o.addProperty("serverId", sid.toString()); o.addProperty("suffix", sx); o.addProperty("fx", fx); o.addProperty("aura", au);
+                com.google.gson.JsonObject o = Achievements.signed(mc, me, name, token);           // proves (to Mojang, or by your account key) that this pick comes from you
+                o.addProperty("suffix", sx); o.addProperty("fx", fx); o.addProperty("aura", au);
                 var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "FancyDrops").header("Content-Type", "application/json")
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString(o.toString())).build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 System.err.println("[FancyDrops] shared your cosmetics (" + (sx.isEmpty() ? "-" : sx) + ", " + (fx.isEmpty() ? "-" : fx) + ", " + (au.isEmpty() ? "-" : au) + "): " + res.statusCode() + " " + res.body());

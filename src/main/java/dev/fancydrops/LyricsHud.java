@@ -298,43 +298,123 @@ final class LyricsHud {
         Gfx.pop(g);
     }
 
+    static final float INTRO = 4.4f;                                                           // how long the song intro lasts (s)
     private static void titleCard(GuiGraphicsExtractor g, Font f, int W, int H, long now, float vis, float k) {
         Spotify.Track t = Spotify.track; if (t == null || !Spotify.playing) return;
-        float u = (now - titleAt) / 1000f; if (u > 3.5f) return;
-        float a = Math.min(1f, u / 0.4f) * Math.min(1f, (3.5f - u) / 0.7f) * vis;
-        intro(g, f, W, H, t.name(), t.artists(), u, a, k);
+        float u = (now - titleAt) / 1000f; if (u > INTRO) return;
+        intro(g, f, W, H, t.name(), t.artists(), u, vis, k);
     }
+    private static final String GLYPHS = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#$%&*+=<>/";
+    /**
+     * The song intro: a hyperspace arrival. Stars streak in toward a point; a flash and a shockwave in the album's colour; the
+     * cover drops in on a glowing frame; the title decodes letter by letter out of scrambled glyphs while its spacing tightens; the
+     * artist types itself out behind a blinking cursor; a little constellation draws itself round the title. Then it all jumps to
+     * lightspeed and streaks away to the right.
+     */
     static void intro(GuiGraphicsExtractor g, Font f, int W, int H, String name, String artists, float u, float a, float size) {
-        float k = size * 1.5f, cy = H * 0.26f;
-        if (f.width(name) * k > W * 0.7f) name = f.plainSubstrByWidth(name, (int) (W * 0.7f / k) - 8) + "…";
-        float nw = f.width(name) * k, open = ease(Math.min(1f, u / 0.6f));
-        NebulaTex.glow(g, W / 2f, cy + 8 * k, nw * 0.6f + 16, 16 * k, Gfx.argb(Math.round(90 * a), 0x000000));
-        g.fill(Math.round(W / 2f - nw / 2f * open), Math.round(cy - 4), Math.round(W / 2f + nw / 2f * open), Math.round(cy - 3), Gfx.argb(Math.round(180 * a), colour()));
-        text(g, f, "NOW PLAYING", W / 2f, cy - 12, 0.6f, Gfx.argb(Math.round(160 * a), colour()));
-        text(g, f, name, W / 2f, cy + (1f - open) * 6, k, Gfx.argb(Math.round(255 * a), 0xFFFFFF));
-        text(g, f, artists, W / 2f, cy + 12 * k, k * 0.6f, Gfx.argb(Math.round(190 * a), 0xD8D8E8));
-        vinyl(g, f, W / 2f - nw / 2f - 24 * k, cy + 4 * k, u, a, size);
-    }
-    /** The song intro: a small ringed planet rises beside the title with a spring, its ring tilted, a moon circling it, stars glinting round. */
-    private static void vinyl(GuiGraphicsExtractor g, Font font, float cx, float cy, float u, float a, float size) {
-        float pop = spring(Math.min(1f, u / 0.6f)), r = 11 * size * Math.max(0f, pop); if (r < 1f || a < 0.02f) return;
-        int acc = colour(), A = Math.round(255 * a), body = Ritual.mixc(acc, 0x6A4AD8, 0.35f);
-        cy += (1f - Math.min(1f, u / 0.35f)) * 16 * size;
-        NebulaTex.glow(g, cx, cy, r * 3f, r * 3f, Gfx.argb(Math.round(90 * a), body));
-        float tilt = -0.35f, ring = r * 1.9f, mo = u * 2.2f;
-        ringHalf(g, cx, cy, ring, tilt, a, false);
-        NowPlayingHud.disc(g, cx, cy, r, Gfx.argb(A, Ritual.mixc(body, 0x000000, 0.45f)));                       // the planet: dark side
-        NowPlayingHud.disc(g, cx - r * 0.18f, cy - r * 0.18f, r * 0.82f, Gfx.argb(A, body));                         // lit side
-        NowPlayingHud.disc(g, cx - r * 0.38f, cy - r * 0.38f, r * 0.35f, Gfx.argb(Math.round(a * 140), 0xFFFFFF));    // where the light catches it
-        for (int i = 0; i < 3; i++) g.fill(Math.round(cx - r * 0.7f), Math.round(cy - r * 0.2f + i * r * 0.3f), Math.round(cx + r * 0.5f), Math.round(cy - r * 0.2f + i * r * 0.3f) + 1, Gfx.argb(Math.round(a * 60), 0x000000));   // bands
-        ringHalf(g, cx, cy, ring, tilt, a, true);
-        float mx = cx + (float) Math.cos(mo) * r * 2.4f, my = cy + (float) Math.sin(mo) * r * 0.9f;                  // the moon
-        if (Math.sin(mo) > -0.2 || Math.abs(Math.cos(mo)) > 0.45) { NowPlayingHud.disc(g, mx, my, r * 0.22f, Gfx.argb(A, 0xD8DCE6)); }
-        for (int i = 0; i < 4; i++) {                                                              // glints round it
-            float q = ((u * 0.7f + i / 4f) % 1f), gx = cx + (float) Math.cos(i * 1.9 + 0.5) * r * (2.2f + i * 0.3f), gy = cy + (float) Math.sin(i * 1.9 + 0.5) * r * 1.4f;
-            float fl = (float) Math.sin(Math.PI * q); NebulaTex.glow(g, gx, gy, 3 * size, 3 * size, Gfx.argb(Math.round(a * 200 * fl), 0xFFFFFF));
+        if (a < 0.02f) return;
+        int acc = colour(), lite = Ritual.mixc(acc, 0xFFFFFF, 0.5f), seed = name.hashCode();
+        float k = size * 1.6f, cx = W / 2f, cy = H * 0.27f;
+        if (f.width(name) * k > W * 0.62f) name = f.plainSubstrByWidth(name, (int) (W * 0.62f / k) - 8) + "\u2026";
+        float out = Math.max(0f, (u - (INTRO - 0.9f)) / 0.9f), oe = out * out;                                   // leaving: 0..1
+        float fade = a * (1f - Math.max(0f, (out - 0.6f) / 0.4f));
+        // 1. the jump in: streaks rushing toward the point, then gone
+        if (u < 0.75f) {
+            float q = u / 0.75f;
+            for (int i = 0; i < 48; i++) {
+                double an = Math.PI * 2 * hash(seed + i * 7); float d0 = (0.25f + 0.75f * hash(seed + i * 13)) * W * 0.6f;
+                float d = d0 * (1f - q) * (1f - q), len = 6 + 40 * q * (0.5f + hash(i));
+                float x0 = cx + (float) Math.cos(an) * d, y0 = cy + (float) Math.sin(an) * d * 0.6f, x1 = cx + (float) Math.cos(an) * (d + len), y1 = cy + (float) Math.sin(an) * (d + len) * 0.6f;
+                streak(g, x0, y0, x1, y1, Gfx.argb(Math.round(220 * a * (float) Math.sin(Math.PI * q)), i % 3 == 0 ? lite : 0xFFFFFF));
+            }
+        }
+        // 2. arrival: a flash and a shockwave ring
+        if (u > 0.6f && u < 1.6f) {
+            float q = (u - 0.6f) / 1.0f, r = 10 + ease(q) * W * 0.45f, fl = Math.max(0f, 1f - q * 3f);
+            NebulaTex.glow(g, cx, cy, 40 + 80 * q, 24 + 40 * q, Gfx.argb(Math.round(230 * fl * a), 0xFFFFFF));
+            int n = 120;
+            for (int i = 0; i < n; i++) { double an = Math.PI * 2 * i / n; float x = cx + (float) Math.cos(an) * r, y = cy + (float) Math.sin(an) * r * 0.42f;
+                g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, Gfx.argb(Math.round(200 * (1f - q) * a), i % 2 == 0 ? lite : acc)); }
+        }
+        if (u < 0.65f) return;
+        float t0 = u - 0.65f;                                                                                  // time since arrival
+        // the name's letters and where each one sits (the spacing tightens as it lands)
+        int n = name.length(); float spread = 1f + 1.2f * (1f - ease(Math.min(1f, t0 / 0.9f)));
+        float nw = 0; float[] cw = new float[n]; for (int i = 0; i < n; i++) { cw[i] = f.width(String.valueOf(name.charAt(i))) * k; nw += cw[i]; }
+        float gap = (spread - 1f) * 3 * k, tot = nw + gap * Math.max(0, n - 1);
+        float cs = 26 * size, coverX = cx - tot / 2f - cs - 10 * size, ty = cy - 4 * k;
+        // a dark band behind it all, a light line underneath that opens out from the middle
+        float open = ease(Math.min(1f, t0 / 0.5f));
+        NebulaTex.glow(g, cx, cy + 4 * k, (tot / 2f + cs + 40) * open, 26 * k, Gfx.argb(Math.round(200 * fade), 0x05061A));
+        NebulaTex.glow(g, cx, cy + 4 * k, (tot / 2f + cs) * 0.8f * open, 14 * k, Gfx.argb(Math.round(120 * fade), 0x05061A));
+        float lineW = (tot / 2f + cs * 0.6f) * open;
+        g.fill(Math.round(cx - lineW + oe * W), Math.round(cy + 9 * k), Math.round(cx + lineW + oe * W * 1.3f), Math.round(cy + 9 * k) + 1, Gfx.argb(Math.round(200 * fade), acc));
+        NebulaTex.glow(g, cx + oe * W, cy + 9 * k, lineW, 3, Gfx.argb(Math.round(120 * fade), acc));
+        // the cover: drops in, a glowing frame round it
+        float cd = ease(Math.min(1f, t0 / 0.45f)), cxo = oe * W * 1.1f;
+        if (cd > 0.01f) {
+            int cxp = Math.round(coverX + cxo), cyp = Math.round(cy - cs / 2f + 2 - (1f - cd) * 14);
+            NebulaTex.glow(g, cxp + cs / 2f, cyp + cs / 2f, cs, cs, Gfx.argb(Math.round(110 * fade * cd), acc));
+            NowPlayingHud.cover(g, f, cxp, cyp, Math.round(cs), Math.round(255 * fade * cd), AlbumArt.ready, acc);
+            int fr = Gfx.argb(Math.round(220 * fade * cd), lite);
+            g.fill(cxp - 1, cyp - 1, cxp + Math.round(cs) + 1, cyp, fr); g.fill(cxp - 1, cyp + Math.round(cs), cxp + Math.round(cs) + 1, cyp + Math.round(cs) + 1, fr);
+            g.fill(cxp - 1, cyp, cxp, cyp + Math.round(cs), fr); g.fill(cxp + Math.round(cs), cyp, cxp + Math.round(cs) + 1, cyp + Math.round(cs), fr);
+        }
+        // "NOW PLAYING", spaced, sliding in
+        float lab = ease(Math.min(1f, t0 / 0.4f));
+        text(g, f, "N O W   P L A Y I N G", cx + (1f - lab) * 20 + oe * W * 0.9f, ty - 11 * size, 0.55f * size, Gfx.argb(Math.round(200 * fade * lab), lite));
+        // the title, letter by letter: scrambled glyphs that settle into the real letters, left to right
+        float x = cx - tot / 2f; long tick = (long) (u * 28);
+        for (int i = 0; i < n; i++) {
+            char ch = name.charAt(i); float li = t0 - 0.08f - i * 0.035f;                                   // this letter's own clock
+            if (li > 0f) {
+                boolean real = li > 0.32f || ch == ' ';
+                String s = real ? String.valueOf(ch) : String.valueOf(GLYPHS.charAt(Math.floorMod((int) (hash((int) (tick * 31 + i * 17 + seed)) * 1000), GLYPHS.length())));
+                float drop = (1f - ease(Math.min(1f, li / 0.3f))) * -6 * size, la = Math.min(1f, li / 0.12f);
+                float ox = oe * W * (0.7f + i * 0.04f);                                                          // leaving: each letter shoots off a little after the last
+                int col = real ? Gfx.argb(Math.round(255 * fade * la), 0xFFFFFF) : Gfx.argb(Math.round(220 * fade * la), lite);
+                if (out > 0f) streak(g, x + ox - out * 70 * size, ty + 4 * k, x + ox, ty + 4 * k, Gfx.argb(Math.round(180 * fade), lite));
+                Gfx.push(g); Gfx.translate(g, x + ox, ty + drop); Gfx.scale(g, k); Gfx.txt(g, f, s, 0, 0, col, true); Gfx.pop(g);
+                if (real && li < 0.45f) NebulaTex.glow(g, x + cw[i] / 2f + ox, ty + 4 * k, 6 * size, 6 * size, Gfx.argb(Math.round(160 * (1f - (li - 0.32f) / 0.13f) * fade), lite));   // a spark as it locks in
+            }
+            x += cw[i] + gap;
+        }
+        // the artist, typed out behind a blinking cursor
+        float at = t0 - 0.35f - n * 0.035f;
+        if (at > 0f) {
+            int shown = Math.min(artists.length(), (int) (at / 0.028f)); String s = artists.substring(0, shown);
+            boolean cursor = shown < artists.length() || ((long) (u * 2.5f)) % 2 == 0;
+            float ak = 0.75f * size, aw = f.width(artists) * ak, ax = cx - aw / 2f + oe * W * 1.2f, ay = cy + 13 * k;
+            Gfx.push(g); Gfx.translate(g, ax, ay); Gfx.scale(g, ak); Gfx.txt(g, f, s, 0, 0, Gfx.argb(Math.round(220 * fade), 0xD8D8F0), true); Gfx.pop(g);
+            if (cursor && out < 0.3f) g.fill(Math.round(ax + f.width(s) * ak + 1), Math.round(ay), Math.round(ax + f.width(s) * ak + 1 + 2 * size), Math.round(ay + 8 * ak), Gfx.argb(Math.round(220 * fade), acc));
+        }
+        // a little constellation round the title, its stars appearing and joining up one by one
+        float ct = t0 - 0.5f;
+        if (ct > 0f) {
+            int m = 7; float[][] pts = new float[m][];
+            for (int i = 0; i < m; i++) { boolean top = i % 2 == 0; float px = cx - tot / 2f - 4 + (tot + 8) * (i + 0.5f) / m + (hash(seed + i * 5) - 0.5f) * 14;
+                float py = top ? ty - 18 * size - hash(seed + i * 3) * 10 * size : cy + 26 * size + hash(seed + i * 9) * 8 * size; pts[i] = new float[]{px + oe * W * (0.8f + i * 0.05f), py}; }
+            for (int i = 0; i < m; i++) {
+                float sa = Math.min(1f, (ct - i * 0.09f) / 0.2f); if (sa <= 0f) continue;
+                if (i > 1) { float la2 = Math.min(1f, (ct - i * 0.09f) / 0.3f); float x0 = pts[i - 2][0], y0 = pts[i - 2][1], x1 = x0 + (pts[i][0] - x0) * la2, y1 = y0 + (pts[i][1] - y0) * la2;   // joined along its own row: never across the title
+                    streak(g, x0, y0, x1, y1, Gfx.argb(Math.round(70 * fade), lite)); }
+                float tw = 0.7f + 0.3f * (float) Math.sin(u * 5 + i);
+                NebulaTex.glow(g, pts[i][0], pts[i][1], 4 * size, 4 * size, Gfx.argb(Math.round(170 * sa * tw * fade), lite));
+                g.fill(Math.round(pts[i][0]), Math.round(pts[i][1]), Math.round(pts[i][0]) + 1, Math.round(pts[i][1]) + 1, Gfx.argb(Math.round(255 * sa * fade), 0xFFFFFF));
+            }
+        }
+        // leaving: a burst of streaks off to the right
+        if (out > 0f) for (int i = 0; i < 24; i++) {
+            float y = cy - 30 * size + hash(seed + i * 11) * 70 * size, x0 = cx - W * 0.4f + hash(i * 3 + 1) * W * 0.5f + oe * W, len = 20 + 120 * out * (0.5f + hash(i));
+            streak(g, x0, y, x0 + len, y, Gfx.argb(Math.round(160 * a * (float) Math.sin(Math.PI * out)), i % 3 == 0 ? lite : 0xFFFFFF));
         }
     }
+    /** A thin line of light from (x0, y0) to (x1, y1). */
+    private static void streak(GuiGraphicsExtractor g, float x0, float y0, float x1, float y1, int argb) {
+        float l = (float) Math.hypot(x1 - x0, y1 - y0); if (l < 0.5f || (argb >>> 24) < 3) return;
+        Gfx.push(g); Gfx.translate(g, x0, y0); Gfx.rotate(g, (float) Math.atan2(y1 - y0, x1 - x0)); g.fill(0, 0, Math.round(l), 1, argb); Gfx.pop(g);
+    }
+    private static float hash(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }
     private static void ringHalf(GuiGraphicsExtractor g, float cx, float cy, float R, float tilt, float a, boolean front) {
         float ct = (float) Math.cos(tilt), st = (float) Math.sin(tilt); int n = 40;
         for (int i = 0; i < n; i++) {
@@ -345,7 +425,7 @@ final class LyricsHud {
         }
     }
     private static void noLyrics(GuiGraphicsExtractor g, Font f, long now, float vis, float cx, float cy, float k) {
-        float u = (now - titleAt) / 1000f - 3.5f; if (u < 0f) return;
+        float u = (now - titleAt) / 1000f - INTRO; if (u < 0f) return;
         float a = Math.min(1f, u / 0.6f) * Math.max(0f, Math.min(1f, (6f - u) / 1f)) * vis; if (a < 0.02f) return;
         text(g, f, "♪  No lyrics for this one  ♪", cx, cy, k, Gfx.argb(Math.round(230 * a), colour()));
         text(g, f, "Just enjoy the music", cx, cy + 12 * k, k * 0.7f, Gfx.argb(Math.round(170 * a), 0xD8D8E8));

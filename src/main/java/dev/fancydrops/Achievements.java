@@ -160,9 +160,23 @@ final class Achievements {
     /** Your Minecraft login proves to Mojang (and so to the server) that a request comes from you. */
     static JsonObject signed(Minecraft mc, UUID me, String name, String token) throws Exception {
         byte[] rb = new byte[20]; new java.security.SecureRandom().nextBytes(rb); StringBuilder sid = new StringBuilder(); for (byte x : rb) sid.append(String.format("%02x", x));
-        mc.services().sessionService().joinServer(me, token, sid.toString());
+        try { mc.services().sessionService().joinServer(me, token, sid.toString()); } catch (Exception e) { System.err.println("[FancyDrops] joinServer failed (the account key is sent instead): " + e); }
         JsonObject o = new JsonObject(); o.addProperty("name", name); o.addProperty("serverId", sid.toString());
+        o.addProperty("uuid", me.toString()); o.addProperty("key", accountKey(me));                 // used when Mojang won't answer the server
         return o;
+    }
+    /**
+     * This account's key: a random secret made once and kept in config/fancydrops/keys/. The server ties it to your account the
+     * first time it sees it (or whenever Mojang confirms you), and accepts it when Mojang refuses to answer. Keep it private.
+     */
+    static synchronized String accountKey(UUID me) {
+        java.nio.file.Path f = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("fancydrops").resolve("keys").resolve(me.toString() + ".key");
+        try {
+            if (java.nio.file.Files.exists(f)) { String k = java.nio.file.Files.readString(f).trim(); if (k.matches("[0-9a-f]{64}")) return k; }
+            byte[] rb = new byte[32]; new java.security.SecureRandom().nextBytes(rb); StringBuilder sb = new StringBuilder(); for (byte x : rb) sb.append(String.format("%02x", x));
+            java.nio.file.Files.createDirectories(f.getParent()); java.nio.file.Files.writeString(f, sb.toString());
+            return sb.toString();
+        } catch (Exception e) { return ""; }
     }
 
     private static final Set<String> ANNOUNCED = java.util.concurrent.ConcurrentHashMap.newKeySet();
