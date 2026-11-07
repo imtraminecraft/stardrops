@@ -13,6 +13,12 @@ import java.util.List;
  * (No Drops, Normal, RNG); its settings are FancyConfig.anim("myth.rng"). Categories.java lists every group.
  */
 public final class AnimationManager {
+    /** The animation clock in ms: from System.nanoTime (smooth and steady), not currentTimeMillis (which can step in 15 ms jumps on Windows and makes motion judder). */
+    private static final long NS0 = System.nanoTime(), MS0 = System.currentTimeMillis();
+    static long clock() { return MS0 + (System.nanoTime() - NS0) / 1_000_000L; }
+    /** The same clock in fractional seconds since start, for the smoothest timing of a playing animation. */
+    static double clockS() { return (System.nanoTime() - NS0) / 1e9; }
+
     /** Everything the animation and its text need about one drop. */
     public static final class Item {
         public DropData.Source source;
@@ -39,7 +45,7 @@ public final class AnimationManager {
         final List<Item> more = new ArrayList<>();      // more drops shown in the same animation (one kill, one reward, or drops that arrived together): up to 8 side by side
         final String group;                      // "myth", "treasure", "slayer", "crops", "feast", "bounty", "pests" or "exp"
         int type;                                // NO_DROPS, NORMAL or RNG (a drop that joins before the scene starts can raise Normal to RNG)
-        final long created = System.currentTimeMillis();
+        final long created = clock();
         float speed = 1f;                        // 1.8 after a cocooned slayer boss
         boolean helios;                          // the Ray of Helios pest drop: a sunbeam instead of the vacuum
         long start; float lastT = -1f; int kind = -1;                  // kind: which Mythological creature to show (-1 = the one the drop belongs to)
@@ -78,7 +84,7 @@ public final class AnimationManager {
         QUEUE.add(a);
     }
     private static boolean canStack(Anim into, Anim a) {
-        return into.item != null && into.group.equals(a.group) && into.kind == a.kind && into.helios == a.helios && into.count() + a.count() <= MAX_ITEMS && System.currentTimeMillis() - into.created < 5000;
+        return into.item != null && into.group.equals(a.group) && into.kind == a.kind && into.helios == a.helios && into.count() + a.count() <= MAX_ITEMS && clock() - into.created < 5000;
     }
     private static void stack(Anim into, Anim a, boolean started) {
         for (Item i : a.items()) into.add(i);
@@ -87,14 +93,14 @@ public final class AnimationManager {
     }
     /** True while the playing scene has not shown its items yet (there is still time to add more). */
     private static boolean beforeItems(Anim c) {
-        float t = (System.currentTimeMillis() - c.start) / 1000f * pace(c), O = opening(c.type);
+        float t = (clock() - c.start) / 1000f * pace(c), O = opening(c.type);
         return t < O - 0.35f;
     }
     public static boolean isPlaying() { return cur != null || !QUEUE.isEmpty(); }
     /** True while the hotbar and hearts should slide away (a scene with cinematic bars). */
     public static boolean hidesHud() {
         if (cur == null || cur.type != RNG || !cur.cfg().bars) return false;
-        float t = (System.currentTimeMillis() - cur.start) / 1000f * pace(cur), S = cur.secs(), O = opening(cur.type);
+        float t = (clock() - cur.start) / 1000f * pace(cur), S = cur.secs(), O = opening(cur.type);
         return t >= O - 0.8f && t < S + cur.hold() - 0.05f;                                           // only while the cinematic bars are on screen (they slide in at O - 0.8 s, out at the end)
     }
 
@@ -125,7 +131,7 @@ public final class AnimationManager {
 
     /** Called every frame from the HUD. */
     public static void render(GuiGraphicsExtractor g) {
-        long now = System.currentTimeMillis();
+        long now = clock();
         if (cur != null && (now - cur.start) / 1000f * pace(cur) > cur.total() + 0.001f) cur = null;
         if (cur == null && !QUEUE.isEmpty()) { cur = QUEUE.poll(); cur.start = now; for (Item i : cur.items()) DropListener.announceNow(i); }          // the chat alert goes out together with the animation
         if (cur == null) return;
@@ -160,17 +166,17 @@ public final class AnimationManager {
     // ---- the Play button of the Sounds page: just the sounds, in time, no picture
     private static String sndKey; private static long sndT0; private static float sndLast; private static boolean sndOn;
     /** Plays the sounds of a scene ("myth.rng") on their real timeline. */
-    public static void playSoundsOnly(String key) { SoundFx.stopPreviews(); sndKey = key; sndT0 = System.currentTimeMillis(); sndLast = -1f; sndOn = true; }
+    public static void playSoundsOnly(String key) { SoundFx.stopPreviews(); sndKey = key; sndT0 = clock(); sndLast = -1f; sndOn = true; }
     /** Call every frame while the menu is open: fires the due sounds of a sounds-only playback. */
     public static void tickSounds() {
         if (!sndOn) return;
-        float t = (System.currentTimeMillis() - sndT0) / 1000f;
+        float t = (clock() - sndT0) / 1000f;
         cues(sndKey, 0f, sndLast, t); sndLast = t;
         if (t > sceneLen(typeOfKey(sndKey)) + 0.4f) sndOn = false;
     }
     /** Seconds into the playback of this scene (a sounds-only playback or the real animation), or -1 when nothing of it is playing. */
     public static float playingT(String key) {
-        long now = System.currentTimeMillis();
+        long now = clock();
         if (sndOn && key.equals(sndKey)) return (now - sndT0) / 1000f;
         if (cur != null && key.equals(cur.key())) return (now - cur.start) / 1000f * pace(cur);
         return -1f;
@@ -228,8 +234,8 @@ public final class AnimationManager {
         String group = key.substring(0, key.indexOf('.')), tid = key.substring(key.indexOf('.') + 1);
         int type = NORMAL; for (int i = 0; i < TYPE_IDS.length; i++) if (TYPE_IDS[i].equals(tid)) type = i;
         Anim a = new Anim(group, type, TextFx.itemOnly ? sampleHead() : sampleFor(group, type));
-        a.kind = (int) (((System.currentTimeMillis() - (key.equals(previewKey) ? previewT0 : System.currentTimeMillis())) / 1000L) / Math.max(1, (long) (sceneLen(type) + 1f))) % Ritual.KINDS.length;      // the preview cycles through all twelve creatures
-        long now = System.currentTimeMillis();
+        a.kind = (int) (((clock() - (key.equals(previewKey) ? previewT0 : clock())) / 1000L) / Math.max(1, (long) (sceneLen(type) + 1f))) % Ritual.KINDS.length;      // the preview cycles through all twelve creatures
+        long now = clock();
         if (!key.equals(previewKey)) { previewKey = key; previewT0 = now; }
         float secs = a.secs();
         float t = syncSec >= 0 ? syncSec : ((now - previewT0) / 1000f) % (secs + 1f);

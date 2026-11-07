@@ -447,14 +447,121 @@ final class IconArt {
                 outline();
                 glint(9, 4 + b, 1, 0xFFFFFF, t);
             }
-            case "cat_table" -> {                                                            // Table & Dyes: the Experimentation Table's open book, and a dye vial beside it splashing colour
-                bev(1, 11, 10, 4, 0x6A2A3A); rect(2, 15, 2, 1, 0x3A1420); rect(8, 15, 2, 1, 0x3A1420);
-                quad(1, 8, 6, 9, 6, 11, 1, 10, 0xF2EAD8); quad(6, 9, 11, 8, 11, 10, 6, 11, 0xE8DCC0); ln(6, 9, 6, 11, 0x8A5A3A);
-                for (int i = 0; i < 3; i++) { float u = (f + i / 3f) % 1f; pxa(3 + i * 3, Math.round(7 - u * 6), 0xC77DFF, 1f - u); }   // runes rising off the page
-                rect(12, 4, 3, 1, 0x8A5A3A); bev(11, 5, 5, 10, 0xD8E8F0); int dc = hue(f, 0.65f, 1f); rect(12, 8, 3, 6, dc); px(12, 8, lite(dc, 0.4f));
+            case "cat_table" -> {                                                            // Table & Dyes: the Experimentation Table's open book, a single drop of dye falling onto the page and spreading
+                bev(1, 11, 14, 4, 0x6A2A3A); rect(2, 15, 2, 1, 0x3A1420); rect(12, 15, 2, 1, 0x3A1420);
+                quad(1, 8, 8, 9, 8, 11, 1, 10, 0xF2EAD8); quad(8, 9, 15, 8, 15, 10, 8, 11, 0xE8DCC0); ln(8, 9, 8, 11, 0x8A5A3A);
+                ln(3, 9, 6, 9, 0xB8A890); ln(10, 9, 13, 9, 0xB8A890);
+                float u = f; int dy = Math.round(1 + u * 6);
+                if (u < 0.75f) { ball(11.5f, dy, 1.3f, 0xFF4FA8); }                          // the drop falls...
+                else { float k = (u - 0.75f) / 0.25f; for (int q = -1; q <= 1; q++) pxa(11 + q * Math.round(1 + k), 9, 0xFF4FA8, 1f - k * 0.5f); px(11, 9, 0xFF4FA8); }   // ...and spreads on the page
+                for (int q = 0; q < 2; q++) { float v = (f + q * 0.5f) % 1f; pxa(3 + q * 2, Math.round(7 - v * 6), 0xC77DFF, 1f - v); }   // a rune rising off the left page
                 outline();
-                glint(14, 6, 1, 0xFFFFFF, t);
             }
+            case "boss_voidgloom", "voidgloom" -> {                                          // Voidgloom Seraph: a winged void angel, a cracked halo, eyes burning pink
+                for (int k = 0; k < 2; k++) { int side = k == 0 ? -1 : 1; float fl = sn(f) * 0.8f;
+                    tri(8, 7, 8 + side * 7, 3 + fl, 8 + side * 6, 11 + fl, 0x2A1240); tri(8, 8, 8 + side * 5, 6 + fl, 8 + side * 4, 12 + fl, 0x4A1E6A); }   // wings, beating slowly
+                bev(6, 5, 4, 10, 0x140A20); rect(7, 5, 2, 10, 0x22102E);                       // the body, a tall dark figure
+                bev(5, 2, 6, 5, 0x0E0616);                                                    // the head
+                int eye = mix(0xC81E8A, 0xFF7AD8, t); px(6, 4, eye); px(9, 4, eye); px(7, 4, dark(eye, 0.4f)); px(8, 4, dark(eye, 0.4f));
+                for (int q = 0; q < 6; q++) { double an = Math.PI * (0.15 + 0.7 * q / 5.0); if (q == 3) continue; px(8 + (int) Math.round(Math.cos(an) * 3.5) - 0, (int) Math.round(1 - Math.sin(an) * 1.2), 0xF2D8FF); }   // the halo, a gap where it's cracked
+                for (int q = 0; q < 3; q++) { float v = (f + q / 3f) % 1f; pxa(4 + q * 4, 15 - Math.round(v * 5), 0xB45AFF, 1f - v); }   // void motes rising
+                outline();
+                glow(7.5f, 4, 3, 0xFF4FC8, 0.15f + 0.15f * t);
+            }
+            case "move" -> {                                                                 // Position: a crosshair with four arrows, nudging outward
+                int o = Math.round(t); int cc = 0x8FE3B0;
+                rect(7, 3, 2, 10, dark(cc, 0.25f)); rect(3, 7, 10, 2, dark(cc, 0.25f));
+                tri(8, 0.5f - o, 5, 3.5f - o, 11, 3.5f - o, cc); tri(8, 15.5f + o, 5, 12.5f + o, 11, 12.5f + o, cc);
+                tri(0.5f - o, 8, 3.5f - o, 5, 3.5f - o, 11, cc); tri(15.5f + o, 8, 12.5f + o, 5, 12.5f + o, 11, cc);
+                bev(6, 6, 4, 4, 0xEAFFF2); px(7, 7, 0xFFFFFF);
+                outline();
+            }
+            case "lyr_burst" -> {                                                            // Star bursts: a word on a line, little stars bursting off it
+                rect(2, 10, 12, 2, 0xFFC8A0); rect(2, 12, 12, 1, dark(0xFFC8A0, 0.4f));
+                for (int q = 0; q < 5; q++) { float v = (f + q / 5f) % 1f; double an = -Math.PI / 2 + (q - 2) * 0.55; int x = 8 + (int) Math.round(Math.cos(an) * v * 7), y = 9 + (int) Math.round(Math.sin(an) * v * 8);
+                    int sc = q % 2 == 0 ? 0xFFE38A : 0xFF9AD8; pxa(x, y, sc, 1f - v); if (v < 0.5f) { pxa(x - 1, y, sc, 0.5f - v); pxa(x + 1, y, sc, 0.5f - v); pxa(x, y - 1, sc, 0.5f - v); } }
+                outline();
+            }
+            case "lyr_intro" -> {                                                            // Song intro: a title card sliding up under a spotlight
+                tri(8, 0, 2, 15, 14, 15, 0x2A2440); for (int y = 1; y < 15; y++) pxa(8, y, 0xFFF4D8, 0.15f);
+                int up = Math.round((1f - Math.min(1f, f * 2f)) * 4);
+                bev(2, 7 + up, 12, 5, 0x3A2A5A); rect(4, 9 + up, 8, 1, 0xFFE9B8); rect(5, 11 + up, 6, 1, 0xB8A8D8);
+                outline();
+                glint(12, 7 + up, 1, 0xFFFFFF, t);
+            }
+            case "lyr_timing" -> {                                                           // Timing: a metronome, its arm ticking side to side
+                quad(4, 15, 12, 15, 10, 2, 6, 2, 0x8A5A3A); quad(5, 14, 11, 14, 9.5f, 4, 6.5f, 4, 0x6A3A1E);
+                float an = sn(f) * 0.55f; float ax = 8 + (float) Math.sin(an) * 9, ay = 13 - (float) Math.cos(an) * 9;
+                ln(8, 13, ax, ay, 0xE8D8B8); rect(Math.round(8 + (float) Math.sin(an) * 5) - 1, Math.round(13 - (float) Math.cos(an) * 5), 2, 2, 0xFFC94A);
+                bev(5, 12, 6, 3, 0x4A2A14);
+                outline();
+            }
+            case "amb" -> {                                                                  // Ambience: a soft glow ring round a disc, light washing out
+                glow(8, 8, 8, 0xB48CFF, 0.25f + 0.15f * t); ball(8, 8, 5.5f, 0x2A2238); ball(8, 8, 2, 0xB48CFF); px(8, 8, 0x1A1424);
+                for (int q = 0; q < 8; q++) { double an = q * Math.PI / 4 + f * 0.8; pxa(8 + (int) Math.round(Math.cos(an) * 7), 8 + (int) Math.round(Math.sin(an) * 7), 0xE8D8FF, 0.4f + 0.4f * tri((f + q / 8f) % 1f)); }
+                outline();
+            }
+            case "amb_glow" -> {                                                             // Album glow: an album cover with its colours glowing out round it
+                glow(8, 8, 8, hue(0.78f + 0.1f * sn(f), 0.6f, 1f), 0.3f + 0.15f * t);
+                bev(3, 3, 10, 10, 0x2A2A44); rect(4, 4, 8, 4, 0xE86A9A); rect(4, 8, 8, 4, 0x6A8AE8); ball(8, 8, 2, 0xFFE9B8);
+                outline();
+            }
+            case "amb_strength" -> {                                                         // Glow strength: a sun whose rays grow and shrink
+                int r = 2 + Math.round(t * 2);
+                for (int q = 0; q < 8; q++) { double an = q * Math.PI / 4; ln(8 + (float) Math.cos(an) * 4, 8 + (float) Math.sin(an) * 4, 8 + (float) Math.cos(an) * (4 + r), 8 + (float) Math.sin(an) * (4 + r), 0xFFC94A); }
+                ball(8, 8, 3.5f, 0xFFE38A);
+                outline();
+            }
+            case "amb_viz" -> {                                                              // Visualizer: bars bouncing to the beat
+                for (int q = 0; q < 5; q++) { int h = 3 + Math.round(9 * (0.5f + 0.5f * (float) Math.sin(f * 6.2832f * (q % 2 == 0 ? 2 : 3) + q * 1.3f))); bev(1 + q * 3, 15 - h, 2, h, hue(0.75f - q * 0.06f, 0.55f, 1f)); }
+                outline();
+            }
+            case "amb_notes" -> {                                                            // Music notes: two notes floating up
+                for (int q = 0; q < 2; q++) { float v = (f + q * 0.5f) % 1f; int x = 3 + q * 7, y = 12 - Math.round(v * 6);
+                    ball(x, y, 1.6f, q == 0 ? 0xB48CFF : 0x8AD8FF); ln(x + 1, y - 1, x + 1, y - 6, 0xE8E8FF); ln(x + 1, y - 6, x + 3, y - 5, 0xE8E8FF); }
+                outline();
+            }
+            case "amb_wave" -> {                                                             // Song wave: a wave of light running across
+                for (int x = 0; x < 16; x++) { int y = 8 + Math.round((float) Math.sin(x * 0.7f - f * 6.2832f) * 3.5f); px(x, y, hue(0.75f + x * 0.01f, 0.5f, 1f)); pxa(x, y + 1, 0x6A4AB0, 0.6f); }
+                outline();
+            }
+            case "spot" -> {                                                                 // Spotify page: a pair of headphones, a beat pulsing between them
+                for (int x = 3; x < 13; x++) { double a = (x - 8) / 5.0; px(x, (int) Math.round(6 - Math.sqrt(Math.max(0, 1 - a * a)) * 4), 0xD8E8DA); }
+                bev(1, 7, 4, 6, 0x1ED760); bev(11, 7, 4, 6, 0x1ED760);
+                int b = Math.round(t * 2); for (int q = 0; q < 3; q++) rect(6 + q * 2, 11 - b - (q == 1 ? 1 : 0), 1, 2 + b + (q == 1 ? 1 : 0), 0xEAFFEA);
+                outline();
+            }
+            case "step_web" -> {                                                             // Step: a browser window, its page loading
+                bev(1, 2, 14, 12, 0xD8E0EA); rect(1, 2, 14, 3, 0x3A6AD8); px(2, 3, 0xFF6A6A); px(4, 3, 0xFFC94A); px(6, 3, 0x6AE86A);
+                int w = Math.round(f * 10); rect(3, 7, w, 1, 0x1ED760); rect(3, 9, 8, 1, 0x9AA4B8); rect(3, 11, 6, 1, 0x9AA4B8);
+                outline();
+            }
+            case "step_app" -> {                                                             // Step: a new app tile with a plus
+                bev(2, 2, 12, 12, 0x1ED760); rect(7, 4, 2, 8, 0xFFFFFF); rect(4, 7, 8, 2, 0xFFFFFF);
+                outline(); glint(12, 4, 1, 0xFFFFFF, t);
+            }
+            case "step_link" -> {                                                            // Step: two chain links joining
+                int o = Math.round((1f - t) * 1.5f);
+                for (int k = 0; k < 2; k++) { int x0 = k == 0 ? 1 + o : 7 - o; rect(x0, 6, 8, 1, 0xB8E8FF); rect(x0, 10, 8, 1, 0xB8E8FF); rect(x0, 6, 1, 5, 0xB8E8FF); rect(x0 + 7, 6, 1, 5, 0xB8E8FF); }
+                outline();
+            }
+            case "step_check" -> {                                                           // Step: a box getting ticked
+                bev(2, 2, 12, 12, 0x2A3448); int n2 = Math.round(Math.min(1f, f * 1.6f) * 8);
+                int[][] ck = {{4, 8}, {5, 9}, {6, 10}, {7, 9}, {8, 8}, {9, 7}, {10, 6}, {11, 5}};
+                for (int q = 0; q < n2; q++) { px(ck[q][0], ck[q][1], 0x1ED760); px(ck[q][0], ck[q][1] + 1, dark(0x1ED760, 0.3f)); }
+                outline();
+            }
+            case "step_key" -> {                                                             // Step: a key card with an ID line copying across
+                bev(1, 4, 14, 9, 0xEAF2FF); rect(1, 6, 14, 2, 0x2A3448); rect(3, 10, Math.round(2 + 8 * t), 1, 0x1ED760);
+                outline();
+            }
+            case "step_login" -> {                                                           // Step: a door opening onto green light
+                bev(3, 1, 10, 14, 0x4A3A2E); rect(4, 2, 8, 12, 0x1ED760); int w = 8 - Math.round(t * 5); bev(4, 2, w, 12, 0x8A6A4A); px(4 + w - 2, 8, 0xFFE38A);
+                outline();
+            }
+            case "mus_play" -> { bev(1, 1, 14, 14, 0x1A2A20); tri(5, 3, 5, 13, 12, 8, 0x1ED760); if (t > 0.5f) { rect(5, 4, 2, 8, 0xEAFFEA); rect(9, 4, 2, 8, 0xEAFFEA); } outline(); }   // play / pause, swapping
+            case "mus_next" -> { int o = Math.round(t * 2); bev(1, 1, 14, 14, 0x1A2A20); tri(3 + o, 4, 3 + o, 12, 8 + o, 8, 0x1ED760); tri(8 + o, 4, 8 + o, 12, 13 + o, 8, 0x1ED760); outline(); }
+            case "mus_prev" -> { int o = Math.round(t * 2); bev(1, 1, 14, 14, 0x1A2A20); tri(13 - o, 4, 13 - o, 12, 8 - o, 8, 0x1ED760); tri(8 - o, 4, 8 - o, 12, 3 - o, 8, 0x1ED760); outline(); }
             case "src_open_water" -> { waves(f, 0x2A7AD8); ln(3, 1, 12, 9, 0x8A5A2B); ln(12, 9, 12, 10, 0xD8D8D8); int b = Math.round(sn(f) * 0.8f); px(12, 11 + b, 0xFF3A3A); px(12, 10 + b, 0xFFFFFF); outline(); }   // a rod's line and bobber on open water
             case "src_backwater_bayou" -> {                                                  // the Bayou: a lily pad on murky water, a frog's eyes peeking
                 waves(f, 0x3A6A4A); ball(8, 9, 4.5f, 0x4AA83A); tri(8, 9, 12, 7, 12, 10, 0x3A6A4A);

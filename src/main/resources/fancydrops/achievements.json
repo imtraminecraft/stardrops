@@ -91,7 +91,7 @@
   {
    "id": "collector",
    "ch": "ledger",
-   "tier": 2,
+   "tier": 1,
    "name": "Collector",
    "desc": "Find 100 drops with FancyDrops on.",
    "icon": "sack",
@@ -104,7 +104,7 @@
   {
    "id": "archivist",
    "ch": "ledger",
-   "tier": 2,
+   "tier": 1,
    "name": "Archivist",
    "desc": "Find 100 different drops with FancyDrops on.",
    "icon": "shelf",
@@ -117,7 +117,7 @@
   {
    "id": "frequent",
    "ch": "ledger",
-   "tier": 2,
+   "tier": 1,
    "name": "Frequent Finder",
    "desc": "Find 10 RNG drops.",
    "icon": "dice",
@@ -130,7 +130,7 @@
   {
    "id": "devout",
    "ch": "ledger",
-   "tier": 2,
+   "tier": 1,
    "name": "Devout",
    "desc": "Find 3 Pray RNGesus drops.",
    "icon": "star",
@@ -143,7 +143,7 @@
   {
    "id": "multimillionaire",
    "ch": "ledger",
-   "tier": 2,
+   "tier": 1,
    "name": "Multimillionaire",
    "desc": "Find 250M coins worth of drops.",
    "icon": "coin",
@@ -156,7 +156,7 @@
   {
    "id": "fast_start",
    "ch": "ledger",
-   "tier": 2,
+   "tier": 1,
    "name": "Fast Starter",
    "desc": "Find 20 drops on your first day with FancyDrops.",
    "icon": "clock",
@@ -169,7 +169,7 @@
   {
    "id": "hoarder",
    "ch": "ledger",
-   "tier": 3,
+   "tier": 2,
    "name": "Hoarder",
    "desc": "Find 500 drops with FancyDrops on.",
    "icon": "sack",
@@ -182,7 +182,7 @@
   {
    "id": "rng_magnet",
    "ch": "ledger",
-   "tier": 3,
+   "tier": 2,
    "name": "RNG Magnet",
    "desc": "Find 100 RNG drops.",
    "icon": "crown",
@@ -195,7 +195,7 @@
   {
    "id": "blessed",
    "ch": "ledger",
-   "tier": 3,
+   "tier": 2,
    "name": "Blessed",
    "desc": "Find 50 RNG drops.",
    "icon": "dice",
@@ -208,7 +208,7 @@
   {
    "id": "pray",
    "ch": "ledger",
-   "tier": 3,
+   "tier": 2,
    "name": "Chosen by RNGesus",
    "desc": "Find 10 Pray RNGesus drops.",
    "icon": "star",
@@ -221,7 +221,7 @@
   {
    "id": "tycoon",
    "ch": "ledger",
-   "tier": 3,
+   "tier": 2,
    "name": "Billionaire",
    "desc": "Find 1B coins worth of drops.",
    "icon": "coin",
@@ -234,7 +234,7 @@
   {
    "id": "prodigy",
    "ch": "ledger",
-   "tier": 3,
+   "tier": 2,
    "name": "Prodigy",
    "desc": "Find 50 drops on your first day with FancyDrops.",
    "icon": "clock",
@@ -247,7 +247,7 @@
   {
    "id": "jackpot",
    "ch": "ledger",
-   "tier": 3,
+   "tier": 2,
    "name": "Jackpot",
    "desc": "One drop worth 100M coins or more.",
    "icon": "gem",
@@ -260,7 +260,7 @@
   {
    "id": "regular",
    "ch": "ledger",
-   "tier": 2,
+   "tier": 1,
    "name": "Week of Luck",
    "desc": "Find drops on 7 different days.",
    "icon": "clock",
@@ -273,7 +273,7 @@
   {
    "id": "devoted",
    "ch": "ledger",
-   "tier": 3,
+   "tier": 2,
    "name": "Devoted",
    "desc": "Find drops on 30 different days.",
    "icon": "clock",
@@ -338,7 +338,7 @@
   {
    "id": "time_24h",
    "ch": "time",
-   "tier": 1,
+   "tier": 0,
    "name": "Full Day",
    "desc": "Play for 24 hours with FancyDrops on.",
    "icon": "clock",
@@ -351,7 +351,7 @@
   {
    "id": "quick_learner",
    "ch": "time",
-   "tier": 1,
+   "tier": 0,
    "name": "Quick Learner",
    "desc": "Find 25 drops on your first day with FancyDrops.",
    "icon": "seal",
@@ -364,7 +364,7 @@
   {
    "id": "beginners_luck",
    "ch": "time",
-   "tier": 1,
+   "tier": 0,
    "name": "Beginner's Luck",
    "desc": "Find an RNG drop on your first day with FancyDrops.",
    "icon": "dice",
@@ -377,7 +377,7 @@
   {
    "id": "natural",
    "ch": "time",
-   "tier": 3,
+   "tier": 2,
    "name": "Natural",
    "desc": "Find 50 drops on your first day with FancyDrops.",
    "icon": "seal",
@@ -390,7 +390,7 @@
   {
    "id": "born_lucky",
    "ch": "time",
-   "tier": 3,
+   "tier": 2,
    "name": "Born Lucky",
    "desc": "Find 5 RNG drops on your first day with FancyDrops.",
    "icon": "dice",
@@ -403,7 +403,7 @@
   {
    "id": "time_50h",
    "ch": "time",
-   "tier": 3,
+   "tier": 2,
    "name": "Dedicated",
    "desc": "Play for 50 hours with FancyDrops on.",
    "icon": "clock",
@@ -416,7 +416,7 @@
   {
    "id": "time_100h",
    "ch": "time",
-   "tier": 3,
+   "tier": 2,
    "name": "Centurion",
    "desc": "Play for 100 hours with FancyDrops on.",
    "icon": "clock",
@@ -481,7 +481,7 @@
   {
    "id": "myth_hunter",
    "ch": "myth",
-   "tier": 2,
+   "tier": 1,
    "name": "Mythological Hunter",
    "desc": "Find 100 drops from Mythological creatures.",
    "icon": "horn",
@@ -494,7 +494,7 @@
   {
    "id": "adv_digger",
    "ch": "myth",
-   "tier": 2,
+   "tier": 1,
    "name": "Advanced Digger",
    "desc": "Find 100 treasures from Mythological burrows.",
    "icon": "shovel",
@@ -507,7 +507,7 @@
   {
    "id": "griffins_favour",
    "ch": "myth",
-   "tier": 2,
+   "tier": 1,
    "name": "Griffin's Favour",
    "desc": "Find 5 RNG drops in the Mythological Ritual (creatures or treasure).",
    "icon": "dice",
@@ -520,7 +520,7 @@
   {
    "id": "mythbreaker",
    "ch": "myth",
-   "tier": 3,
+   "tier": 2,
    "name": "Mythbreaker",
    "desc": "Find 250 drops from Mythological creatures.",
    "icon": "horn",
@@ -533,7 +533,7 @@
   {
    "id": "deep_digger",
    "ch": "myth",
-   "tier": 3,
+   "tier": 2,
    "name": "Deep Digger",
    "desc": "Find 250 treasures from Mythological burrows.",
    "icon": "shovel",
@@ -546,7 +546,7 @@
   {
    "id": "dianas_chosen",
    "ch": "myth",
-   "tier": 3,
+   "tier": 2,
    "name": "Diana's Chosen",
    "desc": "Find 10 RNG drops in the Mythological Ritual (creatures or treasure).",
    "icon": "dice",
@@ -559,7 +559,7 @@
   {
    "id": "golden_burrows",
    "ch": "myth",
-   "tier": 3,
+   "tier": 2,
    "name": "Golden Burrows",
    "desc": "Find 100M coins worth of drops in the Mythological Ritual.",
    "icon": "coin",
@@ -624,7 +624,7 @@
   {
    "id": "executioner",
    "ch": "mob",
-   "tier": 2,
+   "tier": 1,
    "name": "Executioner",
    "desc": "Find 25 slayer drops.",
    "icon": "anvil",
@@ -637,7 +637,7 @@
   {
    "id": "all_bosses",
    "ch": "mob",
-   "tier": 2,
+   "tier": 1,
    "name": "Monster Hunter",
    "desc": "Find a drop from 4 different slayer bosses.",
    "icon": "sword",
@@ -650,7 +650,7 @@
   {
    "id": "isle_raider",
    "ch": "mob",
-   "tier": 2,
+   "tier": 1,
    "name": "Isle Raider",
    "desc": "Find 25 drops on the Crimson Isle.",
    "icon": "flame",
@@ -663,7 +663,7 @@
   {
    "id": "dragon_slayer",
    "ch": "mob",
-   "tier": 2,
+   "tier": 1,
    "name": "Dragon Slayer",
    "desc": "Find 10 drops from Ender Dragons.",
    "icon": "skull",
@@ -676,7 +676,7 @@
   {
    "id": "rare_breed",
    "ch": "mob",
-   "tier": 2,
+   "tier": 1,
    "name": "Rare Breed",
    "desc": "Find 25 drops from the creatures of the Mines.",
    "icon": "skull",
@@ -689,7 +689,7 @@
   {
    "id": "boss_breaker",
    "ch": "mob",
-   "tier": 3,
+   "tier": 2,
    "name": "Boss Breaker",
    "desc": "Find 10 RNG slayer drops.",
    "icon": "skull",
@@ -702,7 +702,7 @@
   {
    "id": "slayer_supreme",
    "ch": "mob",
-   "tier": 3,
+   "tier": 2,
    "name": "Slayer Supreme",
    "desc": "Find 250 slayer drops.",
    "icon": "sword",
@@ -715,7 +715,7 @@
   {
    "id": "warlord",
    "ch": "mob",
-   "tier": 3,
+   "tier": 2,
    "name": "Warlord of the Isle",
    "desc": "Find 100 drops on the Crimson Isle.",
    "icon": "flame",
@@ -728,7 +728,7 @@
   {
    "id": "dragonbane",
    "ch": "mob",
-   "tier": 3,
+   "tier": 2,
    "name": "Dragonbane",
    "desc": "Find 50 drops from Ender Dragons.",
    "icon": "skull",
@@ -741,7 +741,7 @@
   {
    "id": "mines_menace",
    "ch": "mob",
-   "tier": 3,
+   "tier": 2,
    "name": "Menace of the Mines",
    "desc": "Find 100 drops from the creatures of the Mines.",
    "icon": "skull",
@@ -793,7 +793,7 @@
   {
    "id": "nucleus",
    "ch": "mine",
-   "tier": 2,
+   "tier": 1,
    "name": "Heart of the Mountain",
    "desc": "Find 10 rare Crystal Nucleus rewards.",
    "icon": "gem",
@@ -806,7 +806,7 @@
   {
    "id": "grave_robber",
    "ch": "mine",
-   "tier": 2,
+   "tier": 1,
    "name": "Grave Robber",
    "desc": "Find 25 rare drops in Frozen Corpses.",
    "icon": "skull",
@@ -819,7 +819,7 @@
   {
    "id": "fiesta_regular",
    "ch": "mine",
-   "tier": 2,
+   "tier": 1,
    "name": "Fiesta Regular",
    "desc": "Find 10 rare drops during Mining Fiestas.",
    "icon": "gem",
@@ -832,7 +832,7 @@
   {
    "id": "divans_heir",
    "ch": "mine",
-   "tier": 3,
+   "tier": 2,
    "name": "Divan's Heir",
    "desc": "Find 100 rare Crystal Nucleus rewards.",
    "icon": "gem",
@@ -845,7 +845,7 @@
   {
    "id": "frozen_fortune",
    "ch": "mine",
-   "tier": 3,
+   "tier": 2,
    "name": "Frozen Fortune",
    "desc": "Find 100 rare drops in Frozen Corpses.",
    "icon": "skull",
@@ -858,7 +858,7 @@
   {
    "id": "mining_magnate",
    "ch": "mine",
-   "tier": 3,
+   "tier": 2,
    "name": "Mining Magnate",
    "desc": "Find 100M coins worth of Mining drops.",
    "icon": "coin",
@@ -975,7 +975,7 @@
   {
    "id": "crate_digger",
    "ch": "farm",
-   "tier": 2,
+   "tier": 1,
    "name": "Crate Digger",
    "desc": "Find 5 different Vinyls.",
    "icon": "disc",
@@ -988,7 +988,7 @@
   {
    "id": "green_thumb",
    "ch": "farm",
-   "tier": 3,
+   "tier": 2,
    "name": "Golden Fields",
    "desc": "Find 250 rare crops.",
    "icon": "wheat",
@@ -1001,7 +1001,7 @@
   {
    "id": "feast_master",
    "ch": "farm",
-   "tier": 3,
+   "tier": 2,
    "name": "Feast Master",
    "desc": "Find 250 Harvest Feast drops.",
    "icon": "wheat",
@@ -1014,7 +1014,7 @@
   {
    "id": "bounty_king",
    "ch": "farm",
-   "tier": 3,
+   "tier": 2,
    "name": "Bounty King",
    "desc": "Find 100 Harvest Bounties.",
    "icon": "leaf",
@@ -1027,7 +1027,7 @@
   {
    "id": "plague_doctor",
    "ch": "farm",
-   "tier": 3,
+   "tier": 2,
    "name": "Plague Doctor",
    "desc": "Find 500 pest drops.",
    "icon": "bug",
@@ -1079,7 +1079,7 @@
   {
    "id": "sea_hunter",
    "ch": "fish",
-   "tier": 2,
+   "tier": 1,
    "name": "Sea Hunter",
    "desc": "Find 100 drops from sea creatures.",
    "icon": "fish",
@@ -1092,7 +1092,7 @@
   {
    "id": "treasure_diver",
    "ch": "fish",
-   "tier": 2,
+   "tier": 1,
    "name": "Treasure Diver",
    "desc": "Pull up 25 Great or Outstanding Catches.",
    "icon": "chest",
@@ -1105,7 +1105,7 @@
   {
    "id": "deep_sea",
    "ch": "fish",
-   "tier": 2,
+   "tier": 1,
    "name": "Deep Sea Legend",
    "desc": "Find 3 RNG drops from sea creatures.",
    "icon": "fish",
@@ -1118,7 +1118,7 @@
   {
    "id": "leviathan",
    "ch": "fish",
-   "tier": 3,
+   "tier": 2,
    "name": "Leviathan",
    "desc": "Find 500 drops from sea creatures.",
    "icon": "fish",
@@ -1131,7 +1131,7 @@
   {
    "id": "davy_jones",
    "ch": "fish",
-   "tier": 3,
+   "tier": 2,
    "name": "Davy Jones",
    "desc": "Pull up 100 Great or Outstanding Catches.",
    "icon": "chest",
@@ -1144,7 +1144,7 @@
   {
    "id": "abyssal_fortune",
    "ch": "fish",
-   "tier": 3,
+   "tier": 2,
    "name": "Abyssal Fortune",
    "desc": "Find 10 RNG drops while fishing.",
    "icon": "fish",
@@ -1170,7 +1170,7 @@
   {
    "id": "palette",
    "ch": "dye",
-   "tier": 2,
+   "tier": 1,
    "name": "Palette",
    "desc": "Find 3 different dyes.",
    "icon": "dye",
@@ -1183,7 +1183,7 @@
   {
    "id": "rainbow",
    "ch": "dye",
-   "tier": 3,
+   "tier": 2,
    "name": "Every Colour",
    "desc": "Find 10 different dyes.",
    "icon": "dye",
@@ -1209,7 +1209,7 @@
   {
    "id": "mastermind",
    "ch": "dye",
-   "tier": 3,
+   "tier": 2,
    "name": "Mastermind",
    "desc": "Find 5 RNG Experimentation Table rewards.",
    "icon": "book",

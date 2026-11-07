@@ -1,8 +1,8 @@
 # The achievements, one table for the mod and the server. Run tools/make_achievements.py after editing.
-# tier: 0 Common, 1 Uncommon, 2 Rare, 3 Legendary. stat: drops | rng | r3 | value | best | uniq | days | bosses | vinyl | dyes |
+# tier: 0 Bronze, 1 Silver, 2 Gold. stat: drops | rng | r3 | value | best | uniq | days | bosses | vinyl | dyes |
 #   fd (drops on your first day) | fdr (RNG drops on your first day) | pt (minutes played) | g:a+b (drops from groups) |
 #   gr:a+b (RNG drops from groups) | gv:a+b (coins from groups). RNG = a drop worth 10M coins or more. first: first day only.
-C, U, R, L = 0, 1, 2, 3
+C, U, R, L = 0, 0, 1, 2   # Bronze, Bronze, Silver, Gold
 M = 1_000_000
 CH = [("ledger", "Every Drop"), ("time", "Playtime"), ("myth", "Mythological"), ("mob", "Mob Drops"), ("mine", "Mining"),
       ("farm", "Farming"), ("fish", "Fishing"), ("dye", "Table & Dyes")]

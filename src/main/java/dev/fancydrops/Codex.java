@@ -43,7 +43,7 @@ final class Codex {
     private static String blinkId = "";
     private static int[] from = {0, 0, 0, 0};
     private static int focus = -1, prevFocus = -1, hoverCon = -1, lastHoverCon = -1;
-    private static final long OPEN = 900, CLOSE = 300, ZOOM = 650;
+    private static final long OPEN = 900, CLOSE = 300, ZOOM = 480;
     private static final List<Object[]> HITS = new ArrayList<>();
     private static final List<float[]> LABELS = new ArrayList<>();          // label boxes placed this frame (so they don't overlap)
     private static boolean free(float x, float y, float w, float h) { for (float[] b : LABELS) if (x < b[2] && x + w > b[0] && y < b[3] && y + h > b[1]) return false; return true; }
@@ -111,7 +111,7 @@ final class Codex {
     static void draw(GuiGraphicsExtractor g, Host h, int width, int height, int mx0, int my0) {
         if (!open) return;
         try { g.nextStratum(); } catch (Throwable ignored) { }                        // above everything the menu drew, its text included
-        G = g; now = System.currentTimeMillis(); host = h; font = h.font(); W = width; H = height; mx = mx0; my = my0; HITS.clear(); LABELS.clear();
+        G = g; now = AnimationManager.clock(); host = h; font = h.font(); W = width; H = height; mx = mx0; my = my0; HITS.clear(); LABELS.clear();
         float t = now - openAt, closeT = closeAt == 0 ? -1f : now - closeAt;
         if (closeT >= CLOSE) { open = false; return; }
         boolean film = openAt > introFrom;                                              // this opening has the film
@@ -120,6 +120,8 @@ final class Codex {
         alpha = closeT >= 0 ? 1f - cl(closeT / (CLOSE * 0.8f)) : film ? 1f : cl(t / 200f);
         if (film && introSounds < 3 && t >= 0) { introSounds = 3; sound("sky_star", 1.4f, 0.6f); }
         planIgnites();
+        { float tx = cl((mx - (W / 2f)) / Math.max(1f, W) + 0.5f) - 0.5f, ty = cl((my - (H / 2f)) / Math.max(1f, H) + 0.5f) - 0.5f;   // the mouse, smoothed: the layers of the sky slide against each other by depth
+          long dt = Math.min(100, Math.max(0, now - lastPar)); lastPar = now; float k = 1f - (float) Math.exp(-dt / 140.0); mpx += (tx - mpx) * k; mpy += (ty - mpy) * k; }
 
         int fw = Math.round(Math.min(W - 24, H * 2.0f)), fh = Math.round(Math.min(H - 24, fw / 1.7f));
         float bx = (from[0] + from[2]) / 2f, by = (from[1] + from[3]) / 2f, cxs = W / 2f, cys = H / 2f;
@@ -183,7 +185,7 @@ final class Codex {
         if (!NebulaTex.draw(g, x, y, Math.round(ow), Math.round(oh))) for (int i = 0; i < 24; i++) { int y0 = sy0 + sh * i / 24, y1 = sy0 + sh * (i + 1) / 24; g.fill(sx0, y0, sx0 + sw, y1, mix(0xFF0A1028, 0xFF1C1236, i / 24f)); }
         if (alpha < 1f) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(1f - alpha, 0x05060F));
         deepSky(g);
-        float px = (camU - aspect() / 2f) * sh * camS * 0.35f, py = (camV - 0.5f) * sh * camS * 0.35f;
+        float px = (camU - aspect() / 2f) * sh * camS * 0.35f - parX(0.3f), py = (camV - 0.5f) * sh * camS * 0.35f - parY(0.3f);
         for (int i = 0; i < 70; i++) {                                           // a near layer of stars that twinkle (and move a little more)
             float u = rnd(i * 13 + 1), v = rnd(i * 29 + 7), tw = (float) Math.max(0, Math.sin(now / (500.0 + rnd(i) * 1300) + i * 2.1));
             float sx = sx0 + (((u * sw - px) % sw) + sw) % sw, sy = sy0 + (((v * sh - py) % sh) + sh) % sh;
@@ -210,7 +212,7 @@ final class Codex {
      */
     private static void deepSky(GuiGraphicsExtractor g) {
         float tt = (now % 3_600_000L) / 1000f;
-        float px = (camU - aspect() / 2f) * sh * camS * 0.25f, py = (camV - 0.5f) * sh * camS * 0.25f;
+        float px = (camU - aspect() / 2f) * sh * camS * 0.25f - parX(0.18f), py = (camV - 0.5f) * sh * camS * 0.25f - parY(0.18f);
         // the Milky Way: a soft glowing band from the lower left to the upper right, thick with dust and tiny stars
         float ax = sx0 - sw * 0.05f - px, ay = sy0 + sh * 0.95f - py, bx = sx0 + sw * 1.05f - px, by = sy0 + sh * 0.05f - py;
         for (int i = 0; i < 16; i++) {
@@ -219,7 +221,7 @@ final class Codex {
             NebulaTex.glow(g, x, y, sw * 0.05f, sh * 0.06f, argb(0.1f * w * alpha, 0xFFF4F0));
         }
         float nx = -(by - ay), ny = bx - ax, nl = (float) Math.hypot(nx, ny); nx /= nl; ny /= nl;
-        for (int i = 0; i < 520; i++) {                                                  // the dust: thick in the middle of the band, thinning out
+        for (int i = 0; i < 240; i++) {                                                  // the dust: thick in the middle of the band, thinning out
             float u = rnd(i * 17 + 3), off = (rnd(i * 31 + 5) + rnd(i * 37 + 11) + rnd(i * 41 + 13) - 1.5f) * sh * 0.14f;
             float x = ax + (bx - ax) * u + nx * off, y = ay + (by - ay) * u + ny * off;
             if (x < sx0 || x >= sx0 + sw || y < sy0 || y >= sy0 + sh) continue;
@@ -374,13 +376,12 @@ final class Codex {
     private static void scenery(GuiGraphicsExtractor g, float a) {
         if (a < 0.02f) return;
         float k = sh / 150f;
-        float mx0 = sx0 + sw * 0.49f, my0 = sy0 + sh * 0.1f, mr = 6 * k;                                  // a crescent moon, its halo breathing
-        glow(mx0, my0, mr * 5, 0xBFD0FF, (0.18f + 0.04f * (float) Math.sin(now / 2000.0)) * a);
-        for (int i = 0; i <= 24; i++) { float u = i / 24f; double an = Math.toRadians(95 + 170 * u); disc(g, mx0 + (float) Math.cos(an) * mr * 0.8f, my0 + (float) Math.sin(an) * mr * 0.8f, mr * 0.28f * (float) Math.sin(Math.PI * u) + 0.4f, argb(a * alpha, 0xF2EEDC)); }   // a crescent, lit from the left
-        float px = sx0 + sw * 0.92f, py = sy0 + sh * 0.44f, pr = 3.2f * k;                                  // a ringed planet, far off
-        glow(px, py, pr * 4, 0xE8B080, 0.15f * a);
-        disc(g, px, py, pr, argb(a * alpha, 0xC88A5A)); bar(px - pr, py - pr * 0.25f, px + pr, py - pr * 0.05f, 0xE8B88A, 0.6f * a);
-        Gfx.push(g); Gfx.translate(g, px, py); Gfx.rotate(g, -0.35f); Gfx.scale(g, 1f, 0.32f); ring(0, 0, pr * 1.9f, argb(0.7f * a * alpha, 0xF0D8B0), 1f); Gfx.pop(g);
+        // far planets, deep behind everything (they barely slide as you look around): real spheres, lit from one side, a soft
+        // atmosphere on the lit limb; the big one has a tilted ring that passes in front of it and behind it
+        float fx = parX(0.12f), fy = parY(0.12f);
+        planet(g, sx0 + sw * 0.9f + fx, sy0 + sh * 0.36f + fy, 5.2f * k, 0xD8A070, 0x5A3A2A, 0xFFE0B8, -0.6f, 0.35f, a, true);
+        planet(g, sx0 + sw * 0.5f + parX(0.06f), sy0 + sh * 0.09f + parY(0.06f), 3.4f * k, 0xC8CCD8, 0x2A2E3A, 0xF4F6FF, -0.9f, 0f, a, false);   // a pale moon
+        planet(g, sx0 + sw * 0.27f + parX(0.09f), sy0 + sh * 0.2f + parY(0.09f), 1.6f * k, 0x6AA8E8, 0x14243A, 0xC8E8FF, -0.5f, 0f, a * 0.85f, false);  // a small blue world
         int base = sy0 + sh;                                                                              // far hills along the bottom, a few town lights twinkling
         for (int x = sx0 + Math.round(sw * 0.36f); x < sx0 + sw; x += 3) {
             float u = (x - sx0) / (float) sw, h = sh * (0.035f + 0.02f * (float) Math.sin(u * 17) + 0.012f * (float) Math.sin(u * 41 + 1));
@@ -390,6 +391,48 @@ final class Codex {
         long per = 26000; float su = (now % per) / (float) per;                                           // a satellite crossing now and then, blinking
         if (su < 0.5f) { float sxp = sx0 + sw * (0.1f + su * 1.6f), syp = sy0 + sh * (0.06f + su * 0.1f); boolean on = (now / 500) % 2 == 0;
             g.fill(Math.round(sxp), Math.round(syp), Math.round(sxp) + 1, Math.round(syp) + 1, argb((on ? 0.9f : 0.35f) * a * alpha, on ? 0xFF8A8A : 0xFFFFFF)); }
+    }
+
+    /** A shaded sphere: lit colour on the light's side, falling off across a soft terminator into its night side, a rim of
+     *  atmosphere on the lit limb. light = the direction the light comes from (radians, 0 = from the right). ring: a tilted ring. */
+    private static void planet(GuiGraphicsExtractor g, float cx, float cy, float r, int day, int night, int rim, float light, float bands, float a, boolean ring) {
+        if (a < 0.02f || r < 1f) return;
+        float lx = (float) Math.cos(light), ly = (float) Math.sin(light);
+        glow(cx + lx * r * 0.4f, cy + ly * r * 0.4f, r * 3.2f, day, 0.12f * a);
+        if (ring) ringBand(g, cx, cy, r, rim, a, false);
+        int ir = (int) Math.ceil(r), step = r > 6 ? 1 : 1;
+        for (int dy = -ir; dy <= ir; dy += step) {
+            float yy = dy + 0.5f; float hw = (float) Math.sqrt(Math.max(0, r * r - yy * yy)); if (hw < 0.5f) continue;
+            int x0 = Math.round(cx - hw), x1 = Math.round(cx + hw), segs = Math.max(2, Math.min(7, Math.round(hw / 1.6f)));
+            for (int i = 0; i < segs; i++) {                                                     // across the row: each piece shaded by how squarely it faces the light
+                int sa = x0 + (x1 - x0) * i / segs, sb = x0 + (x1 - x0) * (i + 1) / segs; if (sb <= sa) continue;
+                float px = ((sa + sb) / 2f - cx) / r, py = yy / r, pz = (float) Math.sqrt(Math.max(0, 1 - px * px - py * py));
+                float lam = Math.max(0f, px * lx * 0.95f + py * ly * 0.95f + pz * 0.3f);
+                float sh = cl((lam - 0.05f) / 0.75f); sh = sh * sh * (3 - 2 * sh);
+                int col = mix(0xFF000000 | night, 0xFF000000 | day, sh);
+                if (bands > 0) col = mix(col, 0xFF000000 | mix(day, 0xFF000000, 0.3f), bands * 0.5f * (0.5f + 0.5f * (float) Math.sin(py * 9.0)) * sh);
+                if (lam > 0.85f) col = mix(col, 0xFF000000 | rim, (lam - 0.85f) * 2.5f);
+                g.fill(sa, Math.round(cy + dy), sb, Math.round(cy + dy) + step, argb(a * alpha, col & 0xFFFFFF));
+            }
+        }
+        for (int i = 0; i < 10; i++) {                                                          // the lit limb's thin atmosphere
+            double an = light - 1.1 + i * 0.22; float ex = cx + (float) Math.cos(an) * r, ey = cy + (float) Math.sin(an) * r;
+            glow(ex, ey, Math.max(1f, r * 0.35f), rim, 0.16f * a * (float) Math.sin(Math.PI * i / 9.0));
+        }
+        if (ring) ringBand(g, cx, cy, r, rim, a, true);
+    }
+    /** The ring of a planet, tilted: the far half (front = false) is drawn before the planet, the near half after it. */
+    private static void ringBand(GuiGraphicsExtractor g, float cx, float cy, float r, int rgb, float a, boolean front) {
+        float tilt = -0.32f, ry = 0.3f, rr = r * 1.9f; float ct = (float) Math.cos(tilt), st = (float) Math.sin(tilt);
+        int n = 28;
+        for (int i = 0; i < n; i++) {
+            double t0 = Math.PI * 2 * i / n, t1 = Math.PI * 2 * (i + 1) / n; boolean near = Math.sin((t0 + t1) / 2) > 0; if (near != front) continue;
+            for (int b = 0; b < 2; b++) {
+                float R = rr * (b == 0 ? 1f : 0.82f);
+                float ax = (float) Math.cos(t0) * R, ay = (float) Math.sin(t0) * R * ry, bx = (float) Math.cos(t1) * R, by = (float) Math.sin(t1) * R * ry;
+                line(cx + ax * ct - ay * st, cy + ax * st + ay * ct, cx + bx * ct - by * st, cy + bx * st + by * ct, rgb, (b == 0 ? 0.55f : 0.35f) * a, -1);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ the opening film
@@ -468,7 +511,7 @@ final class Codex {
     }
     private static float[] flat(float[][] p) { float[] o = new float[p.length * 2]; for (int i = 0; i < p.length; i++) { o[i * 2] = p[i][0]; o[i * 2 + 1] = p[i][1]; } return o; }
     private static float[][] pts(float... v) { float[][] o = new float[v.length / 2][]; for (int i = 0; i < o.length; i++) o[i] = new float[]{v[i * 2], v[i * 2 + 1]}; return o; }
-    private static final float[] TIER_K = {0.8f, 0.92f, 1.05f, 1.3f};
+    private static final float[] TIER_K = {0.85f, 1.0f, 1.25f};
     private static float figR(int c) { return c == 0 ? 0.16f : 0.12f; }
     /** A point on the figure's outline, t from 0 to 1 along all its strokes (for groups with more stars than key points). */
     private static float[] alongOutline(int c, float t) {
@@ -477,31 +520,61 @@ final class Codex {
         for (float[] st : OUTLINE[c]) for (int i = 2; i < st.length; i += 2) { float l = (float) Math.hypot(st[i] - st[i - 2], st[i + 1] - st[i - 1]); if (want <= l) { float u = want / l; return new float[]{st[i - 2] + (st[i] - st[i - 2]) * u, st[i - 1] + (st[i + 1] - st[i - 1]) * u}; } want -= l; }
         return new float[]{0, 0};
     }
-    /** Every group's stars, in the order you earn them (easiest first): placed one after another along the figure's outline, each
-     *  joined to the one before it, so lighting them draws the picture stroke by stroke. depth = its place in that order (0 = the first). */
+    /** Every group's stars, scattered the way real stars are (seeded per group, so they never move): an irregular, stretched
+     *  cloud with a minimum spacing, joined by its shortest links (a minimum spanning tree). Nothing about it reads as an order:
+     *  any star can be lit at any time. parent = the star it is joined to (-1 for the first), depth = its index (a seed). */
     private static List<Node> tree(int c) {
         Achievements.Profile p = Achievements.profile();
         if (treesFor != p) { TREES.clear(); treesFor = p; }
         return TREES.computeIfAbsent(ACH[c], id -> {
-            List<Achievements.Ach> src = achOf(id), l = new ArrayList<>(src);
-            l.sort(Comparator.comparingDouble((Achievements.Ach a) -> a.goal()).thenComparingInt(src::indexOf));
+            List<Achievements.Ach> l = new ArrayList<>(achOf(id));
+            l.sort(Comparator.comparing(Achievements.Ach::id));
+            java.util.Random rr = new java.util.Random(0x5EEDL * 31 + c * 7919L + l.size());
+            java.util.Collections.shuffle(l, rr);
             int n = l.size(); float R = figR(c);
-            float[] s0 = OUTLINE[c][0]; boolean closed = OUTLINE[c].length == 1 && Math.abs(s0[0] - s0[s0.length - 2]) < 1e-3f && Math.abs(s0[1] - s0[s0.length - 1]) < 1e-3f;
-            List<Node> out = new ArrayList<>();
+            double rot = rr.nextDouble() * Math.PI, asp = 0.5 + 0.45 * rr.nextDouble();
+            float minD = (float) (R * 1.75 / Math.sqrt(Math.max(1, n)));
+            float[][] at = new float[n][];
             for (int i = 0; i < n; i++) {
-                float[] at = n == 1 ? new float[]{0, 0} : alongOutline(c, closed ? i / (float) n : i / (float) (n - 1));
-                out.add(new Node(l.get(i), at[0] * R, at[1] * R, i - 1, i));
+                float[] best = null; float bestD = -1;
+                for (int k = 0; k < 80; k++) {
+                    double r = R * Math.pow(rr.nextDouble(), 0.62) * (rr.nextDouble() < 0.18 ? 1.3 : 1.0), an = rr.nextDouble() * Math.PI * 2;
+                    double x0 = Math.cos(an) * r, y0 = Math.sin(an) * r * asp;
+                    float x = (float) (x0 * Math.cos(rot) - y0 * Math.sin(rot)), y = (float) (x0 * Math.sin(rot) + y0 * Math.cos(rot));
+                    float d = c == 0 ? (float) Math.hypot(x, y) * 1.4f : 9f;                     // (Every Drop keeps its middle clear for the heart)
+                    for (int j = 0; j < i; j++) d = Math.min(d, (float) Math.hypot(x - at[j][0], y - at[j][1]));
+                    if (d > bestD) { bestD = d; best = new float[]{x, y}; }
+                    if (d >= minD) break;
+                }
+                at[i] = best;
             }
+            int[] par = new int[n]; boolean[] in = new boolean[n]; float[] dist = new float[n];
+            java.util.Arrays.fill(par, -1); java.util.Arrays.fill(dist, Float.MAX_VALUE);
+            if (n > 0) dist[0] = 0;
+            for (int it = 0; it < n; it++) {                                                     // Prim: grow the tree by its shortest link each time
+                int u = -1; for (int i = 0; i < n; i++) if (!in[i] && (u < 0 || dist[i] < dist[u])) u = i;
+                in[u] = true;
+                for (int v = 0; v < n; v++) if (!in[v]) { float d = (float) Math.hypot(at[u][0] - at[v][0], at[u][1] - at[v][1]); if (d < dist[v]) { dist[v] = d; par[v] = u; } }
+            }
+            List<Node> out = new ArrayList<>();
+            for (int i = 0; i < n; i++) out.add(new Node(l.get(i), at[i][0], at[i][1], par[i], i));
             return out;
         });
     }
-    /** The first star of a group not lit yet (the one to go for), or -1 when all are lit. */
-    private static int nextOf(List<Node> t) { for (Node n : t) if (!n.a().done()) return n.depth(); return -1; }
+    /** How far back each constellation hangs (1 = nearest): far ones are smaller, dimmer and slide less as you look around. */
+    private static final float[] DEPTH = {1.0f, 0.72f, 0.9f, 0.64f, 0.82f, 0.7f, 0.95f, 0.78f};
+    private static float mpx, mpy; private static long lastPar;
+    /** The sideways slide of a layer at depth d (pixels), from where the mouse is and a slow drift. */
+    private static float parX(float d) { return -mpx * sw * 0.035f * d + (float) Math.sin(now / 9000.0 + d * 7) * 1.2f * d; }
+    private static float parY(float d) { return -mpy * sh * 0.035f * d + (float) Math.cos(now / 11000.0 + d * 5) * 0.9f * d; }
+    private static float pX, pY, dK = 1f;                                                       // the current constellation's slide and depth (size and light)
 
     private static void constellation(GuiGraphicsExtractor g, int c, float zoomed, int fc) {
         List<Node> t = tree(c); List<Achievements.Ach> l = achOf(ACH[c]);
         boolean other = fc >= 0 && c != fc; float fade = other ? 1f - 0.8f * zoomed : 1f;
-        float[] o = centre(c); float ox = X(o[0]), oy = Y(o[1]);
+        float d0 = DEPTH[c], dep = fc == c ? d0 + (1f - d0) * zoomed : d0, still = 1f - zoomed;
+        pX = parX(dep) * still; pY = parY(dep) * still; dK = 0.62f + 0.38f * dep;
+        float[] o = centre(c); float ox = X(o[0]) + pX, oy = Y(o[1]) + pY;
         float rad = 0.16f * sh * camS;
         boolean hv = fc < 0 && zoomed < 0.05f && Math.hypot(mx - ox, my - oy) < rad;
         if (hv) hoverCon = c;
@@ -510,29 +583,25 @@ final class Codex {
         boolean full = !l.isEmpty() && done == l.size(), any = done > 0;
         int col = ACH_COL[c]; float frac = l.isEmpty() ? 0f : done / (float) l.size();
         float breathe = 0.85f + 0.15f * (float) Math.sin(now / 1800.0 + c);
-        NebulaTex.glow(g, ox, oy, rad * (1.2f + 0.25f * frac), rad * (1.0f + 0.2f * frac), argb((0.08f + 0.2f * frac + (full ? 0.15f : 0f) + 0.1f * hk) * fade * alpha * breathe, col));
-        float R = figR(c) * sh * camS;                                                       // the figure's outline: a fine, faint drawing of the picture
-        for (float[] st : OUTLINE[c]) for (int i = 2; i < st.length; i += 2)
-            line(ox + st[i - 2] * R, oy + st[i - 1] * R, ox + st[i] * R, oy + st[i + 1] * R, col, (0.16f + 0.1f * frac + 0.12f * hk) * fade, 0);
-        // the path, in order: bright where both stars are lit, a running dashed line to the next star, faint beyond it
-        int nx = nextOf(t);
+        float dl = 0.6f + 0.4f * dep;                                                          // far constellations sit in a little haze
+        NebulaTex.glow(g, ox, oy, rad * (1.2f + 0.25f * frac) * dK, rad * (1.0f + 0.2f * frac) * dK, argb((0.06f + 0.16f * frac + (full ? 0.12f : 0f) + 0.1f * hk) * fade * alpha * breathe * dl, col));
+        // the links: bright where both ends are lit, a faint thread otherwise (no order: any star can be lit first)
         for (int i = 0; i < t.size(); i++) {
             Node n = t.get(i); if (n.parent() < 0) continue;
             Node q = t.get(n.parent());
-            float x1 = X(o[0] + n.du()), y1 = Y(o[1] + n.dv()), x0 = X(o[0] + q.du()), y0 = Y(o[1] + q.dv());
-            boolean lit = q.a().done() && n.a().done();
-            if (lit) { line(x0, y0, x1, y1, col, 0.55f * fade, 2); line(x0, y0, x1, y1, mix(col, 0xFFFFFFFF, 0.65f), fade, 0); spark(x0, y0, x1, y1, col, fade, i + c * 9); }
-            else if (n.depth() == nx && q.a().done()) dashed(x0, y0, x1, y1, mix(col, 0xFFFFFFFF, 0.4f), (0.85f + 0.15f * hk) * fade);
-            else line(x0, y0, x1, y1, 0xFF8A94B8, (0.22f + 0.15f * hk) * fade, 0);
+            float x1 = X(o[0] + n.du()) + pX, y1 = Y(o[1] + n.dv()) + pY, x0 = X(o[0] + q.du()) + pX, y0 = Y(o[1] + q.dv()) + pY;
+            boolean lit = q.a().done() && n.a().done(), half = q.a().done() || n.a().done();
+            if (lit) { line(x0, y0, x1, y1, col, 0.45f * fade * dl, 2); line(x0, y0, x1, y1, mix(col, 0xFFFFFFFF, 0.6f), 0.9f * fade * dl, 0); spark(x0, y0, x1, y1, col, fade * dl, i + c * 9); }
+            else line(x0, y0, x1, y1, half ? mix(col, 0xFF8A94B8, 0.5f) : 0xFF8A94B8, ((half ? 0.3f : 0.18f) + 0.15f * hk) * fade * dl, 0);
         }
-        if (c == 0) heart(g, c, ox, oy, any, full, fade, zoomed, fc);
-        for (Node n : t) nodeOf(g, c, n, n.depth() == nx, fade, zoomed, fc);
+        if (c == 0) heart(g, c, ox, oy, any, full, fade * dl, zoomed, fc);
+        for (Node n : t) nodeOf(g, c, n, false, fade * dl, zoomed, fc);
         if (zoomed < 0.6f && inSky(ox, oy)) {
             float la = (1f - zoomed / 0.6f) * fade * alpha;
             String nm = spaced(ACH_NAME[c].toUpperCase(Locale.ROOT));
             float bot = 0.04f, top = -0.04f; for (Node n : t) { bot = Math.max(bot, n.dv()); top = Math.min(top, n.dv()); }
             boolean above = c == 3 || c == 4;                                          // these figures have their names above them (clear of the hill and of each other)
-            int ty = above ? Math.round(Y(o[1] + top)) - 26 : Math.round(Y(o[1] + bot)) + 8, nw = host.width(nm);
+            int ty = above ? Math.round(Y(o[1] + top) + pY) - 26 : Math.round(Y(o[1] + bot) + pY) + 8, nw = host.width(nm);
             float hx0 = ox;
             int nc = argb(la, hv || full ? mix(col, 0xFFFFFFFF, 0.4f) : mix(col, 0xFFFFFFFF, 0.65f));
             small(g, nm, Math.round(ox - nw * 0.375f), ty + 2, nc);
@@ -565,7 +634,7 @@ final class Codex {
         for (int i = 0; i < n; i++) { float u0 = (i + off) / n, u1 = Math.min(1f, (i + off + 0.5f) / n); if (u0 >= 1f) continue; line(x0 + (x1 - x0) * u0, y0 + (y1 - y0) * u0, x0 + (x1 - x0) * u1, y0 + (y1 - y0) * u1, rgb, a, 0); }
     }
     private static void nodeOf(GuiGraphicsExtractor g, int c, Node n, boolean open, float fade, float zoomed, int fc) {
-        Achievements.Ach a = n.a(); float[] o = centre(c); float x = X(o[0] + n.du()), y = Y(o[1] + n.dv());
+        Achievements.Ach a = n.a(); float[] o = centre(c); float x = X(o[0] + n.du()) + pX, y = Y(o[1] + n.dv()) + pY;
         if (!inSky(x, y)) return;
         boolean near = fc == c && zoomed > 0.5f;
         float hr = near ? 12 : 6;
@@ -577,36 +646,25 @@ final class Codex {
         Long ig = IGNITE.get(a.id()); float igT = ig == null ? 9f : (now - ig) / 1000f;
         boolean lit = a.done() && igT >= 0f;
         if (ig != null && igT >= 0f && igT < 0.05f && igSounded.add(a.id())) sound("sky_star", 1.2f, 0.8f);
-        int tier = Math.max(0, Math.min(3, a.tier())), tc = LocalLedger.TIER_COL[tier] & 0xFFFFFF;
-        float tk = TIER_K[tier];
-        if (lit) {                                                                           // a lit star: in the group's colour, its size, rim and flare set by its tier (Legendary: eight rays and a gold crown ring)
+        int tier = Math.max(0, Math.min(2, a.tier())), tc = LocalLedger.TIER_COL[tier] & 0xFFFFFF;
+        float tk = TIER_K[tier] * dK;
+        float prog = (float) Math.min(1.0, a.goal() <= 0 ? 0 : a.progress() / a.goal());
+        if (lit) {                                                                           // a lit star: in the group's colour; its tier sets its size and flare (Bronze: a cross, Silver: six rays, Gold: eight and a crown ring)
             float r = (near ? 4.6f : 3.2f) * tw * tk + (hv ? 1.2f : 0f);
             if (igT < 1.4f) { float u = igT / 1.4f; glow(x, y, r * (12f - 7f * u), 0xFFFFFF, 0.9f * (1f - u) * fade); ring(x, y, r * (2f + 24f * ease(u)), argb((1f - u) * 0.9f * fade * alpha, col), 1f); r *= 1f + 1.2f * (1f - u); }
-            glow(x, y, r * 7f, col, 0.55f * fade);
-            glow(x, y, r * 3f, mix(col, 0xFFFFFFFF, 0.45f), 0.85f * fade);
-            ring(x, y, r * 2.1f, argb(0.8f * fade * alpha, tier == 0 ? mix(col, 0xFFFFFFFF, 0.3f) : tc), 1f);
-            if (tier == 3) { ring(x, y, r * 3.0f, argb(0.45f * fade * alpha * (0.7f + 0.3f * tw), tc), 1f); glow(x, y, r * 9f, tc, 0.25f * fade); }
-            float rays = r * (near ? 5f : 4.2f) * (0.85f + 0.15f * tw), sp = (now % 3_600_000L) / 4000f + n.depth();
-            int nr = tier == 0 ? 1 : tier == 1 ? 2 : tier == 2 ? 2 : 4;                          // Common: one bar, Uncommon / Rare: a cross, Legendary: an eight-point star
-            for (int k = 0; k < nr; k++) { double an = sp + k * Math.PI / nr; float ln = k % 2 == 1 && tier == 3 ? 0.6f : 1f, dx = (float) Math.cos(an) * rays * ln, dy = (float) Math.sin(an) * rays * ln;
-                line(x - dx, y - dy, x + dx, y + dy, mix(tier >= 2 ? tc : col, 0xFFFFFFFF, 0.55f), 0.7f * fade, 0); }
+            glow(x, y, r * 6f, col, 0.5f * fade);
+            glow(x, y, r * 2.6f, mix(col, 0xFFFFFFFF, 0.45f), 0.85f * fade);
+            glow(x, y, r * 1.8f, tc, 0.35f * fade);
+            if (tier == 2) { ring(x, y, r * 2.6f, argb(0.5f * fade * alpha * (0.7f + 0.3f * tw), tc), 1f); glow(x, y, r * 8f, tc, 0.2f * fade); }
+            float rays = r * (near ? 5f : 4.2f) * (0.85f + 0.15f * tw), sp = (now % 3_600_000L) / 4000f * (n.depth() % 2 == 0 ? 1 : -1) + n.depth();
+            int nr = tier == 0 ? 2 : tier == 1 ? 3 : 4;
+            for (int k = 0; k < nr; k++) { double an = sp + k * Math.PI / nr; float ln = k % 2 == 1 ? 0.6f : 1f, dx = (float) Math.cos(an) * rays * ln, dy = (float) Math.sin(an) * rays * ln;
+                line(x - dx, y - dy, x + dx, y + dy, mix(tier >= 1 ? tc : col, 0xFFFFFFFF, 0.5f), 0.7f * fade, 0); }
             glow(x, y, r * 1.2f, 0xFFFFFF, fade);
-        } else if (open) {                                                                   // the next one to earn: it pulses, with a ring showing how far along you are
-            float prog = (float) Math.min(1.0, a.goal() <= 0 ? 0 : a.progress() / a.goal()), br = 0.5f + 0.5f * (float) Math.sin(now / 300.0 + c);
-            plainStar(x, y, fade, n.depth() + c * 13, true);
-            float rr = (near ? 8f : 5.5f) + br * 1.5f;
-            ring(x, y, rr, argb(0.35f * fade * alpha, 0xC8D0F0), 1f);
-            if (prog > 0f) ring(x, y, rr, argb(0.95f * fade * alpha, col), prog);
-            ring(x, y, rr + 3 + 6 * br, argb((1f - br) * 0.5f * fade * alpha, col), 1f);
-        } else {                                                                             // further along the path: a small grey star, not yet in reach
-            plainStar(x, y, 0.55f * fade, n.depth() + c * 13, tier == 3);
-            if (tier > 0) ring(x, y, 2.6f * tk, argb(0.35f * fade * alpha, tc), 1f);
-        }
-        if (near || hv || open && zoomed < 0.3f) {                                           // its number on the path: 1 is the first star to earn
-            String num = String.valueOf(n.depth() + 1); float nw2 = host.width(num) * 0.6f;
-            Gfx.push(g); Gfx.translate(g, x - nw2 / 2f, y + (near ? 6.5f : 5f)); Gfx.scale(g, 0.6f);
-            Gfx.txt(g, font, num, 0, 0, argb((lit ? 0.95f : open ? 0.9f : 0.55f) * fade * alpha, lit ? mix(col, 0xFFFFFFFF, 0.5f) : open ? col : 0x9AA4C4), false);
-            Gfx.pop(g);
+        } else {                                                                             // not lit yet: a real, small star; its rim says its tier, and an arc shows how far along you are
+            plainStar(x, y, (0.55f + 0.2f * prog) * fade * dK, n.depth() + c * 13, tier == 2 || near);
+            glow(x, y, 3.2f * tk, tc, 0.22f * fade);
+            if (prog > 0.001f && (near || hv || prog > 0.25f)) { float rr = (near ? 7f : 4.8f) * dK; ring(x, y, rr, argb(0.2f * fade * alpha, 0xC8D0F0), 1f); ring(x, y, rr, argb(0.85f * fade * alpha, col), prog); }
         }
         if (!a.reward().isEmpty() && (near || hv)) { float bx = x + (near ? 7 : 5), by = y - (near ? 7 : 5); line(bx - 2, by, bx + 2, by, lit ? 0xFFE9B8 : 0x8A94B8, fade, 0); line(bx, by - 2, bx, by + 2, lit ? 0xFFE9B8 : 0x8A94B8, fade, 0); }   // a reward waits here
         if (a.id().equals(blinkId) && now >= blinkAt && now < blinkAt + 4200) {
@@ -618,7 +676,7 @@ final class Codex {
             float dl = (float) Math.hypot(n.du(), n.dv()), ux = dl < 1e-4f ? 0f : n.du() / dl, uy = dl < 1e-4f ? 1f : n.dv() / dl;
             CosmeticData.Def rw = a.reward().isEmpty() ? null : CosmeticData.byId(a.reward());
             String r = rw == null ? null : "✦ " + rw.name();
-            int ca = argb((lit ? 1f : open ? 0.85f : 0.5f) * fade * alpha, lit ? 0xFFFFFF : 0xB8C0DA), cr = argb(0.85f * fade * alpha, lit ? col : 0x8A94B8);
+            int ca = argb((lit ? 1f : 0.7f) * fade * alpha, lit ? 0xFFFFFF : 0xB8C0DA), cr = argb(0.85f * fade * alpha, lit ? col : 0x8A94B8);
             float nw = host.width(nm) * 0.75f, rwid = r == null ? 0 : host.width(r) * 0.75f, bw = Math.max(nw, rwid), bh = r == null ? 7 : 15;
             // where the label may go, best first: outward from the figure's middle, then the other sides; the first that is free is used
             int[] order = Math.abs(ux) > 0.7f ? (ux > 0 ? new int[]{0, 2, 3, 1} : new int[]{1, 2, 3, 0}) : uy >= 0 ? new int[]{2, 0, 1, 3} : new int[]{3, 0, 1, 2};
@@ -634,12 +692,12 @@ final class Codex {
             if (r != null) small(g, r, Math.round(centre ? x - rwid / 2f : bx < x ? bx + bw - rwid : bx), Math.round(by + 8), cr);
         }
         if (hv && alpha > 0.6f) {
-            if (!lastHoverStar.equals(a.id())) { lastHoverStar = a.id(); if (now - hoverSoundAt > 90) { hoverSoundAt = now; sound("sky_star", 0.9f + 0.05f * n.depth(), 0.45f); } }      // one chime per star, never a burst
+            if (!lastHoverStar.equals(a.id())) { lastHoverStar = a.id(); if (now - hoverSoundAt > 90) { hoverSoundAt = now; sound("sky_star", 0.85f + 0.3f * rnd(n.depth() + c * 13), 0.45f); } }      // one chime per star, never a burst
             String nm = a.secret() && !a.done() ? "???" : a.name();
             String rew = a.reward().isEmpty() ? "" : Ledger.rewardName(a.reward());
             String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  First day only." : "  Missed: your first day is over.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".");
-            String extra = "Star " + (n.depth() + 1) + " of " + tree(c).size() + "  ·  " + (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal()));
-            host.tip(nm + "\n" + ACH_NAME[c] + "\nT" + Math.max(0, Math.min(3, a.tier())) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
+            String extra = (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal()));
+            host.tip(nm + "\n" + ACH_NAME[c] + "\nT" + Math.max(0, Math.min(2, a.tier())) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
         }
     }
 
@@ -658,7 +716,7 @@ final class Codex {
         int lx = sx0 + Math.round(sw * 0.5f) - 120, ly = sy0 + sh - 16;                         // the key: the four tiers, and what a reward looks like
         g.fill(lx - 8, ly - 5, lx + 248, ly + 10, argb(0.5f * a * alpha, 0x060818)); g.fill(lx - 8, ly - 5, lx + 248, ly - 4, argb(0.4f * a * alpha, 0xE8C76A));
         int kx = lx;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
             int tc = LocalLedger.TIER_COL[i] & 0xFFFFFF; glow(kx + 3, ly + 3, 2.2f * TIER_K[i], tc, a); ring(kx + 3, ly + 3, 3.4f * TIER_K[i], argb(0.8f * a * alpha, tc), 1f);
             String tn = LocalLedger.TIER[i]; small(g, tn, kx + 10, ly + 1, argb(0.85f * a * alpha, mix(0xFFD8DCEC, 0xFF000000 | tc, 0.35f))); kx += 14 + Math.round(host.width(tn) * 0.75f) + 8;
         }
@@ -693,8 +751,7 @@ final class Codex {
     private static void plainStar(float x, float y, float a, int seed, boolean big) {
         float tw = 0.7f + 0.3f * (float) Math.sin(now / (600.0 + rnd(seed) * 700) + seed);
         glow(x, y, big ? 7f : 5f, 0x9AB4FF, 0.35f * a * tw);
-        NebulaTex.glow(G, x, y, big ? 5f : 3.5f, 0.6f, argb(0.5f * a * tw * alpha, 0xD8E2FF));
-        NebulaTex.glow(G, x, y, 0.6f, big ? 5f : 3.5f, argb(0.5f * a * tw * alpha, 0xD8E2FF));
+        if (big) { NebulaTex.glow(G, x, y, 5f, 0.6f, argb(0.5f * a * tw * alpha, 0xD8E2FF)); NebulaTex.glow(G, x, y, 0.6f, 5f, argb(0.5f * a * tw * alpha, 0xD8E2FF)); }
         glow(x, y, big ? 1.8f : 1.3f, 0xF4F6FF, a * tw);
     }
     private static void spark(float x0, float y0, float x1, float y1, int col, float fade, int seed) {
@@ -777,10 +834,10 @@ final class Codex {
     private static void glow(float cx, float cy, float r, int rgb, float a) { NebulaTex.glow(G, cx, cy, r, r, argb(a * alpha, rgb)); }
     /** A bar from (x0, y0) to (x1, y1), one draw however long. width 0 = a hairline, 1 = a 3-pixel soft band, 2 = a wide soft glow. */
     private static void line(float x0, float y0, float x1, float y1, int rgb, float a, int width) {
-        float len = (float) Math.hypot(x1 - x0, y1 - y0); if (len < 1f || a < 0.01f) return;
-        float trim = Math.min(4f, len * 0.2f);                                     // stop short of the stars at both ends
+        float len = (float) Math.hypot(x1 - x0, y1 - y0); if (len < (width < 0 ? 0.3f : 1f) || a < 0.01f) return;
+        float trim = width < 0 ? 0f : Math.min(4f, len * 0.2f);                    // stop short of the stars at both ends (not for width -1: a plain segment)
         Gfx.push(G); Gfx.translate(G, x0, y0); Gfx.rotate(G, (float) Math.atan2(y1 - y0, x1 - x0));
-        int L = Math.round(len - trim);
+        int L = Math.max(Math.round(trim) + 1, Math.round(len - trim));
         if (width == 2) NebulaTex.glow(G, len / 2f, 0, len / 2f, 3.5f, argb(a * alpha, rgb));
         else {
             G.fill(Math.round(trim), 0, L, 1, argb(a * alpha, rgb));
@@ -802,7 +859,7 @@ final class Codex {
     }
     /** A ring (or the start of one, up to `upto` of the way round) made of short rotated bars. */
     private static void ring(float cx, float cy, float r, int c, float upto) {
-        int n = Math.max(16, Math.min(64, Math.round(r * 1.2f)));
+        int n = Math.max(8, Math.min(32, Math.round(r * 0.7f)));
         float a = (c >>> 24) / 255f / Math.max(0.01f, alpha); int rgb = c & 0xFFFFFF;
         for (int i = 0; i < n; i++) {
             float u0 = i / (float) n, u1 = (i + 1) / (float) n; if (u0 >= upto) break; u1 = Math.min(u1, upto);

@@ -8,22 +8,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The lyrics (Visuals > Lyrics): light, readable words on your screen, a little below the crosshair (Move them to put them anywhere).
- * No panels, no world signs: just the words with a soft shadow, so they cost almost nothing.
+ * The lyrics (Visuals > Lyrics): big, clean words a little below the crosshair (Move them to put them anywhere), outlined so they read
+ * on anything, on a soft shade. Three styles:
  *
- *   POP (default): the words of the line pop in one by one as they are sung, each with a little spring (and a few stars, if Star bursts
- *     is on); the word being sung is in the album's colour, the ones before it settle to white. The old line drifts up and away.
- *   KARAOKE: the whole line is there at once, dim, and fills with the album's colour word by word; the last line fades above it and the
- *     next one waits faintly below.
+ *   POP (default): the words pop in one by one as they're sung, each with a spring; the word being sung glows in the album's colour with
+ *     a little bar sliding under it from word to word; sung words settle to white. The old line drifts up and fades.
+ *   KARAOKE: the whole line waits in grey and a wipe of the album's colour runs through it letter by letter, smooth as the song; a dot
+ *     bounces from word to word above it. The next line waits faintly below.
+ *   SCROLL (new): three lines stacked like a lyric sheet - the last one small and dim above, the current one big and bright with its
+ *     glow, the next one below - and the sheet glides up when the line changes.
  *
- * Long lines wrap onto a second row (and shrink a little if they still don't fit). The words are timed from the line's start: they are
- * spread over how long the line would take to sing (about 85 ms a letter), not over the gap until the next line, so a line followed by
- * a long instrumental doesn't crawl. Everything steps aside while a drop animation plays.
+ * Long lines wrap onto a second row (and shrink a little if they still don't fit). Words are timed from the line's start, spread over
+ * how long the line would take to sing (about 85 ms a letter). Everything steps aside while a drop animation plays.
  */
 final class LyricsHud {
     private LyricsHud() {}
 
-    static final int POP = 0, KARAOKE = 1;
+    static final int POP = 0, KARAOKE = 1, SCROLL = 2;
 
     /** The colour of the sung words: from the album cover, made light enough to read. */
     static int colour() { return Ritual.mixc(AlbumArt.accent(), 0xFFFFFF, 0.25f); }
@@ -64,14 +65,24 @@ final class LyricsHud {
         int maxW = Math.round(Math.min(W * 0.72f, 360f) / k);
         bx0 = Math.round(cx - maxW / 2f * k); bx1 = Math.round(cx + maxW / 2f * k); by0 = Math.round(cy - 6 * k); by1 = Math.round(cy + 22 * k);
         if (c.lyricsStyle == KARAOKE) {
-            if (prevLine >= 0 && prevLine < L.size() && out < 1f) block(g, f, L, prevLine, pos, cx, cy - 10 * k * out, k, (1f - out) * vis, maxW, false, c);
-            else if (li > 0 && li - 1 < L.size()) faint(g, f, L.get(li - 1).text(), cx, cy - 13 * k, k * 0.75f, 0.35f * vis, maxW);
-            if (li >= 0 && li < L.size()) block(g, f, L, li, pos, cx, cy + 4 * k * (1f - ease(out)), k, ease(out) * vis, maxW, false, c);
-            if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + 15 * k, k * 0.75f, 0.4f * vis, maxW);
+            if (prevLine >= 0 && prevLine < L.size() && out < 1f) karaoke(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 12 * k * ease(out), k, (1f - out) * vis, maxW);
+            if (li >= 0 && li < L.size()) karaoke(g, f, L, li, pos, cx, cy + 4 * k * (1f - ease(out)), k, ease(out) * vis, maxW);
+            if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + 17 * k, k * 0.75f, 0.45f * vis, maxW);
+        } else if (c.lyricsStyle == SCROLL) {
+            float glide = 1f - ease(out), step = 22 * k;                                     // the sheet moves up one line as the new one arrives
+            for (int d = -2; d <= 2; d++) {
+                int idx = li + d; if (idx < 0 || idx >= L.size()) continue;
+                if (d == 2 && glide < 0.01f) continue;
+                float y = cy + d * step + glide * step, dist = Math.abs(d + glide);
+                float a = Math.max(0f, 1f - dist * 0.55f) * vis, sc = k * (1.15f - Math.min(1f, dist) * 0.4f);
+                if (a < 0.03f) continue;
+                if (d == 0) { line(g, f, L, idx, pos, cx, y, sc, a, maxW, c, true); }
+                else faint(g, f, L.get(idx).text(), cx, y - 2 * k, sc, a * 0.75f, Math.round(maxW * k / Math.max(0.3f, sc)));
+            }
         } else {
-            if (prevLine >= 0 && prevLine < L.size() && out < 1f) block(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 14 * k * ease(out), k, (1f - out) * vis, maxW, true, c);
-            if (li >= 0 && li < L.size()) block(g, f, L, li, pos, cx, cy, k, vis, maxW, true, c);
-            if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + 15 * k, k * 0.7f, 0.3f * vis, maxW);
+            if (prevLine >= 0 && prevLine < L.size() && out < 1f) line(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 14 * k * ease(out), k, (1f - out) * vis, maxW, c, false);
+            if (li >= 0 && li < L.size()) line(g, f, L, li, pos, cx, cy, k, vis, maxW, c, false);
+            if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + 17 * k, k * 0.7f, 0.35f * vis, maxW);
         }
     }
     private static int at(List<Lyrics.Line> l, long ms) { int i = -1; for (int k = 0; k < l.size(); k++) { if (l.get(k).atMs() <= ms) i = k; else break; } return i; }
@@ -83,47 +94,94 @@ final class LyricsHud {
         return start + span * ch / Math.max(1, total);
     }
 
-    /** One line, wrapped to at most two rows. pop: words appear as sung; otherwise all show, filling with colour. */
-    private static void block(GuiGraphicsExtractor g, Font f, List<Lyrics.Line> L, int li, long pos, float cx, float cy, float k, float a, int maxW, boolean pop, FancyConfig c) {
+    /** The rows of a line (at most two) and the scale that fits them. */
+    private static List<String> rowsOf(Font f, String text, int maxW, float k, float[] kk) {
+        List<String> rows = wrap(f, text, maxW); int widest = 0; for (String r : rows) widest = Math.max(widest, f.width(r));
+        kk[0] = widest > maxW ? k * maxW / (float) widest : k; kk[1] = widest; return rows;
+    }
+    /** The shade behind a line: soft, wide, never a box. */
+    private static void shade(GuiGraphicsExtractor g, float cx, float cy, float w, float kk, int rows, float a) {
+        NebulaTex.glow(g, cx, cy + 4 * kk, w * 0.58f + 14, 10 * kk + rows * 6 * kk, Gfx.argb(Math.round(95 * a), 0x000000));
+    }
+    /** Pop (and Scroll's middle line): words arrive as they're sung; the sung word glows in the album's colour with a bar sliding under it. */
+    private static void line(GuiGraphicsExtractor g, Font f, List<Lyrics.Line> L, int li, long pos, float cx, float cy, float k, float a, int maxW, FancyConfig c, boolean all) {
         if (a < 0.02f) return;
         String text = L.get(li).text(); if (text.isBlank()) return;
         long start = L.get(li).atMs(), end = li + 1 < L.size() ? L.get(li + 1).atMs() : start + 5000;
-        List<String> rows = wrap(f, text, maxW); float kk = k;
-        int widest = 0; for (String r : rows) widest = Math.max(widest, f.width(r));
-        if (widest > maxW) kk = k * maxW / (float) widest;
+        float[] q = new float[2]; List<String> rows = rowsOf(f, text, maxW, k * 1.2f, q); float kk = q[0];
         int acc = colour(), total = text.length(), ch = 0;
-        float rowH = 11 * kk, y0 = cy - (rows.size() - 1) * rowH / 2f;
-        NebulaTex.glow(g, cx, cy + 4 * kk, widest * kk * 0.55f + 10, 9 * kk + rows.size() * 5 * kk, Gfx.argb(Math.round(70 * a), 0x000000));   // a soft shade behind the words, nothing more
+        float rowH = 12 * kk, y0 = cy - (rows.size() - 1) * rowH / 2f;
+        shade(g, cx, cy, q[1] * kk, kk, rows.size(), a);
+        float barX0 = -1, barX1 = -1, barY = 0;
         for (String row : rows) {
             float x = cx - f.width(row) * kk / 2f, y = y0;
             for (String w : row.split(" ")) {
                 if (w.isEmpty()) { x += f.width(" ") * kk; ch++; continue; }
                 long wa = wordAt(start, end, ch, total), nx = wordAt(start, end, ch + w.length() + 1, total);
                 float u = (pos - wa) / 1000f, ww = f.width(w) * kk; boolean singing = pos >= wa && pos < nx;
-                if (pop) {
-                    if (u >= 0f) {
-                        float p = Math.min(1f, u / 0.22f), s = p < 1f ? 0.6f + 0.4f * spring(p) : 1f;
-                        int col = singing ? acc : Ritual.mixc(acc, 0xFFFFFF, Math.min(1f, (pos - nx) / 600f + 0.5f));
-                        word(g, f, w, x + ww / 2f, y + (1f - p) * 4 * kk, kk * s, Gfx.argb(Math.round(255 * a * Math.min(1f, p * 2f)), col));
-                        if (c.lyricsStars && u < 0.6f) AmbienceHud.sparkle(g, x + ww / 2f, y + 3 * kk, ww, u / 0.6f, a * 0.8f, (li * 31 + ch) & 0xFFFF, kk * 0.8f);
-                    }
-                } else {
-                    float lit = Math.max(0f, Math.min(1f, u / 0.18f));
-                    word(g, f, w, x + ww / 2f, y, kk, Gfx.argb(Math.round(150 * a), 0xC8CCD8));
-                    if (lit > 0f) word(g, f, w, x + ww / 2f, y, kk, Gfx.argb(Math.round(255 * a * lit), singing ? acc : Ritual.mixc(acc, 0xFFFFFF, 0.45f)));
+                if (all || u >= 0f) {
+                    float p = all ? 1f : Math.min(1f, u / 0.22f), s = p < 1f ? 0.6f + 0.4f * spring(p) : 1f;
+                    boolean sung = pos >= wa;
+                    int col = singing ? Ritual.mixc(acc, 0xFFFFFF, 0.15f) : sung ? Ritual.mixc(acc, 0xFFFFFF, Math.min(1f, (pos - nx) / 500f + 0.55f)) : 0xB8BCC8;
+                    if (singing) { NebulaTex.glow(g, x + ww / 2f, y + 4 * kk, ww * 0.7f + 4, 7 * kk, Gfx.argb(Math.round(70 * a), acc)); barX0 = x; barX1 = x + ww; barY = y + 10 * kk; }
+                    outlined(g, f, w, x + ww / 2f, y + (1f - p) * 4 * kk, kk * s, a * Math.min(1f, p * 2f) * (sung || all ? 1f : 0.6f), col);
+                    if (c.lyricsStars && !all && u >= 0 && u < 0.6f) AmbienceHud.sparkle(g, x + ww / 2f, y + 3 * kk, ww, u / 0.6f, a * 0.8f, (li * 31 + ch) & 0xFFFF, kk * 0.8f);
                 }
                 x += ww + f.width(" ") * kk; ch += w.length() + 1;
             }
             y0 += rowH;
         }
+        if (barX0 >= 0) {                                                                    // the bar under the word being sung, gliding to it
+            if (BAR_LINE != li) { BAR_LINE = li; barA = barX0; barB = barX1; }
+            barA += (barX0 - barA) * 0.35f; barB += (barX1 - barB) * 0.35f;
+            g.fill(Math.round(barA), Math.round(barY), Math.round(barB), Math.round(barY) + 1, Gfx.argb(Math.round(230 * a), acc));
+            NebulaTex.glow(g, (barA + barB) / 2f, barY + 0.5f, (barB - barA) * 0.6f + 2, 2.5f, Gfx.argb(Math.round(120 * a), acc));
+        }
+    }
+    private static int BAR_LINE = -9; private static float barA, barB;
+    /** Karaoke: the line in grey, a wipe of colour running through it letter by letter, a dot bouncing over the word being sung. */
+    private static void karaoke(GuiGraphicsExtractor g, Font f, List<Lyrics.Line> L, int li, long pos, float cx, float cy, float k, float a, int maxW) {
+        if (a < 0.02f) return;
+        String text = L.get(li).text(); if (text.isBlank()) return;
+        long start = L.get(li).atMs(), end = li + 1 < L.size() ? L.get(li + 1).atMs() : start + 5000;
+        float[] q = new float[2]; List<String> rows = rowsOf(f, text, maxW, k * 1.2f, q); float kk = q[0];
+        int acc = colour(), total = text.length(), ch = 0;
+        float rowH = 12 * kk, y0 = cy - (rows.size() - 1) * rowH / 2f;
+        shade(g, cx, cy, q[1] * kk, kk, rows.size(), a);
+        float dotX = -1, dotY = 0, dotU = 0;
+        for (String row : rows) {
+            float x = cx - f.width(row) * kk / 2f;
+            for (int i = 0; i < row.length(); i++) {
+                String cs = String.valueOf(row.charAt(i)); float cw = f.width(cs) * kk;
+                long ca = wordAt(start, end, ch, total), cb = wordAt(start, end, ch + 1, total);
+                float fill = Math.max(0f, Math.min(1f, (pos - ca) / (float) Math.max(1, cb - ca)));
+                if (cs.equals(" ")) { x += cw; ch++; continue; }
+                outlined(g, f, cs, x + cw / 2f, y0, kk, a * 0.7f, 0x8A8EA0);
+                if (fill > 0f) outlined(g, f, cs, x + cw / 2f, y0, kk, a * fill, fill >= 1f ? Ritual.mixc(acc, 0xFFFFFF, 0.25f) : acc);
+                if (fill > 0f && fill < 1f) { dotX = x + cw / 2f; dotY = y0; }
+                x += cw; ch++;
+            }
+            ch++; y0 += rowH;
+        }
+        if (dotX >= 0) {                                                                     // the bouncing dot
+            float b = Math.abs((float) Math.sin(pos / 140.0)) * 3 * kk;
+            NebulaTex.glow(g, dotX, dotY - 4 * kk - b, 3.5f * kk, 3.5f * kk, Gfx.argb(Math.round(200 * a), acc));
+            g.fill(Math.round(dotX - kk), Math.round(dotY - 5 * kk - b), Math.round(dotX + kk), Math.round(dotY - 3 * kk - b), Gfx.argb(Math.round(255 * a), 0xFFFFFF));
+        }
+    }
+    /** A word or letter with a dark outline, so it reads on snow, sky and lava alike. mx: its middle. */
+    private static void outlined(GuiGraphicsExtractor g, Font f, String w, float mx, float y, float k, float a, int rgb) {
+        if (a < 0.02f) return;
+        Gfx.push(g); Gfx.translate(g, mx, y + 4 * k); Gfx.scale(g, k);
+        int x = -f.width(w) / 2, o = Gfx.argb(Math.round(200 * a), 0x08080C);
+        Gfx.txt(g, f, w, x - 1, -4, o, false); Gfx.txt(g, f, w, x + 1, -4, o, false); Gfx.txt(g, f, w, x, -5, o, false); Gfx.txt(g, f, w, x, -3, o, false);
+        Gfx.txt(g, f, w, x, -4, Gfx.argb(Math.round(255 * a), rgb), false);
+        Gfx.pop(g);
     }
     private static void faint(GuiGraphicsExtractor g, Font f, String s, float cx, float y, float k, float a, int maxW) {
         if (s.isBlank() || a < 0.02f) return;
         if (f.width(s) > maxW) s = f.plainSubstrByWidth(s, maxW - 8) + "…";
-        text(g, f, s, cx, y, k, Gfx.argb(Math.round(255 * a), 0xD8DCE6));
-    }
-    private static void word(GuiGraphicsExtractor g, Font f, String w, float mx, float y, float k, int argb) {
-        Gfx.push(g); Gfx.translate(g, mx, y + 4 * k); Gfx.scale(g, k); Gfx.txt(g, f, w, -f.width(w) / 2, -4, argb, true); Gfx.pop(g);
+        outlined(g, f, s, cx, y, k, a, 0xD8DCE6);
     }
     /** Up to two rows, split at the space nearest the middle. */
     private static List<String> wrap(Font f, String s, int maxW) {

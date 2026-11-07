@@ -598,3 +598,11 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Less clutter: constellation names are small spaced caps with a thin progress bar and a small count; the top hint is gone; the key at the bottom shows the four tiers, the reward mark and "click a constellation to fly in". An aurora waves across the top of the sky.
 - Mob Drops is two crossed swords (14 key points); figures are drawn a little larger (0.12).
 - The deep sky (Codex.deepSky): a Milky Way band of glow and ~500 dust stars with dark lanes from the lower left to the upper right, a slowly turning two-armed spiral galaxy in the gap between Every Drop and Playtime, five bright stars with diffraction spikes, and a comet crossing the upper sky every 2.5 minutes. All parallaxed with the camera.
+
+## Round: 01:51 request (achievements, lyrics, Now Playing, size, smoothness, icons)
+- Achievement tiers are three: Bronze, Silver, Gold (achievements_src.py C/U = Bronze, R = Silver, L = Gold). Tooltips show a medal.
+- Constellations are seeded random star clouds joined by their shortest links (MST). There is no order: no numbers, no "next" star, no dashed path. Any star can be lit anytime; unlit stars show a progress arc once started.
+- Depth: each constellation has a DEPTH (size, light, parallax). The sky layers slide by depth with the mouse. Far planets are shaded spheres (terminator, atmosphere, ringed planet).
+- Performance: ring() max 32 segments, Milky Way dust 240, small unlit stars without spikes; ~1900 draws a frame (was ~3450). Fly time 480 ms.
+- Lyrics styles: Pop, Karaoke, Scroll. Now Playing redesigned (record behind the cover, equalizer, glowing progress bar).
+- Item size: old 50% is now 75%; cap 110%. The animation clock runs on nanoTime.

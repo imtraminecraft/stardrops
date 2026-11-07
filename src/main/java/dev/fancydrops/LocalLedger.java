@@ -30,8 +30,8 @@ final class LocalLedger {
     static final double RNG_COINS = 10_000_000;
     static final LinkedHashMap<String, String> CH = new LinkedHashMap<>();
     static final List<Def> ACH = new ArrayList<>();
-    static final String[] TIER = {"Common", "Uncommon", "Rare", "Legendary"};
-    static final int[] TIER_COL = {0xFFFFFFFF, 0xFF55FF55, 0xFF5555FF, 0xFFFFAA00};
+    static final String[] TIER = {"Bronze", "Silver", "Gold"};
+    static final int[] TIER_COL = {0xFFD08A4E, 0xFFCFD8E6, 0xFFFFCE4A};
     static {
         try (var in = LocalLedger.class.getResourceAsStream("/fancydrops/achievements.json")) {
             var o = JsonParser.parseString(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();

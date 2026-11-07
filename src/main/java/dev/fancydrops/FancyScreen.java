@@ -852,6 +852,14 @@ public class FancyScreen extends Screen {
     private static String tipText, hoverCos; private static int tipCol;                      // the hover card of the tile under the mouse (drawn last, on top of everything)
     private static final int[] RAR_COL = {0xFF9AA3B5, 0xFF4B6BEB, 0xFF8FB8FF, 0xFFFFB400, 0xFFC77DFF};      // common, rare, achievement, legendary (and Beta), special
     /** The little rarity pin: a tiny gem on a pin, in the colour of the rarity. */
+    /** A small medal in the achievement's tier colour: bronze, silver or gold (gold glints). */
+    private static void medal(GuiGraphicsExtractor g, int x, int y, int tier) {
+        int c = LocalLedger.TIER_COL[tier], lt = Canvas.mix(c, 0xFFFFFFFF, 0.5f), dk = Canvas.mix(c, 0xFF000000, 0.45f);
+        g.fill(x + 1, y, x + 3, y + 3, 0xFF8A2A3A); g.fill(x + 4, y, x + 6, y + 3, 0xFF2A4A8A);         // the ribbon
+        g.fill(x + 2, y + 3, x + 5, y + 4, c); g.fill(x + 1, y + 4, x + 6, y + 7, c); g.fill(x + 2, y + 7, x + 5, y + 8, dk);
+        g.fill(x + 1, y + 6, x + 6, y + 7, dk); g.fill(x + 2, y + 4, x + 3, y + 5, lt);
+        if (tier == 2) { float gl = Math.max(0f, (float) Math.sin(System.currentTimeMillis() / 400.0)); g.fill(x + 2, y + 4, x + 5, y + 6, Gfx.argb(Math.round(120 * gl), 0xFFFFFF)); }
+    }
     private static void rarityPin(GuiGraphicsExtractor g, int x, int y, int rar) {
         int c = RAR_COL[Math.max(0, Math.min(4, rar))], lt = Canvas.mix(c, 0xFFFFFFFF, 0.55f), dk = Canvas.mix(c, 0xFF000000, 0.45f);
         g.fill(x + 2, y, x + 5, y + 1, lt); g.fill(x + 1, y + 1, x + 6, y + 3, c); g.fill(x, y + 3, x + 7, y + 4, c);
@@ -871,7 +879,7 @@ public class FancyScreen extends Screen {
         if (t == null || t.isEmpty()) return;
         String[] ln = t.split("\n", -1); if (ln.length < 6) return;
         int rar = 0, tier = -1; try { if (ln[2].startsWith("T")) tier = Integer.parseInt(ln[2].substring(1)); else rar = Integer.parseInt(ln[2]); } catch (NumberFormatException ignored) { }      // "T2": an achievement's tier
-        boolean yours = "1".equals(ln[3]); int rc = tier >= 0 ? LocalLedger.TIER_COL[Math.min(3, tier)] : RAR_COL[Math.max(0, Math.min(4, rar))];
+        boolean yours = "1".equals(ln[3]); int rc = tier >= 0 ? LocalLedger.TIER_COL[Math.min(2, tier)] : RAR_COL[Math.max(0, Math.min(4, rar))];
         List<String> how = new ArrayList<>(); String cur = "";
         for (String wd : ln[5].split(" ")) { if (!cur.isEmpty() && Gfx.w(font, cur + " " + wd) > 190) { how.add(cur); cur = wd; } else cur = cur.isEmpty() ? wd : cur + " " + wd; }
         if (!cur.isEmpty()) how.add(cur);
@@ -880,7 +888,7 @@ public class FancyScreen extends Screen {
         int x = Math.min(mx + 10, width - w - 2), y = Math.min(my + 12, height - h - 2);
         pill(g, x, y, w, h, 0xF4101420); rout(g, x, y, w, h, Gfx.argb(200, rc & 0xFFFFFF)); g.fill(x, y + 2, x + 2, y + h - 2, tipCol);
         Gfx.text(g, font, ln[0], x + 10, y + 7, Canvas.mix(tipCol, 0xFFFFFFFF, 0.5f)); Gfx.text(g, font, ln[1], x + 10 + Gfx.w(font, ln[0]) + 6, y + 7, Ui.DIM);
-        int yy = y + 23; rarityPin(g, x + 10, yy + 1, tier >= 0 ? new int[]{0, 1, 1, 3}[Math.min(3, tier)] : rar); Gfx.text(g, font, tier >= 0 ? LocalLedger.TIER[Math.min(3, tier)] : CosmeticData.rarityName(rar), x + 22, yy, Canvas.mix(rc, 0xFFFFFFFF, 0.25f));
+        int yy = y + 23; if (tier >= 0) medal(g, x + 10, yy, Math.min(2, tier)); else rarityPin(g, x + 10, yy + 1, rar); Gfx.text(g, font, tier >= 0 ? LocalLedger.TIER[Math.min(2, tier)] : CosmeticData.rarityName(rar), x + 22, yy, Canvas.mix(rc, 0xFFFFFFFF, 0.25f));
         String st = tier >= 0 ? (yours ? "Lit" : "Not yet") : yours ? "Unlocked" : "Locked"; Gfx.text(g, font, st, x + w - 10 - Gfx.w(font, st), yy, yours ? 0xFF62E6A8 : 0xFFFF7B7B);
         yy += 15; if (!ln[4].isEmpty()) { Gfx.text(g, font, ln[4], x + 10, yy, Ui.SUB); yy += 13; }
         g.fill(x + 10, yy, x + w - 10, yy + 1, 0x22FFFFFF); yy += 6;
@@ -2243,7 +2251,7 @@ public class FancyScreen extends Screen {
             case HOME -> l.add(new SubPage("Resources", ":res_heart:", 0xFFFF6B8A, false));
             case DROPS, ANIMATIONS, SOUNDS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), c.wip())); }
             case CHAT -> { l.add(new SubPage("Message & Channel", ":format:", 0xFFFFC857, false)); l.add(new SubPage("Chat Enabled", ":bell:", 0xFF7BE05A, false)); }
-            case VISUALS -> { l.add(new SubPage("Now Playing", ":disc:", 0xFF1ED760, false)); l.add(new SubPage("Lyrics", ":note:", 0xFFFFC8A0, false)); l.add(new SubPage("Ambience", ":glass:", 0xFFB48CFF, false)); l.add(new SubPage("Spotify", ":sounds:", 0xFF1DB954, false)); }
+            case VISUALS -> { l.add(new SubPage("Now Playing", ":disc:", 0xFF1ED760, false)); l.add(new SubPage("Lyrics", ":note:", 0xFFFFC8A0, false)); l.add(new SubPage("Ambience", ":amb:", 0xFFB48CFF, false)); l.add(new SubPage("Spotify", ":spot:", 0xFF1DB954, false)); }
             case GENERAL -> {
                 l.add(new SubPage("Menu", ":menu:", 0xFFB0B6C2, false)); l.add(new SubPage("Cosmetics", ":cosmetics:", 0xFFC77DFF, false));
                 l.add(new SubPage("Prices", ":coin:", 0xFFFFC857, false)); l.add(new SubPage("Drop Data", ":refresh:", 0xFF56D8FF, false));
@@ -2743,13 +2751,13 @@ public class FancyScreen extends Screen {
 
     // ---- Visuals: Now Playing, Lyrics, Spotify
     private void visualsPage(FancyConfig c) {
-        String[] wheres = {"Pop", "Karaoke"};
+        String[] wheres = {"Pop", "Karaoke", "Scroll"};
         int ambOn = (c.ambGlow ? 1 : 0) + (c.ambBars ? 1 : 0) + (c.ambNotes ? 1 : 0) + (c.ambWave ? 1 : 0);
         if (searching || landing()) {
             rows.add(hero(":note:", "Visuals", "Your music in the game: what's playing, the words floating in front of you, and a little atmosphere in the album's colours.", 0xFF1ED760));
             String[] lb = {"Now Playing", "Lyrics", "Ambience", "Spotify"};
             String[] sb = {c.npOn ? "On \u00B7 " + c.npScale + "%" : "Off", c.lyricsOn ? wheres[c.lyricsStyle] : "Off", ambOn == 0 ? "Off" : ambOn + " of 4 on", Spotify.linked() ? "Linked" : "Not linked yet"};
-            rows.add(picker("", "", lb, sb, new String[]{":disc:", ":note:", ":glass:", ":sounds:"}, new int[]{0xFF1ED760, 0xFFFFC8A0, 0xFFB48CFF, 0xFF1DB954}, null, 2, () -> -1, i -> openPage(i, null, null)));
+            rows.add(picker("", "", lb, sb, new String[]{":disc:", ":note:", ":amb:", ":spot:"}, new int[]{0xFF1ED760, 0xFFFFC8A0, 0xFFB48CFF, 0xFF1DB954}, null, 2, () -> -1, i -> openPage(i, null, null)));
             if (!Spotify.linked()) rows.add(note("Start with Spotify: link it once and everything here comes alive.", 0xFF1ED760));
             else if (!Spotify.status.isEmpty()) rows.add(note(Spotify.status, 0xFF8A93B0));
             return;
@@ -2758,7 +2766,7 @@ public class FancyScreen extends Screen {
             rows.add(toggle(":disc:", "Now Playing", "The song you're playing, on your screen", () -> c.npOn, v -> c.npOn = v));
             if (!c.npOn) return;
             rows.add(section("Place"));
-            Row mv = row(0, ":switch:", "Position", "Drag it anywhere on the screen, scroll to resize", 0xFF1ED760);
+            Row mv = row(0, ":move:", "Position", "Drag it anywhere on the screen, scroll to resize", 0xFF1ED760);
             mv.ctls.add(new Btn("Move HUD", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this)))); rows.add(mv);
             Row nps = row(0, ":size:", "Size", "How big it is", Ui.ACCENT);
             nps.ctls.add(new Slider(60, 160, 5, () -> c.npScale, v -> c.npScale = (int) v, () -> c.npScale + "%").typed(1)); rows.add(nps);
@@ -2772,18 +2780,18 @@ public class FancyScreen extends Screen {
             rows.add(toggle(":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v));
             if (!c.lyricsOn) { if (!Lyrics.status.isEmpty()) rows.add(note(Lyrics.status, 0xFF8A93B0)); return; }
             rows.add(section("Style"));
-            rows.add(picker("", "", wheres, new String[]{"Words pop in as they're sung", "The line fills with colour"},
-                new String[]{":glass:", ":menu:"}, new int[]{0xFFFFC8A0, 0xFF1ED760}, null, 2, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
+            rows.add(picker("", "", wheres, new String[]{"Words pop in as they're sung", "A wipe of colour runs through the line", "A lyric sheet that glides up"},
+                new String[]{":lyr_burst:", ":note:", ":menu:"}, new int[]{0xFFFFC8A0, 0xFF1ED760, 0xFFB48CFF}, null, 3, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
             rows.add(section("Place"));
-            Row lm = row(0, ":switch:", "Position", "Drag them anywhere, scroll to resize", 0xFFFFC8A0);
+            Row lm = row(0, ":move:", "Position", "Drag them anywhere, scroll to resize", 0xFFFFC8A0);
             lm.ctls.add(new Btn("Move them", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.LINE)))); rows.add(lm);
             Row ls = row(0, ":size:", "Size", "How big the words are", Ui.ACCENT);
             ls.ctls.add(new Slider(60, 160, 5, () -> c.lyricsSize, v -> c.lyricsSize = (int) v, () -> c.lyricsSize + "%").typed(1)); rows.add(ls);
             rows.add(toggle(":format:", "Next line", "The coming line, faintly below", () -> c.lyricsNext, v -> c.lyricsNext = v));
             rows.add(section("Extras"));
-            rows.add(toggle(":glass:", "Star bursts", "Little stars burst from each word as it's sung", () -> c.lyricsStars, v -> c.lyricsStars = v));
-            rows.add(toggle(":disc:", "Song intro", "The song's name in big letters when it starts", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
-            Row off = row(0, ":clock:", "Timing", "Words early or late? Nudge them", Ui.ACCENT);
+            rows.add(toggle(":lyr_burst:", "Star bursts", "Little stars burst from each word as it's sung", () -> c.lyricsStars, v -> c.lyricsStars = v));
+            rows.add(toggle(":lyr_intro:", "Song intro", "The song's name in big letters when it starts", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
+            Row off = row(0, ":lyr_timing:", "Timing", "Words early or late? Nudge them", Ui.ACCENT);
             off.ctls.add(new Slider(-1500, 1500, 50, () -> c.lyricsOffset, v -> c.lyricsOffset = (int) v, () -> (c.lyricsOffset > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", c.lyricsOffset / 1000.0))); rows.add(off);
             rows.add(note(Lyrics.status.isEmpty() ? "The words take the album cover's colour and step aside during drop animations." : Lyrics.status, 0xFF8A93B0));
             return;
@@ -2791,12 +2799,12 @@ public class FancyScreen extends Screen {
         if (curSub() == 2) {
             rows.add(note("Atmosphere in the album's colours, only while a song plays. Everything fades away during drop animations.", 0xFFB48CFF));
             rows.add(section("Screen"));
-            rows.add(toggle(":glass:", "Album glow", "The edges of your screen glow softly, breathing", () -> c.ambGlow, v -> c.ambGlow = v));
-            if (c.ambGlow) { Row gs = row(0, ":size:", "Glow strength", "How strong the light is", Ui.ACCENT); gs.ctls.add(new Slider(10, 100, 5, () -> c.ambGlowStrength, v -> c.ambGlowStrength = (int) v, () -> c.ambGlowStrength + "%").typed(1)); rows.add(gs); }
-            rows.add(toggle(":bars:", "Visualizer", "Dancing bars along the bottom, either side of the hotbar", () -> c.ambBars, v -> c.ambBars = v));
-            rows.add(toggle(":note:", "Music notes", "Notes drift up beside your hotbar", () -> c.ambNotes, v -> c.ambNotes = v));
+            rows.add(toggle(":amb_glow:", "Album glow", "The edges of your screen glow softly, breathing", () -> c.ambGlow, v -> c.ambGlow = v));
+            if (c.ambGlow) { Row gs = row(0, ":amb_strength:", "Glow strength", "How strong the light is", Ui.ACCENT); gs.ctls.add(new Slider(10, 100, 5, () -> c.ambGlowStrength, v -> c.ambGlowStrength = (int) v, () -> c.ambGlowStrength + "%").typed(1)); rows.add(gs); }
+            rows.add(toggle(":amb_viz:", "Visualizer", "Dancing bars along the bottom, either side of the hotbar", () -> c.ambBars, v -> c.ambBars = v));
+            rows.add(toggle(":amb_notes:", "Music notes", "Notes drift up beside your hotbar", () -> c.ambNotes, v -> c.ambNotes = v));
             rows.add(section("Moments"));
-            rows.add(toggle(":speed:", "Song wave", "A wave of colour sweeps across when a new song starts", () -> c.ambWave, v -> c.ambWave = v));
+            rows.add(toggle(":amb_wave:", "Song wave", "A wave of colour sweeps across when a new song starts", () -> c.ambWave, v -> c.ambWave = v));
             return;
         }
         Row lk = row(0, ":sounds:", Spotify.linked() ? "Linked to Spotify" : "Log in with Spotify", Spotify.status.isEmpty() ? (Spotify.linked() ? "Ready" : "Opens your browser once") : Spotify.status, 0xFF1ED760);
@@ -2805,21 +2813,21 @@ public class FancyScreen extends Screen {
         rows.add(lk);
         rows.add(section("Setup"));
         rows.add(note("Spotify needs an app of your own to talk to (it's free and takes about two minutes). Do these once:", 0xFFB4BDD2));
-        Row s1 = row(0, ":fancydrops:", "Step 1  \u00B7  Open the Spotify dashboard", "Log in with your Spotify account at developer.spotify.com/dashboard", 0xFF1ED760);
+        Row s1 = row(0, ":step_web:", "Step 1  \u00B7  Open the Spotify dashboard", "Log in with your Spotify account at developer.spotify.com/dashboard", 0xFF1ED760);
         s1.ctls.add(new Btn("Open", 0xFF1DB954, () -> { try { net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(this, java.net.URI.create("https://developer.spotify.com/dashboard")); } catch (Throwable ignored) { } }));
         rows.add(s1);
-        rows.add(row(0, ":format:", "Step 2  \u00B7  Create app", "Press Create app. Any name and description work (e.g. FancyDrops)", 0xFF1ED760));
-        Row s3 = row(0, ":send:", "Step 3  \u00B7  Add the Redirect URI", "Paste " + Spotify.REDIRECT + " into Redirect URIs and press Add", 0xFF1ED760);
+        rows.add(row(0, ":step_app:", "Step 2  \u00B7  Create app", "Press Create app. Any name and description work (e.g. FancyDrops)", 0xFF1ED760));
+        Row s3 = row(0, ":step_link:", "Step 3  \u00B7  Add the Redirect URI", "Paste " + Spotify.REDIRECT + " into Redirect URIs and press Add", 0xFF1ED760);
         s3.ctls.add(new Btn("Copy", Ui.ROW_HOVER, () -> { net.minecraft.client.Minecraft.getInstance().keyboardHandler.setClipboard(Spotify.REDIRECT); toast("Redirect URI copied.", 0xFF62E6A8); }));
         rows.add(s3);
-        rows.add(row(0, ":switch:", "Step 4  \u00B7  Tick Web API and save", "Under \"Which API/SDKs are you planning to use?\" tick Web API, accept the terms, Save", 0xFF1ED760));
-        Row cid = row(0, ":settings:", "Step 5  \u00B7  Paste the Client ID here", "Open the app's Settings, copy the Client ID, paste it in the box", 0xFF1ED760);
+        rows.add(row(0, ":step_check:", "Step 4  \u00B7  Tick Web API and save", "Under \"Which API/SDKs are you planning to use?\" tick Web API, accept the terms, Save", 0xFF1ED760));
+        Row cid = row(0, ":step_key:", "Step 5  \u00B7  Paste the Client ID here", "Open the app's Settings, copy the Client ID, paste it in the box", 0xFF1ED760);
         cid.h = 44; cid.field = spotifyField; rows.add(cid);
-        Row s6 = row(0, ":sounds:", "Step 6  \u00B7  Log in", Spotify.linked() ? "Done: you're linked" : "Press Log in at the top of this page and allow access in your browser", 0xFF1ED760);
+        Row s6 = row(0, ":step_login:", "Step 6  \u00B7  Log in", Spotify.linked() ? "Done: you're linked" : "Press Log in at the top of this page and allow access in your browser", 0xFF1ED760);
         rows.add(s6);
         rows.add(note("Only you can log in to an app in Development Mode. For friends: the app's Settings > User Management, add their Spotify name and email.", 0xFF8A93B0));
         rows.add(section("Music Functions"));
-        String[] mn = {"Play / Pause", "Next song", "Previous song"}, mi = {":play:", ":speed:", ":back:"}, md = {"Pauses or resumes what's playing", "Skips to the next song", "Goes back to the song before"};
+        String[] mn = {"Play / Pause", "Next song", "Previous song"}, mi = {":mus_play:", ":mus_next:", ":mus_prev:"}, md = {"Pauses or resumes what's playing", "Skips to the next song", "Goes back to the song before"};
         for (int i = 0; i < 3; i++) {
             net.minecraft.client.KeyMapping km = FancyDropsMod.MUSIC[i];
             String bound = km == null ? "unavailable" : km.isUnbound() ? "Not set" : km.getTranslatedKeyMessage().getString();

@@ -42,7 +42,8 @@ final class Icons {
         if (name.startsWith("mob_") && ItemIcons.hasPixels("MOB_" + name.substring(4))) { ItemIcons.draw(g, "MOB_" + name.substring(4), null, x + 8, y + 8, 1.15f); return; }      // the creature's own 3D head (the pixel icon shows until it has loaded)
         if (name.startsWith("mob_")) ItemIcons.prefetch("MOB_" + name.substring(4));
         if (name.startsWith("it_")) { ItemIcons.draw(g, name.substring(3).toUpperCase(java.util.Locale.ROOT).replace('~', ';'), null, x + 8, y + 8, 1f); return; }      // a creature of the newer libraries: its rarest drop
-        if (name.startsWith("boss_")) {
+        if (name.equals("boss_enderman")) name = "boss_voidgloom";                          // Voidgloom Seraph has a drawn picture of its own, not an enderman skull
+        if (name.startsWith("boss_") && !name.equals("boss_voidgloom")) {
             String bid = name.substring(5);
             ItemIcons.draw(g, SlayerData.headId(bid), SlayerData.headFallback(bid), x + 8, y + 8, 1.15f); return;
         }      // a slayer boss: its skull

@@ -134,7 +134,7 @@ public class FancyConfig {
     public String spotifyRefresh = "";                         // the login, kept so you stay linked (no password, no secret)
     public boolean lyricsOn = true;
     public int lyricsSize = 100;
-    public int lyricsStyle = 0;                                         // 0 Pop (words pop in as sung), 1 Karaoke (the line fills with colour)
+    public int lyricsStyle = 0;                                         // 0 Pop (words pop in as sung), 1 Karaoke (a wipe of colour), 2 Scroll (a gliding lyric sheet)
     public boolean lyricsNext = true, lyricsIntro = true;               // the coming line under the current one; the song's name when it starts
     public int lyricsOffset = 0;                                        // ms the words come early (+) or late (-)
     public boolean ambGlow = false, ambNotes = false, ambBars = false, ambWave = false, lyricsStars = true; public int ambGlowStrength = 60;   // Ambience (Visuals > Ambience)
@@ -173,12 +173,13 @@ public class FancyConfig {
         if (c.playDone == null) c.playDone = new LinkedHashMap<>();
         if (c.ver < 3) { c.ver = 3; c.sounds.clear(); c.mcSounds.clear(); save(); }          // the rewrite: old sound picks refer to sounds that no longer exist
         if (c.ver < 6) { c.ver = 6; if ("minos".equals(c.suffix) || "rod".equals(c.suffix)) c.suffix = ""; save(); }          // 0.7.8: the King Minos and Fishing Rod icons are gone
+        if (c.ver < 9) { c.ver = 9; c.itemScale = Math.min(1.1f, c.itemScale * 1.5f); save(); }          // Item size: the old 50% is the new 75%, capped at 110%
         if (c.ver < 8) { c.ver = 8; c.animScale = 1f; c.animPos = 1; save(); }          // the pixel cutscenes (Nov 7): size and place start fresh
         c.textScale = clamp(c.textScale, 0f, 1.1f); c.itemScale = clamp(c.itemScale, 0.5f, 1.1f);
         c.titleScale = clamp(c.titleScale, 0.5f, 1.5f); c.subScale = clamp(c.subScale, 0.5f, 1.5f); c.subDelay = clamp(c.subDelay, 0f, 3f);
         c.animScale = clamp(c.animScale, 0.5f, 1.5f); c.normalSize = Math.max(50, Math.min(100, c.normalSize)); c.itemSpin = clamp(c.itemSpin, 0f, 2f); c.itemGlow = clamp(c.itemGlow, 0f, 1.5f);
         c.barPx = Math.max(5, Math.min(15, c.barPx));
-        c.lyricsStyle = c.lyricsStyle <= 0 ? 0 : 1; c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
+        c.lyricsStyle = Math.max(0, Math.min(2, c.lyricsStyle)); c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
         c.mythPet = Math.max(0, Math.min(5, c.mythPet)); c.mythSpade = Math.max(0, Math.min(2, c.mythSpade));
         c.menuTranslucency = Math.max(0, Math.min(70, c.menuTranslucency)); c.previewAt = Math.max(0, Math.min(2, c.previewAt));
         c.animPos = Math.max(0, Math.min(2, c.animPos)); c.textPos = Math.max(0, Math.min(1, c.textPos));

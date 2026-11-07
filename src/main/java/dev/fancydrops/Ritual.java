@@ -948,7 +948,7 @@ final class Ritual {
         FancyConfig c = FancyConfig.get(); FancyConfig.AnimCfg cfg = a.cfg(); Item it = a.lead();
         boolean tre = a.group.equals("treasure"); kind = Math.max(0, a.kind); int type = a.type;
         boolean rng = type == AnimationManager.RNG, nod = type == AnimationManager.NO_DROPS;
-        float S = a.secs() + a.hold(), csz = Math.max(0.5f, Math.min(1.5f, c.animScale)), sz = SMALLER * csz * K, isc = Math.max(0.4f, c.itemScale) * 1.5f;
+        float S = a.secs() + a.hold(), csz = Math.max(0.5f, Math.min(1.5f, c.animScale)), sz = SMALLER * csz * K, isc = Math.max(0.4f, c.itemScale);
         int rc = it != null ? (it.color() & 0xFFFFFF) : GREY;
         if (!tre && !rng && !nod) rc = mixc(rc, WHITE, 0.15f);
         float barH = CH * Math.max(0.031f, Math.min(0.094f, c.barPx / 160f)), hi = 16 * sz * isc * (rng ? 1.2f : 1f), icy = CH * POS[Math.max(0, Math.min(2, c.animPos))];
@@ -973,7 +973,7 @@ final class Ritual {
         int type = a.type;
         boolean rng = type == AnimationManager.RNG, nod = type == AnimationManager.NO_DROPS;
         float hd = a.hold(), S = a.secs() + hd, O = AnimationManager.opening(type), p = t - O;
-        float csz = Math.max(0.5f, Math.min(1.5f, c.animScale)) * (rng ? 1f : Math.max(0.5f, Math.min(1f, c.normalSize / 100f))), sz = SMALLER * csz, szc = sz * K, ssz = szc * SCENE_K, isc = Math.max(0.4f, c.itemScale) * 1.5f;          // Normal and No Drops can play smaller, so they stay out of the way
+        float csz = Math.max(0.5f, Math.min(1.5f, c.animScale)) * (rng ? 1f : Math.max(0.5f, Math.min(1f, c.normalSize / 100f))), sz = SMALLER * csz, szc = sz * K, ssz = szc * SCENE_K, isc = Math.max(0.4f, c.itemScale);          // Normal and No Drops can play smaller, so they stay out of the way
         int rc = it != null ? (it.color() & 0xFFFFFF) : GREY;
         if (!tre && !rng && !nod) rc = mixc(rc, WHITE, 0.15f);
         boolean barsOn = (rng && cfg.bars) || TextFx.barsOnly, blurOn = rng && cfg.blur && !TextFx.barsOnly && !TextFx.itemOnly;
@@ -1004,7 +1004,7 @@ final class Ritual {
             else {
                 long nowMs = System.currentTimeMillis();
                 String id = a.group + a.type + "/" + a.kind + "/" + (it == null ? 0 : it.id.hashCode()) + "/" + a.count() + "/" + TextFx.itemOnly;
-                boolean reuse = id.equals(upKey) && nowMs >= upMs && nowMs - upMs < (AnimationManager.previewing ? 16 : 7);       // the pixel scene repaints every frame up to ~140 a second (60 in menu previews): painting it costs under 1 ms
+                boolean reuse = id.equals(upKey) && nowMs >= upMs && nowMs - upMs < (AnimationManager.previewing ? 16 : 0);       // the pixel scene repaints every frame up to ~140 a second (60 in menu previews): painting it costs under 1 ms
                 if (!reuse) {
                     begin(a, szc, isc);
                     try { paint(t, tre, type, S, ssz, isc, rc, icy, TreasureData.COLS[Math.max(0, Math.min(2, c.mythSpade))] & 0xFFFFFF, c.itemBob, c.itemBobAmp); stage(a, icy, ssz, szc, isc); } finally { end(); }
