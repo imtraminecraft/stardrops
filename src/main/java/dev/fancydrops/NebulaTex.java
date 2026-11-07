@@ -99,6 +99,34 @@ final class NebulaTex {
         } catch (Throwable e) { glowFailed = true; }
     }
 
+    /** Tests draw baked layers themselves: the canvas and {x, y, w, h, argb}. */
+    static java.util.function.BiConsumer<Canvas, float[]> testLayer;
+    private static final java.util.Map<String, Object[]> LAYERS = new java.util.HashMap<>();     // name -> {canvas, id}
+    private static int layerSeq;
+    /**
+     * A picture drawn once and kept as a texture (the landscape: mountains, the hill, its grass and trees): one draw a frame
+     * instead of thousands of fills. A new canvas for the same name replaces the old texture.
+     */
+    static void layer(GuiGraphicsExtractor g, String name, Canvas c, float x, float y, float w, float h, int argb) {
+        if (c == null || (argb >>> 24) < 2) return;
+        if (testLayer != null) { testLayer.accept(c, new float[]{x, y, w, h, Float.intBitsToFloat(argb)}); return; }
+        try {
+            Object[] l = LAYERS.get(name);
+            if (l == null || l[0] != c) {
+                if (l != null) { try { Minecraft.getInstance().getTextureManager().release((Identifier) l[1]); } catch (Throwable ignored) { } }
+                Identifier id = Identifier.fromNamespaceAndPath("fancydrops", "layer_" + name + "_" + (layerSeq++));
+                DynamicTexture t = new DynamicTexture(() -> "fancydrops " + name, c.w, c.h, true);
+                NativeImage img = t.getPixels(); if (img == null) return;
+                for (int yy = 0; yy < c.h; yy++) for (int xx = 0; xx < c.w; xx++) { int p = c.px[yy * c.w + xx]; img.setPixelABGR(xx, yy, (p & 0xFF00FF00) | ((p >> 16) & 0xFF) | ((p & 0xFF) << 16)); }
+                t.upload(); Minecraft.getInstance().getTextureManager().register(id, t);
+                l = new Object[]{c, id}; LAYERS.put(name, l);
+            }
+            Gfx.push(g); Gfx.translate(g, x, y); g.pose().scale(w / c.w, h / c.h);
+            g.blit(RenderPipelines.GUI_TEXTURED, (Identifier) l[1], 0, 0, 0f, 0f, c.w, c.h, c.w, c.h, c.w, c.h, argb);
+            Gfx.pop(g);
+        } catch (Throwable ignored) { }
+    }
+
     /** Draws the sky into x, y, w, h (the picture is stretched). False when no texture could be made. */
     static boolean draw(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         if (testDraw != null) { canvas(); testDraw.accept(new int[]{x, y, w, h}); return true; }

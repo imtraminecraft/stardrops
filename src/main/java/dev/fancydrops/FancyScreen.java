@@ -3171,12 +3171,17 @@ public class FancyScreen extends Screen {
         super.extractBackground(g, mx, my, delta);
     }
 
+    private void codexOverlay(GuiGraphicsExtractor g, int mx0, int my0) {
+        Codex.draw(g, codexHost, width, height, mx0, my0); drawTileTip(g, mx0, my0);
+        if (simpleTip != null) { int w = Gfx.w(font, simpleTip) + 8, x0 = Math.min(width - w - 2, mx0 + 10), y0 = Math.max(2, my0 - 16); pill(g, x0, y0, w, 13, 0xF40D0F16); rout(g, x0, y0, w, 13, Gfx.argb(200, simpleTipCol & 0xFFFFFF)); Gfx.text(g, font, simpleTip, x0 + 4, y0 + 3, Ui.TEXT); simpleTip = null; }
+    }
     private boolean dirty = true; private long lastSig, lastBuild;
     @Override public void extractRenderState(GuiGraphicsExtractor g, int mx0, int my0, float delta) {
         AnimFrames.tick();                                                                      // the first time the menu opens, the animation frames are written to config/fancydrops/art/animations
         Gfx.uiFont = 0;                                             // the menu font setting is gone: one font
         if (codexPend != -2 && width > 0) { Codex.open(achBtn(), codexPend); codexPend = -2; }
         if (codexStar != null && width > 0) { Codex.openAt(achBtn(), codexStar); codexStar = null; }
+        if (Codex.covering()) { codexOverlay(g, mx0, my0); return; }                          // the sky covers everything: skip drawing the whole menu underneath (the big lag)
         final boolean bookUp = Codex.open;
         final int mx = editor != 0 || bookUp ? -9999 : mx0, my = editor != 0 || bookUp ? -9999 : my0;       // an open editor (or the Collection) sits on top: nothing behind it lights up
         formatField.setVisible(false); addField.setVisible(false); adminField.setVisible(false); thrField.setVisible(false); tokenField.setVisible(false); spotifyField.setVisible(false);
@@ -3588,7 +3593,7 @@ public class FancyScreen extends Screen {
         drawTileTip(g, mx, my);
         if (adminHome && !adminOpen) drawAdminHome(g, mx0, my0);
         if (adminOpen) drawAdmin(g, mx0, my0);
-        if (Codex.open) { Codex.draw(g, codexHost, width, height, mx0, my0); drawTileTip(g, mx0, my0); if (simpleTip != null) { int w = Gfx.w(font, simpleTip) + 8, x0 = Math.min(width - w - 2, mx0 + 10), y0 = Math.max(2, my0 - 16); pill(g, x0, y0, w, 13, 0xF40D0F16); rout(g, x0, y0, w, 13, Gfx.argb(200, simpleTipCol & 0xFFFFFF)); Gfx.text(g, font, simpleTip, x0 + 4, y0 + 3, Ui.TEXT); simpleTip = null; } }
+        if (Codex.open) codexOverlay(g, mx0, my0);
         drawToast(g, now);
         if (editor == 0 && !adminHome && !adminOpen && !Codex.open) drawX(g, mainClose(), in(mx0, my0, mainClose()), "mx");          // the book covers the menu: its close button is the seal
         drawEditor(g, mx0, my0);

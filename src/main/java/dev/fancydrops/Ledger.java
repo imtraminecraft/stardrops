@@ -29,7 +29,7 @@ final class Ledger {
             case "time" -> { double m = FancyConfig.get().playMinutes; /* live, to the second */ o.add(new String[]{"Played", hms(m)}); o.add(new String[]{"First day", m < 1440 ? hms(1440 - m) + " left" : "Over"}); o.add(new String[]{"Next star in", nextGoal(m)}); }
             case "dye" -> { o.add(new String[]{"Dyes found", fmt(gr.apply("dyes", 0))}); o.add(new String[]{"Different dyes", fmt(st.apply("dyes"))}); o.add(new String[]{"Table rewards", fmt(gr.apply("exp", 0))}); o.add(new String[]{"Table RNG", fmt(gr.apply("exp", 1))}); }
             default -> { o.add(new String[]{"Rare drops", fmt(st.apply("drops"))}); o.add(new String[]{"Different items", fmt(st.apply("unique"))}); o.add(new String[]{"RNG drops", fmt(st.apply("rng"))}); o.add(new String[]{"Coins found", fmt(st.apply("value"))}); o.add(new String[]{"Pray RNGesus+", fmt(st.apply("r3"))}); o.add(new String[]{"Best drop", fmt(st.apply("best"))}); o.add(new String[]{"Days with drops", fmt(st.apply("days"))});
-                if (p.since() > 0) o.add(new String[]{"Ledger since", new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(p.since()))}); }
+                if (p.since() > 0) o.add(new String[]{"Counting since", new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(p.since()))}); }
         }
         return o;
     }

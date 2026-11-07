@@ -76,6 +76,8 @@ final class Codex {
     }
     static void close() { if (open && closeAt == 0) { closeAt = System.currentTimeMillis(); sound("sky_close", 1f, 0.6f); } }
     static boolean busy() { return open; }
+    /** The sky fully covers the menu (open and settled, not closing): the menu behind it needn't be drawn at all. */
+    static boolean covering() { long n = System.currentTimeMillis(); return open && closeAt == 0 && (openAt > introFrom || n - openAt > 450); }
     private static void fly(int c) { if (c == focus) return; prevFocus = focus; focus = c; zoomAt = System.currentTimeMillis(); sound("sky_zoom", c < 0 ? 0.85f : 1f, 0.7f); }
 
     private static void planIgnites() {
@@ -117,13 +119,17 @@ final class Codex {
         float t = now - openAt, closeT = closeAt == 0 ? -1f : now - closeAt;
         if (closeT >= CLOSE) { open = false; return; }
         boolean film = openAt > introFrom;                                              // this opening has the film
-        float fu = film && closeT < 0 ? now - introFrom : 1e9f;                       // ms into the opening shot
+        float fu = film && closeT < 0 ? now - introFrom : 1e9f;
+        bake();                       // ms into the opening shot
         if (film && introSounds < 1 && fu >= 700) { introSounds = 1; sound("sky_zoom", 0.9f, 0.7f); }
-        dusk = 1f - ease((fu - 150f) / 1500f);                                             // night falls (a time-lapse): the twilight drains out of the sky
-        night = ease((fu - 250f) / 1500f);                                                  // the stars come out one by one
-        crane = 1f - ease((fu - 700f) / 1900f);                                             // the camera cranes up off the hill to the whole sky
-        focusPull = 1f - ease((fu - 1800f) / 900f);                                         // the constellations come into focus out of soft blurs
-        conA = ease((fu - 1500f) / 900f);
+        open0 = 1f - ease(fu / 650f);                                                       // out of black, like opening your eyes
+        dusk = 1f - ease((fu - 200f) / 2200f);                                              // the last of the sunset low on the horizon, fading
+        night = ease((fu - 150f) / 1300f);                                                  // the bright stars first, then the faint ones (eyes adjusting)
+        milky = ease((fu - 700f) / 1700f);                                                  // the Milky Way and the nebulae last of all
+        tilt = 1f - ease((fu - 250f) / 2300f);                                              // the head tilting up from the horizon
+        focusPull = 1f - ease((fu - 1700f) / 800f);
+        conA = ease((fu - 1400f) / 800f);
+        lineGrow = ease((fu - 1700f) / 900f);                                               // the figures draw themselves, star to star
         float grow = closeT >= 0 ? 1f - ease(closeT / CLOSE) : film ? 1f : ease(t / 420f);
         alpha = closeT >= 0 ? 1f - cl(closeT / (CLOSE * 0.8f)) : film ? 1f : cl(t / 200f);
         if (film && introSounds < 3 && t >= 0) { introSounds = 3; sound("sky_star", 1.4f, 0.6f); }
@@ -135,7 +141,7 @@ final class Codex {
         float bx = (from[0] + from[2]) / 2f, by = (from[1] + from[3]) / 2f, cxs = W / 2f, cys = H / 2f;
         float gx = bx + (cxs - bx) * grow, gy = by + (cys - by) * grow, gs = Math.max(0.02f, grow);
         sw = Math.round(fw * gs); sh = Math.round(fh * gs); sx0 = Math.round(gx - sw / 2f); sy0 = Math.round(gy - sh / 2f);
-        g.fill(0, 0, W, H, argb(0.72f * alpha, 0x02010A));
+        g.fill(0, 0, W, H, argb(0.88f * alpha, 0x02010A));
         if (sw < 8 || sh < 8) return;
 
         float z = zoomAt == 0 || now < zoomAt ? (zoomAt > now ? 0f : 1f) : ease((now - zoomAt) / (float) ZOOM);
@@ -149,25 +155,24 @@ final class Codex {
         int showFocus = zoomAt > now ? -1 : fc;
 
         g.enableScissor(sx0, sy0, sx0 + sw, sy0 + sh);
-        boolean craning = crane > 0.001f;
-        float pvx = sx0 + sw * 0.12f, pvy = sy0 + sh * 0.84f;                              // the stargazer: where the shot starts
-        if (craning) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, 0xFF05060F);
-        if (craning) { Gfx.push(g); float ks = 1f + 0.35f * crane; Gfx.translate(g, sx0 + sw / 2f, sy0 + sh / 2f + crane * sh * 0.28f); Gfx.scale(g, ks); Gfx.translate(g, -(sx0 + sw / 2f), -(sy0 + sh / 2f)); }
+        boolean tilting = tilt > 0.001f;
+        if (tilting) { g.fill(sx0, sy0, sx0 + sw, sy0 + sh, 0xFF05060F); Gfx.push(g); Gfx.translate(g, 0, tilt * sh * 0.07f); }
         sky(g);
-        aurora(g, 1f - cl(zoomed * 2f));
+        aurora(g, (1f - cl(zoomed * 2f)) * milky);
         scenery(g, 1f - cl(zoomed * 2.5f));
         streaks(g);
         hoverCon = -1; hoverStar = hoverPick; hoverPick = ""; hoverPickD = 1e9f;
         if (conA > 0.01f) for (int c = 0; c < ACH.length; c++) constellation(g, c, zoomed, showFocus);
         if (hoverCon != lastHoverCon) { lastHoverCon = hoverCon; hoverAt = now; if (hoverCon >= 0) sound("sky_star", 0.75f, 0.35f); }
         shootingStars(g);
-        if (craning) Gfx.pop(g);
-        if (dusk > 0.001f) twilight(g);                                                  // over the whole frame, so the sky's top never shows an edge
-        if (craning) { Gfx.push(g); float ks = 1f + 1.25f * crane * crane; float tx = pvx + (sx0 + sw * 0.3f - pvx) * crane, ty = pvy + (sy0 + sh * 0.97f - pvy) * crane; Gfx.translate(g, tx, ty); Gfx.scale(g, ks); Gfx.translate(g, -pvx, -pvy); }
+        if (tilting) Gfx.pop(g);
+        if (dusk > 0.001f) twilight(g);
+        if (tilting) { Gfx.push(g); Gfx.translate(g, 0, tilt * sh * 0.16f); }               // the ground is nearer: it slides further
         stargazer(g, 1f - cl(zoomed * 2.5f));
-        if (craning) Gfx.pop(g);
+        if (tilting) Gfx.pop(g);
         nearDust(g, 1f - cl(zoomed * 1.5f));
         vignette(g);
+        if (open0 > 0.002f) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(open0, 0x020208));
         g.disableScissor();
         frame(g);
         if (alpha > 0.6f && closeT < 0) {
@@ -197,6 +202,7 @@ final class Codex {
         if (!NebulaTex.draw(g, x, y, Math.round(ow), Math.round(oh))) for (int i = 0; i < 24; i++) { int y0 = sy0 + sh * i / 24, y1 = sy0 + sh * (i + 1) / 24; g.fill(sx0, y0, sx0 + sw, y1, mix(0xFF0A1028, 0xFF1C1236, i / 24f)); }
         if (alpha < 1f) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(1f - alpha, 0x05060F));
         deepSky(g);
+        if (milky < 1f) g.fill(sx0, sy0 - sh / 5, sx0 + sw, sy0 + sh, argb((1f - milky) * 0.92f, 0x05060F));
         float px = (camU - aspect() / 2f) * sh * camS * 0.35f - parX(0.3f), py = (camV - 0.5f) * sh * camS * 0.35f - parY(0.3f);
         for (int i = 0; i < 70; i++) {                                           // a near layer of stars that twinkle (and move a little more)
             if (night < 1f && rnd(i * 3 + 2) > night) continue;
@@ -234,7 +240,7 @@ final class Codex {
             NebulaTex.glow(g, x, y, sw * 0.05f, sh * 0.06f, argb(0.1f * w * alpha, 0xFFF4F0));
         }
         float nx = -(by - ay), ny = bx - ax, nl = (float) Math.hypot(nx, ny); nx /= nl; ny /= nl;
-        for (int i = 0; i < 240; i++) {                                                  // the dust: thick in the middle of the band, thinning out
+        for (int i = 0; i < 90; i++) {                                                  // the dust: thick in the middle of the band, thinning out
             float u = rnd(i * 17 + 3), off = (rnd(i * 31 + 5) + rnd(i * 37 + 11) + rnd(i * 41 + 13) - 1.5f) * sh * 0.14f;
             float x = ax + (bx - ax) * u + nx * off, y = ay + (by - ay) * u + ny * off;
             if (x < sx0 || x >= sx0 + sw || y < sy0 || y >= sy0 + sh || night < 1f && rnd(i * 5 + 9) > night) continue;
@@ -250,8 +256,8 @@ final class Codex {
         float gx = sx0 + sw * 0.6f - px * 0.6f, gy = sy0 + sh * 0.47f - py * 0.6f, gr = Math.min(sw, sh) * 0.075f, rot = tt * 0.03f;
         NebulaTex.glow(g, gx, gy, gr * 1.7f, gr * 0.8f, argb(0.2f * alpha, 0xB89AFF)); NebulaTex.glow(g, gx, gy, gr * 0.9f, gr * 0.45f, argb(0.25f * alpha, 0xFF9AD8));
         NebulaTex.glow(g, gx, gy, gr * 0.35f, gr * 0.2f, argb(0.45f * alpha, 0xFFF0D8));
-        for (int arm = 0; arm < 2; arm++) for (int i = 0; i < 46; i++) {
-            float k = i / 45f, an = rot + arm * (float) Math.PI + k * 4.2f, r = gr * (0.12f + 0.95f * k);
+        for (int arm = 0; arm < 2; arm++) for (int i = 0; i < 24; i++) {
+            float k = i / 23f, an = rot + arm * (float) Math.PI + k * 4.2f, r = gr * (0.12f + 0.95f * k);
             float x = gx + (float) Math.cos(an) * r, y = gy + (float) Math.sin(an) * r * 0.42f;
             g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, argb((0.75f - 0.5f * k) * alpha, i % 4 == 0 ? 0xFFB8E0 : i % 3 == 0 ? 0x9AD8FF : 0xD8D0FF)); if (i % 6 == 0) glow(x, y, 2.5f, 0xC8B8FF, 0.35f * (1f - k));
         }
@@ -274,31 +280,12 @@ final class Codex {
         }
     }
 
-    /** A range of mountains along the bottom: jagged peaks, darker at the foot (haze lifts toward the top), sliding a little by depth. */
-    private static void mountains(GuiGraphicsExtractor g, float depth, float hgt, float var, int rgb, float op, int seed, float a) {
-        float px = parX(depth), base = sy0 + sh;
-        int step = 3, top0 = Math.round(sh * 0.36f);
-        for (int x = sx0 - 6; x < sx0 + sw + 6; x += step) {
-            float u = (x - sx0 - px) / (float) sw;
-            float r = (float) (Math.abs(Math.sin(u * 7.3 + seed)) * 0.6 + Math.abs(Math.sin(u * 17.1 + seed * 2.1)) * 0.28 + Math.sin(u * 41 + seed) * 0.08 + Math.sin(u * 97 + seed * 3) * 0.04);
-            float hpx = sh * (hgt * 0.45f + var * r), y = base - hpx + parY(depth);
-            if (x + step < sx0 + sw * 0.3f && depth > 0.07f) continue;                                // (the near range stops behind the hill)
-            g.fill(Math.max(sx0, x), Math.round(y), Math.min(sx0 + sw, x + step), Math.round(y + hpx * 0.35f), argb(0.75f * op * a * alpha, mix(rgb, 0xFF2A2A5A, 0.25f)));
-            g.fill(Math.max(sx0, x), Math.round(y + hpx * 0.35f), Math.min(sx0 + sw, x + step), Math.round(base), argb(op * a * alpha, rgb));
-            g.fill(Math.max(sx0, x), Math.round(y), Math.min(sx0 + sw, x + step), Math.round(y) + 1, argb(0.25f * op * a * alpha, 0x8A8AD8));   // starlight on the ridge
-        }
-        if (top0 < 0) return;
-    }
-    /** Dusk at the start of the opening: a glow of sunset low over the hills, the sky above it still blue, both draining away. */
+    /** The last of the sunset along the horizon at the start of the opening: soft lights, no bands. */
     private static void twilight(GuiGraphicsExtractor g) {
         float d = dusk * alpha;
-        int N = Math.max(24, sh / 3);
-        for (int i = 0; i < N; i++) {                                                           // fine bands from the horizon up (no visible steps)
-            float u = i / (N - 1f); int y0 = sy0 + Math.round(sh * (1f - (i + 1) / (float) N)), y1 = sy0 + Math.round(sh * (1f - i / (float) N));
-            int col = u < 0.25f ? mix(0xFFFF9A5A, 0xFFE0607A, u / 0.25f) : u < 0.6f ? mix(0xFFE0607A, 0xFF5A4AA8, (u - 0.25f) / 0.35f) : mix(0xFF5A4AA8, 0xFF1A2A6A, (u - 0.6f) / 0.4f);
-            g.fill(sx0, Math.max(sy0, y0), sx0 + sw, Math.min(sy0 + sh, y1), argb(d * (0.92f - 0.25f * u), col));
-        }
-        NebulaTex.glow(g, sx0 + sw * 0.78f, sy0 + sh * 1.02f, sw * 0.35f, sh * 0.22f, argb(0.7f * d, 0xFFC878));     // where the sun went down
+        NebulaTex.glow(g, sx0 + sw * 0.62f, sy0 + sh * 1.02f, sw * 0.75f, sh * 0.3f, argb(0.55f * d, 0xE0607A));
+        NebulaTex.glow(g, sx0 + sw * 0.72f, sy0 + sh * 1.03f, sw * 0.45f, sh * 0.16f, argb(0.75f * d, 0xFF9A5A));
+        NebulaTex.glow(g, sx0 + sw * 0.5f, sy0 + sh * 0.9f, sw * 0.9f, sh * 0.5f, argb(0.25f * d, 0x3A3A8A));
     }
     /** The nearest layer: a few out-of-focus motes drifting close to the lens; they slide the most as you look around. */
     private static void nearDust(GuiGraphicsExtractor g, float a) {
@@ -316,8 +303,8 @@ final class Codex {
         if (a < 0.02f) return;
         float tt = (now % 3_600_000L) / 1000f;
         int[] cols = {0x3AE8B0, 0x6A8CFF, 0xB46AFF};
-        for (int b = 0; b < 3; b++) for (int i = 0; i < 14; i++) {
-            float u = i / 13f, x = sx0 + sw * (0.08f + 0.84f * u), y = sy0 + sh * (0.1f + 0.05f * b) + (float) Math.sin(u * 5.0 + tt * 0.25 + b * 1.7) * sh * 0.035f;
+        for (int b = 0; b < 3; b++) for (int i = 0; i < 8; i++) {
+            float u = i / 7f, x = sx0 + sw * (0.08f + 0.84f * u), y = sy0 + sh * (0.1f + 0.05f * b) + (float) Math.sin(u * 5.0 + tt * 0.25 + b * 1.7) * sh * 0.035f;
             float al = (0.06f + 0.04f * (float) Math.sin(tt * 0.6 + i * 0.7 + b)) * (float) Math.sin(Math.PI * u) * a * alpha;
             NebulaTex.glow(g, x, y, sw * 0.05f, sh * (0.05f + 0.02f * b), argb(al, cols[b]));
         }
@@ -361,29 +348,18 @@ final class Codex {
     private static void stargazer(GuiGraphicsExtractor g, float a, boolean film) {
         if (a < 0.02f && !film) return;
         float k = sh / 150f, gnd = sy0 + sh, hillW = sw * 0.36f;
-        int sil = argb(a * alpha, 0x05040A), rim = argb(0.5f * a * alpha, 0x7A6AC8);
-        for (int i = 0; i <= Math.round(hillW); i += 2) {                                         // the hill, its crest caught by the sky's light
-            int x = sx0 + i, top = Math.round(ground(x));
-            g.fill(x, top, x + 2, Math.round(gnd), sil); g.fill(x, top - 1, x + 2, top, rim);
-        }
-        float wind = (float) Math.sin(now / 1900.0) * 0.6f + (float) Math.sin(now / 700.0) * 0.2f;   // the grass along the crest: fine blades leaning together in the breeze
-        for (int i = 2; i < Math.round(hillW) - 2; i++) {
-            if (rnd(i * 7 + 11) > 0.42f) continue;
-            int x = sx0 + i; float top = ground(x), bh = (1.5f + 2.5f * rnd(i * 13 + 3)) * k * 0.55f;
-            int lean = Math.round(wind * bh * 0.3f * (0.6f + 0.4f * rnd(i)));
-            g.fill(x, Math.round(top - bh * 0.55f), x + 1, Math.round(top), sil);
-            g.fill(x + lean, Math.round(top - bh), x + lean + 1, Math.round(top - bh * 0.55f), sil);
-        }
-        // two firs at the hill's edge: tiered, bending from the foot (the top moves most), never wobbling apart
-        fir(g, sx0 + sw * 0.035f, 30 * k, k, 0f, sil);
-        fir(g, sx0 + sw * 0.062f, 19 * k, k, 1.7f, sil);
+        int sil = argb(a * alpha, 0x05040A);
+        NebulaTex.layer(g, "land", landC, sx0, sy0, sw, sh, argb(a * alpha, 0xFFFFFF));          // the hill, its grass and the firs (baked once)
         float hx = sx0 + sw * 0.12f, hy = ground(hx) + 1;
         // a blanket spread on the grass, lit warm by the lantern
         for (int i = 0; i < Math.round(20 * k); i++) { float bx = hx - 9 * k + i, by = ground(bx); int c = (i / Math.max(1, Math.round(3 * k))) % 2 == 0 ? 0x3A1620 : 0x4A2A14;
             g.fill(Math.round(bx), Math.round(by - 1.2f * k), Math.round(bx) + 1, Math.round(by + 0.5f), argb(a * alpha * 0.95f, c)); }
         // the lantern beside them: warm light, a flame that flickers
         float lx = hx - 16 * k, ly = ground(lx) - 2.5f * k, fl = 0.8f + 0.2f * (float) Math.sin(now / 90.0) * (float) Math.sin(now / 37.0);
-        glow(lx, ly, 26 * k * fl, 0xFFB050, 0.35f * a); glow(lx, ly, 8 * k, 0xFFD890, 0.8f * a * fl);
+        NebulaTex.glow(g, lx + 4 * k, ground(lx) + 1.5f * k, 26 * k * fl, 5 * k, argb(0.3f * a * alpha, 0xFFA040));          // a pool of light on the grass
+        glow(lx, ly, 22 * k * fl, 0xFFB050, 0.3f * a); glow(lx, ly, 7 * k, 0xFFD890, 0.75f * a * fl);
+        for (int i = 0; i < 2; i++) { float mt = now / (700f + i * 230f) + i * 2.1f; float mxp = lx + (float) Math.cos(mt) * (4 + i * 2) * k, myp = ly - 2 * k + (float) Math.sin(mt * 1.7f) * 3 * k;      // two moths circling the lantern
+            g.fill(Math.round(mxp), Math.round(myp), Math.round(mxp) + 1, Math.round(myp) + 1, argb(0.8f * a * alpha, 0xFFE8C0)); }
         bar(lx - 1.5f * k, ly - 2.5f * k, lx + 1.5f * k, ly + 2.5f * k, 0x1A120A, a); bar(lx - 0.5f * k, ly - 3.5f * k, lx + 0.5f * k, ly - 2.5f * k, 0x1A120A, a);
         disc(g, lx, ly, 1.2f * k, argb(a * alpha * fl, 0xFFE8A0));
         // a mug of something hot on the blanket, steam curling up off it
@@ -426,13 +402,10 @@ final class Codex {
         thick(hcx, hcy, hcx + (float) Math.sin(tilt) * 4.2f * k, hcy - (float) Math.cos(tilt) * 4.2f * k, 3.6f * k, 0x05040A, a);
         float bob = (float) Math.sin(now / 520.0) * 0.6f * k, bxp = hcx + (float) Math.sin(tilt) * 5.6f * k + bob, byp = hcy - (float) Math.cos(tilt) * 5.6f * k;
         disc(g, bxp, byp, 1.3f * k, sil);
-        line(bxp - 0.8f * k, byp - 1f * k, bxp + 0.4f * k, byp - 1.3f * k, 0x8A6AD8, 0.5f * a, -1);
         // a long scarf: wound at the neck, its end streaming out behind in the wind, in one smooth curve
         float wx = hx + 1 * k, wy = hy - 11.5f * k, px0 = wx, py0 = wy;
         for (int i = 1; i <= 5; i++) { float q = i / 5f, wave = (float) Math.sin(now / 420.0 - q * 3.2) * 1.4f * k * q;
             float px1 = wx - q * 7.5f * k, py1 = wy + q * 1.5f * k + wave; thick(px0, py0, px1, py1, (1.7f - 0.5f * q) * k, 0x05040A, a); px0 = px1; py0 = py1; }
-        line(headX - 2.6f * k, headY - 1.2f * k, headX - 2.2f * k, headY + 1.6f * k, 0x8A6AD8, 0.45f * a, -1);           // rim light down the face and back
-        line(hx - 1.6f * k, hy - 3 * k, hx - 0.6f * k, hy - 11 * k, 0x8A6AD8, 0.35f * a, -1);
         for (int i = 0; i < (film ? 0 : 4); i++) {                                                   // a few fireflies blinking low over the grass
             float u = (now % 3_600_000L) / 1000f, fx = sx0 + sw * (0.03f + 0.28f * rnd(i * 7)) + (float) Math.sin(u * 0.35f + i) * 6 * k, fy = ground(fx) - (5 + 10 * rnd(i * 3)) * k + (float) Math.sin(u * 0.6f + i * 2) * 2 * k;
             float bl = (float) Math.max(0, Math.sin(u * 1.3f + i * 1.7f)); bl *= bl; glow(fx, fy, 3 * k, 0xD8FF8A, 0.5f * bl * a); g.fill(Math.round(fx), Math.round(fy), Math.round(fx) + 1, Math.round(fy) + 1, argb(bl * a * alpha, 0xF4FFC8));
@@ -443,17 +416,65 @@ final class Codex {
             for (int i = 0; i < 30; i++) { float u = (i + ((now / 60) % 3) / 3f) / 30f; if (u * d < 6) continue; float xx = tx1 + (ox - tx1) * u, yy = ty1 + (oy - ty1) * u; G.fill(Math.round(xx), Math.round(yy), Math.round(xx) + 1, Math.round(yy) + 1, argb(0.25f * ha * a * (1f - u) * alpha, ACH_COL[hoverCon])); }
         }
     }
-    /** A fir: a trunk and four tiers of boughs, row by row; the wind bends it from the foot, so the top sways most and it moves as one. */
-    private static void fir(GuiGraphicsExtractor g, float x, float th, float k, float ph, int sil) {
-        float base = ground(x) + 1, sway = ((float) Math.sin(now / 2600.0 + ph) * 0.8f + (float) Math.sin(now / 1100.0 + ph * 2) * 0.25f) * k;
-        g.fill(Math.round(x - 0.7f * k), Math.round(base - 4 * k), Math.round(x + 0.7f * k), Math.round(base), sil);
-        int rows = Math.round(th - 3 * k);
-        for (int r = 0; r < rows; r++) {
-            float h = r / (float) rows, tier = (h * 4f) % 1f;
-            float hw = (1f - h) * th * 0.28f * (0.5f + 0.5f * (1f - tier)) + 0.4f, off = sway * h * h;
-            int y = Math.round(base - 3 * k - r);
-            g.fill(Math.round(x + off - hw), y, Math.round(x + off + hw), y + 1, sil);
+    // ------------------------------------------------------------------ the landscape, baked once into two pictures (at twice the menu's pixels)
+    private static Canvas farC, landC; private static int bakedW, bakedH;
+    private static float h1(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFFFF) / 16777216f; }
+    private static float n1(float x) { int i = (int) Math.floor(x); float f = x - i; f = f * f * (3 - 2 * f); return h1(i) + (h1(i + 1) - h1(i)) * f; }
+    /** A mountain skyline: sharp ridges (ridged noise), big shapes with smaller ones on them. 0..1. */
+    private static float ridge(float x, int seed) {
+        float s = 0, amp = 0.55f, f = 1f, norm = 0;
+        for (int o = 0; o < 4; o++) { float n = 1f - Math.abs(n1(x * f + seed * 17.3f + o * 5.1f) * 2f - 1f); s += amp * n; norm += amp; f *= 2.3f; amp *= 0.42f; }
+        return s / norm;
+    }
+    private static void bake() {
+        if (farC != null && bakedW == sw && bakedH == sh || sw < 8 || sh < 8) return;
+        bakedW = sw; bakedH = sh; int R = 2, CW = sw * R, CH = sh * R; float k = sh / 150f * R;
+        Canvas f = new Canvas(CW, CH);
+        // two ranges: the far one pale and blue with distance, its foot lost in haze; the near one darker
+        float[][] ranges = {{3, 0.12f, 0.06f}, {9, 0.07f, 0.04f}}; int[][] cols = {{0xFF151838, 0xFF23264E}, {0xFF090A1A, 0xFF12132C}};   // dark silhouettes: it is night
+        for (int ri = 0; ri < 2; ri++) {
+            float[] rg = ranges[ri]; int seed = (int) rg[0], top = cols[ri][0], foot = cols[ri][1];
+            for (int x = 0; x < CW; x++) {
+                float u = x / (float) CW, hgt = CH * (rg[1] + rg[2] * (ridge(u * 2.4f, seed) - 0.5f) * 2f);
+                float ry = CH - hgt; int y0 = (int) Math.floor(ry); float fr = 1f - (ry - y0);
+                for (int y = Math.max(0, y0); y < CH; y++) {
+                    float t = (y - ry) / Math.max(1f, hgt); int col = Canvas.mix(top, foot, (float) Math.pow(Math.min(1f, t), 1.4f));
+                    f.set(x, y, y == y0 ? (Math.round(255 * fr) << 24) | (col & 0xFFFFFF) : col);
+                }
+            }
+            for (int y = (int) (CH * 0.93f); y < CH; y++) { float t = (y - CH * 0.93f) / (CH * 0.07f); for (int x = 0; x < CW; x++) f.set(x, y, Canvas.rgb(Math.round(45 * t), 0x2A2A58)); }   // a little mist along the foot
         }
+        farC = f;
+        Canvas l = new Canvas(CW, CH); int dark = 0xFF05040A;
+        float lanternX = (sw * 0.12f - 16 * k / R) * R, lightR = 34 * k;
+        for (int x = 0; x < CW; x++) {                                                                // the hill
+            float gy = (ground(sx0 + x / (float) R) - sy0) * R; if (gy >= CH) continue;
+            int y0 = (int) Math.floor(gy); float fr = 1f - (gy - y0);
+            float ld = Math.abs(x - lanternX) / lightR, warm = ld < 1f ? (1f - ld) * (1f - ld) : 0f;
+            for (int y = Math.max(0, y0); y < CH; y++) {
+                int col = dark; if (warm > 0f && y - y0 < 3 * R) col = Canvas.mix(dark, 0xFF6A3A18, warm * 0.75f * (1f - (y - y0) / (3f * R)));
+                l.set(x, y, y == y0 ? (Math.round(255 * fr) << 24) | (col & 0xFFFFFF) : col);
+            }
+            float dens = 0.35f + 0.4f * n1(x * 0.05f);                                                 // grass: clumps of fine blades, each leaning its own way
+            if (h1(x * 7 + 3) < dens) {
+                float bh = (1.2f + 3.6f * h1(x * 13 + 1)) * k * 0.45f, lean = (h1(x * 5 + 9) - 0.5f) * bh * 0.6f;
+                int col = warm > 0f ? Canvas.mix(dark, 0xFF7A4A20, warm * 0.8f) : dark;
+                for (int j = 0; j < Math.round(bh); j++) { float q = j / bh; l.set(Math.round(x + lean * q * q), Math.round(gy - j), col); }
+            }
+        }
+        float[][] firs = {{0.035f, 30, 1}, {0.062f, 19, 2}, {0.012f, 23, 3}};                       // firs: a trunk and tiers of ragged boughs
+        for (float[] fz : firs) {
+            float fx = (sw * fz[0]) * R, base = (ground(sx0 + sw * fz[0]) - sy0) * R + R, th = fz[1] * k; int sd = (int) fz[2];
+            for (int y = Math.round(base - 4 * k); y < base; y++) for (int x = Math.round(fx - 0.7f * k); x < fx + 0.7f * k; x++) l.set(x, y, dark);
+            int rows = Math.round(th - 3 * k);
+            for (int r = 0; r < rows; r++) {
+                float h = r / (float) rows, tier = (h * 5f) % 1f;
+                float hw = (1f - h) * th * 0.27f * (0.45f + 0.55f * (1f - tier)) + 0.6f + (h1(r * 7 + sd * 31) - 0.5f) * 1.6f * R;
+                int y = Math.round(base - 3 * k - r);
+                for (int x = Math.round(fx - hw); x <= Math.round(fx + hw); x++) l.set(x, y, dark);
+            }
+        }
+        landC = l;
     }
 
     // ------------------------------------------------------------------ the sky's furniture: a moon, a ringed planet, far hills with town lights, a satellite
@@ -475,8 +496,7 @@ final class Codex {
             NebulaTex.glow(g, cx, cy, sw * (0.12f + 0.06f * rnd(i)), sh * 0.018f, argb(0.12f * a * alpha, 0x3A3A6A));
             NebulaTex.glow(g, cx, cy + sh * 0.006f, sw * 0.08f, sh * 0.008f, argb(0.08f * a * alpha, 0x8A7AB8));
         }
-        mountains(g, 0.05f, 0.2f, 0.13f, 0x161A44, 0.85f, 3, a);                                         // the far range, blue with distance
-        mountains(g, 0.1f, 0.12f, 0.09f, 0x0A0B1E, 1f, 9, a);                                            // the nearer range, darker
+        NebulaTex.layer(g, "far", farC, sx0, sy0 + tilt * sh * 0.05f, sw, sh, argb(a * alpha, 0xFFFFFF));   // the mountains (baked once)
         long per = 26000; float su = (now % per) / (float) per;                                           // a satellite crossing now and then, blinking
         if (su < 0.5f) { float sxp = sx0 + sw * (0.1f + su * 1.6f), syp = sy0 + sh * (0.06f + su * 0.1f); boolean on = (now / 500) % 2 == 0;
             g.fill(Math.round(sxp), Math.round(syp), Math.round(sxp) + 1, Math.round(syp) + 1, argb((on ? 0.9f : 0.35f) * a * alpha, on ? 0xFF8A8A : 0xFFFFFF)); }
@@ -492,7 +512,7 @@ final class Codex {
         int ir = (int) Math.ceil(r), step = r > 6 ? 1 : 1;
         for (int dy = -ir; dy <= ir; dy += step) {
             float yy = dy + 0.5f; float hw = (float) Math.sqrt(Math.max(0, r * r - yy * yy)); if (hw < 0.5f) continue;
-            int x0 = Math.round(cx - hw), x1 = Math.round(cx + hw), segs = Math.max(2, Math.min(7, Math.round(hw / 1.6f)));
+            int x0 = Math.round(cx - hw), x1 = Math.round(cx + hw), segs = Math.max(2, Math.min(4, Math.round(hw / 2.5f)));
             for (int i = 0; i < segs; i++) {                                                     // across the row: each piece shaded by how squarely it faces the light
                 int sa = x0 + (x1 - x0) * i / segs, sb = x0 + (x1 - x0) * (i + 1) / segs; if (sb <= sa) continue;
                 float px = ((sa + sb) / 2f - cx) / r, py = yy / r, pz = (float) Math.sqrt(Math.max(0, 1 - px * px - py * py));
@@ -513,7 +533,7 @@ final class Codex {
     /** The ring of a planet, tilted: the far half (front = false) is drawn before the planet, the near half after it. */
     private static void ringBand(GuiGraphicsExtractor g, float cx, float cy, float r, int rgb, float a, boolean front) {
         float tilt = -0.32f, ry = 0.3f, rr = r * 1.9f; float ct = (float) Math.cos(tilt), st = (float) Math.sin(tilt);
-        int n = 28;
+        int n = 18;
         for (int i = 0; i < n; i++) {
             double t0 = Math.PI * 2 * i / n, t1 = Math.PI * 2 * (i + 1) / n; boolean near = Math.sin((t0 + t1) / 2) > 0; if (near != front) continue;
             for (int b = 0; b < 2; b++) {
@@ -600,7 +620,7 @@ final class Codex {
     }
     private static float[] flat(float[][] p) { float[] o = new float[p.length * 2]; for (int i = 0; i < p.length; i++) { o[i * 2] = p[i][0]; o[i * 2 + 1] = p[i][1]; } return o; }
     private static float[][] pts(float... v) { float[][] o = new float[v.length / 2][]; for (int i = 0; i < o.length; i++) o[i] = new float[]{v[i * 2], v[i * 2 + 1]}; return o; }
-    private static final float[] TIER_K = {0.85f, 1.0f, 1.25f};
+    private static final float[] TIER_K = {0.75f, 1.0f, 1.4f};
     private static float figR(int c) { return c == 0 ? 0.16f : 0.12f; }
     /** A point on the figure's outline, t from 0 to 1 along all its strokes (for groups with more stars than key points). */
     private static float[] alongOutline(int c, float t) {
@@ -653,10 +673,10 @@ final class Codex {
     /** How far back each constellation hangs (1 = nearest): far ones are smaller, dimmer and slide less as you look around. */
     private static final float[] DEPTH = {1.0f, 0.72f, 0.9f, 0.64f, 0.82f, 0.7f, 0.95f, 0.78f};
     private static float mpx, mpy; private static long lastPar;
-    private static float dusk, night = 1f, crane, focusPull, conA = 1f;                     // the opening shot
+    private static float dusk, night = 1f, milky = 1f, tilt, open0, focusPull, conA = 1f, lineGrow = 1f;   // the opening shot
     /** The sideways slide of a layer at depth d (pixels), from where the mouse is and a slow drift. */
-    private static float parX(float d) { return -mpx * sw * 0.035f * d + (float) Math.sin(now / 9000.0 + d * 7) * 1.2f * d; }
-    private static float parY(float d) { return -mpy * sh * 0.035f * d + (float) Math.cos(now / 11000.0 + d * 5) * 0.9f * d; }
+    private static float parX(float d) { return 0f; }                                 // (no mouse parallax: the sky stays where it is)
+    private static float parY(float d) { return 0f; }
     private static float pX, pY, dK = 1f;                                                       // the current constellation's slide and depth (size and light)
 
     private static void constellation(GuiGraphicsExtractor g, int c, float zoomed, int fc) {
@@ -680,6 +700,7 @@ final class Codex {
             Node n = t.get(i); if (n.parent() < 0) continue;
             Node q = t.get(n.parent());
             float x1 = X(o[0] + n.du()) + pX, y1 = Y(o[1] + n.dv()) + pY, x0 = X(o[0] + q.du()) + pX, y0 = Y(o[1] + q.dv()) + pY;
+            if (lineGrow < 1f) { float gr = cl(lineGrow * 1.6f - i / (float) Math.max(1, t.size()) * 0.6f); if (gr <= 0f) continue; x1 = x0 + (x1 - x0) * gr; y1 = y0 + (y1 - y0) * gr; }
             boolean lit = q.a().done() && n.a().done(), half = q.a().done() || n.a().done();
             if (lit) { line(x0, y0, x1, y1, col, 0.45f * fade * dl, 2); line(x0, y0, x1, y1, mix(col, 0xFFFFFFFF, 0.6f), 0.9f * fade * dl, 0); spark(x0, y0, x1, y1, col, fade * dl, i + c * 9); }
             else line(x0, y0, x1, y1, half ? mix(col, 0xFF8A94B8, 0.5f) : 0xFF8A94B8, ((half ? 0.3f : 0.18f) + 0.15f * hk) * fade * dl, 0);
@@ -742,15 +763,15 @@ final class Codex {
         if (lit) {                                                                           // a lit star: in the group's colour; its tier sets its size and flare (Bronze: a cross, Silver: six rays, Gold: eight and a crown ring)
             float r = (near ? 4.6f : 3.2f) * tw * tk + (hv ? 1.2f : 0f);
             if (igT < 1.4f) { float u = igT / 1.4f; glow(x, y, r * (12f - 7f * u), 0xFFFFFF, 0.9f * (1f - u) * fade); ring(x, y, r * (2f + 24f * ease(u)), argb((1f - u) * 0.9f * fade * alpha, col), 1f); r *= 1f + 1.2f * (1f - u); }
-            glow(x, y, r * 6f, col, 0.5f * fade);
-            glow(x, y, r * 2.6f, mix(col, 0xFFFFFFFF, 0.45f), 0.85f * fade);
-            glow(x, y, r * 1.8f, tc, 0.35f * fade);
-            if (tier == 2) { ring(x, y, r * 2.6f, argb(0.5f * fade * alpha * (0.7f + 0.3f * tw), tc), 1f); glow(x, y, r * 8f, tc, 0.2f * fade); }
-            float rays = r * (near ? 5f : 4.2f) * (0.85f + 0.15f * tw), sp = (now % 3_600_000L) / 4000f * (n.depth() % 2 == 0 ? 1 : -1) + n.depth();
-            int nr = tier == 0 ? 2 : tier == 1 ? 3 : 4;
-            for (int k = 0; k < nr; k++) { double an = sp + k * Math.PI / nr; float ln = k % 2 == 1 ? 0.6f : 1f, dx = (float) Math.cos(an) * rays * ln, dy = (float) Math.sin(an) * rays * ln;
-                line(x - dx, y - dy, x + dx, y + dy, mix(tier >= 1 ? tc : col, 0xFFFFFFFF, 0.5f), 0.7f * fade, 0); }
-            glow(x, y, r * 1.2f, 0xFFFFFF, fade);
+            int core = tier == 0 ? 0xC87038 : tier == 1 ? 0xE8F0FF : 0xFFE24A;
+            glow(x, y, r * (tier == 2 ? 7f : 5f), col, (tier == 0 ? 0.3f : 0.45f) * fade);                     // the constellation's light around it
+            glow(x, y, r * 2.4f, core, (tier == 0 ? 0.7f : 0.9f) * fade);                                        // the star in its tier's colour
+            if (tier == 2) { ring(x, y, r * 2.7f, argb(0.6f * fade * alpha * (0.7f + 0.3f * tw), 0xFFE24A), 1f); glow(x, y, r * 9f, 0xFFD040, 0.25f * fade); }
+            float rays = r * (near ? 5f : 4.2f) * (0.85f + 0.15f * tw) * (tier == 0 ? 0.55f : 1f), sp = (now % 3_600_000L) / 4000f * (n.depth() % 2 == 0 ? 1 : -1) + n.depth();
+            int nr = tier == 0 ? 2 : tier == 1 ? 2 : 4;                                                          // Bronze: a small cross; Silver: a long cross; Gold: an eight-point star
+            for (int k = 0; k < nr; k++) { double an = (tier == 0 ? Math.PI / 4 : sp) + k * Math.PI / nr; float ln = tier == 2 && k % 2 == 1 ? 0.6f : 1f, dx = (float) Math.cos(an) * rays * ln, dy = (float) Math.sin(an) * rays * ln;
+                line(x - dx, y - dy, x + dx, y + dy, mix(0xFF000000 | core, 0xFFFFFFFF, tier == 0 ? 0.1f : 0.5f), (tier == 0 ? 0.55f : 0.75f) * fade, 0); }
+            glow(x, y, r * (tier == 0 ? 0.9f : 1.2f), tier == 0 ? 0xFFD8B0 : 0xFFFFFF, fade);
         } else {                                                                             // not lit yet: a real, small star; its rim says its tier, and an arc shows how far along you are
             plainStar(x, y, (0.55f + 0.2f * prog) * fade * dK, n.depth() + c * 13, tier == 2 || near);
             glow(x, y, 3.2f * tk, tc, 0.22f * fade);

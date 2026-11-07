@@ -616,3 +616,10 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Sung line is a lyrics style (4th), docked Above/Below the Now Playing card; Position/Size/Next/Previous hidden for it. Strip: clean glass, note in a soft light, hairline progress. "Previous line" toggle (off by default). Star bursts only for Pop; Next line hidden for Scroll.
 - Word pacing: syllables and punctuation (commas hold) set when each word is sung; line spread over most of the gap unless the gap is long.
 - Icons: sty_pop, sty_kara, sty_scroll, sty_sung, lyr_prev; mus_play is a round button switching play/pause (never both).
+- Performance: the landscape (two mountain ranges, the hill with grass, three firs) is baked once into two textures at 2x (Codex.bake, NebulaTex.layer) and redrawn only on resize; the menu is not drawn at all while the sky covers it (Codex.covering). ~1200 draws a frame (was ~3100).
+- No mouse parallax: constellations and the sky stay still. Depth is by size and light only.
+- Opening (2.6 s): out of black, the last sunset glow low on the horizon fading, bright stars first then faint ones (eyes adjusting), the Milky Way last, a slow tilt up (ground slides more than sky), constellations come into focus and their lines draw themselves star to star.
+- Mountains: dark night silhouettes from ridged noise, a little mist at the foot. No outlines on the stargazer; the lantern lights a warm pool on the grass and the nearby grass, two moths circle it.
+- Tiers at a glance: the lit star itself is in its tier colour. Bronze: small copper diagonal cross; Silver: white long cross; Gold: large yellow eight-point star with a ring and halo.
+- "Ledger since" renamed "Counting since" (the day FancyDrops started counting your drops).
+- Lyrics: word-timed (enhanced) LRC is used when LRCLIB has it (exact word sync); otherwise the pacing guess. Now Playing's colour wash starts at the very edge (no dark line on the left).

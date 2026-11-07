@@ -96,6 +96,8 @@ final class LyricsHud {
      * except after a long gap (an instrumental), where it is sung at a natural pace and then simply waits.
      */
     private static long wordAt(String text, long start, long end, int ch) {
+        long[] exact = Lyrics.wordTimes(start, text);                                        // word-timed lyrics: exactly when each letter is sung
+        if (exact != null) return exact[Math.max(0, Math.min(exact.length - 1, ch))];
         float[] cum = PACE.computeIfAbsent(text, LyricsHud::pace);
         int n = cum.length - 1; float tot = Math.max(1f, cum[n]);
         long gap = Math.max(300, end - start);

@@ -65,8 +65,8 @@ final class NowPlayingHud {
         NebulaTex.glow(g, w / 2f, h / 2f + 5, w * 0.58f, h * 0.95f, Gfx.argb(Math.round(90 * e), 0x000000));                // the shadow under it
         round(g, 0, 0, w, h, Gfx.argb(Math.round(232 * e), panel));
         for (int i = 0; i < 12; i++) {                                                                                 // the album's colour washing in from the left
-            int x0 = 2 + i * (w - 4) / 12, x1 = 2 + (i + 1) * (w - 4) / 12; float u = i / 11f;
-            g.fill(x0, 1, x1, h - 1, Gfx.argb(Math.round(e * 70 * (1f - u) * (1f - u)), acc));
+            int x0 = i == 0 ? 0 : 1 + i * (w - 2) / 12, x1 = 1 + (i + 1) * (w - 2) / 12; float u = i / 11f;          // (from the very edge: no dark line down the left)
+            g.fill(x0, i == 0 ? 2 : 1, x1, i == 0 ? h - 2 : h - 1, Gfx.argb(Math.round(e * 70 * (1f - u) * (1f - u)), acc));
         }
         round(g, 0, 0, w, h / 2, Gfx.argb(Math.round(12 * e), 0xFFFFFF));
         g.fill(3, 0, w - 3, 1, Gfx.argb(Math.round(45 * e), 0xFFFFFF));                                               // a lit top edge
