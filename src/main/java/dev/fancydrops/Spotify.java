@@ -152,7 +152,7 @@ final class Spotify {
             long prog = o.has("progress_ms") && !o.get("progress_ms").isJsonNull() ? o.get("progress_ms").getAsLong() : 0;
             boolean pl = o.has("is_playing") && o.get("is_playing").getAsBoolean();
             progressMs = prog; progressAt = (sentAt + System.currentTimeMillis()) / 2; playing = pl;     // Spotify read the position halfway through the request
-            if (track == null || !track.id().equals(tr.id())) { track = tr; Lyrics.load(tr); Beat.load(tr); AlbumArt.load(tr.art()); }
+            if (track == null || !track.id().equals(tr.id())) { track = tr; Lyrics.load(tr); AlbumArt.load(tr.art()); }
             status = (pl ? "Playing: " : "Paused: ") + tr.name() + " - " + tr.artists();
         } catch (Throwable e) { status = "Couldn't reach Spotify: " + e; }
     }

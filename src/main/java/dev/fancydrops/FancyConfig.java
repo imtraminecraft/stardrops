@@ -136,7 +136,8 @@ public class FancyConfig {
     public int lyricsSize = 100;
     public int lyricsStyle = 0;                                         // 0 Pop (words pop in as sung), 1 Karaoke (a wipe of colour), 2 Scroll (a gliding lyric sheet), 3 Sung line (docked to Now Playing)
     public int npLine = 1;                                              // the Sung line style: 1 docked below the Now Playing card, 2 above it
-    public boolean lyricsPrev = false;                                  // show the line just sung (Scroll: the lines above; Pop / Karaoke: it rolls away)
+    public boolean lyricsPrev = false;
+    public boolean lyricsBar = true, lyricsGlow = true, lyricsShade = true;   // the line counting down to the next line; a soft light behind the words; a dark shade behind them                                  // show the line just sung (Scroll: the lines above; Pop / Karaoke: it rolls away)
     public boolean lyricsNext = true, lyricsIntro = true;               // the coming line under the current one; the song's name when it starts
     public int lyricsOffset = 0;                                        // ms the words come early (+) or late (-)
     public boolean ledgerSigned = false;                                // the local ledger file carries a seal (ledger_local.sig)

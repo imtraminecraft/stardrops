@@ -424,7 +424,7 @@ final class Codex {
         mcBox(cx0 + 7 * p, cgy - 7 * p, 0, 0, 0, 5 * p, 4 * p, 0xE0A050, 0.6f, a);                         // head
         mcBox(cx0 + 7 * p, cgy - 8 * p, 0, 0, 0, 1 * p, 1 * p, 0xE0A050, 0.6f, a); mcBox(cx0 + 10 * p, cgy - 8 * p, 0, 0, 0, 1 * p, 1 * p, 0xE0A050, 0.6f, a);   // ears
         mcBox(cx0 + 11 * p, cgy - 5 * p, 0, 0, 0, 1.4f * p, 1 * p, 0xF0D0B0, 0.6f, a);                      // muzzle
-        if (blink > 0) mcBox(cx0 + 9.5f * p, cgy - 6 * p, 0, 0, 0, 1 * p, 1 * p, 0x7AE06A, 1f, a);          // an eye, catching the lantern
+        if (blink > 0) mcBox(cx0 + 9.5f * p, cgy - 6 * p, 0, 0, 0, 1 * p, 1 * p, 0x7AE06A, 0.9f, a);          // an eye
         // a chest beside them
         float chx = hx - 14 * p, chy = ground(chx + 3.5f * p);
         mcBox(chx, chy - 7 * p, 0, 0, 0, 7 * p, 7 * p, 0x9A6A30, 0.5f, a);
@@ -443,7 +443,6 @@ final class Codex {
         float shX = hipX + ux * 11 * p, shY = hipY + uy * 11 * p, hcX = hipX + ux * 16.5f * p, hcY = hipY + uy * 16.5f * p;
         float look = (scopeAng + (float) Math.PI / 2) * 0.55f - (float) Math.PI / 2 + (float) Math.PI / 2 * 0.45f;   // the head pitches up part of the way; the spyglass does the rest
         look = look * (1f - rest * 0.3f);
-        mcBox(shX, shY, (float) (Math.PI / 2 + 0.7), 0, -2 * p, 11 * p, 4 * p, 0x0E8A8A, 0.3f, a);          // the far arm, propping him up behind
         float slope = (float) Math.atan2(ground(hipX + 12 * p) - ground(hipX), 12 * p);                  // legs lie along the slope of the hill
         mcBox(hipX, hipY, slope, -1 * p, 0, 13 * p, 4 * p, 0x3A3AA8, 0.42f, a);                            // legs
         mcBox(hipX, hipY, slope, 10 * p, 0, 2 * p, 4 * p, 0x5A5A5A, 0.42f, a);                               // shoes
@@ -462,9 +461,9 @@ final class Codex {
         mcBox(hcX, hcY, look, 2 * p, 0, 2 * p, 1 * p, 0x6A4030, 0.5f, a);                                    // a bit of beard
         mcBox(sgX, sgY, sgA, 0, -1 * p, 7 * p, 2 * p, 0xC87A4A, 0.6f, a);                                    // the copper tube
         mcBox(sgX, sgY, sgA, 2 * p, -1 * p, 0.8f * p, 2 * p, 0x8A4A2A, 0.6f, a); mcBox(sgX, sgY, sgA, 5 * p, -1 * p, 0.8f * p, 2 * p, 0x8A4A2A, 0.6f, a);
-        mcBox(sgX, sgY, sgA, 7 * p, -1.2f * p, 1 * p, 2.4f * p, 0x9A6AE0, 1f, a);                             // the amethyst lens
+        mcBox(sgX, sgY, sgA, 7 * p, -1.2f * p, 1 * p, 2.4f * p, 0x9A6AE0, 0.9f, a);                             // the lens
         float tx1 = sgX + gx * 8 * p, ty1 = sgY + gy * 8 * p; lensX = tx1; lensY = ty1;
-        glow(tx1, ty1, 4 * p, 0xC8A8FF, (hoverCon >= 0 || film ? 0.5f : 0.25f) * a * (1f - rest));
+        glow(tx1, ty1, 4 * p, 0xBFD8FF, (hoverCon >= 0 || film ? 0.5f : 0.25f) * a * (1f - rest));
         float tx1b = tx1, ty1b = ty1;
         for (int i = 0; i < (film ? 0 : 4); i++) {                                                   // a few fireflies blinking low over the grass
             float u = (now % 3_600_000L) / 1000f, fx = sx0 + sw * (0.03f + 0.28f * rnd(i * 7)) + (float) Math.sin(u * 0.35f + i) * 6 * k, fy = ground(fx) - (5 + 10 * rnd(i * 3)) * k + (float) Math.sin(u * 0.6f + i * 2) * 2 * k;
@@ -479,7 +478,7 @@ final class Codex {
     /** A Minecraft-style box: in local coordinates (x along angle `ang` from the pivot px, py; y across it), lx, ly, w, h. The colour
      *  is darkened for night (lit = how much of its own colour shows: 0 = a silhouette, 1 = full colour, e.g. the lantern's flame). */
     private static void mcBox(float px, float py, float ang, float lx, float ly, float w, float h, int rgb, float lit, float a) {
-        int col = mix(0xFF07060E, 0xFF000000 | rgb, lit);
+        int col = lit >= 1f ? 0xFF000000 | rgb : 0xFF05040A;                                   // silhouettes (only light sources keep their colour)
         Gfx.push(G); Gfx.translate(G, px, py); if (ang != 0) Gfx.rotate(G, ang); Gfx.translate(G, lx, ly); G.pose().scale(w, h); G.fill(0, 0, 1, 1, argb(a * alpha, col)); Gfx.pop(G);
     }
     // ------------------------------------------------------------------ the landscape, baked once into two pictures (at twice the menu's pixels)

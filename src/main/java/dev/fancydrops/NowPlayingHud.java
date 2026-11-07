@@ -41,7 +41,7 @@ final class NowPlayingHud {
         long pos = preview && Spotify.track == null ? (now / 10) % 200_000 : Spotify.position();
         draw(g, mc.font, cx, top, k, e, t, now, now - changedAt, pos, playing, dt, "", AlbumArt.ready && !(preview && Spotify.track == null), AlbumArt.accent());
     }
-    static int width() { return 214; }
+    static int width() { return 226; }
     static int height(boolean lyric) { return lyric ? 64 : 56; }
 
     /** Draws the card. cx/top: the middle of its top edge; e: 0..1 how far it has slid in; since: ms since the song changed. */
@@ -66,15 +66,26 @@ final class NowPlayingHud {
         round(g, 0, 0, w, h, Gfx.argb(Math.round(150 * e), 0x2A2C38));                                                  // a fine light edge
         round(g, 1, 1, w - 2, h - 2, Gfx.argb(Math.round(242 * e), panel));                                              // plain dark glass: no colour wash
         g.fill(4, 1, w - 4, 2, Gfx.argb(Math.round(22 * e), 0xFFFFFF));                                                  // a sheen along the top
-        // the record, sliding out from behind the cover while it plays
+        // the record, sliding out from behind the cover while it plays: fine grooves, the album's art printed on its spinning label,
+        // two highlights that stay put while it turns (the way light sits on a real record), a thin bright rim
         int as = 42, ax = 7, ay = 7;
-        rec += ((playing ? 1f : 0.35f) - rec) * 0.08f;
-        float rx = ax + as / 2f + rec * 11, ry = ay + as / 2f, rr = as / 2f - 2, spin = (now % 3_600_000L) / 1000f * (playing ? 2.4f : 0f);
-        disc(g, rx, ry, rr, Gfx.argb(a, 0x111216));
-        for (int ring = 0; ring < 3; ring++) circle(g, rx, ry, rr * (0.55f + ring * 0.15f), Gfx.argb(Math.round(a * 0.22f), 0x6A6E7C));
-        disc(g, rx, ry, rr * 0.28f, Gfx.argb(a, Ritual.mixc(acc, 0x2A2C34, 0.35f))); disc(g, rx, ry, 1.2f, Gfx.argb(a, 0x111216));
-        float gx = rx + (float) Math.cos(spin) * rr * 0.8f, gy = ry + (float) Math.sin(spin) * rr * 0.8f;
-        NebulaTex.glow(g, gx, gy, 4, 2.5f, Gfx.argb(Math.round(a * 0.3f), 0xFFFFFF));
+        rec += ((playing ? 1f : 0.3f) - rec) * 0.08f;
+        float rx = ax + as / 2f + rec * 25, ry = ay + as / 2f, rr = as / 2f - 1, spin = (now % 3_600_000L) / 1000f * 3.5f * rec;
+        disc(g, rx, ry, rr, Gfx.argb(a, 0x0A0A0D));
+        circle(g, rx, ry, rr - 0.5f, Gfx.argb(Math.round(a * 0.5f), 0x3A3C46));
+        for (int ring = 0; ring < 6; ring++) circle(g, rx, ry, rr * (0.46f + ring * 0.085f), Gfx.argb(Math.round(a * (ring % 2 == 0 ? 0.22f : 0.12f)), 0x8A8E9C));
+        for (int side = 0; side < 2; side++) {                                                   // the highlights, fixed: light, not paint
+            double an = -Math.PI / 4 + side * Math.PI; float hx = rx + (float) Math.cos(an) * rr * 0.68f, hy = ry + (float) Math.sin(an) * rr * 0.68f;
+            Gfx.push(g); Gfx.translate(g, hx, hy); Gfx.rotate(g, (float) an + (float) Math.PI / 2); NebulaTex.glow(g, 0, 0, rr * 0.42f, rr * 0.08f, Gfx.argb(Math.round(a * 0.28f), 0xFFFFFF)); Gfx.pop(g);
+        }
+        float lr = rr * 0.38f;
+        disc(g, rx, ry, lr, Gfx.argb(a, Ritual.mixc(acc, 0x1A1A20, 0.4f)));
+        Gfx.push(g); Gfx.translate(g, rx, ry); Gfx.rotate(g, spin); float ls = lr * 1.3f / as; Gfx.scale(g, ls, ls); Gfx.translate(g, -as / 2f, -as / 2f);
+        cover(g, font, 0, 0, as, a, art, acc);                                                   // the label: the album's art, turning
+        Gfx.pop(g);
+        circle(g, rx, ry, lr, Gfx.argb(Math.round(a * 0.6f), 0x0A0A0D));
+        disc(g, rx, ry, 1.2f, Gfx.argb(a, 0xD8DCE6)); disc(g, rx, ry, 0.6f, Gfx.argb(a, 0x0A0A0D));                  // the spindle
+        NebulaTex.glow(g, ax + as + 1, ay + as / 2f, 4, as * 0.5f, Gfx.argb(Math.round(a * 0.55f), 0x000000));      // the cover's shadow falling on it
         // the cover: a shadow under it, it flips in when the song changes, dims under a pause sign when paused
         NebulaTex.glow(g, ax + as / 2f + 1, ay + as / 2f + 3, as * 0.62f, as * 0.6f, Gfx.argb(Math.round(e * 150), 0x000000));
         float flip = Math.min(1f, since / 400f), sx = Math.abs((float) Math.cos(Math.PI * 0.5 * (1f - flip)));
@@ -85,7 +96,7 @@ final class NowPlayingHud {
         if (!playing) { g.fill(0, 0, as, as, Gfx.argb(Math.round(130 * e), 0x000000)); g.fill(as / 2 - 5, as / 2 - 6, as / 2 - 2, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); g.fill(as / 2 + 2, as / 2 - 6, as / 2 + 5, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); }
         Gfx.pop(g);
         // the words
-        float in = ease(Math.min(1f, since / 380f)), sl = (1f - in) * 8; int tx = 70, eqW = 16, tw = w - tx - eqW - 10;
+        float in = ease(Math.min(1f, since / 380f)), sl = (1f - in) * 8; int tx = 84, eqW = 16, tw = w - tx - eqW - 10;
         small(g, font, playing ? "NOW PLAYING" : "PAUSED", tx + sl * 0.4f, 8, 0.55f, Gfx.argb(Math.round(a * 0.75f * in), 0x8A8E9C));
         Gfx.txt(g, font, marquee(font, t.name(), tw, since), Math.round(tx + sl), 15, Gfx.argb(Math.round(a * in), 0xFFFFFF), true);
         small(g, font, cut(font, t.artists(), tw / 0.8f), tx + sl * 0.6f, 26, 0.8f, Gfx.argb(Math.round(a * 0.7f * in), 0xA8ACB8));
