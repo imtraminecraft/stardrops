@@ -29,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class FancyDropsMod implements ClientModInitializer, ModInitializer {
     /** The music keys (play/pause, next, previous): the Spotify page shows what they are bound to. */
-    static final net.minecraft.client.KeyMapping[] MUSIC = new net.minecraft.client.KeyMapping[3];
+    static final net.minecraft.client.KeyMapping[] MUSIC = new net.minecraft.client.KeyMapping[5];
 
     private static int tabTick;
     /** The one version number: gradle.properties -> fabric.mod.json -> here. */
@@ -59,12 +59,13 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
         net.minecraft.client.KeyMapping[] music = MUSIC;          // music keys (unbound until you pick them in Options > Controls)
         try {
             var cat = net.minecraft.client.KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fancydrops", "music"));
-            String[] ids = {"key.fancydrops.playpause", "key.fancydrops.next", "key.fancydrops.previous"};
-            for (int i = 0; i < 3; i++) music[i] = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(new net.minecraft.client.KeyMapping(ids[i], -1, cat));
+            String[] ids = {"key.fancydrops.playpause", "key.fancydrops.next", "key.fancydrops.previous", "key.fancydrops.lyricsEarlier", "key.fancydrops.lyricsLater"};
+            for (int i = 0; i < 5; i++) music[i] = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(new net.minecraft.client.KeyMapping(ids[i], -1, cat));
         } catch (Throwable t) { System.err.println("[FancyDrops] music keys unavailable: " + t); }
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             String[] acts = {"toggle", "next", "previous"};
             for (int i = 0; i < 3; i++) if (music[i] != null) while (music[i].consumeClick()) Spotify.control(acts[i]);
+            for (int i = 3; i < 5; i++) if (music[i] != null) while (music[i].consumeClick()) Lyrics.nudge(mc, i == 3 ? 100 : -100);   // the words a little earlier / later, for this song
             if (openMenu) { openMenu = false; mc.setScreenAndShow(new FancyScreen()); }   // 26.2: setScreenAndShow
             if (reopenMenu && !AnimationManager.isPlaying()) { reopenMenu = false; mc.setScreenAndShow(new FancyScreen()); }
             DropListener.tick(mc);

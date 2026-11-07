@@ -2,5 +2,7 @@
   "key.category.fancydrops.music": "FancyDrops: Music",
   "key.fancydrops.playpause": "Play / pause",
   "key.fancydrops.next": "Next song",
-  "key.fancydrops.previous": "Previous song"
+  "key.fancydrops.previous": "Previous song",
+  "key.fancydrops.lyricsEarlier": "Lyrics earlier (this song)",
+  "key.fancydrops.lyricsLater": "Lyrics later (this song)"
 }

@@ -51,7 +51,7 @@ final class LyricsHud {
         boolean demo = preview && (!on || L.isEmpty());
         if (demo) { L = DEMO; on = true; }
         if (!demo && on && !t.id().equals(lastTrack)) { lastTrack = t.id(); lastLine = -2; prevLine = -2; titleAt = now; }
-        long pos = demo ? now % 9000 : Spotify.position() + c.lyricsOffset;
+        long pos = demo ? now % 9000 : Spotify.position() + FancyConfig.lyricsShift();
         draw(g, mc.font, c, L, on, demo, pos, now, vis);
     }
     static void draw(GuiGraphicsExtractor g, Font f, FancyConfig c, List<Lyrics.Line> L, boolean on, boolean demo, long pos, long now, float vis) {
@@ -235,7 +235,7 @@ final class LyricsHud {
         List<Lyrics.Line> L = Lyrics.lines;
         boolean demo = NowPlayingHud.preview && (Spotify.track == null || L.isEmpty()); if (demo) L = DEMO;
         boolean on = c.lyricsOn && c.lyricsStyle == SUNG && (demo || Spotify.playing) && !L.isEmpty();
-        long pos = demo ? now % 9000 : Spotify.position() + c.lyricsOffset;
+        long pos = demo ? now % 9000 : Spotify.position() + FancyConfig.lyricsShift();
         int li = on ? at(L, pos) : -1;
         boolean has = li >= 0 && !L.get(li).text().isBlank();
         dockShow += ((has ? 1f : 0f) - dockShow) * Math.min(1f, dt * 7f);

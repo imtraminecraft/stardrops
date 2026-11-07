@@ -2833,6 +2833,12 @@ public class FancyScreen extends Screen {
             rows.add(toggle(":lyr_intro:", "Song intro", "A record spins up with the song's name when it starts", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
             Row off = row(0, ":lyr_timing:", "Timing", "Words early or late? Nudge them", Ui.ACCENT);
             off.ctls.add(new Slider(-1500, 1500, 50, () -> c.lyricsOffset, v -> c.lyricsOffset = (int) v, () -> (c.lyricsOffset > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", c.lyricsOffset / 1000.0))); rows.add(off);
+            Spotify.Track st = Spotify.track;
+            if (st != null) {                                                                  // a fix just for the song playing now (the Lyrics earlier / later keys change it too)
+                String sid = st.id(); java.util.function.IntSupplier so = () -> c.songOffset == null ? 0 : c.songOffset.getOrDefault(sid, 0);
+                Row ts = row(0, ":lyr_timing:", "This song", "Only for " + st.name() + ". Keys: Lyrics earlier / later", Ui.ACCENT);
+                ts.ctls.add(new Slider(-3000, 3000, 50, () -> so.getAsInt(), v -> { if (c.songOffset == null) c.songOffset = new java.util.LinkedHashMap<>(); if ((int) v == 0) c.songOffset.remove(sid); else c.songOffset.put(sid, (int) v); }, () -> (so.getAsInt() > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", so.getAsInt() / 1000.0))); rows.add(ts);
+            }
             rows.add(note(Lyrics.status.isEmpty() ? "The words take the album cover's colour and step aside during drop animations." : Lyrics.status, 0xFF8A93B0));
             return;
         }
@@ -2867,8 +2873,8 @@ public class FancyScreen extends Screen {
         rows.add(s6);
         rows.add(note("Only you can log in to an app in Development Mode. For friends: the app's Settings > User Management, add their Spotify name and email.", 0xFF8A93B0));
         rows.add(section("Music Functions"));
-        String[] mn = {"Play / Pause", "Next song", "Previous song"}, mi = {":mus_play:", ":mus_next:", ":mus_prev:"}, md = {"Pauses or resumes what's playing", "Skips to the next song", "Goes back to the song before"};
-        for (int i = 0; i < 3; i++) {
+        String[] mn = {"Play / Pause", "Next song", "Previous song", "Lyrics earlier", "Lyrics later"}, mi = {":mus_play:", ":mus_next:", ":mus_prev:", ":lyr_timing:", ":lyr_timing:"}, md = {"Pauses or resumes what's playing", "Skips to the next song", "Goes back to the song before", "The words come 0.1 s sooner, for this song", "The words come 0.1 s later, for this song"};
+        for (int i = 0; i < 5; i++) {
             net.minecraft.client.KeyMapping km = FancyDropsMod.MUSIC[i];
             String bound = km == null ? "unavailable" : km.isUnbound() ? "Not set" : km.getTranslatedKeyMessage().getString();
             Row mr = row(0, mi[i], mn[i] + "  \u00B7  " + bound, md[i], km != null && !km.isUnbound() ? 0xFF1ED760 : 0xFF8A93B0);

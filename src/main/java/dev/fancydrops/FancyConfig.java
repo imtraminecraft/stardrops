@@ -139,6 +139,9 @@ public class FancyConfig {
     public boolean lyricsPrev = false;                                  // show the line just sung (Scroll: the lines above; Pop / Karaoke: it rolls away)
     public boolean lyricsNext = true, lyricsIntro = true;               // the coming line under the current one; the song's name when it starts
     public int lyricsOffset = 0;                                        // ms the words come early (+) or late (-)
+    public java.util.Map<String, Integer> songOffset = new java.util.LinkedHashMap<>();   // a timing fix for one song (Spotify id -> ms), on top of lyricsOffset
+    /** The timing fix for the song playing now: yours for every song plus this song's own. */
+    static int lyricsShift() { FancyConfig c = get(); Spotify.Track t = Spotify.track; Integer s = t == null || c.songOffset == null ? null : c.songOffset.get(t.id()); return c.lyricsOffset + (s == null ? 0 : s); }
     public boolean ambGlow = false, ambNotes = false, ambBars = false, ambWave = false, lyricsStars = true; public int ambGlowStrength = 60;   // Ambience (Visuals > Ambience)
     public boolean npOn = true; public int npScale = 100, npHidePaused = 1;   // Now Playing; when paused: 0 stays, 1 hides after 8 s, 2 hides at once
     public float npX = 0.5f; public int npY = 4;                         // where it sits: the middle of it at npX of the width, npY pixels from the top

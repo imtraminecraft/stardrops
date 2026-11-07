@@ -623,3 +623,5 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Tiers at a glance: the lit star itself is in its tier colour. Bronze: small copper diagonal cross; Silver: white long cross; Gold: large yellow eight-point star with a ring and halo.
 - "Ledger since" renamed "Counting since" (the day FancyDrops started counting your drops).
 - Lyrics: word-timed (enhanced) LRC is used when LRCLIB has it (exact word sync); otherwise the pacing guess. Now Playing's colour wash starts at the very edge (no dark line on the left).
+- Lyrics sources: NetEase Cloud Music first (search by title + first artist, length within 4.5 s; its "yrc" lyrics time every word), then LRCLIB. latest.log says which: "[FancyDrops] lyrics: <song>: ...". The menu note shows "Word-synced lyrics from NetEase" when it worked.
+- Per-song timing: FancyConfig.songOffset (track id -> ms) on top of lyricsOffset. Visuals > Lyrics > This song slider (while a song plays) and two keys, Lyrics earlier / later (±0.1 s, shown above the hotbar), in Controls > FancyDrops: Music.
