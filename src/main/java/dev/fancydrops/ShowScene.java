@@ -29,7 +29,7 @@ final class ShowScene {
     static int motifOf(String group) {
         return switch (group) {
             case "fish_water" -> WATER; case "fish_lava" -> LAVA; case "fish_spooky" -> SPOOKY; case "fish_winter" -> WINTER;
-            case "crimson" -> CRIMSON; case "mobs" -> MINES; case "nucleus" -> NUCLEUS; case "dragon" -> END; case "dyes" -> DYE;
+            case "crimson" -> CRIMSON; case "mobs" -> MINES; case "nucleus" -> NUCLEUS; case "corpse", "fiesta" -> MINES; case "dragon" -> END; case "dyes" -> DYE;
             default -> -1;
         };
     }

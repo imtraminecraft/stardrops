@@ -197,7 +197,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
     /** /fd simulate <Mythological|Slayer|Farming|Experiments> ...: one literal per category, each with Tab completion. */
     private static LiteralArgumentBuilder<FabricClientCommandSource> simLiteral(LiteralArgumentBuilder<FabricClientCommandSource> sim) {
         sim.executes(ctx -> { say(ctx.getSource(), "Use " + SIM_USAGE); return Command.SINGLE_SUCCESS; });
-        for (String mode : new String[]{"Mythological", "Slayer", "Farming", "Experiments", "Fishing", "Crimson", "Mobs", "Nucleus", "End", "Dyes"}) {
+        for (String mode : new String[]{"Mythological", "Slayer", "Farming", "Experiments", "Fishing", "Crimson", "Mobs", "Nucleus", "Corpse", "Fiesta", "End", "Dyes"}) {
             sim.then(ClientCommands.literal(mode)
                 .executes(ctx -> { say(ctx.getSource(), "Use " + usage(mode)); return Command.SINGLE_SUCCESS; })
                 .then(ClientCommands.argument("args", StringArgumentType.greedyString())
@@ -280,6 +280,8 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
             case "Crimson" -> "/fd simulate Crimson <Boss> <Drop> [Drop 2]";
             case "Mobs" -> "/fd simulate Mobs <Mob> <Drop> [Drop 2]";
             case "Nucleus" -> "/fd simulate Nucleus <Drop> [Drop 2]";
+            case "Corpse" -> "/fd simulate Corpse <Drop> [Drop 2]";
+            case "Fiesta" -> "/fd simulate Fiesta <Drop>";
             case "End" -> "/fd simulate End <Drop> [Drop 2]";
             case "Dyes" -> "/fd simulate Dyes <Dye> [Dye 2]";
             default -> "/fd simulate Mythological <Mob|Treasure> <Drop> <mf>";
@@ -290,7 +292,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
         return switch (mode) {
             case "Slayer" -> SlayerData.ALL; case "Farming" -> FarmData.ALL; case "Experiments", "Dyes" -> java.util.List.of();
             case "Fishing" -> ExtraData.ALL.stream().filter(x -> x.group.startsWith("fish_")).toList();
-            case "Crimson" -> ExtraData.group("crimson"); case "Mobs" -> ExtraData.group("mobs"); case "Nucleus" -> ExtraData.group("nucleus"); case "End" -> ExtraData.group("dragon");
+            case "Crimson" -> ExtraData.group("crimson"); case "Mobs" -> ExtraData.group("mobs"); case "Nucleus" -> ExtraData.group("nucleus"); case "Corpse" -> ExtraData.group("corpse"); case "Fiesta" -> ExtraData.group("fiesta"); case "End" -> ExtraData.group("dragon");
             default -> MythData.ALL;
         };
     }
@@ -304,7 +306,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
     /** /fd simulate <mode> ...: the source (a mob, a boss, a farming page), one drop (two for Slayer and Experiments; Nothing for none), then the magic find or Overbloom. */
     private static int simulate(FabricClientCommandSource source, String args, String mode) {
         String t = args.trim(); boolean exp = mode.equals("Experiments"), farm = mode.equals("Farming");
-        String extraCat = switch (mode) { case "Fishing" -> "fishing"; case "Crimson" -> "crimson"; case "Mobs" -> "mobs"; case "Nucleus" -> "nucleus"; case "End" -> "dragon"; case "Dyes" -> "dyes"; default -> null; };
+        String extraCat = switch (mode) { case "Fishing" -> "fishing"; case "Crimson" -> "crimson"; case "Mobs" -> "mobs"; case "Nucleus" -> "nucleus"; case "Corpse" -> "corpse"; case "Fiesta" -> "fiesta"; case "End" -> "dragon"; case "Dyes" -> "dyes"; default -> null; };
         if (extraCat != null) { DropListener.simulateExtra(extraCat, t, m -> source.sendFeedback(Chat.msg(m))); return Command.SINGLE_SUCCESS; }
         int mf = farm ? 25 : 250;
         String[] w = t.split("\\s+");
@@ -332,7 +334,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
     /** Tab completion: the source, then its drops (and Nothing), then the magic find. */
     private static CompletableFuture<Suggestions> suggestSim(SuggestionsBuilder builder, String mode) {
         boolean dyes = mode.equals("Dyes"), exp = mode.equals("Experiments") || dyes, farm = mode.equals("Farming"), slayer = mode.equals("Slayer"), myth = mode.equals("Mythological");
-        boolean extra = dyes || mode.equals("Fishing") || mode.equals("Crimson") || mode.equals("Mobs") || mode.equals("Nucleus") || mode.equals("End");
+        boolean extra = dyes || mode.equals("Fishing") || mode.equals("Crimson") || mode.equals("Mobs") || mode.equals("Nucleus") || mode.equals("Corpse") || mode.equals("Fiesta") || mode.equals("End");
         int maxDrops = slayer || exp || extra ? 2 : 1;
         java.util.List<DropData.Source> lib = libOf(mode);
         String rem = builder.getRemaining(); int lead = rem.length() - rem.stripLeading().length(); String t = rem.stripLeading();

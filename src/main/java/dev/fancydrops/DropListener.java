@@ -60,15 +60,16 @@ public final class DropListener {
 
     /** After "CRYSTAL NUCLEUS LOOT BUNDLE" (or a dragon going down) the next lines list the rewards: the rare ones listed in the
      *  Crystal Hollows / The End pages play. A dragon's loot also shows as "<you> has obtained <item>!". */
-    private static long nucleusUntil, dragonUntil;
+    private static long nucleusUntil, dragonUntil, corpseUntil;
     private static final java.util.regex.Pattern OBTAINED = java.util.regex.Pattern.compile("^\\s*(?:\\[[^\\]]+\\]\\s*)?([A-Za-z0-9_]{1,16}) has obtained (.+?)!?\\s*$");
     private static boolean lootLine(String line, long now) {
         String up = line.toUpperCase(java.util.Locale.ROOT);
         if (up.contains("CRYSTAL NUCLEUS LOOT BUNDLE")) { nucleusUntil = now + 8000; dlog("Crystal Nucleus loot: listening"); return false; }
+        if (up.matches("^\\s*[A-Z]+ CORPSE LOOT!\\s*$")) { corpseUntil = now + 8000; dlog("Frozen Corpse loot: listening"); return false; }
         if (up.contains("DRAGON DOWN!")) { dragonUntil = now + 30000; dlog("dragon down: listening for its loot"); return false; }
-        String group = now < nucleusUntil ? "nucleus" : now < dragonUntil ? "dragon" : null;
+        String group = now < nucleusUntil ? "nucleus" : now < corpseUntil ? "corpse" : now < dragonUntil ? "dragon" : null;
         if (group == null) return false;
-        String name = line.trim().replaceFirst("^[+\\-•▸»]\\s*", "");
+        String name = line.trim().replaceFirst("^[+\\-•▸»]\\s*", "").replaceFirst("^[^A-Za-z0-9]+\\s*", "").replaceFirst("\\s*[(\\[](?:[x\\u00d7]\\s*)?[\\d,]+[)\\]]\\s*$", "");
         if (group.equals("dragon")) {
             java.util.regex.Matcher m = OBTAINED.matcher(line);
             if (!m.matches()) return false;
@@ -334,7 +335,7 @@ public final class DropListener {
     /** The menu category a newer group lives in. */
     static String catOfGroup(String g) {
         if (g.startsWith("fish_")) return "fishing";
-        return switch (g) { case "dyes" -> "dyes"; default -> "bosses"; };          // the Crimson Isle and the End: the Rare Drops page
+        return switch (g) { case "dyes", "exp" -> "dyes"; case "nucleus", "corpse", "fiesta" -> "mining"; default -> "bosses"; };
     }
     /** The scene variant of a source: its place in its group (drops of the same creature stack into one animation). */
     private static int extraKind(DropData.Source src) { return Math.max(0, ExtraData.group(src.group).indexOf(src)); }
@@ -453,7 +454,7 @@ public final class DropListener {
         List<Plan> plans = new ArrayList<>();
         for (String nm : names) {
             DropData.Drop dr = ExperimentData.find(nm); if (dr == null) continue;
-            Plan pl = plan(s, dr, expItem(dr, false), "bosses", "experiment");
+            Plan pl = plan(s, dr, expItem(dr, false), "dyes", "experiment");
             if (pl != null) plans.add(pl);
         }
         for (int i = 0; i < plans.size(); i += 2) show("exp", plans.get(i), i + 1 < plans.size() ? plans.get(i + 1) : null, 0, false);
@@ -569,7 +570,7 @@ public final class DropListener {
         if (it.source.group != null && !it.source.group.isEmpty()) return catOfGroup(it.source.group);
         if (SlayerData.byId(it.source.id) == it.source) return "bosses";
         if (FarmData.byId(it.source.id) == it.source) return "farming";
-        if (it.source == ExperimentData.SOURCE) return "bosses";
+        if (it.source == ExperimentData.SOURCE) return "dyes";
         return "mythological";
     }
 
@@ -604,7 +605,7 @@ public final class DropListener {
             DropData.Source f = FarmData.ALL.get(0); it.source = f; it.name = f.drops.isEmpty() ? "Cropie" : f.drops.get(f.drops.size() - 1).name;
             return message(it, 4_500_000, "OB:+25", format);
         }
-        if ("bosses".equals(cat) && !ExperimentData.SOURCE.drops.isEmpty()) {
+        if ("dyes".equals(cat) && !ExperimentData.SOURCE.drops.isEmpty()) {
             it.source = ExperimentData.SOURCE; it.name = ExperimentData.SOURCE.drops.get(0).name;
             return message(it, 8_500_000, null, format);
         }

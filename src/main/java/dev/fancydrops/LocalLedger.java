@@ -70,7 +70,7 @@ final class LocalLedger {
         new Def("angler", "fish", "Angler", "Get 10 rare drops from sea creatures.", "fish", 10, LocalLedger::fish, "bubbleaura", false),
         new Def("deep_sea", "fish", "Deep Sea Legend", "Get 3 RNG drops from sea creatures.", "fish", 3, LocalLedger::fishR, "", false),
         new Def("isle_raider", "rare", "Isle Raider", "Get 10 rare drops from Crimson Isle bosses.", "flame", 10, p -> g(p, "crimson"), "", false),
-        new Def("rare_breed", "rare", "Rare Breed", "Get 10 rare drops in the Dwarven Mines.", "skull", 10, p -> g(p, "mobs"), "", false),
+        new Def("rare_breed", "rare", "Rare Breed", "Get 10 rare drops from the creatures of the Mines.", "skull", 10, p -> g(p, "mobs"), "", false),
         new Def("dragon_slayer", "rare", "Dragon Slayer", "Get 5 rare drops from Ender Dragons.", "skull", 5, p -> g(p, "dragon"), "", false),
         new Def("nucleus", "rare", "Heart of the Mountain", "Get 10 rare Crystal Nucleus rewards.", "gem", 10, p -> g(p, "nucleus"), "", false),
         new Def("living_colour", "dye", "Living Colour", "Find a dye.", "dye", 1, p -> g(p, "dyes"), "", true),

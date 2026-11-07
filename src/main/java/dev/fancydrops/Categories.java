@@ -28,7 +28,8 @@ final class Categories {
         List<DropData.Source> sources(String groupId) {
             List<DropData.Source> l = new ArrayList<>();
             if (ExtraData.BY_GROUP.containsKey(groupId)) { l.addAll(ExtraData.group(groupId)); return l; }
-            if (id.equals("bosses")) { if (groupId.equals("slayer")) l.addAll(SlayerData.ALL); if (groupId.equals("exp") && !ExperimentData.SOURCE.id.isEmpty()) l.add(ExperimentData.SOURCE); return l; }
+            if (groupId.equals("exp")) { if (!ExperimentData.SOURCE.id.isEmpty()) l.add(ExperimentData.SOURCE); return l; }
+            if (id.equals("bosses")) { if (groupId.equals("slayer")) l.addAll(SlayerData.ALL); return l; }
             if (id.equals("farming")) { DropData.Source f = FarmData.byId(groupId); if (f != null) l.add(f); return l; }
             if (!id.equals("mythological")) return l;
             if (groupId.equals("myth")) l.addAll(MythData.spawnable(FancyConfig.get().mythPet));
@@ -80,13 +81,15 @@ final class Categories {
         new Cat("mythological", "Mythological", ":mytho:", 0xFF55D8FF, false, "Mythological Ritual is an event that occurs with the Mythological Ritual perk.", List.of(
             new Group("myth", "Mythological Mobs", ":mytho:", 0xFF55D8FF, "What plays when a ritual creature dies.", MYTH_TYPES),
             new Group("treasure", "Treasure", ":treasure:", 0xFFFFD25A, "What plays when a burrow holds treasure.", MYTH_TYPES))),
-        new Cat("bosses", "Mob Drops", ":raredrops:", 0xFFFF5A5A, false, "Slayers, the Crimson Isle, the End, the Dwarven Mines, the Crystal Hollows and the Experimentation Table.", List.of(
+        new Cat("bosses", "Mob Drops", ":raredrops:", 0xFFFF5A5A, false, "Slayers, the Crimson Isle, the End and the creatures of the Mines.", List.of(
             new Group("slayer", "Slayers", ":grp_slayers:", 0xFFFF5A5A, "What plays when a slayer boss drops something.", SLAYER_TYPES),
             new Group("crimson", "Crimson Isle", ":grp_crimson:", 0xFFFF6A3A, "The Crimson Isle's minibosses and the Magma Boss.", SHOW_TYPES),
             new Group("dragon", "The End", ":grp_end:", 0xFFC77DFF, "Ender Dragons: the Ender Dragon pet, the Aspect of the Dragons and the dragons' rare loot.", SHOW_TYPES),
-            new Group("mobs", "Dwarven Mines", ":grp_mines:", 0xFF7FE8D8, "Rare drops of the Dwarven Mines' creatures.", MINE_TYPES),
-            new Group("nucleus", "Crystal Hollows", ":grp_nucleus:", 0xFF9AE6FF, "The Crystal Nucleus and the Hollows' rare drops.", MINE_TYPES),
-            new Group("exp", "Experimentation Table", ":grp_exp:", 0xFFB56BFF, "What plays when the Table gives out rewards.", EXP_TYPES))),
+            new Group("mobs", "Mines", ":grp_mines:", 0xFF7FE8D8, "Rare drops of the Dwarven Mines' and the Crystal Hollows' creatures.", SHOW_TYPES))),
+        new Cat("mining", "Mining", ":mining:", 0xFF55D8FF, false, "The Crystal Nucleus, Frozen Corpses and the Mining Fiesta.", List.of(
+            new Group("nucleus", "Crystal Nucleus", ":grp_nucleus:", 0xFF9AE6FF, "What plays when the Nucleus loot bundle holds something rare.", MINE_TYPES),
+            new Group("corpse", "Frozen Corpses", ":grp_corpse:", 0xFF8FD8FF, "What plays when a Frozen Corpse in a Glacite Mineshaft holds something rare.", MINE_TYPES),
+            new Group("fiesta", "Mining Events", ":grp_fiesta:", 0xFFFFC857, "Rare finds while mining during a Mining Fiesta.", MINE_TYPES))),
         new Cat("farming", "Farming", ":farm:", 0xFF7BE05A, false, "Every rare drop you can find in the Garden.", List.of(
             new Group("crops", "Rare Crops", ":grp_crops:", 0xFF7CCB4F, "What plays when a crop turns out rare.", FARM_TYPES),
             new Group("feast", "Harvest Feast", ":grp_feast:", 0xFFFFA63A, "What plays when the Harvest Feast serves a rare crop.", FARM_TYPES),
@@ -97,7 +100,8 @@ final class Categories {
             new Group("fish_lava", "Lava", ":grp_lava:", 0xFFFF7A2E, "The Crimson Isle, its hotspots, the Magma Fields and the Plhlegblast Pool.", SHOW_TYPES),
             new Group("fish_spooky", "Spooky", ":grp_spooky:", 0xFFFF9A2E, "The Spooky Festival's sea creatures.", SHOW_TYPES),
             new Group("fish_winter", "Winter", ":grp_winter:", 0xFF9FE4FF, "Jerry's Workshop's sea creatures.", SHOW_TYPES))),
-        new Cat("dyes", "Dyes", ":dye:", 0xFFFF72C6, false, "Every dye in the game and where it comes from.", List.of(
+        new Cat("dyes", "Table & Dyes", ":dye:", 0xFFFF72C6, false, "The Experimentation Table's rewards, and every dye in the game.", List.of(
+            new Group("exp", "Experimentation Table", ":grp_exp:", 0xFFB56BFF, "What plays when the Table gives out rewards.", EXP_TYPES),
             new Group("dyes", "Dyes", ":dye:", 0xFFFF72C6, "What plays when a dye drops.", DYE_TYPES))));
 
     static Cat byId(String id) { for (Cat c : ALL) if (c.id().equals(id)) return c; return ALL.get(0); }

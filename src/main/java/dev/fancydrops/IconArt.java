@@ -418,6 +418,24 @@ final class IconArt {
                 outline();
                 glint(7, 7, 1, 0xFFFFFF, t);
             }
+            case "grp_corpse" -> {                                                           // a Frozen Corpse: a skull in a block of ice, frost creeping, a key glinting
+                bev(2, 3, 12, 12, 0x7FC8E8);
+                rect(3, 4, 10, 10, mix(0x9ADCF4, 0xC8F0FF, t));
+                rect(5, 6, 6, 5, 0xE8E2D0); rect(6, 11, 4, 2, 0xD8D0BC); rect(6, 8, 1, 2, 0x2A2A34); rect(9, 8, 1, 2, 0x2A2A34); px(7, 12, 0x6A6458); px(8, 12, 0x6A6458);
+                for (int i = 0; i < 4; i++) { float u = (f + i / 4f) % 1f; pxa(3 + Math.round(u * 9), 4 + (i * 3) % 9, 0xFFFFFF, 0.7f * (float) Math.sin(Math.PI * u)); }
+                outline();
+                rect(11, 12, 3, 1, 0xFFC857); px(13, 13, 0xFFC857); glint(12, 12, 1, 0xFFFFFF, t);
+                glow(8, 8, 7, 0x8FD8FF, 0.1f + 0.1f * t);
+            }
+            case "grp_fiesta" -> {                                                           // the Mining Fiesta: a gold nugget bouncing on an ore block, confetti falling
+                bev(3, 9, 10, 6, 0x5E5A68); rect(5, 11, 2, 1, 0xFFC857); rect(9, 12, 2, 1, 0x55D8FF);
+                int b = Math.round(-2.5f * 4f * f * (1f - f));
+                ball(8, 6 + b, 2.6f, mix(0xE8A020, 0xFFE070, t)); px(7, 5 + b, 0xFFF6C0);
+                int[] cf = {0xFF5A8A, 0x55D8FF, 0x7BE05A, 0xFFC857};
+                for (int i = 0; i < 4; i++) { float u = (f + i / 4f) % 1f; px(2 + i * 4, Math.round(u * 8), cf[i]); }
+                outline();
+                glint(9, 4 + b, 1, 0xFFFFFF, t);
+            }
             case "mining" -> {                                                               // Mining: a pickaxe comes down on an ore block, sparks fly and the gems glint
                 bev(6, 9, 9, 6, 0x6E6A78);
                 rect(8, 11, 2, 2, 0x55D8FF); rect(12, 10, 2, 1, 0xFFC857); rect(12, 13, 2, 1, 0x55D8FF); px(8, 11, 0xC8F4FF);

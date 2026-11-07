@@ -1,10 +1,10 @@
 {
- "v": 3,
+ "v": 4,
  "sources": [
   {
-   "id": "dwarven_mines",
-   "name": "Dwarven Mines",
-   "boss": "Dwarven Mines",
+   "id": "mines",
+   "name": "Mines",
+   "boss": "the Mines",
    "icon": "prismarine_crystals",
    "color": "#7FE8D8",
    "group": "mobs",
@@ -53,34 +53,6 @@
      "odds": "Rare",
      "chance": "1 in 100",
      "rank": 1
-    }
-   ]
-  },
-  {
-   "id": "crystal_hollows",
-   "name": "Crystal Hollows",
-   "boss": "Crystal Hollows",
-   "icon": "amethyst_shard",
-   "color": "#9AE6FF",
-   "group": "nucleus",
-   "drops": [
-    {
-     "name": "Divan's Alloy",
-     "id": "DIVAN_ALLOY",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Pray RNGesus",
-     "chance": "",
-     "rank": 3
-    },
-    {
-     "name": "Jaderald",
-     "id": "JADERALD",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Very Rare",
-     "chance": "",
-     "rank": 2
     },
     {
      "name": "Legendary Bal Pet",
@@ -108,15 +80,279 @@
      "odds": "Rare",
      "chance": "1 in 100",
      "rank": 1
+    }
+   ]
+  },
+  {
+   "id": "crystal_nucleus",
+   "name": "Crystal Nucleus",
+   "boss": "the Crystal Nucleus",
+   "icon": "amethyst_shard",
+   "color": "#9AE6FF",
+   "group": "nucleus",
+   "drops": [
+    {
+     "name": "Divan's Alloy",
+     "id": "DIVAN_ALLOY",
+     "icon": "paper",
+     "skull": false,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 1,095",
+     "rank": 3
+    },
+    {
+     "name": "Flawless Jasper Gemstone",
+     "id": "FLAWLESS_JASPER_GEM",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 3,724",
+     "rank": 3
+    },
+    {
+     "name": "Quick Claw",
+     "id": "PET_ITEM_QUICK_CLAW",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 372",
+     "rank": 3
+    },
+    {
+     "name": "Flawless Ruby Gemstone",
+     "id": "FLAWLESS_RUBY_GEM",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,241",
+     "rank": 3
+    },
+    {
+     "name": "Flawless Amethyst Gemstone",
+     "id": "FLAWLESS_AMETHYST_GEM",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,241",
+     "rank": 3
+    },
+    {
+     "name": "Flawless Jade Gemstone",
+     "id": "FLAWLESS_JADE_GEM",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,241",
+     "rank": 3
+    },
+    {
+     "name": "Flawless Amber Gemstone",
+     "id": "FLAWLESS_AMBER_GEM",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,241",
+     "rank": 3
+    },
+    {
+     "name": "Flawless Sapphire Gemstone",
+     "id": "FLAWLESS_SAPPHIRE_GEM",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,241",
+     "rank": 3
+    },
+    {
+     "name": "Flawless Topaz Gemstone",
+     "id": "FLAWLESS_TOPAZ_GEM",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,241",
+     "rank": 3
+    },
+    {
+     "name": "Fine Jasper Gemstone",
+     "id": "FINE_JASPER_GEM",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Very Rare",
+     "chance": "1 in 93",
+     "rank": 2
+    },
+    {
+     "name": "Recall Potion",
+     "id": "RECALL_POTION",
+     "icon": "potion",
+     "skull": false,
+     "odds": "Very Rare",
+     "chance": "1 in 74",
+     "rank": 2
+    },
+    {
+     "name": "Precious Pearl",
+     "id": "PRECIOUS_PEARL",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 37",
+     "rank": 1
+    },
+    {
+     "name": "Claw Fossil",
+     "id": "CLAW_FOSSIL",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 37",
+     "rank": 1
+    },
+    {
+     "name": "Gemstone Mixture",
+     "id": "GEMSTONE_MIXTURE",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 27",
+     "rank": 1
+    },
+    {
+     "name": "Jaderald",
+     "id": "JADERALD",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 13",
+     "rank": 1
     },
     {
      "name": "Jasper Crystal",
      "id": "JASPER_CRYSTAL",
      "icon": "paper",
      "skull": false,
-     "odds": "Pray RNGesus",
-     "chance": "1 in 1,000",
+     "odds": "Rare",
+     "chance": "1 in 7",
+     "rank": 1
+    },
+    {
+     "name": "Helix Fossil",
+     "id": "HELIX",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 5",
+     "rank": 1
+    }
+   ]
+  },
+  {
+   "id": "glacite_corpses",
+   "name": "Frozen Corpses",
+   "boss": "a Frozen Corpse",
+   "icon": "skeleton_skull",
+   "color": "#8FD8FF",
+   "group": "corpse",
+   "drops": [
+    {
+     "name": "Shattered Locket",
+     "id": "SHATTERED_PENDANT",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 703",
      "rank": 3
+    },
+    {
+     "name": "Caged Wisp",
+     "id": "CAGED_WISP",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 352",
+     "rank": 3
+    },
+    {
+     "name": "Frozen Scute",
+     "id": "FROZEN_SCUTE",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Very Rare",
+     "chance": "1 in 352",
+     "rank": 2
+    },
+    {
+     "name": "Skeleton Key",
+     "id": "SKELETON_KEY",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Very Rare",
+     "chance": "1 in 352",
+     "rank": 2
+    },
+    {
+     "name": "Umber Plate",
+     "id": "UMBER_PLATE",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 117",
+     "rank": 1
+    },
+    {
+     "name": "Tungsten Plate",
+     "id": "TUNGSTEN_PLATE",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 117",
+     "rank": 1
+    },
+    {
+     "name": "Mithril Plate",
+     "id": "MITHRIL_PLATE",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 59",
+     "rank": 1
+    },
+    {
+     "name": "Dwarven O's Metallic Minis",
+     "id": "DWARVEN_OS_METALLIC_MINIS",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 29",
+     "rank": 1
+    }
+   ]
+  },
+  {
+   "id": "mining_events",
+   "name": "Mining Events",
+   "boss": "a Mining Fiesta",
+   "icon": "gold_nugget",
+   "color": "#FFC857",
+   "group": "fiesta",
+   "drops": [
+    {
+     "name": "Glossy Gemstone",
+     "id": "GLOSSY_GEMSTONE",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Very Rare",
+     "chance": "1 in 725",
+     "rank": 2
+    },
+    {
+     "name": "Refined Mineral",
+     "id": "REFINED_MINERAL",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 375",
+     "rank": 1
     }
    ]
   },

@@ -29,7 +29,7 @@ public final class SoundFx {
     }
 
     public static final String NONE = "none";
-    public static final String[] SCENES = {"myth.nodrops", "myth.normal", "myth.rng", "treasure.nodrops", "treasure.normal", "treasure.rng", "slayer.nodrops", "slayer.normal", "slayer.rng", "crops.normal", "crops.rng", "feast.normal", "feast.rng", "bounty.normal", "bounty.rng", "pests.normal", "pests.rng", "exp.normal", "exp.rng", "fish_water.normal", "fish_water.rng", "fish_lava.normal", "fish_lava.rng", "fish_spooky.normal", "fish_spooky.rng", "fish_winter.normal", "fish_winter.rng", "crimson.normal", "crimson.rng", "dragon.normal", "dragon.rng", "mobs.normal", "mobs.rng", "nucleus.normal", "nucleus.rng", "dyes.normal", "dyes.rng"};
+    public static final String[] SCENES = {"myth.nodrops", "myth.normal", "myth.rng", "treasure.nodrops", "treasure.normal", "treasure.rng", "slayer.nodrops", "slayer.normal", "slayer.rng", "crops.normal", "crops.rng", "feast.normal", "feast.rng", "bounty.normal", "bounty.rng", "pests.normal", "pests.rng", "exp.normal", "exp.rng", "fish_water.normal", "fish_water.rng", "fish_lava.normal", "fish_lava.rng", "fish_spooky.normal", "fish_spooky.rng", "fish_winter.normal", "fish_winter.rng", "crimson.normal", "crimson.rng", "dragon.normal", "dragon.rng", "mobs.normal", "mobs.rng", "nucleus.normal", "nucleus.rng", "corpse.normal", "corpse.rng", "fiesta.normal", "fiesta.rng", "dyes.normal", "dyes.rng"};
     public static final String[] SLOTS = {"chop", "split", "reveal", "linger", "end"};
 
     private static final Map<String, Fx> ALL = new LinkedHashMap<>();
@@ -111,7 +111,7 @@ public final class SoundFx {
     private static final Map<String, String> MC_DEFAULTS = new LinkedHashMap<>();
     static {
         java.util.List<String[]> m0 = new java.util.ArrayList<>();               // the same idea built from Minecraft's sounds: soft and alike for Normal, a show for RNG
-        for (String g : new String[]{"myth", "treasure", "slayer", "crops", "feast", "bounty", "pests", "exp", "fish_water", "fish_lava", "fish_spooky", "fish_winter", "crimson", "dragon", "mobs", "nucleus", "dyes"}) {
+        for (String g : new String[]{"myth", "treasure", "slayer", "crops", "feast", "bounty", "pests", "exp", "fish_water", "fish_lava", "fish_spooky", "fish_winter", "crimson", "dragon", "mobs", "nucleus", "corpse", "fiesta", "dyes"}) {
             if (g.equals("myth") || g.equals("treasure") || g.equals("slayer")) m0.add(new String[]{g + ".nodrops", "mc_xylo", "mc_fizzle", NONE, NONE, NONE});
             m0.add(new String[]{g + ".normal", "mc_xylo", "mc_orb", "mc_chime", NONE, "mc_bell"});
             m0.add(new String[]{g + ".rng", "mc_bass", "mc_trident", "mc_fanfare", "mc_twinkle", "mc_levelup"});
@@ -123,7 +123,7 @@ public final class SoundFx {
     /** What each slot plays until the player changes it. */
     private static final Map<String, String> DEFAULTS = new LinkedHashMap<>();
     static {
-        String[] grp = {"myth", "treasure", "slayer", "crops", "feast", "bounty", "pests", "exp", "fish_water", "fish_lava", "fish_spooky", "fish_winter", "crimson", "dragon", "mobs", "nucleus", "dyes"};
+        String[] grp = {"myth", "treasure", "slayer", "crops", "feast", "bounty", "pests", "exp", "fish_water", "fish_lava", "fish_spooky", "fish_winter", "crimson", "dragon", "mobs", "nucleus", "corpse", "fiesta", "dyes"};
         java.util.List<String[]> d0 = new java.util.ArrayList<>();               // one quiet set for every Normal and No Drops scene, the cinematic set for RNG
         for (String g : grp) {
             if (g.equals("myth") || g.equals("treasure") || g.equals("slayer")) d0.add(new String[]{g + ".nodrops", "std_beat", "std_fizzle", NONE, NONE, NONE});

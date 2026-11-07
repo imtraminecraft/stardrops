@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synthesizes the 1.0 sounds: the soft set every Normal and No Drops scene shares (std_*), the cinematic RNG set (rng_*) and the
+"""Synthesizes the 2.0 sounds: the soft set every Normal and No Drops scene shares (std_*), the cinematic RNG set (rng_*) and the
 star map's sounds. Writes sounds/<name>.ogg, the sounds.json entries and the envelopes the Sounds tab draws.
 Needs numpy, scipy and ffmpeg (libvorbis). Run from the repo root: python3 tools/make_scene_sounds.py"""
 import os, json, subprocess, tempfile, wave
@@ -127,19 +127,39 @@ def choir(notes, d, a=.4):
     return s * env(t, a, d * .6)
 
 # ---- 1.0b: two sets only, both musical and soft (no hits, no noise). Normal and No Drops share the quiet set in D; RNG has the bright one.
+# 2.0: the pixel cutscenes - stone struck three times, a crunch as it bursts, then a little chiptune fanfare (8-bit squares and
+# triangles over a soft bed). RNG: heavy strikes with a clang, a big boom and a full fanfare with a choir behind it.
+def chip(f, d, k=None, duty=.5):
+    t = T(d); ph = (f * t) % 1; x = np.where(ph < duty, 1.0, -1.0) * .5
+    return lp(x, 6000) * (dec(t, k) if k else env(t, .003, d * .5)) * np.minimum(1, t / .002)
+def tri(f, d, k=None):
+    t = T(d); return osc(f, d, 'tri') * (dec(t, k) if k else env(t, .004, d * .5))
+def stone(d=.25, f=180, bright=1.0):
+    t = T(d); n = noise(d)
+    return add(lp(n, 2200 * bright) * dec(t, 30) * .9, thump(f, f * .5, d, 22) * .7, bp(n, 3000, 7000) * dec(t, 80) * .3 * bright)
+def crunch(d=.5, bright=1.0):
+    t = T(d); n = noise(d); g = (rng.random(len(t)) < .012).astype(float)
+    return add(lp(n, 1800) * dec(t, 9) * .6, lp(g * rng.standard_normal(len(t)), 5000 * bright) * dec(t, 7) * 1.2)
+def clang(f, d=.8): return bell(f, d, ratios=(1, 2.4, 3.9, 5.6), amps=(1, .6, .35, .2), k=4.0)
+def fanfare(notes, step, d, inst=chip, gain=.4):
+    b = mix(d + step * len(notes))
+    for i, m in enumerate(notes): at(b, inst(N(m), max(.12, d - i * step * .5), k=7) * gain, i * step)
+    return b
 def std_set():
-    S('std_beat', kalimba(N(86), .3) * .5, .2)                                             # a soft kalimba tick (pitch rises with each beat)
-    S('std_burst', add(kalimba(N(81), .45) * .45, kalimba(N(86), .4) * .3), .25)           # two notes together
-    S('std_reveal', arp([74, 78, 81, 86], kalimba, .07, .6, .42), .3)                       # a little rising arpeggio
-    S('std_glow', pad([62, 69, 74], .9, 'sin', a=.2, r=.6) * .25, .25)                       # a quiet warm hum
-    S('std_end', arp([86, 81], kalimba, .1, .45, .32), .3)
-    S('std_fizzle', arp([74, 69], kalimba, .12, .4, .3), .25)                                # nothing dropped: two notes going down
+    S('std_beat', add(stone(.28, 170) * .55, chip(N(81), .09, k=40) * .18), .18)                       # a strike on stone, a tiny 8-bit tick on top
+    b = mix(.8); at(b, crunch(.6) * .55, 0); at(b, thump(120, 45, .4, 10) * .5, 0); at(b, fanfare([69, 76, 81], .045, .25, gain=.22), .02); S('std_burst', b, .22)   # the rock breaks
+    b = mix(.9); at(b, fanfare([81, 85, 88, 93], .065, .32, gain=.28), 0); at(b, tri(N(57), .5) * .35, 0); S('std_reveal', b, .28)       # a little chiptune fanfare
+    S('std_glow', add(pad([69, 76, 81], .9, 'tri', a=.15, r=.6) * .18, sparkle(.8, 6, gain=.06)), .25)
+    S('std_end', fanfare([93, 88], .08, .2, gain=.18), .3)
+    b = mix(.8); at(b, crunch(.6, .5) * .5, 0); at(b, fanfare([69, 64, 57], .1, .25, chip, .2), .05); S('std_fizzle', b, .2)              # crumbles, three notes going down
 def rng_set():
-    S('rng_beat', add(glock(N(74), .7) * .4, pad([50, 57], .6, 'sin', a=.02, r=.5) * .3), .3)           # a bell over a low swell
-    b = mix(1.4); at(b, arp([62, 66, 69, 74, 78, 81, 86, 90, 93, 98], harp, .035, .8, .35), 0); at(b, pad([50, 57, 62], 1.2, 'sin', a=.05, r=.9) * .3, 0); S('rng_burst', b, .35)   # a harp glissando
-    b = mix(2.0); at(b, arp([74, 78, 81, 86], celesta, .09, 1.2, .45), 0); at(b, choir([62, 69, 74, 78], 1.8, .15) * .3, 0); at(b, sparkle(1.5, 18, gain=.1), .1); S('rng_reveal', b, .38)   # celesta + soft choir
-    S('rng_glow', add(pad([62, 66, 69, 74], 1.5, 'sin', a=.25, r=1.0) * .35, sparkle(1.4, 10, gain=.07)), .3)
-    S('rng_end', arp([98, 93, 86, 81], glock, .08, .7, .3), .38)
+    b = mix(1.0); at(b, stone(.4, 120, 1.2) * .7, 0); at(b, clang(N(62), .9) * .28, 0); at(b, impact(90, 34, .7, .6, .8) * .45, 0); S('rng_beat', b, .35)      # a heavy strike and a clang
+    b = mix(2.2); at(b, impact(80, 28, 1.6, 1.0, 1.2) * .8, 0); at(b, crunch(1.0, 1.3) * .7, 0); at(b, sweep_noise(1.0, 4000, 300, .3) * .25, 0)
+    at(b, fanfare([62, 69, 74, 81, 86, 93], .035, .4, chip, .2), .05); S('rng_burst', b, .4)                                       # the boom, the rock in pieces
+    b = mix(2.6); at(b, fanfare([74, 78, 81, 86], .11, .5, chip, .3), 0); at(b, fanfare([86], .1, 1.2, chip, .3), .48)
+    at(b, tri(N(50), 1.6) * .4, 0); at(b, choir([62, 69, 74, 78], 2.0, .2) * .3, .1); at(b, add(bell(N(98), 1.6) * .12, sparkle(1.6, 16, gain=.09)), .45); S('rng_reveal', b, .4)   # the fanfare
+    S('rng_glow', add(pad([62, 69, 74, 78], 1.6, 'tri', a=.3, r=1.0) * .22, sparkle(1.5, 12, gain=.07)), .35)
+    b = mix(1.2); at(b, fanfare([98, 93, 86, 81, 74], .06, .3, chip, .15), 0); at(b, sweep_noise(.6, 600, 3000, .3) * .15, 0); S('rng_end', b, .4)
 std_set(); rng_set()
 
 # ---- the achievements star map
