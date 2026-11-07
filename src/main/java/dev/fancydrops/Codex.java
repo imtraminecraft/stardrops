@@ -48,6 +48,8 @@ final class Codex {
     private static final List<float[]> LABELS = new ArrayList<>();          // label boxes placed this frame (so they don't overlap)
     private static boolean free(float x, float y, float w, float h) { for (float[] b : LABELS) if (x < b[2] && x + w > b[0] && y < b[3] && y + h > b[1]) return false; return true; }
     private static String lastHoverStar = "";
+    /** Only one star is pointed at: the nearest one under the mouse (picked over a frame, used the next), so stars close together never fight. */
+    private static String hoverStar = "", hoverPick = ""; private static float hoverPickD = 1e9f; private static long hoverSoundAt;
     private static final Map<String, Long> IGNITE = new HashMap<>();
     private static final Set<String> igSounded = new HashSet<>();
     private static boolean ignitesPlanned;
@@ -144,7 +146,7 @@ final class Codex {
         aurora(g, 1f - cl(zoomed * 2f));
         scenery(g, 1f - cl(zoomed * 2.5f));
         streaks(g);
-        hoverCon = -1;
+        hoverCon = -1; hoverStar = hoverPick; hoverPick = ""; hoverPickD = 1e9f;
         for (int c = 0; c < ACH.length; c++) constellation(g, c, zoomed, showFocus);
         if (hoverCon != lastHoverCon) { lastHoverCon = hoverCon; hoverAt = now; if (hoverCon >= 0) sound("sky_star", 0.75f, 0.35f); }
         shootingStars(g);
@@ -567,7 +569,9 @@ final class Codex {
         if (!inSky(x, y)) return;
         boolean near = fc == c && zoomed > 0.5f;
         float hr = near ? 12 : 6;
-        boolean hv = Math.abs(mx - x) <= hr && Math.abs(my - y) <= hr && (near || fc < 0) && fade > 0.5f;
+        boolean in = Math.abs(mx - x) <= hr && Math.abs(my - y) <= hr && (near || fc < 0) && fade > 0.5f;
+        if (in) { float d = (float) Math.hypot(mx - x, my - y); if (d < hoverPickD) { hoverPickD = d; hoverPick = a.id(); } }
+        boolean hv = in && a.id().equals(hoverStar);
         float tw = 0.82f + 0.18f * (float) Math.sin(now / 380.0 + n.depth() * 1.7 + c * 0.9);
         int col = ACH_COL[c];
         Long ig = IGNITE.get(a.id()); float igT = ig == null ? 9f : (now - ig) / 1000f;
@@ -630,10 +634,10 @@ final class Codex {
             if (r != null) small(g, r, Math.round(centre ? x - rwid / 2f : bx < x ? bx + bw - rwid : bx), Math.round(by + 8), cr);
         }
         if (hv && alpha > 0.6f) {
-            if (!lastHoverStar.equals(a.id())) { lastHoverStar = a.id(); sound("sky_star", 0.9f + 0.05f * n.depth(), 0.45f); }
+            if (!lastHoverStar.equals(a.id())) { lastHoverStar = a.id(); if (now - hoverSoundAt > 90) { hoverSoundAt = now; sound("sky_star", 0.9f + 0.05f * n.depth(), 0.45f); } }      // one chime per star, never a burst
             String nm = a.secret() && !a.done() ? "???" : a.name();
             String rew = a.reward().isEmpty() ? "" : Ledger.rewardName(a.reward());
-            String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  First day only." : "  Missed: your first day is over.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".") + (!a.done() && !open ? "  Star " + n.depth() + " comes first." : "");
+            String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  First day only." : "  Missed: your first day is over.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".");
             String extra = "Star " + (n.depth() + 1) + " of " + tree(c).size() + "  ·  " + (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal()));
             host.tip(nm + "\n" + ACH_NAME[c] + "\nT" + Math.max(0, Math.min(3, a.tier())) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
         }
