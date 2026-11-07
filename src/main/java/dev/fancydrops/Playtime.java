@@ -24,8 +24,7 @@ final class Playtime {
         if ((long) before != (long) c.playMinutes) for (String id : LocalLedger.timeTick()) {                // a Playtime star is earned: note when, and say so
             LocalLedger.Def g = LocalLedger.def(id); if (g == null) continue;
             c.playDone.put(id, now);
-            var msg = Chat.prefix().append(" ").append(Chat.color("New star lit: ", Chat.TEXT)).append(Chat.color(g.name(), Chat.NUMBER).withStyle(st -> st.withBold(true))).append(Chat.color("  ·  Playtime", Chat.DIM));
-            mc.player.sendSystemMessage(msg); SoundFx.achievement();
+            StarToast.lit(g.id(), g.name(), g.ch(), g.tier(), g.reward());                                   // a clickable line in chat and a card on screen
         }
         if (now - savedAt > 120_000) { savedAt = now; try { FancyConfig.save(); } catch (Throwable ignored) { } }
     }

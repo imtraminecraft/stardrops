@@ -169,10 +169,7 @@ final class Achievements {
         for (Ach a : p.list()) if (a.id().equals(id)) {
             Minecraft.getInstance().execute(() -> {
                 var mc = Minecraft.getInstance(); if (mc.player == null) return;
-                var msg = Chat.prefix().append(" ").append(Chat.color("Achievement unlocked: ", Chat.TEXT)).append(Chat.color(a.name(), Chat.NUMBER).withStyle(s -> s.withBold(true)));
-                if (!a.reward().isEmpty()) { CosmeticData.Def d = CosmeticData.byId(a.reward()); if (d != null) msg.append(Chat.color("  ·  unlocks " + d.name(), Chat.DIM)); }
-                mc.player.sendSystemMessage(msg);
-                SoundFx.achievement();
+                StarToast.lit(a.id(), a.name(), a.ch(), a.tier(), a.reward());
             });
         }
     }

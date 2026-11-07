@@ -330,7 +330,7 @@ public class FancyScreen extends Screen {
 
     /** Set by /fd stats and /fd <search>: the next menu opens on the Stats page, or with this text in the search box. */
     private int codexPend = -2;          // the Collection opens on this chapter at the next frame (-2 = no)
-    static boolean pendingStats, pendingCos; static String pendingSearch, pendingTab;
+    static boolean pendingStats, pendingCos; static String pendingSearch, pendingTab, pendingStar; private String codexStar;
 
     private static boolean prefetchedAll;
     /** Loads every item picture once (they are saved to config/fancydrops/textures/ so you can replace them). */
@@ -348,6 +348,7 @@ public class FancyScreen extends Screen {
         prefetchAll();
         if (!skipIntro) { tab = Tab.HOME; subSel[Tab.HOME.ordinal()] = -1; dropSrc = null; dropSrcName = null; scroll = 0; query = ""; }          // a fresh /fd opens on the Home page itself, never on Resources
         if (pendingStats) { pendingStats = false; codexPend = 0; }
+        if (pendingStar != null) { codexStar = pendingStar; pendingStar = null; }
         if (pendingTab != null) { Tab pt = pendingTab.equals("sounds") ? Tab.SOUNDS : Tab.ANIMATIONS; pendingTab = null; tab = pt; subSel[pt.ordinal()] = -1; scroll = 0; query = ""; }          // /fd editor
         if (pendingCos) { pendingCos = false; openCos(); }
         if (pendingSearch != null) { query = pendingSearch; pendingSearch = null; scroll = 0; }          // a fresh /fd opens on Home; coming back from a preview keeps your page
@@ -3180,6 +3181,7 @@ public class FancyScreen extends Screen {
         AnimFrames.tick();                                                                      // the first time the menu opens, the animation frames are written to config/fancydrops/art/animations
         Gfx.uiFont = 0;                                             // the menu font setting is gone: one font
         if (codexPend != -2 && width > 0) { Codex.open(achBtn(), codexPend); codexPend = -2; }
+        if (codexStar != null && width > 0) { Codex.openAt(achBtn(), codexStar); codexStar = null; }
         final boolean bookUp = Codex.open;
         final int mx = editor != 0 || bookUp ? -9999 : mx0, my = editor != 0 || bookUp ? -9999 : my0;       // an open editor (or the Collection) sits on top: nothing behind it lights up
         formatField.setVisible(false); addField.setVisible(false); adminField.setVisible(false); thrField.setVisible(false); tokenField.setVisible(false); spotifyField.setVisible(false);

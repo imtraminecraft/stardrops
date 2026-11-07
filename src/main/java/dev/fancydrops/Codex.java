@@ -64,6 +64,8 @@ final class Codex {
         Achievements.refresh(true);
         sound("sky_open", 1f, 0.8f);
     }
+    static int colourOf(String ch) { return ACH_COL[groupOf(ch)]; }
+    static String nameOf(String ch) { return ACH_NAME[groupOf(ch)]; }
     /** Opens straight on one achievement: flies to its constellation and makes its star blink. */
     static void openAt(int[] btn, String achId) {
         Achievements.Profile p = Achievements.profile(); int c = -1;

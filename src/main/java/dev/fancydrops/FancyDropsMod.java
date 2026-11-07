@@ -96,7 +96,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("fancydrops", "lyrics"),
-                (graphics, deltaTracker) -> { AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false)); AmbienceHud.render(graphics); LyricsHud.hud(graphics); NowPlayingHud.hud(graphics); });
+                (graphics, deltaTracker) -> { AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false)); AmbienceHud.render(graphics); LyricsHud.hud(graphics); NowPlayingHud.hud(graphics); StarToast.render(graphics); });
 
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("fancydrops", "auras"),
@@ -181,6 +181,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
         return ClientCommands.literal(name)
             .executes(ctx -> { openMenu = true; return Command.SINGLE_SUCCESS; })          // opened next tick so the chat screen doesn't close it again
             .then(ClientCommands.literal("achievement").executes(ctx -> { FancyScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))      // straight to the achievements sky
+            .then(ClientCommands.literal("star").then(ClientCommands.argument("id", StringArgumentType.word()).executes(ctx -> { FancyScreen.pendingStar = StringArgumentType.getString(ctx, "id"); openMenu = true; return Command.SINGLE_SUCCESS; })))   // a "New star lit" line: the sky, flown to that star
             .then(ClientCommands.literal("achievements").executes(ctx -> { FancyScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))
             .then(ClientCommands.literal("help").executes(ctx -> help(ctx.getSource()))
                 .then(ClientCommands.literal("simulate").executes(ctx -> helpSimulate(ctx.getSource()))))
