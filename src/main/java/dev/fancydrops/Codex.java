@@ -239,9 +239,10 @@ final class Codex {
         if (a < 0.02f && !film) return;
         float k = sh / 150f, gnd = sy0 + sh, hillW = sw * 0.36f;
         int sil = argb(a * alpha, 0x05040A), rim = argb(0.55f * a * alpha, 0x8A6AD8);
-        for (int i = 0; i <= Math.round(hillW); i += 2) {                       // the hill, its top edge caught by the sky's light, a few grass tufts
+        int stepH = film ? 4 : 2;
+        for (int i = 0; i <= Math.round(hillW); i += stepH) {                       // the hill, its top edge caught by the sky's light, a few grass tufts
             int x = sx0 + i, top = Math.round(ground(x));
-            g.fill(x, top, x + 2, Math.round(gnd), sil); g.fill(x, top - 1, x + 2, top, rim);
+            g.fill(x, top, x + stepH, Math.round(gnd), sil); g.fill(x, top - 1, x + stepH, top, rim);
             if (i % 14 == 6) { float sway = (float) Math.sin(now / 900.0 + i) * 1.2f; line(x + 1, top, x + 1 + sway, top - 4 * k, 0x05040A, a * alpha, 0); }
         }
         float hx = sx0 + sw * 0.12f, hy = ground(hx) + 1;                                       // where they sit (the hilltop)
@@ -334,7 +335,7 @@ final class Codex {
         float push = cl((u - 900f) / (INTRO - 900f)), pe = push * push * push;                       // 0..900 ms: the close-up, then the push into the lens
         if (introSounds < 1 && u >= 900) { introSounds = 1; sound("sky_zoom", 1.1f, 0.8f); }
         float k0 = 3.4f + 0.5f * cl(u / 900f), kz = k0 * (float) Math.pow(70f / k0, pe);
-        stargazer(g, 0f, true);                                                                       // (nothing drawn: works out where the lens is)
+        if (u < 40 || lensX == 0) stargazer(g, 0f, true);                                           // (nothing drawn: works out where the lens is; once)
         float fx0 = (headXs + lensX) / 2f, fy0 = (headYs + lensY) / 2f, fx = fx0 + (lensX - fx0) * ease(push * 1.6f), fy = fy0 + (lensY - fy0) * ease(push * 1.6f);
         float tx = sx0 + sw * (0.42f + 0.08f * ease(push)), ty = sy0 + sh * (0.58f - 0.08f * ease(push));
         Gfx.push(g); Gfx.translate(g, tx, ty); Gfx.scale(g, kz); Gfx.translate(g, -fx, -fy);
@@ -352,11 +353,12 @@ final class Codex {
     /** The lens's edge while the page opens out of it: dark outside the circle, a brass rim on it. */
     private static void lensMask(GuiGraphicsExtractor g, float cx, float cy, float r, float a) {
         int c = argb(cl(a * 1.6f), 0x02010A);
-        for (int y = sy0; y < sy0 + sh; y += 2) {
-            float dy = y + 1 - cy;
-            if (Math.abs(dy) >= r) { g.fill(sx0, y, sx0 + sw, y + 2, c); continue; }
-            int hw = Math.round((float) Math.sqrt(r * r - dy * dy));
-            g.fill(sx0, y, Math.round(cx) - hw, y + 2, c); g.fill(Math.round(cx) + hw, y, sx0 + sw, y + 2, c);
+        int top = Math.max(sy0, Math.round(cy - r)), bot = Math.min(sy0 + sh, Math.round(cy + r));
+        if (top > sy0) g.fill(sx0, sy0, sx0 + sw, top, c); if (bot < sy0 + sh) g.fill(sx0, bot, sx0 + sw, sy0 + sh, c);   // whole bands above and below: one fill each
+        for (int y = top; y < bot; y += 3) {
+            float dy = y + 1.5f - cy;
+            int hw = Math.round((float) Math.sqrt(Math.max(0f, r * r - dy * dy)));
+            g.fill(sx0, y, Math.round(cx) - hw, Math.min(bot, y + 3), c); g.fill(Math.round(cx) + hw, y, sx0 + sw, Math.min(bot, y + 3), c);
         }
         ring(cx, cy, r, argb(a, 0xE8C76A), 1f); ring(cx, cy, r + 3, argb(a * 0.5f, 0xB08A3A), 1f);
         glow(cx, cy - r, r * 0.6f, 0xE8F0FF, 0.25f * a);

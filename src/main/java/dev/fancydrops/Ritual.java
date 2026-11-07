@@ -1003,7 +1003,7 @@ final class Ritual {
             else {
                 long nowMs = System.currentTimeMillis();
                 String id = a.group + a.type + "/" + a.kind + "/" + (it == null ? 0 : it.id.hashCode()) + "/" + a.count() + "/" + TextFx.itemOnly;
-                boolean reuse = id.equals(upKey) && nowMs >= upMs && nowMs - upMs < (AnimationManager.previewing ? 33 : 22);       // the pixel scene repaints at most ~60 fps in game (~30 in menu previews): at 144 fps the picture barely changes between frames
+                boolean reuse = id.equals(upKey) && nowMs >= upMs && nowMs - upMs < (AnimationManager.previewing ? 40 : 30);       // the pixel scene repaints ~33 times a second (25 in menu previews); the item, glow and words still move every frame
                 if (!reuse) {
                     begin(a, szc, isc);
                     try { paint(t, tre, type, S, ssz, isc, rc, icy, TreasureData.COLS[Math.max(0, Math.min(2, c.mythSpade))] & 0xFFFFFF, c.itemBob, c.itemBobAmp); stage(a, icy, ssz, szc, isc); } finally { end(); }

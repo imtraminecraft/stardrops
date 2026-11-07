@@ -540,3 +540,8 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Opening film (FancyConfig.achIntro, default on; click or Esc skips): INTRO 1.9 s before openAt. 0-0.9 s: the stargazer close up ("looking up"), camera at ~3.5x. Then the camera pushes into the telescope's lens (scale up to 70x, cubic) while the lens's light floods the screen. The page then opens out of the lens like an iris (IRIS 0.9 s, brass rim) while the whole sky pulls back from 1.45x to 1x; the warp streaks fly out as before.
 - Telescope stands on the ground: ground(x) gives the hill's top; the tripod's three feet, the lantern, the person's feet, the tree and the cat all stand on it.
 - Added: a little tree at the hill's edge, a cat by the lantern (tail swishing), fireflies over the hill, a crescent moon with a breathing halo (top middle), a ringed planet (right), far hills with twinkling town lights along the bottom, a satellite crossing now and then.
+
+## Round: smoother, new sounds (1.0b)
+- Drop scenes: the pixel scene repaints ~33/s in game (was ~45), 25/s in menu previews; the item, glows and words still move every frame.
+- Achievements film: lighter (lens mask fills whole bands above/below the circle and 3-px rows inside; the hill uses 4-px columns while zoomed; the lens position is worked out once).
+- Sounds 1.0b: no hits or noise. Normal/No Drops: soft kalimba in D (tick, two-note pop, little arpeggio, quiet hum, two-note close; No Drops = two notes going down). RNG: bell over a low swell, harp glissando, celesta with a soft choir, a shimmering pad, a glockenspiel close.

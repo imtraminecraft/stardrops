@@ -126,21 +126,20 @@ def choir(notes, d, a=.4):
     s = bp(s, 400, 1600) * 1.4 + bp(s, 2200, 3200) * .5
     return s * env(t, a, d * .6)
 
-# ---- 1.0: two sets only. Every Normal and No Drops scene shares the soft set (short, quiet, in E); RNG has the cinematic one.
+# ---- 1.0b: two sets only, both musical and soft (no hits, no noise). Normal and No Drops share the quiet set in D; RNG has the bright one.
 def std_set():
-    t = T(.22); S('std_beat', add(mallet(N(83), .22) * .55, fm(N(95), .18, 2.0, .8, 18) * .15), .18)
-    b = mix(.5); at(b, thump(320, 140, .22, 18) * .5, 0); at(b, sparkle(.35, 5, 3500, 6500, .14), .03); S('std_burst', b, .22)
-    S('std_reveal', add(arp([76, 80, 83, 88], celesta, .06, .55, .45), pad([64, 71], .9, 'sin', a=.05, r=.7) * .18), .28)
-    S('std_glow', pad([64, 71, 76], 1.0, 'sin', a=.15, r=.75) * .35, .22)
-    S('std_end', arp([88, 83], glock, .09, .5, .35), .3)
-    b = mix(.6); at(b, osc(700, .5, glide=180) * env(T(.5), .01, .45) * .3, 0); at(b, bp(noise(.4), 500, 3000) * env(T(.4), .02, .35) * .2, 0); S('std_fizzle', b, .2)
+    S('std_beat', kalimba(N(86), .3) * .5, .2)                                             # a soft kalimba tick (pitch rises with each beat)
+    S('std_burst', add(kalimba(N(81), .45) * .45, kalimba(N(86), .4) * .3), .25)           # two notes together
+    S('std_reveal', arp([74, 78, 81, 86], kalimba, .07, .6, .42), .3)                       # a little rising arpeggio
+    S('std_glow', pad([62, 69, 74], .9, 'sin', a=.2, r=.6) * .25, .25)                       # a quiet warm hum
+    S('std_end', arp([86, 81], kalimba, .1, .45, .32), .3)
+    S('std_fizzle', arp([74, 69], kalimba, .12, .4, .3), .25)                                # nothing dropped: two notes going down
 def rng_set():
-    b = mix(.9); at(b, impact(120, 46, .7, .7, 1.2) * .8, 0); at(b, osc(N(40), .6) * env(T(.6), .005, .5) * .4, 0); at(b, riser(.35, 1500, 7000) * .25, .2); S('rng_beat', b, .25)
-    b = mix(1.6); at(b, riser(.25, 600, 8000) * .5, 0); at(b, impact(95, 28, 1.4, 1.3, 1.6), .22); at(b, sweep_noise(.9, 6000, 400, .35) * .35, .22); at(b, sparkle(1.0, 14, gain=.16), .3); S('rng_burst', b, .32)
-    b = mix(2.0); at(b, supersaw([52, 59, 64, 68, 71], 1.8, cut=2600, a=.03) * .55, 0); at(b, arp([64, 68, 71, 76, 80, 83, 88, 92, 95], harp, .045, .9, .4), .02)
-    at(b, choir([64, 71, 76], 1.6, .08) * .25, 0); at(b, sparkle(1.6, 24, gain=.15), .15); S('rng_reveal', b, .38)
-    S('rng_glow', pump(add(pad([52, 59, 64, 71, 76], 1.6, 'tri', a=.2, r=1.0) * .5, sparkle(1.5, 18, gain=.1)), 2.4) * .7, .3)
-    S('rng_end', add(arp([95, 92, 88, 83, 76], glock, .07, .8, .35), pad([52], .9, 'sin', a=.02, r=.8) * .25), .38)
+    S('rng_beat', add(glock(N(74), .7) * .4, pad([50, 57], .6, 'sin', a=.02, r=.5) * .3), .3)           # a bell over a low swell
+    b = mix(1.4); at(b, arp([62, 66, 69, 74, 78, 81, 86, 90, 93, 98], harp, .035, .8, .35), 0); at(b, pad([50, 57, 62], 1.2, 'sin', a=.05, r=.9) * .3, 0); S('rng_burst', b, .35)   # a harp glissando
+    b = mix(2.0); at(b, arp([74, 78, 81, 86], celesta, .09, 1.2, .45), 0); at(b, choir([62, 69, 74, 78], 1.8, .15) * .3, 0); at(b, sparkle(1.5, 18, gain=.1), .1); S('rng_reveal', b, .38)   # celesta + soft choir
+    S('rng_glow', add(pad([62, 66, 69, 74], 1.5, 'sin', a=.25, r=1.0) * .35, sparkle(1.4, 10, gain=.07)), .3)
+    S('rng_end', arp([98, 93, 86, 81], glock, .08, .7, .3), .38)
 std_set(); rng_set()
 
 # ---- the achievements star map
