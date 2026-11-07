@@ -18,7 +18,7 @@ import java.util.function.*;
  */
 public class FancyScreen extends Screen {
     private enum Tab {
-        HOME("Home", "nether_star", "What FancyDrops does, and what is new"),
+        HOME("Home", "nether_star", "What Stardrops does, and what is new"),
         DROPS("Drop Library", "chest", "Every drop, sorted by where it comes from"),
         ANIMATIONS("Animations", "firework_rocket", "Change how every drop looks and plays"),
         SOUNDS("Sounds", "note_block", "Volume and the sound of every moment"),
@@ -334,7 +334,7 @@ public class FancyScreen extends Screen {
     }
 
     public FancyScreen() {
-        super(Component.literal("FancyDrops"));
+        super(Component.literal("Stardrops"));
         prefetchAll();
         if (!skipIntro) { tab = Tab.HOME; subSel[Tab.HOME.ordinal()] = -1; dropSrc = null; dropSrcName = null; scroll = 0; query = ""; }          // a fresh /fd opens on the Home page itself, never on Resources
         if (pendingStats) { pendingStats = false; codexPend = 0; }
@@ -2236,7 +2236,7 @@ public class FancyScreen extends Screen {
     private void resourcesPage() {
         Row bk = row(0, ":back:", "Home", "Back to the home page", Ui.ACCENT); bk.noSearch = true;
         bk.backGo = () -> openPage(-1, null, null); bk.backLabel = "Home"; rows.add(bk);
-        Row hero = row(0, ":res_heart:", "Resources used", "FancyDrops stands on the work of these projects and communities. Thank you!", Ui.ACCENT);
+        Row hero = row(0, ":res_heart:", "Resources used", "Stardrops stands on the work of these projects and communities. Thank you!", Ui.ACCENT);
         hero.kind = HERO; hero.h = 84; hero.noSearch = true; rows.add(hero);
         rows.add(section("Credits"));
         String[][] res = {
@@ -2528,7 +2528,7 @@ public class FancyScreen extends Screen {
 
     private void homePage(FancyConfig c) {
         if (!landing()) { resourcesPage(); return; }
-        rows.add(hero(":fancydrops:", "FancyDrops", "Every rare drop becomes a short animation you design yourself: how it looks, how it sounds and what your party reads in chat.", Ui.ACCENT));
+        rows.add(hero(":fancydrops:", "Stardrops", "Every rare drop becomes a short animation you design yourself: how it looks, how it sounds and what your party reads in chat.", Ui.ACCENT));
         UpdateCheck.check(false);
         rows.add(section("Updates"));
         Row ur = new Row(); ur.kind = UPDATE; ur.h = 36; ur.noSearch = true; rows.add(ur);
@@ -2732,7 +2732,7 @@ public class FancyScreen extends Screen {
     private void soundsLanding(FancyConfig c) {
         if (searching || "@settings".equals(dropSrc)) { soundSettings(c); return; }
         rows.add(hero(":sounds:", "Sounds", "Edit each sound based on what you want. Open a category to hear and change its sounds.", Ui.ACCENT));
-        Row ss = row(0, ":settings:", "Sound Settings", (c.sound ? "On" : "Off") + "  \u00B7  volume " + c.volume + "%  \u00B7  " + (c.customSounds ? "FancyDrops sounds" : "Minecraft sounds"), Ui.ACCENT);
+        Row ss = row(0, ":settings:", "Sound Settings", (c.sound ? "On" : "Off") + "  \u00B7  volume " + c.volume + "%  \u00B7  " + (c.customSounds ? "Stardrops sounds" : "Minecraft sounds"), Ui.ACCENT);
         ss.click = () -> openPage(-1, "@settings", "Sound Settings"); rows.add(ss);
         rows.add(section("Categories"));
         rows.add(catTiles());
@@ -2743,9 +2743,9 @@ public class FancyScreen extends Screen {
         rows.add(backRow("Sounds", "Back to the Sounds page", Ui.ACCENT, () -> openPage(-1, null, null)));
         rows.add(section("Sound"));
         rows.add(toggle(":sounds:", "Sounds", "Master switch (also /fd mute)", () -> c.sound, v -> { c.sound = v; SoundFx.stopPreviews(); waveKey = null; }));
-        Row vo = row(0, ":bell:", "Volume", "Applies to every FancyDrops sound", Ui.ACCENT);
+        Row vo = row(0, ":bell:", "Volume", "Applies to every Stardrops sound", Ui.ACCENT);
         vo.ctls.add(new Slider(0, 100, 1, () -> c.volume, v -> c.volume = (int) Math.round(v), () -> c.volume + "%").typed(1)); rows.add(vo);
-        rows.add(toggle(":disc:", "FancyDrops sound set", "Off plays Minecraft's own sounds instead, picked separately", () -> c.customSounds, v -> { c.customSounds = v; SoundFx.stopPreviews(); waveKey = null; }));
+        rows.add(toggle(":disc:", "Stardrops sound set", "Off plays Minecraft's own sounds instead, picked separately", () -> c.customSounds, v -> { c.customSounds = v; SoundFx.stopPreviews(); waveKey = null; }));
     }
 
     private void soundEditor(Categories.Cat cat, Categories.Group gr, FancyConfig c) {
@@ -2755,7 +2755,7 @@ public class FancyScreen extends Screen {
         rows.add(backRow(cat.name(), "Back to the " + cat.name() + " sounds", cat.color(), () -> openPage(curSub(), null, null)));
         rows.add(typePicker(gr, c));
         if (!c.sound) { rows.add(note("Sounds are off. Turn them on from the Sounds page.", Ui.DIM)); return; }
-        if (!c.customSounds) rows.add(note("The FancyDrops sound set is off: every animation uses Minecraft's own sounds. Your picks for them are saved separately.", Ui.DIM));
+        if (!c.customSounds) rows.add(note("The Stardrops sound set is off: every animation uses Minecraft's own sounds. Your picks for them are saved separately.", Ui.DIM));
         Row head = row(0, ty.icon(), gr.name() + "  ·  " + ty.name(), "Plays only the sounds, at the times they happen in the animation", ty.color());
         head.ctls.add(new Btn("▶ Play", GREEN, () -> AnimationManager.playSoundsOnly(scene))); rows.add(head);
         rows.add(section("Sounds"));
@@ -2867,7 +2867,7 @@ public class FancyScreen extends Screen {
         Row s1 = row(0, ":step_web:", "Step 1  \u00B7  Open the Spotify dashboard", "Log in with your Spotify account at developer.spotify.com/dashboard", 0xFF1ED760);
         s1.ctls.add(new Btn("Open", 0xFF1DB954, () -> { try { net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(this, java.net.URI.create("https://developer.spotify.com/dashboard")); } catch (Throwable ignored) { } }));
         rows.add(s1);
-        rows.add(row(0, ":step_app:", "Step 2  \u00B7  Create app", "Press Create app. Any name and description work (e.g. FancyDrops)", 0xFF1ED760));
+        rows.add(row(0, ":step_app:", "Step 2  \u00B7  Create app", "Press Create app. Any name and description work (e.g. Stardrops)", 0xFF1ED760));
         Row s3 = row(0, ":step_link:", "Step 3  \u00B7  Add the Redirect URI", "Paste " + Spotify.REDIRECT + " into Redirect URIs and press Add", 0xFF1ED760);
         s3.ctls.add(new Btn("Copy", Ui.ROW_HOVER, () -> { net.minecraft.client.Minecraft.getInstance().keyboardHandler.setClipboard(Spotify.REDIRECT); toast("Redirect URI copied.", 0xFF62E6A8); }));
         rows.add(s3);
@@ -2886,7 +2886,7 @@ public class FancyScreen extends Screen {
             mr.ctls.add(new Btn("Change", Ui.ROW_HOVER, () -> net.minecraft.client.Minecraft.getInstance().setScreenAndShow(new net.minecraft.client.gui.screens.options.controls.KeyBindsScreen(this, net.minecraft.client.Minecraft.getInstance().options))));
             rows.add(mr);
         }
-        rows.add(note("Set them in Options > Controls > Key Binds > FancyDrops: Music. They need Spotify Premium; if you linked before these existed, unlink and log in again once.", 0xFF8A93B0));
+        rows.add(note("Set them in Options > Controls > Key Binds > Stardrops: Music. They need Spotify Premium; if you linked before these existed, unlink and log in again once.", 0xFF8A93B0));
     }
 
     private void chatPage(FancyConfig c) {
@@ -3256,8 +3256,8 @@ public class FancyScreen extends Screen {
         // the name drops in letter by letter, bounces once, and stays still
         {
             float age = born == 0L || !animOn ? 99f : (now - born) / 1000f;
-            int[] pal = {0xFFFFE3A0, 0xFFF4C860, 0xFFE8AE3E, 0xFFF4C860};
-            String title = "FancyDrops"; int tx = px + 40;
+            int[] pal = {0xFFC8B4FF, 0xFF9B7BFF, 0xFFD27BEF, 0xFFFF7AD9};          // violet into nebula pink
+            String title = "Stardrops"; int tx = px + 40;
             for (int i = 0; i < title.length(); i++) {
                 String ch = String.valueOf(title.charAt(i)); int cwid = Gfx.w(font, ch);
                 float lt0 = age - 0.12f - i * 0.05f;                                  // each letter lands a moment after the one before
@@ -3682,6 +3682,8 @@ public class FancyScreen extends Screen {
         g.enableScissor(x + 1, y + 1, x + w - 1, y + h - 1);
         NebulaTex.draw(g, x, y, w, h, Gfx.argb(Math.round(a * 0.42f), 0xFFFFFF));
         g.fill(x, y, x + w, y + h, Gfx.argb(Math.round(a * 0.35f), Ui.PANEL & 0xFFFFFF));                 // keep it dark under the words
+        NebulaTex.glow(g, x + w * 0.78f, y + h * 0.3f, w * 0.4f, h * 0.45f, Gfx.argb(Math.round(a * 0.16f), Ui.ACCENT2 & 0xFFFFFF));   // nebula: pink and violet clouds
+        NebulaTex.glow(g, x + w * 0.35f, y + h * 0.8f, w * 0.45f, h * 0.4f, Gfx.argb(Math.round(a * 0.14f), Ui.ACCENT & 0xFFFFFF));
         for (int i = 0; i < 46; i++) {
             int sx = x + 4 + (int) ((i * 2654435761L >>> 7) % Math.max(1, w - 8)), sy = y + 4 + (int) ((i * 40503L * 7919L >>> 5) % Math.max(1, h - 8));
             float tw = animOn ? 0.35f + 0.65f * Math.abs((float) Math.sin(now / (700.0 + (i % 7) * 230) + i)) : 0.7f;

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "fancydrops",
   "version": "${version}",
-  "name": "FancyDrops",
+  "name": "Stardrops",
   "description": "Cinematic drop animations for Hypixel SkyBlock Mythological Rituals, with live prices, profit tracking and party/co-op announcements. More categories are on the way.",
   "authors": [
     "You"

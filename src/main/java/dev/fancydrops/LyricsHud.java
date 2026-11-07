@@ -295,8 +295,8 @@ final class LyricsHud {
         float y = above ? -sh * s - 2 * s + 3 : h - 3 + sh * s - sh + 2 * s;           // tucked behind the card, then out
         int a = Math.round(255 * e * s), A = Math.round(255 * e);
         NebulaTex.glow(g, w / 2f, y + sh / 2f + 2, sw * 0.55f, sh, Gfx.argb(Math.round(70 * e * s), 0x000000));
-        NowPlayingHud.round(g, Math.round(sx), Math.round(y), Math.round(sw), Math.round(sh), Gfx.argb(Math.round(150 * e * s), 0x2A2C38));          // the same plain glass as the card
-        NowPlayingHud.round(g, Math.round(sx) + 1, Math.round(y) + 1, Math.round(sw) - 2, Math.round(sh) - 2, Gfx.argb(Math.round(242 * e * s), 0x0D0E13));
+        NowPlayingHud.round(g, Math.round(sx), Math.round(y), Math.round(sw), Math.round(sh), Gfx.argb(Math.round(170 * e * s), 0x2C2A66));          // the same glass as the card
+        NowPlayingHud.round(g, Math.round(sx) + 1, Math.round(y) + 1, Math.round(sw) - 2, Math.round(sh) - 2, Gfx.argb(Math.round(240 * e * s), 0x0B0C26));
 
         g.fill(Math.round(sx + 3), Math.round(above ? y : y + sh - 1), Math.round(sx + sw - 3), Math.round(above ? y + 1 : y + sh), Gfx.argb(Math.round(40 * e * s), 0xFFFFFF));   // the lit outer edge
         float bob = (float) Math.sin(now / 260.0) * 1f;                                       // the note, in a soft round light

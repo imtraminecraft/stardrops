@@ -329,11 +329,11 @@ final class Codex {
         if (title < 0.01f) return;
         String t = spaced("ACHIEVEMENTS"); float k = 2.2f, w = host.width(t) * k, cx = sx0 + sw / 2f, cy = sy0 + sh * 0.42f - (1f - title) * 8;
         NebulaTex.glow(g, cx, cy + 8, w * 0.65f, 26, argb(0.5f * title, 0x000000));
-        NebulaTex.glow(g, cx, cy + 8, w * 0.5f, 14, argb(0.25f * title, 0xFFE9B8));
-        Gfx.push(g); Gfx.translate(g, cx - w / 2f, cy); Gfx.scale(g, k); Gfx.txt(g, font, t, 0, 0, argb(title, 0xFFE9B8), true); Gfx.pop(g);
+        NebulaTex.glow(g, cx, cy + 8, w * 0.5f, 14, argb(0.25f * title, 0xE6DCFF));
+        Gfx.push(g); Gfx.translate(g, cx - w / 2f, cy); Gfx.scale(g, k); Gfx.txt(g, font, t, 0, 0, argb(title, 0xE6DCFF), true); Gfx.pop(g);
         String sub = "every drop is a star"; int sw2 = host.width(sub);
         small(g, sub, Math.round(cx - sw2 * 0.375f), Math.round(cy + 24), argb(0.8f * title, 0xD8DCEC));
-        float lw = w * 0.4f * ease(title); g.fill(Math.round(cx - lw), Math.round(cy + 21), Math.round(cx + lw), Math.round(cy + 22), argb(0.7f * title, 0xFFE9B8));
+        float lw = w * 0.4f * ease(title); g.fill(Math.round(cx - lw), Math.round(cy + 21), Math.round(cx + lw), Math.round(cy + 22), argb(0.7f * title, 0xE6DCFF));
     }
     /** The nearest layer: a few out-of-focus motes drifting close to the lens; they slide the most as you look around. */
     private static void nearDust(GuiGraphicsExtractor g, float a) {
@@ -375,7 +375,7 @@ final class Codex {
         }
     }
     private static void frame(GuiGraphicsExtractor g) {
-        int c = argb(0.8f * alpha, 0xE8C76A), c2 = argb(0.35f * alpha, 0xE8C76A);
+        int c = argb(0.8f * alpha, 0xA88BFF), c2 = argb(0.35f * alpha, 0xA88BFF);
         g.fill(sx0 - 1, sy0 - 1, sx0 + sw + 1, sy0, c); g.fill(sx0 - 1, sy0 + sh, sx0 + sw + 1, sy0 + sh + 1, c); g.fill(sx0 - 1, sy0, sx0, sy0 + sh, c); g.fill(sx0 + sw, sy0, sx0 + sw + 1, sy0 + sh, c);
         g.fill(sx0 + 3, sy0 + 3, sx0 + sw - 3, sy0 + 4, c2); g.fill(sx0 + 3, sy0 + sh - 4, sx0 + sw - 3, sy0 + sh - 3, c2); g.fill(sx0 + 3, sy0 + 3, sx0 + 4, sy0 + sh - 3, c2); g.fill(sx0 + sw - 4, sy0 + 3, sx0 + sw - 3, sy0 + sh - 3, c2);
         for (int i = 1; i < 36; i++) { int x = sx0 + sw * i / 36, l = i % 9 == 0 ? 7 : i % 3 == 0 ? 4 : 2; g.fill(x, sy0, x + 1, sy0 + l, c); g.fill(x, sy0 + sh - l, x + 1, sy0 + sh, c); }
@@ -415,21 +415,15 @@ final class Codex {
         glow(lx, ly, 6 * p, 0xFFD890, 0.6f * a * fl);
         for (int i = 0; i < 2; i++) { float mt = now / (700f + i * 230f) + i * 2.1f; float mxp = lx + (float) Math.cos(mt) * (5 + i * 3) * p, myp = ly - 4 * p + (float) Math.sin(mt * 1.7f) * 4 * p;      // two moths round it
             g.fill(Math.round(mxp), Math.round(myp), Math.round(mxp) + 1, Math.round(myp) + 1, argb(0.8f * a * alpha, 0xFFE8C0)); }
-        // the cat (a ginger tabby), lying down facing Steve: legs tucked, head up, ears, and its tail flicking
-        float cx0 = hx - 27 * p, cgy = ground(cx0 + 5 * p) - 0.3f * p, flick = (float) Math.sin(now / 600.0) * 0.5f;
-        mcBox(cx0, cgy - 4 * p, 0.4f + flick, 0, -0.5f * p, 7 * p, 1 * p, 0xE0A050, 0.55f, a);            // the tail, rising off its back
-        mcBox(cx0, cgy - 4 * p, 0, 0, 0, 9 * p, 4 * p, 0xE0A050, 0.55f, a);                                // body
-        mcBox(cx0 + 2 * p, cgy - 4 * p, 0, 0, 0, 1 * p, 4 * p, 0xB0702A, 0.55f, a); mcBox(cx0 + 5 * p, cgy - 4 * p, 0, 0, 0, 1 * p, 4 * p, 0xB0702A, 0.55f, a);   // stripes
-        float blink = (now % 4200L) < 140 ? 0f : 1f;
-        mcBox(cx0 + 7 * p, cgy - 7 * p, 0, 0, 0, 5 * p, 4 * p, 0xE0A050, 0.6f, a);                         // head
-        mcBox(cx0 + 7 * p, cgy - 8 * p, 0, 0, 0, 1 * p, 1 * p, 0xE0A050, 0.6f, a); mcBox(cx0 + 10 * p, cgy - 8 * p, 0, 0, 0, 1 * p, 1 * p, 0xE0A050, 0.6f, a);   // ears
-        mcBox(cx0 + 11 * p, cgy - 5 * p, 0, 0, 0, 1.4f * p, 1 * p, 0xF0D0B0, 0.6f, a);                      // muzzle
-        if (blink > 0) mcBox(cx0 + 9.5f * p, cgy - 6 * p, 0, 0, 0, 1 * p, 1 * p, 0x7AE06A, 0.9f, a);          // an eye
-        // a chest beside them
-        float chx = hx - 14 * p, chy = ground(chx + 3.5f * p);
-        mcBox(chx, chy - 7 * p, 0, 0, 0, 7 * p, 7 * p, 0x9A6A30, 0.5f, a);
-        mcBox(chx, chy - 7 * p, 0, 0, 0, 7 * p, 0.6f * p, 0x5A3A18, 0.5f, a); mcBox(chx, chy - 4.6f * p, 0, 0, 0, 7 * p, 0.6f * p, 0x5A3A18, 0.5f, a);
-        mcBox(chx + 6 * p, chy - 5.4f * p, 0, 0, 0, 1 * p, 2 * p, 0xC8C8D0, 0.6f, a);                      // the latch
+        // the cat, sitting up beside the lantern looking at the sky with him: an upright body, a head with two pointed ears, a tail
+        // curled round its paws whose tip flicks now and then (a clear silhouette). (No chest: as a silhouette it was just a box.)
+        float cx0 = hx - 24 * p, cgy = ground(cx0 + 2 * p) + 0.3f * p, flick = (now % 5000L) < 600 ? (float) Math.sin((now % 5000L) / 600.0 * Math.PI * 2) * 0.5f : 0f;
+        mcBox(cx0 - 3 * p, cgy - 6 * p, 0, 0, 0, 6 * p, 6 * p, 0x05040A, 0f, a);                            // haunches
+        mcBox(cx0 - 1 * p, cgy - 9 * p, 0, 0, 0, 4 * p, 4 * p, 0x05040A, 0f, a);                            // chest
+        mcBox(cx0 - 1.5f * p, cgy - 13 * p, 0, 0, 0, 5 * p, 4.5f * p, 0x05040A, 0f, a);                      // head
+        mcBox(cx0 - 1.5f * p, cgy - 14.5f * p, 0, 0, 0, 1.5f * p, 1.5f * p, 0x05040A, 0f, a); mcBox(cx0 + 2 * p, cgy - 14.5f * p, 0, 0, 0, 1.5f * p, 1.5f * p, 0x05040A, 0f, a);   // ears
+        mcBox(cx0 - 3 * p, cgy - 1.2f * p, 0, -4 * p, 0, 5 * p, 1.2f * p, 0x05040A, 0f, a);                  // tail, round the paws
+        mcBox(cx0 - 7 * p, cgy - 1.2f * p, -1.2f + flick, 0, 0, 2.5f * p, 1.2f * p, 0x05040A, 0f, a);      // its tip
         // Steve, sitting with his legs out on the carpet, looking up through a spyglass at the constellation under your mouse
         float want;
         if (film) want = -1.05f;
@@ -653,7 +647,7 @@ final class Codex {
             int hw = Math.round((float) Math.sqrt(Math.max(0f, r * r - dy * dy)));
             g.fill(sx0, y, Math.round(cx) - hw, Math.min(bot, y + 3), c); g.fill(Math.round(cx) + hw, y, sx0 + sw, Math.min(bot, y + 3), c);
         }
-        ring(cx, cy, r, argb(a, 0xE8C76A), 1f); ring(cx, cy, r + 3, argb(a * 0.5f, 0xB08A3A), 1f);
+        ring(cx, cy, r, argb(a, 0xA88BFF), 1f); ring(cx, cy, r + 3, argb(a * 0.5f, 0xB08A3A), 1f);
         glow(cx, cy - r, r * 0.6f, 0xE8F0FF, 0.25f * a);
     }
 
@@ -872,7 +866,7 @@ final class Codex {
             glow(x, y, 3.2f * tk, tc, 0.22f * fade);
             if (prog > 0.001f && (near || hv || prog > 0.25f)) { float rr = (near ? 7f : 4.8f) * dK; ring(x, y, rr, argb(0.2f * fade * alpha, 0xC8D0F0), 1f); ring(x, y, rr, argb(0.85f * fade * alpha, col), prog); }
         }
-        if (!a.reward().isEmpty() && (near || hv)) { float bx = x + (near ? 7 : 5), by = y - (near ? 7 : 5); line(bx - 2, by, bx + 2, by, lit ? 0xFFE9B8 : 0x8A94B8, fade, 0); line(bx, by - 2, bx, by + 2, lit ? 0xFFE9B8 : 0x8A94B8, fade, 0); }   // a reward waits here
+        if (!a.reward().isEmpty() && (near || hv)) { float bx = x + (near ? 7 : 5), by = y - (near ? 7 : 5); line(bx - 2, by, bx + 2, by, lit ? 0xE6DCFF : 0x8A94B8, fade, 0); line(bx, by - 2, bx, by + 2, lit ? 0xE6DCFF : 0x8A94B8, fade, 0); }   // a reward waits here
         if (a.id().equals(blinkId) && now >= blinkAt && now < blinkAt + 4200) {
             float u = ((now - blinkAt) % 1400L) / 1400f, b = (float) Math.sin(Math.PI * u);
             glow(x, y, 14 + 10 * b, col, 0.6f * b * fade); ring(x, y, 6 + 26 * ease(u), argb((1f - u) * fade * alpha, 0xFFFFFF), 1f); ring(x, y, 10 + 30 * ease(u), argb((1f - u) * 0.6f * fade * alpha, col), 1f);
@@ -920,20 +914,20 @@ final class Codex {
         y = card(g, "NEARLY THERE", next.subList(0, Math.min(3, next.size())), x, y, w, a, true) + 6;
         // (Recently Lit was removed to keep the sky clear; Nearly There stays)
         int lx = sx0 + Math.round(sw * 0.5f) - 120, ly = sy0 + sh - 16;                         // the key: the four tiers, and what a reward looks like
-        g.fill(lx - 8, ly - 5, lx + 248, ly + 10, argb(0.5f * a * alpha, 0x060818)); g.fill(lx - 8, ly - 5, lx + 248, ly - 4, argb(0.4f * a * alpha, 0xE8C76A));
+        g.fill(lx - 8, ly - 5, lx + 248, ly + 10, argb(0.5f * a * alpha, 0x060818)); g.fill(lx - 8, ly - 5, lx + 248, ly - 4, argb(0.4f * a * alpha, 0xA88BFF));
         int kx = lx;
         for (int i = 0; i < 3; i++) {
             int tc = LocalLedger.TIER_COL[i] & 0xFFFFFF; glow(kx + 3, ly + 3, 2.2f * TIER_K[i], tc, a); ring(kx + 3, ly + 3, 3.4f * TIER_K[i], argb(0.8f * a * alpha, tc), 1f);
             String tn = LocalLedger.TIER[i]; small(g, tn, kx + 10, ly + 1, argb(0.85f * a * alpha, mix(0xFFD8DCEC, 0xFF000000 | tc, 0.35f))); kx += 14 + Math.round(host.width(tn) * 0.75f) + 8;
         }
-        line(kx + 1, ly + 3, kx + 7, ly + 3, 0xFFE9B8, a, 0); line(kx + 4, ly, kx + 4, ly + 6, 0xFFE9B8, a, 0); small(g, "reward", kx + 11, ly + 1, argb(0.8f * a * alpha, 0xD8DCEC));
+        line(kx + 1, ly + 3, kx + 7, ly + 3, 0xE6DCFF, a, 0); line(kx + 4, ly, kx + 4, ly + 6, 0xE6DCFF, a, 0); small(g, "reward", kx + 11, ly + 1, argb(0.8f * a * alpha, 0xD8DCEC));
         small(g, "click a constellation to fly in", lx + 248 - Math.round(host.width("click a constellation to fly in") * 0.75f), ly - 14, argb(0.45f * a * alpha, 0xB8C0DA));
     }
     private static int card(GuiGraphicsExtractor g, String title, List<Achievements.Ach> l, int x, int y, int w, float a, boolean bars) {
         if (l.isEmpty()) return y;
         int h = 14 + l.size() * (bars ? 18 : 12);
-        g.fill(x, y, x + w, y + h, argb(0.55f * a * alpha, 0x060818)); g.fill(x, y, x + 2, y + h, argb(0.8f * a * alpha, 0xE8C76A));
-        small(g, title, x + 7, y + 4, argb(0.9f * a * alpha, 0xE8C76A));
+        g.fill(x, y, x + w, y + h, argb(0.55f * a * alpha, 0x060818)); g.fill(x, y, x + 2, y + h, argb(0.8f * a * alpha, 0xA88BFF));
+        small(g, title, x + 7, y + 4, argb(0.9f * a * alpha, 0xA88BFF));
         int yy = y + 14;
         for (Achievements.Ach q : l) {
             int ci = groupOf(q.ch()), col = ACH_COL[ci];
@@ -998,19 +992,19 @@ final class Codex {
         float ia = in * alpha;
         int x = sx0 + 14, y = sy0 + 11;
         String ttl = spaced("ACHIEVEMENTS");
-        text(g, ttl, x, y, argb(ia, 0xFFE9B8), true);
+        text(g, ttl, x, y, argb(ia, 0xE6DCFF), true);
         String cnt = p == null ? (Achievements.status.isEmpty() ? "Reading the stars..." : Achievements.status) : lit + " of " + all + " stars lit";
         if (soloId != null) cnt = "Showing one star  \u00B7  press back to explore the rest";
         else if (p != null && !LocalLedger.WAITING.isEmpty()) cnt += "  \u00B7  " + LocalLedger.WAITING.size() + " waiting for the server";
         if (p != null && Achievements.unsent > 0) cnt += "  \u00B7  " + Achievements.unsent + " drop" + (Achievements.unsent == 1 ? "" : "s") + " waiting to be counted";
         small(g, cnt, x + host.width(ttl) + 10, y + 1, argb(0.8f * ia, 0xB8C0DA));
-        if (p != null && all > 0) { int bw = host.width(ttl); g.fill(x, y + 11, x + bw, y + 12, argb(0.2f * ia, 0xFFE9B8)); g.fill(x, y + 11, x + Math.round(bw * lit / (float) all), y + 12, argb(ia, 0xFFE9B8)); }
+        if (p != null && all > 0) { int bw = host.width(ttl); g.fill(x, y + 11, x + bw, y + 12, argb(0.2f * ia, 0xE6DCFF)); g.fill(x, y + 11, x + Math.round(bw * lit / (float) all), y + 12, argb(ia, 0xE6DCFF)); }
         if (false && zoomed < 0.3f && p != null) { String hint = ""; small(g, hint, sx0 + sw - 34 - Math.round(host.width(hint) * 0.75f), sy0 + 12, argb(0.55f * ia * (1f - zoomed / 0.3f), 0xB8C0DA)); }
         compass(g, sx0 + sw - 30, sy0 + sh - 30, 16, ia);
         float bcx = sx0 + sw - 16.5f, bcy = sy0 + 14.5f;                                       // the close button: a ring with an X through its exact middle
         boolean hc = Math.hypot(mx - bcx, my - bcy) < 9;
         glow(bcx, bcy, 9, 0xFFFFFF, (hc ? 0.35f : 0.12f) * ia);
-        ring(bcx, bcy, 7.5f, argb((hc ? 0.9f : 0.5f) * ia, 0xE8C76A), 1f);
+        ring(bcx, bcy, 7.5f, argb((hc ? 0.9f : 0.5f) * ia, 0xA88BFF), 1f);
         for (int d = 0; d < 2; d++) { float s0 = d == 0 ? 1f : -1f; float x0 = bcx - 3.2f, y0 = bcy - 3.2f * s0, x1 = bcx + 3.2f, y1 = bcy + 3.2f * s0;
             int L = Math.round((float) Math.hypot(x1 - x0, y1 - y0)); Gfx.push(g); Gfx.translate(g, bcx, bcy); Gfx.rotate(g, (float) Math.atan2(y1 - y0, x1 - x0)); Gfx.translate(g, -L / 2f, -0.5f); g.fill(0, 0, L, 1, argb(ia, 0xFFFFFF)); Gfx.pop(g); }
         int cx = Math.round(bcx) - 8, cy = Math.round(bcy) - 8;
@@ -1024,10 +1018,10 @@ final class Codex {
         }
     }
     private static void compass(GuiGraphicsExtractor g, int cx, int cy, int r, float a) {
-        ring(cx, cy, r, argb(0.45f * a, 0xE8C76A), 1f); ring(cx, cy, r - 3, argb(0.2f * a, 0xE8C76A), 1f);
+        ring(cx, cy, r, argb(0.45f * a, 0xA88BFF), 1f); ring(cx, cy, r - 3, argb(0.2f * a, 0xA88BFF), 1f);
         double rot = now / 20000.0;
-        for (int k = 0; k < 8; k++) { double an = rot + k * Math.PI / 4; float len = k % 2 == 0 ? r - 1 : r * 0.55f; line(cx, cy, cx + (float) Math.cos(an) * len, cy + (float) Math.sin(an) * len, k == 0 ? 0xFFE9B8 : 0xE8C76A, (k == 0 ? 0.9f : 0.45f) * a / Math.max(0.01f, alpha), 0); }
-        disc(g, cx, cy, 1.5f, argb(a, 0xFFE9B8));
+        for (int k = 0; k < 8; k++) { double an = rot + k * Math.PI / 4; float len = k % 2 == 0 ? r - 1 : r * 0.55f; line(cx, cy, cx + (float) Math.cos(an) * len, cy + (float) Math.sin(an) * len, k == 0 ? 0xE6DCFF : 0xA88BFF, (k == 0 ? 0.9f : 0.45f) * a / Math.max(0.01f, alpha), 0); }
+        disc(g, cx, cy, 1.5f, argb(a, 0xE6DCFF));
     }
 
     // ------------------------------------------------------------------ drawing helpers: a soft light, rotated bars

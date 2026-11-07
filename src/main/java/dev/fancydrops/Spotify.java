@@ -79,7 +79,7 @@ final class Spotify {
                         String q = path.contains("?") ? path.substring(path.indexOf('?') + 1) : "";
                         String gotState = param(q, "state"); code = param(q, "code"); err = param(q, "error");
                         if (code != null && !state.equals(gotState)) { code = null; err = "the login did not match (try again)"; }
-                        reply(s, 200, code != null ? "<h2>FancyDrops is linked to Spotify.</h2><p>You can close this tab and go back to Minecraft.</p>" : "<h2>Spotify said no: " + err + "</h2>");
+                        reply(s, 200, code != null ? "<h2>Stardrops is linked to Spotify.</h2><p>You can close this tab and go back to Minecraft.</p>" : "<h2>Spotify said no: " + err + "</h2>");
                     }
                 }
                 if (code == null) throw new IOException(err);
@@ -90,7 +90,7 @@ final class Spotify {
             catch (BindException e) { status = "Port " + PORT + " is busy."; say.accept("Couldn't listen on port " + PORT + ". Close whatever uses it and try again."); }
             catch (Throwable e) { status = "Login failed: " + e.getMessage(); say.accept("Spotify login failed: " + e.getMessage()); }
             finally { busy = false; }
-        }, "FancyDrops Spotify login");
+        }, "Stardrops Spotify login");
         t.setDaemon(true); t.start();
     }
     static void logout() { FancyConfig c = FancyConfig.get(); c.spotifyRefresh = ""; FancyConfig.save(); access = ""; expires = 0; track = null; playing = false; status = "Not linked."; }
@@ -173,7 +173,7 @@ final class Spotify {
                 else if (path.equals("pause") || path.equals("play")) { progressMs = position(); progressAt = System.currentTimeMillis(); playing = path.equals("play"); }
                 Thread.sleep(350); lastPoll = 0;
             } catch (Throwable e) { status = "Couldn't reach Spotify."; }
-        }, "FancyDrops Spotify control");
+        }, "Stardrops Spotify control");
         t.setDaemon(true); t.start();
     }
 
@@ -184,7 +184,7 @@ final class Spotify {
         return JsonParser.parseString(r.body()).getAsJsonObject();
     }
     private static void reply(Socket s, int code, String html) throws IOException {
-        byte[] b = ("<!doctype html><meta charset=utf-8><title>FancyDrops</title><body style='font-family:sans-serif;background:#111;color:#eee;padding:40px'>" + html).getBytes(StandardCharsets.UTF_8);
+        byte[] b = ("<!doctype html><meta charset=utf-8><title>Stardrops</title><body style='font-family:sans-serif;background:#111;color:#eee;padding:40px'>" + html).getBytes(StandardCharsets.UTF_8);
         OutputStream o = s.getOutputStream();
         o.write(("HTTP/1.1 " + code + " OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: " + b.length + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.US_ASCII)); o.write(b); o.flush();
     }

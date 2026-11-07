@@ -9,8 +9,8 @@ import java.util.regex.Pattern;
 /** How the mod talks in the player's chat: a gradient name tag, then the message with numbers, Magic Find and commands picked out in their own hex colours. */
 final class Chat {
     // The "vault" colours (0.8.1), the same as the menu: a gold name, warm white text, violet commands.
-    static final int[] GRADIENT = {0xFFE3A0, 0xF4C860, 0xE8AE3E, 0xF4C860, 0xFFE3A0};
-    static final int TEXT = 0xE9E3D6, DIM = 0x8A8296, NUMBER = 0xFFD27A, MF = 0x55E6FF, COMMAND = 0xB9A8F0, GOOD = 0x62E6A8, BAD = 0xFF7B7B, BRACKET = 0x5A5266, LINE = 0x4A3F2A;
+    static final int[] GRADIENT = {0xC8B4FF, 0x9B7BFF, 0xD27BEF, 0xFF7AD9, 0xC8B4FF};   // violet into nebula pink
+    static final int TEXT = 0xE6E4F6, DIM = 0x8682B0, NUMBER = 0xFFA8E8, MF = 0x55E6FF, COMMAND = 0xB9A8F0, GOOD = 0x62E6A8, BAD = 0xFF7B7B, BRACKET = 0x4A4478, LINE = 0x3A2F6A;
 
     private static final Pattern TOKEN = Pattern.compile(
             "(?<mf>\\+\\d[\\d,.]*%)|(?<cmd>/(?:fd|fancydrops)\\b)|(?<par>\\([^)]*\\))|(?<good>\\b(?:enabled|on|Sent|Simulating)\\b)|(?<bad>\\b(?:disabled|DISABLED|off|muted)\\b)|(?<num>\\b\\d[\\d,.]*(?:[kKMB]\\b|%)?)");
@@ -20,7 +20,7 @@ final class Chat {
     /** [FancyDrops] with the name in the menu's gold.  */
     static MutableComponent prefix() {
         MutableComponent out = Component.empty().append(color("[", BRACKET));
-        String name = "FancyDrops";
+        String name = "Stardrops";
         for (int i = 0; i < name.length(); i++) {
             float u = i / (float) (name.length() - 1) * (GRADIENT.length - 1);
             int a = GRADIENT[(int) u], b = GRADIENT[Math.min(GRADIENT.length - 1, (int) u + 1)];
@@ -46,7 +46,7 @@ final class Chat {
     }
 
     static Component msg(String text) {
-        String t = text.startsWith("FancyDrops » ") ? text.substring(13) : text;
+        String t = text.startsWith("Stardrops » ") ? text.substring("Stardrops » ".length()) : text;
         return prefix().append(" ").append(body(t));
     }
 

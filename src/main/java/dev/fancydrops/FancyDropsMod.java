@@ -193,7 +193,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
             }))
             .then(ClientCommands.literal("toggle").executes(ctx -> {                      // the master switch
                 FancyConfig c = FancyConfig.get(); boolean on = !(c.masterAnimate || c.masterAnnounce); c.setMaster(on, on); FancyConfig.save();
-                say(ctx.getSource(), "FancyDrops " + (on ? "enabled" : "disabled") + " (animations and chat announcements)");
+                say(ctx.getSource(), "Stardrops " + (on ? "enabled" : "disabled") + " (animations and chat announcements)");
                 return Command.SINGLE_SUCCESS;
             }))
             .then(simLiteral(ClientCommands.literal("simulate")))
@@ -240,7 +240,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
 
     private static int help(FabricClientCommandSource s) {
         s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
-        s.sendFeedback(waveTitle("FancyDrops").copy().append(Chat.color("  \u00B7  Quick guide", Chat.DIM)));
+        s.sendFeedback(waveTitle("Stardrops").copy().append(Chat.color("  \u00B7  Quick guide", Chat.DIM)));
         helpLine(s, "/fd", "Open the menu");
         helpLine(s, "/fd <words>", "Open the menu and search for them (for example /fd minos)");
         helpLine(s, "/fd achievement", "Open the achievements");
@@ -254,7 +254,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
     /** /fd help simulate: every simulate command. */
     private static int helpSimulate(FabricClientCommandSource s) {
         s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
-        s.sendFeedback(waveTitle("FancyDrops").copy().append(Chat.color("  \u00B7  Simulate", Chat.DIM)));
+        s.sendFeedback(waveTitle("Stardrops").copy().append(Chat.color("  \u00B7  Simulate", Chat.DIM)));
         helpLine(s, "/fd simulate Mythological <Mob|Treasure> <Drop> <mf>", "Play a pretend drop through the real animation");
         helpLine(s, "/fd simulate Slayer <Boss> <Drop> [Drop 2] <mf>", "The same for a slayer boss: one or two drops (Nothing for no drop)");
         helpLine(s, "/fd simulate Farming <Rare Crops|Harvest Feast|Harvest Bounty|Pest Drops> <Drop> <overbloom>", "A pretend crop or pest drop");
