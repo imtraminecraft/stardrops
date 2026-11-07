@@ -36,7 +36,7 @@ final class Spotify {
     static volatile String status = "";
     private static volatile String access = ""; private static volatile long expires;
     private static volatile boolean busy, polling;
-    private static long lastPoll;
+    private static long lastPoll, lastGood, pollStart;
     private static final java.util.concurrent.ExecutorService WORKER = java.util.concurrent.Executors.newSingleThreadExecutor(r -> { Thread t = new Thread(r, "FancyDrops Spotify"); t.setDaemon(true); t.setPriority(Thread.MIN_PRIORITY); return t; });
 
     static boolean linked() { return !FancyConfig.get().spotifyRefresh.isBlank(); }
@@ -110,15 +110,21 @@ final class Spotify {
     // ------------------------------------------------------------------ what is playing (asked every 3 s from a worker thread, only while lyrics are on)
     static void tick() {
         FancyConfig c = FancyConfig.get();
-        if (!(c.lyricsOn || c.npOn) || !linked() || busy || polling) return;
-        long now = System.currentTimeMillis(); if (now - lastPoll < 3000) return; lastPoll = now;
-        polling = true; WORKER.execute(() -> { try { poll(); } finally { polling = false; } });
+        if (!(c.lyricsOn || c.npOn) || !linked() || busy) return;
+        long now = System.currentTimeMillis();
+        if (playing && lastGood > 0 && now - lastGood > 10_000) { progressMs = position(); progressAt = now; playing = false; status = "Lost touch with Spotify."; }   // no answer for 10 s: stop the clock, don't pretend it plays
+        if (playing && track != null && track.durationMs() > 0 && position() >= track.durationMs() - 200 && now - lastPoll > 600) lastPoll = 0;              // the song just ended: ask at once what's next
+        if (polling) { if (now - pollStart < 12_000) return; polling = false; }                                       // a request that never came back no longer blocks the next one
+        if (now - lastPoll < 3000) return; lastPoll = now;
+        polling = true; pollStart = now; WORKER.execute(() -> { try { poll(); } finally { polling = false; } });
     }
     private static void poll() {
         try {
             if (!fresh()) return;
             long sentAt = System.currentTimeMillis();
-            HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create("https://api.spotify.com/v1/me/player/currently-playing")).header("Authorization", "Bearer " + access).GET().build(), HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create("https://api.spotify.com/v1/me/player/currently-playing")).timeout(java.time.Duration.ofSeconds(6)).header("Authorization", "Bearer " + access).GET().build(), HttpResponse.BodyHandlers.ofString());
+            if (r.statusCode() == 429) { lastPoll = System.currentTimeMillis() + 7000; status = "Spotify asked to slow down."; return; }
+            lastGood = System.currentTimeMillis();
             if (r.statusCode() == 204 || r.body().isBlank()) { playing = false; status = "Nothing playing."; return; }
             if (r.statusCode() == 401) { access = ""; return; }
             if (r.statusCode() != 200) { status = "Spotify answered " + r.statusCode(); return; }
@@ -150,7 +156,7 @@ final class Spotify {
             try {
                 if (!fresh()) return;
                 String path = what.equals("next") ? "next" : what.equals("previous") ? "previous" : playing ? "pause" : "play";
-                HttpRequest.Builder b = HttpRequest.newBuilder(URI.create("https://api.spotify.com/v1/me/player/" + path)).header("Authorization", "Bearer " + access);
+                HttpRequest.Builder b = HttpRequest.newBuilder(URI.create("https://api.spotify.com/v1/me/player/" + path)).timeout(java.time.Duration.ofSeconds(6)).header("Authorization", "Bearer " + access);
                 b = path.equals("pause") || path.equals("play") ? b.PUT(HttpRequest.BodyPublishers.noBody()) : b.POST(HttpRequest.BodyPublishers.noBody());
                 int code = HTTP.send(b.build(), HttpResponse.BodyHandlers.discarding()).statusCode();
                 if (code == 403 || code == 401) status = "Controls need Spotify Premium, and linking again once (Visuals > Spotify > Unlink, then Link).";
@@ -164,7 +170,7 @@ final class Spotify {
 
     // ------------------------------------------------------------------ bits
     private static JsonObject post(String form) throws Exception {
-        HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create("https://accounts.spotify.com/api/token")).header("Content-Type", "application/x-www-form-urlencoded")
+        HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create("https://accounts.spotify.com/api/token")).timeout(java.time.Duration.ofSeconds(6)).header("Content-Type", "application/x-www-form-urlencoded")
             .POST(HttpRequest.BodyPublishers.ofString(form)).build(), HttpResponse.BodyHandlers.ofString());
         return JsonParser.parseString(r.body()).getAsJsonObject();
     }
