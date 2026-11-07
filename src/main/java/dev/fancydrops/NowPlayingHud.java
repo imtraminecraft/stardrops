@@ -42,6 +42,8 @@ final class NowPlayingHud {
         draw(g, mc.font, cx, top, k, e, t, now, now - changedAt, pos, playing, dt, "", AlbumArt.ready && !(preview && Spotify.track == null), AlbumArt.accent());
     }
     static int width() { return 214; }
+    /** How solid the glass is (Visuals > Music > Now Playing > Background), 0.2..0.7. */
+    static float bg() { return FancyConfig.get().npBg / 100f; }
     static int height(boolean lyric) { return lyric ? 64 : 56; }
 
     /** Draws the card. cx/top: the middle of its top edge; e: 0..1 how far it has slid in; since: ms since the song changed. */
@@ -68,11 +70,11 @@ final class NowPlayingHud {
      * slides in and the rocket flies back in from the left to where the new song is.
      */
     private static void glass(GuiGraphicsExtractor g, Font font, int w, int h, float e, Spotify.Track t, long now, long since, long pos, boolean playing, String lyric, boolean art, int acc) {
-        int a = Math.round(255 * e);
+        int a = Math.round(255 * e); float op = bg();
         float warp = since < 1100 ? (float) Math.sin(Math.PI * Math.min(1f, since / 1100f)) : 0f;                    // the jump between songs
-        NebulaTex.glow(g, w / 2f, h / 2f + 6, w * 0.58f, h * 0.9f, Gfx.argb(Math.round(120 * e), 0x000000));
-        round(g, 0, 0, w, h, Gfx.argb(Math.round(170 * e), 0x2C2A66));
-        round(g, 1, 1, w - 2, h - 2, Gfx.argb(Math.round(240 * e), 0x0B0C26));
+        NebulaTex.glow(g, w / 2f, h / 2f + 6, w * 0.58f, h * 0.9f, Gfx.argb(Math.round(120 * e * op), 0x000000));
+        round(g, 0, 0, w, h, Gfx.argb(Math.round((70 + 100 * op) * e), 0x2C2A66));
+        round(g, 1, 1, w - 2, h - 2, Gfx.argb(Math.round(255 * e * op), 0x0B0C26));
         NebulaTex.glow(g, w * 0.82f, h * 0.35f, w * 0.3f, h * 0.7f, Gfx.argb(Math.round(26 * e), PINK));            // faint nebula behind the glass
         NebulaTex.glow(g, w * 0.55f, h * 0.9f, w * 0.35f, h * 0.5f, Gfx.argb(Math.round(22 * e), V));
         float drift = (now % 3_600_000L) / 1000f;
@@ -92,7 +94,7 @@ final class NowPlayingHud {
         float flip = Math.min(1f, since / 400f), sx = Math.abs((float) Math.cos(Math.PI * 0.5 * (1f - flip)));
         Gfx.push(g); Gfx.translate(g, ax + as / 2f, ay); Gfx.scale(g, Math.max(0.02f, sx), 1f); Gfx.translate(g, -as / 2f, 0);
         cover(g, font, 0, 0, as, a, art, acc);
-        for (int[] q : new int[][]{{0, 0}, {as - 1, 0}, {0, as - 1}, {as - 1, as - 1}}) g.fill(q[0], q[1], q[0] + 1, q[1] + 1, Gfx.argb(Math.round(240 * e), 0x0B0C26));
+        for (int[] q : new int[][]{{0, 0}, {as - 1, 0}, {0, as - 1}, {as - 1, as - 1}}) g.fill(q[0], q[1], q[0] + 1, q[1] + 1, Gfx.argb(Math.round(255 * e * op), 0x0B0C26));
         if (!playing) { g.fill(0, 0, as, as, Gfx.argb(Math.round(130 * e), 0x000000)); g.fill(as / 2 - 5, as / 2 - 6, as / 2 - 2, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); g.fill(as / 2 + 2, as / 2 - 6, as / 2 + 5, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); }
         Gfx.pop(g);
         rout1(g, ax - 1, ay - 1, as + 2, as + 2, Gfx.argb(Math.round(a * 0.55f), V));
@@ -108,24 +110,46 @@ final class NowPlayingHud {
             int bh = Math.max(1, Math.round(8 * amp)), bx = ex + i * 3;
             g.fill(bx, ey - bh, bx + 2, ey, Gfx.argb(Math.round(a * 0.9f), Ritual.mixc(V, PINK, i / 4f)));
         }
-        // the course: a dotted path to a ringed planet, the exhaust trail behind the rocket
+        // the course, like the Active control: a launch pad at the start (its light green while playing, red when paused), a dotted
+        // path, and the ringed planet at the end. The song's first moments are the lift-off (upright on the pad, smoke, tipping over
+        // onto the course); its last seconds, the rocket swings into orbit round the planet, passing behind it.
         long dur = Math.max(1, t.durationMs()); float f = Math.min(1f, pos / (float) dur);
-        int by = h - 13, b0 = tx + 2, b1 = w - 20; float rxp = b0 + (b1 - b0) * f;
+        int by = h - 13, padX = tx + 4, b0 = tx + 10, b1 = w - 22; float rxp = b0 + (b1 - b0) * f, ryp = by + 0.5f, ang = 0f;
+        float pcx = b1 + 9, pcy = by + 0.5f;
+        float lift = since < 1100 ? 1f : Math.min(1f, pos / 1800f), orbit = Math.max(0f, Math.min(1f, 1f - (dur - pos) / 2500f));
+        if (lift < 1f) {                                                                          // lift-off: up off the pad, then over onto the course
+            float u = ease(lift), px = padX, py = by - 3;
+            rxp = px + (rxp - px) * u; ryp = py + (by + 0.5f - py) * u - (float) Math.sin(Math.PI * u) * 6; ang = (float) (-Math.PI / 2) * (1f - ease(Math.min(1f, lift * 1.4f)));
+        }
+        boolean rBehind = false;
+        if (orbit > 0f && since >= 1100) {                                                         // the end: into orbit
+            float oa = (float) Math.PI + (now / 650f) * orbit * orbit, ox = pcx + (float) Math.cos(oa) * 11, oy = pcy + (float) Math.sin(oa) * 4f;
+            float u = ease(orbit); rxp = rxp + (ox - rxp) * u; ryp = ryp + (oy - ryp) * u;
+            ang = (float) Math.atan2(Math.cos(oa) * 4f, -Math.sin(oa) * 11) * u; rBehind = u > 0.6f && Math.sin(oa) < 0;
+        }
         if (since < 1100) {                                                                       // blast off and fly back in
-            float u = since / 1100f;
-            rxp = u < 0.4f ? b0 + (b1 - b0) * f + (w + 30 - (b0 + (b1 - b0) * f)) * (float) Math.pow(u / 0.4f, 2.2) : -20 + (b0 + (b1 - b0) * f + 20) * ease((u - 0.4f) / 0.6f);
+            float u = since / 1100f, home = b0 + (b1 - b0) * f;
+            rxp = u < 0.4f ? home + (w + 30 - home) * (float) Math.pow(u / 0.4f, 2.2) : -20 + (home + 20) * ease((u - 0.4f) / 0.6f); ryp = by + 0.5f; ang = 0f;
         }
-        for (int x = b0; x < b1; x += 3) if (x > rxp + 6) g.fill(x, by, x + 1, by + 1, Gfx.argb(Math.round(a * 0.35f), 0xB9B6E6));
-        float tail0 = Math.max(b0, rxp - Math.max(18, (b1 - b0) * 0.6f));
-        for (int i = 0; i < 16; i++) {                                                            // the trail: pink near the rocket, violet, then gone
-            float u0 = i / 16f, xa = rxp - 3 - (rxp - 3 - tail0) * (u0 + 1f / 16f), xb = rxp - 3 - (rxp - 3 - tail0) * u0; if (xb <= b0) continue;
-            g.fill(Math.round(Math.max(b0, xa)), by, Math.round(xb), by + 1, Gfx.argb(Math.round(a * 0.85f * (1f - u0)), Ritual.mixc(PINK, V, u0)));
+        float trailEnd = Math.min(rxp, b1);
+        for (int x = b0; x < b1; x += 3) if (x > trailEnd + 6) g.fill(x, by, x + 1, by + 1, Gfx.argb(Math.round(a * 0.35f), 0xB9B6E6));
+        float tail0 = Math.max(b0, trailEnd - Math.max(18, (b1 - b0) * 0.6f));
+        if (lift >= 1f) for (int i = 0; i < 16; i++) {                                          // the trail: pink near the rocket, violet, then gone
+            float u0 = i / 16f, xa = trailEnd - 3 - (trailEnd - 3 - tail0) * (u0 + 1f / 16f), xb = trailEnd - 3 - (trailEnd - 3 - tail0) * u0; if (xb <= b0) continue;
+            g.fill(Math.round(Math.max(b0, xa)), by, Math.round(xb), by + 1, Gfx.argb(Math.round(a * 0.85f * (1f - u0) * (1f - orbit)), Ritual.mixc(PINK, V, u0)));
         }
-        planet(g, b1 + 7, by + 0.5f, a);
-        rocket(g, rxp, by + 0.5f, a, now, playing || since < 1100, since < 1100 ? 1f + warp * 2f : 1f);
+        pad(g, padX, by + 3, a, playing, now);
+        if (lift < 0.9f && since >= 1100) for (int i = 0; i < 4; i++) {                          // smoke rolling off the pad
+            float q = ((now / 450f) + i / 4f) % 1f, sa = (1f - q) * Math.min(1f, (0.9f - lift) * 4f);
+            NebulaTex.glow(g, padX + (i - 1.5f) * 3f * (0.6f + q), by + 2 - q * 3, 2 + q * 3, 1.5f + q * 2, Gfx.argb(Math.round(a * 0.45f * sa), 0xC8C4E0));
+        }
+        boolean fire = playing || since < 1100;
+        if (rBehind) flyer(g, rxp, ryp, ang, a, now, fire, 1f);
+        planet(g, pcx, pcy, a);
+        if (!rBehind) flyer(g, rxp, ryp, ang, a, now, fire, since < 1100 ? 1f + warp * 2f : lift < 1f ? 1.6f : 1f);
         String l = mmss(pos), r = "-" + mmss(Math.max(0, dur - pos)); float rw = font.width(r) * 0.55f;
         small(g, font, l, b0, by + 4, 0.55f, Gfx.argb(Math.round(a * 0.55f), 0xFFFFFF));
-        small(g, font, r, b1 - rw, by + 4, 0.55f, Gfx.argb(Math.round(a * 0.55f), 0xFFFFFF));
+        small(g, font, r, b1 - 4 - rw, by + 4, 0.55f, Gfx.argb(Math.round(a * 0.55f), 0xFFFFFF));
         if (since < 500) { float fl = 1f - since / 500f; NebulaTex.glow(g, w - 4, by, 18, 10, Gfx.argb(Math.round(a * 0.6f * fl * Math.min(1f, since / 120f)), PINK)); }   // where the rocket left
     }
     /** A little rocket pointing right, its nose at x+5: white body, a round window, pink fins, a flickering flame (longer with boost). */
@@ -143,11 +167,25 @@ final class NowPlayingHud {
         g.fill(cx - 5, cy - 4, cx - 2, cy - 2, Gfx.argb(a, PINK)); g.fill(cx - 5, cy + 2, cx - 2, cy + 4, Gfx.argb(a, PINK));        // fins
         g.fill(cx - 4, cy + 1, cx + 3, cy + 2, Gfx.argb(a, 0xB8B4D8));
     }
-    /** The destination: a small ringed planet at the end of the course. */
+    /** The rocket turned to ang (0 = flying right). */
+    private static void flyer(GuiGraphicsExtractor g, float x, float y, float ang, int a, long now, boolean firing, float boost) {
+        Gfx.push(g); Gfx.translate(g, x, y); if (ang != 0f) Gfx.rotate(g, ang); rocket(g, 0, 0, a, now, firing, boost); Gfx.pop(g);
+    }
+    /** The launch pad at the start of the course: a deck on two legs and a little tower whose light blinks (green playing, red paused). */
+    private static void pad(GuiGraphicsExtractor g, int x, int y, int a, boolean playing, long now) {
+        g.fill(x - 4, y, x + 5, y + 1, Gfx.argb(a, 0x9A9EC8)); g.fill(x - 4, y + 1, x + 5, y + 2, Gfx.argb(a, 0x5A5E88));
+        g.fill(x - 3, y + 2, x - 2, y + 4, Gfx.argb(a, 0x3A3E68)); g.fill(x + 3, y + 2, x + 4, y + 4, Gfx.argb(a, 0x3A3E68));
+        g.fill(x - 6, y - 8, x - 5, y + 1, Gfx.argb(a, 0x4A4E78));
+        boolean blink = (now / 500) % 2 == 0;
+        g.fill(x - 6, y - 9, x - 5, y - 8, blink ? Gfx.argb(a, playing ? 0x7AF0B0 : 0xFF5A6A) : Gfx.argb(a, 0x3A3E68));
+    }
+    /** The destination: the same ringed planet as the Active control, its ring passing in front. */
     private static void planet(GuiGraphicsExtractor g, float x, float y, int a) {
-        NebulaTex.glow(g, x, y, 7, 7, Gfx.argb(Math.round(a * 0.35f), V));
-        disc(g, x, y, 3.5f, Gfx.argb(a, 0x5A3FAA)); disc(g, x - 0.8f, y - 0.8f, 2.6f, Gfx.argb(a, 0x8A6AE8)); disc(g, x - 1.4f, y - 1.4f, 1f, Gfx.argb(Math.round(a * 0.7f), 0xFFFFFF));
-        g.fill(Math.round(x - 5), Math.round(y), Math.round(x + 6), Math.round(y) + 1, Gfx.argb(Math.round(a * 0.8f), 0xFFB8EC));
+        int ring = Gfx.argb(Math.round(a * 0.8f), 0xC8B4FF);
+        NebulaTex.glow(g, x, y, 9, 9, Gfx.argb(Math.round(a * 0.4f), V));
+        g.fill(Math.round(x - 8), Math.round(y), Math.round(x + 9), Math.round(y) + 1, ring);
+        disc(g, x, y, 4.2f, Gfx.argb(a, 0x3E3090)); disc(g, x - 0.8f, y - 0.8f, 3.2f, Gfx.argb(a, 0x8A6AE8)); disc(g, x - 1.5f, y - 1.5f, 1.1f, Gfx.argb(Math.round(a * 0.67f), 0xFFFFFF));
+        g.fill(Math.round(x - 8), Math.round(y), Math.round(x - 4), Math.round(y) + 1, ring); g.fill(Math.round(x + 5), Math.round(y), Math.round(x + 9), Math.round(y) + 1, ring);
     }
     private static void rout1(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { g.fill(x + 1, y, x + w - 1, y + 1, c); g.fill(x + 1, y + h - 1, x + w - 1, y + h, c); g.fill(x, y + 1, x + 1, y + h - 1, c); g.fill(x + w - 1, y + 1, x + w, y + h - 1, c); }
     private static float hash(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }

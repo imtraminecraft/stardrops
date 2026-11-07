@@ -2821,6 +2821,8 @@ public class FancyScreen extends Screen {
             mv.ctls.add(new Btn("Move HUD", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this)))); rows.add(mv);
             Row nps = row(0, ":size:", "Size", "How big it is", Ui.ACCENT);
             nps.ctls.add(new Slider(60, 160, 5, () -> c.npScale, v -> c.npScale = (int) v, () -> c.npScale + "%").typed(1)); rows.add(nps);
+            Row npo = row(0, ":glass:", "Background", "How see-through the card is: 20% lets the game show through, 70% is nearly solid", Ui.ACCENT);
+            npo.ctls.add(new Slider(20, 70, 5, () -> c.npBg, v -> c.npBg = (int) v, () -> c.npBg + "%").typed(1)); rows.add(npo);
             rows.add(section("Behaviour"));
             rows.add(picker("When paused", "", new String[]{"Stays", "Hides after 8 s", "Hides at once"}, new String[]{"", "", ""},
                 new String[]{":play:", ":clock:", ":switch:"}, new int[]{0xFF1ED760, 0xFFFFC857, 0xFF8A93B0}, null, 3, () -> c.npHidePaused, i -> c.npHidePaused = i));

@@ -146,7 +146,8 @@ public class FancyConfig {
     static int lyricsShift() { FancyConfig c = get(); Spotify.Track t = Spotify.track; Integer s = t == null || c.songOffset == null ? null : c.songOffset.get(t.id()); return c.lyricsOffset + (s == null ? 0 : s); }
     public boolean cosShooting = true, cosShootNight = true, cosClock = false, cosNight = true, cosAurora = false, cosMeteor = true;   // Visuals > Cosmos
     public boolean ambGlow = false, ambNotes = false, ambBars = false, ambWave = false, lyricsStars = true; public int ambGlowStrength = 60;   // Ambience (Visuals > Ambience)
-    public boolean npOn = true; public int npScale = 100, npHidePaused = 1;   // Now Playing; when paused: 0 stays, 1 hides after 8 s, 2 hides at once
+    public boolean npOn = true; public int npScale = 100, npHidePaused = 1, npBg = 60;   // npBg: how solid the card's background is, 20..70 %
+      // Now Playing; when paused: 0 stays, 1 hides after 8 s, 2 hides at once
     public float npX = 0.5f; public int npY = 4;                         // where it sits: the middle of it at npX of the width, npY pixels from the top
     public double playMinutes = 0; public java.util.Map<String, Long> playDone = new java.util.LinkedHashMap<>();   // Playtime: minutes played with the mod on; when each milestone was reached
     public float lineX = 0.5f, lyY = 0.64f;                            // where the lyrics sit: the middle of the line, as fractions of the screen (Visuals > Lyrics > Move them)
@@ -187,7 +188,7 @@ public class FancyConfig {
         c.titleScale = clamp(c.titleScale, 0.5f, 1.5f); c.subScale = clamp(c.subScale, 0.5f, 1.5f); c.subDelay = clamp(c.subDelay, 0f, 3f);
         c.animScale = clamp(c.animScale, 0.5f, 1.5f); c.normalSize = Math.max(50, Math.min(100, c.normalSize)); c.itemSpin = clamp(c.itemSpin, 0f, 2f); c.itemGlow = clamp(c.itemGlow, 0f, 1.5f);
         c.barPx = Math.max(5, Math.min(15, c.barPx));
-        c.lyricsStyle = Math.max(0, Math.min(3, c.lyricsStyle)); c.npLine = c.npLine == 2 ? 2 : 1; c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
+        c.lyricsStyle = Math.max(0, Math.min(3, c.lyricsStyle)); c.npLine = c.npLine == 2 ? 2 : 1; c.npBg = c.npBg == 0 ? 60 : Math.max(20, Math.min(70, c.npBg)); c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
         c.mythPet = Math.max(0, Math.min(5, c.mythPet)); c.mythSpade = Math.max(0, Math.min(2, c.mythSpade));
         c.menuTranslucency = Math.max(0, Math.min(70, c.menuTranslucency)); c.previewAt = Math.max(0, Math.min(2, c.previewAt));
         c.animPos = Math.max(0, Math.min(2, c.animPos)); c.textPos = Math.max(0, Math.min(1, c.textPos));
