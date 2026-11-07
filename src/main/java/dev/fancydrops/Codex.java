@@ -180,6 +180,7 @@ final class Codex {
         int x = Math.round(sx0 + sw / 2f - ow / 2f - dx - drift + sw * 0.03f), y = Math.round(sy0 + sh / 2f - oh / 2f - dy);
         if (!NebulaTex.draw(g, x, y, Math.round(ow), Math.round(oh))) for (int i = 0; i < 24; i++) { int y0 = sy0 + sh * i / 24, y1 = sy0 + sh * (i + 1) / 24; g.fill(sx0, y0, sx0 + sw, y1, mix(0xFF0A1028, 0xFF1C1236, i / 24f)); }
         if (alpha < 1f) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(1f - alpha, 0x05060F));
+        deepSky(g);
         float px = (camU - aspect() / 2f) * sh * camS * 0.35f, py = (camV - 0.5f) * sh * camS * 0.35f;
         for (int i = 0; i < 70; i++) {                                           // a near layer of stars that twinkle (and move a little more)
             float u = rnd(i * 13 + 1), v = rnd(i * 29 + 7), tw = (float) Math.max(0, Math.sin(now / (500.0 + rnd(i) * 1300) + i * 2.1));
@@ -200,6 +201,62 @@ final class Codex {
             streak(x0, y0, x0 - (float) Math.cos(an) * len, y0 - (float) Math.sin(an) * len * 0.7f, col, warp * ph * 0.9f);
         }
     }
+    /**
+     * The deep sky behind the constellations: the Milky Way as a band of star dust across the sky, a spiral galaxy slowly turning in
+     * the far corner, a few bright stars with long diffraction spikes, and a comet drifting along its tail. All of it moves with the
+     * camera a little (parallax), and everything is points and glows: a few hundred fills a frame.
+     */
+    private static void deepSky(GuiGraphicsExtractor g) {
+        float tt = (now % 3_600_000L) / 1000f;
+        float px = (camU - aspect() / 2f) * sh * camS * 0.25f, py = (camV - 0.5f) * sh * camS * 0.25f;
+        // the Milky Way: a soft glowing band from the lower left to the upper right, thick with dust and tiny stars
+        float ax = sx0 - sw * 0.05f - px, ay = sy0 + sh * 0.95f - py, bx = sx0 + sw * 1.05f - px, by = sy0 + sh * 0.05f - py;
+        for (int i = 0; i < 16; i++) {
+            float u = i / 15f, x = ax + (bx - ax) * u, y = ay + (by - ay) * u, w = (float) Math.sin(Math.PI * (0.15f + 0.7f * u));
+            NebulaTex.glow(g, x, y, sw * 0.1f, sh * 0.15f, argb(0.13f * w * alpha, i % 3 == 0 ? 0xB89AFF : i % 3 == 1 ? 0x9AB8FF : 0xFFD8C8));
+            NebulaTex.glow(g, x, y, sw * 0.05f, sh * 0.06f, argb(0.1f * w * alpha, 0xFFF4F0));
+        }
+        float nx = -(by - ay), ny = bx - ax, nl = (float) Math.hypot(nx, ny); nx /= nl; ny /= nl;
+        for (int i = 0; i < 520; i++) {                                                  // the dust: thick in the middle of the band, thinning out
+            float u = rnd(i * 17 + 3), off = (rnd(i * 31 + 5) + rnd(i * 37 + 11) + rnd(i * 41 + 13) - 1.5f) * sh * 0.14f;
+            float x = ax + (bx - ax) * u + nx * off, y = ay + (by - ay) * u + ny * off;
+            if (x < sx0 || x >= sx0 + sw || y < sy0 || y >= sy0 + sh) continue;
+            float tw = 0.6f + 0.4f * (float) Math.sin(tt * (0.6 + rnd(i) * 1.6) + i);
+            int c = i % 7 == 0 ? 0xFFE0C0 : i % 5 == 0 ? 0xC8D8FF : 0xE8E8FF;
+            g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, argb((0.3f + 0.5f * rnd(i * 3)) * tw * alpha, c));
+        }
+        for (int i = 0; i < 6; i++) {                                                    // dark dust lanes running along it
+            float u = 0.12f + 0.13f * i, x = ax + (bx - ax) * u + nx * sh * 0.015f * (i % 2 == 0 ? 1 : -1), y = ay + (by - ay) * u + ny * sh * 0.015f * (i % 2 == 0 ? 1 : -1);
+            NebulaTex.glow(g, x, y, sw * 0.05f, sh * 0.025f, argb(0.22f * alpha, 0x05060F));
+        }
+        // a spiral galaxy far away, turning very slowly
+        float gx = sx0 + sw * 0.6f - px * 0.6f, gy = sy0 + sh * 0.47f - py * 0.6f, gr = Math.min(sw, sh) * 0.075f, rot = tt * 0.03f;
+        NebulaTex.glow(g, gx, gy, gr * 1.7f, gr * 0.8f, argb(0.2f * alpha, 0xB89AFF)); NebulaTex.glow(g, gx, gy, gr * 0.9f, gr * 0.45f, argb(0.25f * alpha, 0xFF9AD8));
+        NebulaTex.glow(g, gx, gy, gr * 0.35f, gr * 0.2f, argb(0.45f * alpha, 0xFFF0D8));
+        for (int arm = 0; arm < 2; arm++) for (int i = 0; i < 46; i++) {
+            float k = i / 45f, an = rot + arm * (float) Math.PI + k * 4.2f, r = gr * (0.12f + 0.95f * k);
+            float x = gx + (float) Math.cos(an) * r, y = gy + (float) Math.sin(an) * r * 0.42f;
+            g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, argb((0.75f - 0.5f * k) * alpha, i % 4 == 0 ? 0xFFB8E0 : i % 3 == 0 ? 0x9AD8FF : 0xD8D0FF)); if (i % 6 == 0) glow(x, y, 2.5f, 0xC8B8FF, 0.35f * (1f - k));
+        }
+        // bright stars with long diffraction spikes, breathing
+        float[][] bright = {{0.14f, 0.12f}, {0.47f, 0.08f}, {0.72f, 0.46f}, {0.93f, 0.62f}, {0.33f, 0.4f}};
+        int[] bc = {0xBFD8FF, 0xFFE6C0, 0xFFB8A8, 0xC8F0FF, 0xE8D8FF};
+        for (int i = 0; i < bright.length; i++) {
+            float x = sx0 + sw * bright[i][0] - px * 0.8f, y = sy0 + sh * bright[i][1] - py * 0.8f, b = 0.7f + 0.3f * (float) Math.sin(tt * 1.3 + i * 2.3);
+            glow(x, y, 7f * b, bc[i], 0.35f * b);
+            NebulaTex.glow(g, x, y, 14f * b, 0.7f, argb(0.6f * b * alpha, bc[i])); NebulaTex.glow(g, x, y, 0.7f, 14f * b, argb(0.6f * b * alpha, bc[i]));
+            NebulaTex.glow(g, x, y, 5f * b, 0.5f, argb(0.4f * b * alpha, 0xFFFFFF));
+            glow(x, y, 1.4f, 0xFFFFFF, b);
+        }
+        // a comet, gliding along its tail across the upper sky once every couple of minutes
+        float cu = ((now % 150_000L) / 150_000f) * 1.4f - 0.2f;
+        if (cu > -0.1f && cu < 1.1f) {
+            float cx = sx0 + sw * (0.1f + 0.75f * cu), cy = sy0 + sh * (0.18f + 0.12f * cu), dx = -sw * 0.75f, dy = -sh * 0.12f, dl = (float) Math.hypot(dx, dy);
+            for (int i = 0; i < 18; i++) { float k = i / 17f; NebulaTex.glow(g, cx + dx / dl * k * sw * 0.09f, cy + dy / dl * k * sw * 0.09f, 3f + 6f * k, 2f + 3f * k, argb(0.18f * (1f - k) * alpha, i % 2 == 0 ? 0x9AE8FF : 0xD8F4FF)); }
+            glow(cx, cy, 4f, 0xD8F8FF, 0.8f); glow(cx, cy, 1.4f, 0xFFFFFF, 1f);
+        }
+    }
+
     /** An aurora: a few soft ribbons of green and violet light waving slowly across the top of the sky. */
     private static void aurora(GuiGraphicsExtractor g, float a) {
         if (a < 0.02f) return;
