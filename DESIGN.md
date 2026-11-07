@@ -591,3 +591,9 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Achievements come from ONE table: tools/achievements_src.py -> tools/make_achievements.py writes src/main/resources/fancydrops/achievements.json and the TABLE block in tools/worn-worker.js. Tiers: Common, Uncommon, Rare, Legendary. RNG = a drop worth 10M coins or more. First-day stars count drops while playtime < 24 h (missed after). Groups keep {drops, RNG, coins}.
 - Constellations: Every Drop, Mythological, Mob Drops, Farming, Fishing, Table & Dyes, Playtime (played time to the second), Mining (The Pickaxe). Stars whose goal moved past your numbers go dark; new stars you already earned light on load.
 - /fd achievement (and /fd achievements) opens the sky straight away.
+
+## Round: achievements sky polish (Nov 8, 01:31)
+- The star card shows the achievement's own tier (Common / Uncommon / Rare / Legendary, coloured), never a cosmetic rarity; "Lit" / "Not yet".
+- Stars by tier: lit stars sized 0.8 / 0.92 / 1.05 / 1.3, rimmed in the tier colour; rays: Common one bar, Uncommon and Rare a cross, Legendary an eight-point star with a gold crown ring. Unlit stars are visible small stars rimmed in their tier colour, so every figure reads.
+- Less clutter: constellation names are small spaced caps with a thin progress bar and a small count; the top hint is gone; the key at the bottom shows the four tiers, the reward mark and "click a constellation to fly in". An aurora waves across the top of the sky.
+- Mob Drops is two crossed swords (14 key points); figures are drawn a little larger (0.12).

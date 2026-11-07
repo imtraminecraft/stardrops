@@ -31,7 +31,7 @@ final class Codex {
     private static final String[] FIGURE = {"The Pole Star", "The Griffin", "The Sword", "The Sheaf", "The Fish", "The Drop", "The Hourglass", "The Pickaxe"};
     private static final int[] ACH_COL = {0xFFFFD27A, 0xFF55D8FF, 0xFFFF6A6A, 0xFF8CE86A, 0xFF4FC3FF, 0xFFFF72C6, 0xFFA9B4FF, 0xFF55D8FF};
     private static final String[] QUOTE = {"Every find, written down.", "Dig, and the earth answers.", "They drop what they guard.", "The harvest remembers.", "Patience, then a splash.", "Every colour has a story.", "Time flies when the drops are good.", "Strike the rock, and listen."};
-    private static final float[][] HOME = {{0.42f, 0.56f}, {0.37f, 0.17f}, {0.8f, 0.83f}, {0.6f, 0.82f}, {0.22f, 0.67f}, {0.19f, 0.27f}, {0.6f, 0.21f}, {0.85f, 0.4f}};      // fractions of the width, of the height
+    private static final float[][] HOME = {{0.42f, 0.56f}, {0.37f, 0.17f}, {0.79f, 0.78f}, {0.59f, 0.77f}, {0.22f, 0.67f}, {0.19f, 0.27f}, {0.6f, 0.21f}, {0.85f, 0.4f}};      // fractions of the width, of the height
     /** Which group a server chapter belongs to. */
     private static int groupOf(String ch) { return switch (ch) { case "myth" -> 1; case "rare", "mob" -> 2; case "mine" -> 7; case "farm" -> 3; case "fish" -> 4; case "dye" -> 5; case "time" -> 6; default -> 0; }; }
 
@@ -141,6 +141,7 @@ final class Codex {
         boolean pulling = pull > 0.001f;
         if (pulling) { Gfx.push(g); float pk = 1f + 0.45f * pull, pcx = sx0 + sw / 2f, pcy = sy0 + sh / 2f; Gfx.translate(g, pcx, pcy); Gfx.scale(g, pk); Gfx.translate(g, -pcx, -pcy); }
         sky(g);
+        aurora(g, 1f - cl(zoomed * 2f));
         scenery(g, 1f - cl(zoomed * 2.5f));
         streaks(g);
         hoverCon = -1;
@@ -197,6 +198,17 @@ final class Codex {
             float x0 = cx + (float) Math.cos(an) * r0, y0 = cy + (float) Math.sin(an) * r0 * 0.7f;
             int col = i % 5 == 0 ? 0xC9A0FF : i % 3 == 0 ? 0x9AD8FF : 0xFFFFFF;
             streak(x0, y0, x0 - (float) Math.cos(an) * len, y0 - (float) Math.sin(an) * len * 0.7f, col, warp * ph * 0.9f);
+        }
+    }
+    /** An aurora: a few soft ribbons of green and violet light waving slowly across the top of the sky. */
+    private static void aurora(GuiGraphicsExtractor g, float a) {
+        if (a < 0.02f) return;
+        float tt = (now % 3_600_000L) / 1000f;
+        int[] cols = {0x3AE8B0, 0x6A8CFF, 0xB46AFF};
+        for (int b = 0; b < 3; b++) for (int i = 0; i < 14; i++) {
+            float u = i / 13f, x = sx0 + sw * (0.08f + 0.84f * u), y = sy0 + sh * (0.1f + 0.05f * b) + (float) Math.sin(u * 5.0 + tt * 0.25 + b * 1.7) * sh * 0.035f;
+            float al = (0.06f + 0.04f * (float) Math.sin(tt * 0.6 + i * 0.7 + b)) * (float) Math.sin(Math.PI * u) * a * alpha;
+            NebulaTex.glow(g, x, y, sw * 0.05f, sh * (0.05f + 0.02f * b), argb(al, cols[b]));
         }
     }
     private static void shootingStars(GuiGraphicsExtractor g) {
@@ -382,8 +394,8 @@ final class Codex {
         OUTLINE[1] = new float[][]{{-1f, -.45f, -.7f, -.1f, -.35f, .05f, 0f, .12f, .35f, .05f, .7f, -.1f, 1f, -.45f},          // the griffin: wings,
                 {0f, .12f, 0f, .6f, -.22f, .9f}, {0f, .6f, .22f, .9f}, {0f, .12f, .05f, -.25f, .28f, -.32f}};                       // body and tail, head and beak
         KEY[1] = pts(-1f, -.45f, 1f, -.45f, .05f, -.25f, 0f, .6f, -.7f, -.1f, .7f, -.1f, -.22f, .9f, .22f, .9f, .28f, -.32f, 0f, .12f);
-        OUTLINE[2] = new float[][]{{0f, -1f, -.09f, -.8f, -.09f, .4f}, {0f, -1f, .09f, -.8f, .09f, .4f}, {-.5f, .4f, .5f, .4f}, {0f, .4f, 0f, .78f}};   // the sword
-        KEY[2] = pts(0f, -1f, 0f, .85f, -.5f, .4f, .5f, .4f, 0f, -.45f, 0f, .05f, 0f, .4f, 0f, .62f, -.09f, -.8f, .09f, -.8f);
+        OUTLINE[2] = new float[][]{{-.9f, -.95f, .55f, .5f}, {.9f, -.95f, -.55f, .5f}, {.25f, .62f, .68f, .2f}, {-.25f, .62f, -.68f, .2f}, {.55f, .5f, .85f, .8f}, {-.55f, .5f, -.85f, .8f}};   // two swords crossed
+        KEY[2] = pts(-.9f, -.95f, .9f, -.95f, .85f, .8f, -.85f, .8f, 0f, -.05f, .68f, .2f, -.68f, .2f, .25f, .62f, -.25f, .62f, -.45f, -.5f, .45f, -.5f, .3f, .25f, -.3f, .25f, .7f, .65f);
         OUTLINE[3] = new float[][]{{0f, .95f, 0f, -.7f, 0f, -1f}, {0f, .5f, -.5f, -.55f, -.62f, -.9f}, {0f, .5f, .5f, -.55f, .62f, -.9f}, {-.28f, .25f, .28f, .25f}};   // the sheaf
         KEY[3] = pts(0f, -1f, -.62f, -.9f, .62f, -.9f, 0f, .95f, -.28f, .25f, .28f, .25f, 0f, -.35f, -.5f, -.55f, .5f, -.55f, 0f, .5f);
         OUTLINE[4] = new float[][]{{1f, 0f, .45f, -.42f, -.2f, -.38f, -.6f, 0f, -.2f, .38f, .45f, .42f, 1f, 0f}, {-.6f, 0f, -1f, -.45f, -.86f, 0f, -1f, .45f, -.6f, 0f}};   // the fish
@@ -397,7 +409,8 @@ final class Codex {
     }
     private static float[] flat(float[][] p) { float[] o = new float[p.length * 2]; for (int i = 0; i < p.length; i++) { o[i * 2] = p[i][0]; o[i * 2 + 1] = p[i][1]; } return o; }
     private static float[][] pts(float... v) { float[][] o = new float[v.length / 2][]; for (int i = 0; i < o.length; i++) o[i] = new float[]{v[i * 2], v[i * 2 + 1]}; return o; }
-    private static float figR(int c) { return c == 0 ? 0.16f : 0.105f; }
+    private static final float[] TIER_K = {0.8f, 0.92f, 1.05f, 1.3f};
+    private static float figR(int c) { return c == 0 ? 0.16f : 0.12f; }
     /** A point on the figure's outline, t from 0 to 1 along all its strokes (for groups with more stars than key points). */
     private static float[] alongOutline(int c, float t) {
         float tot = 0; for (float[] st : OUTLINE[c]) for (int i = 2; i < st.length; i += 2) tot += Math.hypot(st[i] - st[i - 2], st[i + 1] - st[i - 1]);
@@ -459,15 +472,18 @@ final class Codex {
             float la = (1f - zoomed / 0.6f) * fade * alpha;
             String nm = spaced(ACH_NAME[c].toUpperCase(Locale.ROOT));
             float bot = 0.04f, top = -0.04f; for (Node n : t) { bot = Math.max(bot, n.dv()); top = Math.min(top, n.dv()); }
-            boolean above = c == 2 || c == 3 || c == 4;                                          // these figures have their names above them (clear of the hill and of each other)
+            boolean above = c == 3 || c == 4;                                          // these figures have their names above them (clear of the hill and of each other)
             int ty = above ? Math.round(Y(o[1] + top)) - 26 : Math.round(Y(o[1] + bot)) + 8, nw = host.width(nm);
             float hx0 = ox;
-            if (c == 0) small(g, nm, Math.round(ox - nw * 0.375f), ty + 2, argb(la, hv || full ? mix(col, 0xFFFFFFFF, 0.4f) : 0xFFE9B8));      // the heart's name, smaller
-            else text(g, nm, Math.round(ox - nw / 2f), ty, argb(la, hv || full ? mix(col, 0xFFFFFFFF, 0.4f) : 0xE6E8F4), true);
-            String sub = done + " / " + l.size(); int subW = Math.round(host.width(sub) * 0.75f);
-            small(g, sub, Math.round(ox - subW / 2f), ty + 11, argb(la * 0.8f, full ? col : 0xA8B2D0));
+            int nc = argb(la, hv || full ? mix(col, 0xFFFFFFFF, 0.4f) : mix(col, 0xFFFFFFFF, 0.65f));
+            small(g, nm, Math.round(ox - nw * 0.375f), ty + 2, nc);
+            float bw0 = Math.max(26, nw * 0.6f), bx0 = ox - bw0 / 2f, by0 = ty + 11;                       // a thin bar: how much of it is lit
+            g.fill(Math.round(bx0), Math.round(by0), Math.round(bx0 + bw0), Math.round(by0) + 1, argb(la * 0.35f, 0x8A94B8));
+            g.fill(Math.round(bx0), Math.round(by0), Math.round(bx0 + bw0 * frac), Math.round(by0) + 1, argb(la, col));
+            String sub = done + " / " + l.size(); int subW = Math.round(host.width(sub) * 0.6f);
+            Gfx.push(g); Gfx.translate(g, ox - subW / 2f, by0 + 3); Gfx.scale(g, 0.6f); Gfx.txt(g, font, sub, 0, 0, argb(la * 0.8f, full ? col : 0xA8B2D0), false); Gfx.pop(g);
             if (full) small(g, "✦ COMPLETE ✦", Math.round(ox - host.width("✦ COMPLETE ✦") * 0.375f), ty - 9, argb(la, col));
-            if (hk > 0f) { String fg = FIGURE[c]; small(g, fg, Math.round(ox - host.width(fg) * 0.375f), above ? ty - 10 : ty + 19, argb(la * hk, col)); }
+            if (hk > 0f) { String fg = FIGURE[c]; small(g, fg, Math.round(ox - host.width(fg) * 0.375f), above ? ty - 10 : ty + 21, argb(la * hk, col)); }
             ox = hx0; if (fc < 0) HITS.add(new Object[]{Math.round(ox - rad), Math.round(oy - rad), Math.round(ox + rad), Math.round(oy + rad + 30), (Runnable) () -> fly(c)});
         }
     }
@@ -500,15 +516,19 @@ final class Codex {
         Long ig = IGNITE.get(a.id()); float igT = ig == null ? 9f : (now - ig) / 1000f;
         boolean lit = a.done() && igT >= 0f;
         if (ig != null && igT >= 0f && igT < 0.05f && igSounded.add(a.id())) sound("sky_star", 1.2f, 0.8f);
-        if (lit) {                                                                           // a lit star: big, in the group's colour, a slow rotating flare and a halo, never mistaken for an unlit one
-            float r = (near ? 4.6f : 3.2f) * tw + (hv ? 1.2f : 0f);
+        int tier = Math.max(0, Math.min(3, a.tier())), tc = LocalLedger.TIER_COL[tier] & 0xFFFFFF;
+        float tk = TIER_K[tier];
+        if (lit) {                                                                           // a lit star: in the group's colour, its size, rim and flare set by its tier (Legendary: eight rays and a gold crown ring)
+            float r = (near ? 4.6f : 3.2f) * tw * tk + (hv ? 1.2f : 0f);
             if (igT < 1.4f) { float u = igT / 1.4f; glow(x, y, r * (12f - 7f * u), 0xFFFFFF, 0.9f * (1f - u) * fade); ring(x, y, r * (2f + 24f * ease(u)), argb((1f - u) * 0.9f * fade * alpha, col), 1f); r *= 1f + 1.2f * (1f - u); }
             glow(x, y, r * 7f, col, 0.55f * fade);
             glow(x, y, r * 3f, mix(col, 0xFFFFFFFF, 0.45f), 0.85f * fade);
-            ring(x, y, r * 2.1f, argb(0.75f * fade * alpha, mix(col, 0xFFFFFFFF, 0.3f)), 1f);
+            ring(x, y, r * 2.1f, argb(0.8f * fade * alpha, tier == 0 ? mix(col, 0xFFFFFFFF, 0.3f) : tc), 1f);
+            if (tier == 3) { ring(x, y, r * 3.0f, argb(0.45f * fade * alpha * (0.7f + 0.3f * tw), tc), 1f); glow(x, y, r * 9f, tc, 0.25f * fade); }
             float rays = r * (near ? 5f : 4.2f) * (0.85f + 0.15f * tw), sp = (now % 3_600_000L) / 4000f + n.depth();
-            for (int k = 0; k < 2; k++) { double an = sp + k * Math.PI / 2; float dx = (float) Math.cos(an) * rays, dy = (float) Math.sin(an) * rays;
-                line(x - dx, y - dy, x + dx, y + dy, mix(col, 0xFFFFFFFF, 0.6f), 0.7f * fade, 0); }
+            int nr = tier == 0 ? 1 : tier == 1 ? 2 : tier == 2 ? 2 : 4;                          // Common: one bar, Uncommon / Rare: a cross, Legendary: an eight-point star
+            for (int k = 0; k < nr; k++) { double an = sp + k * Math.PI / nr; float ln = k % 2 == 1 && tier == 3 ? 0.6f : 1f, dx = (float) Math.cos(an) * rays * ln, dy = (float) Math.sin(an) * rays * ln;
+                line(x - dx, y - dy, x + dx, y + dy, mix(tier >= 2 ? tc : col, 0xFFFFFFFF, 0.55f), 0.7f * fade, 0); }
             glow(x, y, r * 1.2f, 0xFFFFFF, fade);
         } else if (open) {                                                                   // the next one to earn: it pulses, with a ring showing how far along you are
             float prog = (float) Math.min(1.0, a.goal() <= 0 ? 0 : a.progress() / a.goal()), br = 0.5f + 0.5f * (float) Math.sin(now / 300.0 + c);
@@ -518,7 +538,8 @@ final class Codex {
             if (prog > 0f) ring(x, y, rr, argb(0.95f * fade * alpha, col), prog);
             ring(x, y, rr + 3 + 6 * br, argb((1f - br) * 0.5f * fade * alpha, col), 1f);
         } else {                                                                             // further along the path: a small grey star, not yet in reach
-            plainStar(x, y, 0.3f * fade, n.depth() + c * 13, false);
+            plainStar(x, y, 0.55f * fade, n.depth() + c * 13, tier == 3);
+            if (tier > 0) ring(x, y, 2.6f * tk, argb(0.35f * fade * alpha, tc), 1f);
         }
         if (near || hv || open && zoomed < 0.3f) {                                           // its number on the path: 1 is the first star to earn
             String num = String.valueOf(n.depth() + 1); float nw2 = host.width(num) * 0.6f;
@@ -556,8 +577,8 @@ final class Codex {
             String nm = a.secret() && !a.done() ? "???" : a.name();
             String rew = a.reward().isEmpty() ? "" : Ledger.rewardName(a.reward());
             String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  First day only." : "  Missed: your first day is over.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".") + (!a.done() && !open ? "  Star " + n.depth() + " comes first." : "");
-            String extra = LocalLedger.TIER[Math.max(0, Math.min(3, a.tier()))] + "  ·  Star " + (n.depth() + 1) + " of " + tree(c).size() + "  ·  " + (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal()));
-            host.tip(nm + "\n" + ACH_NAME[c] + "\n" + (a.done() ? 3 : 0) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
+            String extra = "Star " + (n.depth() + 1) + " of " + tree(c).size() + "  ·  " + (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal()));
+            host.tip(nm + "\n" + ACH_NAME[c] + "\nT" + Math.max(0, Math.min(3, a.tier())) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
         }
     }
 
@@ -573,11 +594,15 @@ final class Codex {
         int w = Math.max(110, Math.round(sw * 0.2f)), x = sx0 + sw - w - 10, y = sy0 + 26;
         y = card(g, "NEARLY THERE", next.subList(0, Math.min(3, next.size())), x, y, w, a, true) + 6;
         // (Recently Lit was removed to keep the sky clear; Nearly There stays)
-        int lx = sx0 + Math.round(sw * 0.42f), ly = sy0 + sh - 18;                              // the key: what a star looks like
-        g.fill(lx - 6, ly - 4, lx + 160, ly + 10, argb(0.45f * a * alpha, 0x060818));
-        glow(lx + 3, ly + 3, 3, 0xFFE9B8, a); small(g, "earned", lx + 9, ly + 1, argb(0.8f * a * alpha, 0xD8DCEC));
-        ring(lx + 54, ly + 3, 3, argb(0.3f * a * alpha, 0xC8D0F0), 1f); ring(lx + 54, ly + 3, 3, argb(0.95f * a * alpha, 0x7AD8FF), 0.6f); small(g, "in progress", lx + 60, ly + 1, argb(0.8f * a * alpha, 0xD8DCEC));
-        line(lx + 113, ly + 3, lx + 119, ly + 3, 0xFFE9B8, a, 0); line(lx + 116, ly, lx + 116, ly + 6, 0xFFE9B8, a, 0); small(g, "reward", lx + 123, ly + 1, argb(0.8f * a * alpha, 0xD8DCEC));
+        int lx = sx0 + Math.round(sw * 0.5f) - 120, ly = sy0 + sh - 16;                         // the key: the four tiers, and what a reward looks like
+        g.fill(lx - 8, ly - 5, lx + 248, ly + 10, argb(0.5f * a * alpha, 0x060818)); g.fill(lx - 8, ly - 5, lx + 248, ly - 4, argb(0.4f * a * alpha, 0xE8C76A));
+        int kx = lx;
+        for (int i = 0; i < 4; i++) {
+            int tc = LocalLedger.TIER_COL[i] & 0xFFFFFF; glow(kx + 3, ly + 3, 2.2f * TIER_K[i], tc, a); ring(kx + 3, ly + 3, 3.4f * TIER_K[i], argb(0.8f * a * alpha, tc), 1f);
+            String tn = LocalLedger.TIER[i]; small(g, tn, kx + 10, ly + 1, argb(0.85f * a * alpha, mix(0xFFD8DCEC, 0xFF000000 | tc, 0.35f))); kx += 14 + Math.round(host.width(tn) * 0.75f) + 8;
+        }
+        line(kx + 1, ly + 3, kx + 7, ly + 3, 0xFFE9B8, a, 0); line(kx + 4, ly, kx + 4, ly + 6, 0xFFE9B8, a, 0); small(g, "reward", kx + 11, ly + 1, argb(0.8f * a * alpha, 0xD8DCEC));
+        small(g, "click a constellation to fly in", lx + 248 - Math.round(host.width("click a constellation to fly in") * 0.75f), ly - 14, argb(0.45f * a * alpha, 0xB8C0DA));
     }
     private static int card(GuiGraphicsExtractor g, String title, List<Achievements.Ach> l, int x, int y, int w, float a, boolean bars) {
         if (l.isEmpty()) return y;
@@ -654,7 +679,7 @@ final class Codex {
         if (p != null && Achievements.unsent > 0) cnt += "  \u00B7  " + Achievements.unsent + " drop" + (Achievements.unsent == 1 ? "" : "s") + " waiting to be counted";
         small(g, cnt, x + host.width(ttl) + 10, y + 1, argb(0.8f * ia, 0xB8C0DA));
         if (p != null && all > 0) { int bw = host.width(ttl); g.fill(x, y + 11, x + bw, y + 12, argb(0.2f * ia, 0xFFE9B8)); g.fill(x, y + 11, x + Math.round(bw * lit / (float) all), y + 12, argb(ia, 0xFFE9B8)); }
-        if (zoomed < 0.3f && p != null) { String hint = "Point at a constellation, click to fly in"; small(g, hint, sx0 + sw - 34 - Math.round(host.width(hint) * 0.75f), sy0 + 12, argb(0.55f * ia * (1f - zoomed / 0.3f), 0xB8C0DA)); }
+        if (false && zoomed < 0.3f && p != null) { String hint = ""; small(g, hint, sx0 + sw - 34 - Math.round(host.width(hint) * 0.75f), sy0 + 12, argb(0.55f * ia * (1f - zoomed / 0.3f), 0xB8C0DA)); }
         compass(g, sx0 + sw - 30, sy0 + sh - 30, 16, ia);
         float bcx = sx0 + sw - 16.5f, bcy = sy0 + 14.5f;                                       // the close button: a ring with an X through its exact middle
         boolean hc = Math.hypot(mx - bcx, my - bcy) < 9;

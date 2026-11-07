@@ -870,8 +870,8 @@ public class FancyScreen extends Screen {
         String t = tipText; tipText = null;
         if (t == null || t.isEmpty()) return;
         String[] ln = t.split("\n", -1); if (ln.length < 6) return;
-        int rar = 0; try { rar = Integer.parseInt(ln[2]); } catch (NumberFormatException ignored) { }
-        boolean yours = "1".equals(ln[3]); int rc = RAR_COL[Math.max(0, Math.min(4, rar))];
+        int rar = 0, tier = -1; try { if (ln[2].startsWith("T")) tier = Integer.parseInt(ln[2].substring(1)); else rar = Integer.parseInt(ln[2]); } catch (NumberFormatException ignored) { }      // "T2": an achievement's tier
+        boolean yours = "1".equals(ln[3]); int rc = tier >= 0 ? LocalLedger.TIER_COL[Math.min(3, tier)] : RAR_COL[Math.max(0, Math.min(4, rar))];
         List<String> how = new ArrayList<>(); String cur = "";
         for (String wd : ln[5].split(" ")) { if (!cur.isEmpty() && Gfx.w(font, cur + " " + wd) > 190) { how.add(cur); cur = wd; } else cur = cur.isEmpty() ? wd : cur + " " + wd; }
         if (!cur.isEmpty()) how.add(cur);
@@ -880,8 +880,8 @@ public class FancyScreen extends Screen {
         int x = Math.min(mx + 10, width - w - 2), y = Math.min(my + 12, height - h - 2);
         pill(g, x, y, w, h, 0xF4101420); rout(g, x, y, w, h, Gfx.argb(200, rc & 0xFFFFFF)); g.fill(x, y + 2, x + 2, y + h - 2, tipCol);
         Gfx.text(g, font, ln[0], x + 10, y + 7, Canvas.mix(tipCol, 0xFFFFFFFF, 0.5f)); Gfx.text(g, font, ln[1], x + 10 + Gfx.w(font, ln[0]) + 6, y + 7, Ui.DIM);
-        int yy = y + 23; rarityPin(g, x + 10, yy + 1, rar); Gfx.text(g, font, CosmeticData.rarityName(rar), x + 22, yy, Canvas.mix(rc, 0xFFFFFFFF, 0.25f));
-        String st = yours ? "Unlocked" : "Locked"; Gfx.text(g, font, st, x + w - 10 - Gfx.w(font, st), yy, yours ? 0xFF62E6A8 : 0xFFFF7B7B);
+        int yy = y + 23; rarityPin(g, x + 10, yy + 1, tier >= 0 ? new int[]{0, 1, 1, 3}[Math.min(3, tier)] : rar); Gfx.text(g, font, tier >= 0 ? LocalLedger.TIER[Math.min(3, tier)] : CosmeticData.rarityName(rar), x + 22, yy, Canvas.mix(rc, 0xFFFFFFFF, 0.25f));
+        String st = tier >= 0 ? (yours ? "Lit" : "Not yet") : yours ? "Unlocked" : "Locked"; Gfx.text(g, font, st, x + w - 10 - Gfx.w(font, st), yy, yours ? 0xFF62E6A8 : 0xFFFF7B7B);
         yy += 15; if (!ln[4].isEmpty()) { Gfx.text(g, font, ln[4], x + 10, yy, Ui.SUB); yy += 13; }
         g.fill(x + 10, yy, x + w - 10, yy + 1, 0x22FFFFFF); yy += 6;
         for (String hl : how) { Gfx.text(g, font, hl, x + 10, yy, Ui.DIM); yy += 12; }
