@@ -11,11 +11,12 @@ package dev.fancydrops;
  *   CRIMSON  a basalt platform on the Crimson Isle: three meteors strike it, the cracks glow, it bursts open.
  *   MOBS     a monster spawner cage with a flame inside: it pulses three times, then the bars break apart.
  *   DYE      a white basin: three drops of the dye's colour fall in, each blooms into the water; the drop rises from a swirl of colour.
- *   MINES    a mithril ore block: a pickaxe strikes it three times, sparks fly and cracks spread, then it bursts into shards.
+ *   MINES    a mithril ore block (Minecraft-style): a pickaxe winds up and bites into its corner three times, chips and sparks fly,
+ *            texels are knocked out and the breaking cracks grow; then it breaks into little cubes.
  *   NUCLEUS  the Crystal Nucleus: five gem crystals circle a dark core and lock into place one beat at a time, then it lights up.
  *   END      the Dragon's Nest: eight Summoning Eyes on the altar light up, a dragon's eye opens in the sky and a roar of violet light.
- *   GLACITE  a Glacite Mineshaft: a Frozen Corpse locked in a block of ice; a pickaxe strikes it three times, frost bursts and the
- *            ice cracks deeper each time while the corpse's eyes start to glow; the ice shatters in a blizzard of shards and the loot rises.
+ *   GLACITE  a Glacite Mineshaft: a Frozen Corpse locked in a block of ice. Someone (random each time) walks up with a key, turns it
+ *            in the lock on each beat while the corpse's eyes light up; the ice splits open and the loot rises.
  */
 final class ShowScene {
     private ShowScene() {}
@@ -317,41 +318,114 @@ final class ShowScene {
     // ------------------------------------------------------------------ mining: the ore, the nucleus and the dragon's altar
     /** How hard beat k still rings (1 at the beat, fading over `len` seconds). */
     private static float hit(float op, float O, int k, float len) { float tau = beat(op, O, k); return tau >= 0 && tau < len ? 1f - tau / len : 0f; }
+    /** Who is in this animation's scene (the corpse's visitor): set by Ritual for each animation. */
+    static int seed;
+
+    /** A filled rectangle of canvas pixels. */
+    private static void box(float x, float y, float w, float h, int rgb, float a) {
+        if (a <= 0.01f) return;
+        int x0 = Math.round(x), y0 = Math.round(y), x1 = Math.round(x + w), y1 = Math.round(y + h), c = Ritual.A(a, rgb);
+        for (int yy = y0; yy < y1; yy++) for (int xx = x0; xx < x1; xx++) Ritual.cv.set(xx, yy, c);
+    }
+
+    /**
+     * The swing of a pickaxe whose tip lands on (hx, hy): 0 = held back, 1 = the blow. Before each beat it winds up slowly, comes down
+     * fast in the last 0.09 s, bites in, and bounces back a little.
+     */
+    private static float swing(float op, float O) {
+        float sw = 0.05f;
+        for (int k = 0; k < 3; k++) {
+            float tau = beat(op, O, k);
+            if (tau >= -0.42f && tau < -0.09f) sw = Math.max(sw, 0.05f - 0.25f * sm((tau + 0.42f) / 0.33f));          // the wind-up, drawing back
+            else if (tau >= -0.09f && tau < 0f) { float u = (tau + 0.09f) / 0.09f; sw = -0.2f + 1.2f * u * u; }         // the blow
+            else if (tau >= 0f && tau < 0.07f) sw = 1f;                                                                // bitten in
+            else if (tau >= 0.07f && tau < 0.32f) sw = 1f - 0.75f * eo((tau - 0.07f) / 0.25f);                          // the recoil
+        }
+        return sw;
+    }
+    /**
+     * A pickaxe swung by someone standing to the right: at the blow (sw = 1) the lower point of its head lands on (hx, hy); held back
+     * (sw = 0) the handle points up and over the shoulder. A motion smear trails a fast blow.
+     */
+    private static void pickaxe(float hx, float hy, float len, float sw, float sz, int head, int headLo, float a, float prevSw) {
+        float thB = 2.62f, hl = len * 0.38f;                                                         // the handle's angle at the blow: from the hands down to the left
+        float dbx = (float) Math.cos(thB), dby = (float) Math.sin(thB), tbx = (float) Math.cos(thB - 1.5708f), tby = (float) Math.sin(thB - 1.5708f);
+        float gx = hx - dbx * len - tbx * hl, gy = hy - dby * len - tby * hl;                         // the hands, so the tip meets the block
+        float ang = thB + (1f - sw) * 1.55f;
+        float ex = gx + (float) Math.cos(ang) * len, ey = gy + (float) Math.sin(ang) * len;
+        float tx = (float) Math.cos(ang - 1.5708f), ty = (float) Math.sin(ang - 1.5708f);          // towards the striking point
+        if (sw > prevSw + 0.12f) for (int k = 1; k <= 3; k++) {                                        // the smear behind a fast blow
+            float a2 = ang + k * 0.2f, sx = gx + (float) Math.cos(a2) * len, sy = gy + (float) Math.sin(a2) * len;
+            Ritual.stroke(sx, sy, sx + (float) Math.cos(a2 - 1.5708f) * hl, sy + (float) Math.sin(a2 - 1.5708f) * hl, 1.3f * sz, 0xE8F4FF, a * (0.4f - k * 0.11f));
+        }
+        Ritual.stroke(gx, gy, ex, ey, 1.5f * sz, 0x7A4E22, a); Ritual.stroke(gx, gy, ex, ey, 0.5f * sz, 0xA8743A, a);    // the handle
+        float px = ex + tx * hl, py = ey + ty * hl, bx = ex - tx * hl * 0.8f, by = ey - ty * hl * 0.8f;
+        float bend = len * 0.06f, cbx = (float) Math.cos(ang) * bend, cby = (float) Math.sin(ang) * bend;   // the head curves back toward the hands at both ends
+        Ritual.stroke(ex, ey, px - cbx, py - cby, 1.8f * sz, head, a); Ritual.stroke(ex, ey, bx - cbx, by - cby, 1.8f * sz, head, a);
+        Ritual.stroke(ex + 1, ey + 1, px - cbx + 1, py - cby + 1, 0.5f * sz, headLo, a);
+        dot(px - cbx, py - cby, WHITE, a); dot(gx, gy, 0xF2C8A0, a);
+    }
+    /** An ore block, Minecraft-style: front face of 8 x 8 texels and a lighter top; texels knocked out where it was hit; breaking cracks. */
+    private static void block(float cx, float gy, float s, int stone, int stoneHi, int ore, int oreHi, int stage, float since, float a, float jx) {
+        float tx = s / 8f, x0 = cx - s / 2f + jx, y0 = gy - s, top = s * 0.28f;
+        for (int i = 0; i < 8; i++) {                                                                // the top face, skewed back
+            for (int r = 0; r < 2; r++) box(x0 + i * tx + (2 - r) * tx * 0.5f, y0 - top + r * top / 2f, tx + 1, top / 2f + 1, r == 0 ? mix(stoneHi, WHITE, 0.15f) : stoneHi, a);
+        }
+        for (int j = 0; j < 8; j++) for (int i = 0; i < 8; i++) {
+            float n = rnd(i * 31 + j * 7 + 3);
+            boolean isOre = (rnd(i * 13 + j * 5) > 0.72f);
+            int col = isOre ? mix(ore, oreHi, rnd(i + j * 3)) : mix(stone, stoneHi, n * 0.5f);
+            if (i == 0 || j == 0) col = mix(col, WHITE, 0.12f);
+            if (i == 7 || j == 7) col = mix(col, 0x000000, 0.25f);
+            // knocked out: the texels round the spot each strike hit (top right), more with each stage
+            float dx = i - 6, dy = j - 1.5f; boolean gone = stage > 0 && dx * dx + dy * dy < stage * 1.6f && rnd(i * 7 + j) > 0.25f;
+            if (gone) col = mix(stone, 0x000000, 0.55f);
+            box(x0 + i * tx, y0 + j * tx, tx + 0.6f, tx + 0.6f, col, a);
+        }
+        int[][] crack = {{5, 1}, {4, 2}, {4, 3}, {3, 4}, {6, 3}, {6, 4}, {2, 5}, {3, 6}, {5, 5}, {1, 6}, {7, 5}, {4, 6}, {2, 3}, {1, 2}, {5, 7}, {6, 6}};
+        int nCrack = Math.min(crack.length, stage * 5 + Math.round(5 * cl(since / 0.15f)) * (stage > 0 ? 1 : 0));          // Minecraft's breaking stages, growing on each strike
+        for (int k = 0; k < nCrack; k++) box(x0 + crack[k][0] * tx + tx * 0.25f, y0 + crack[k][1] * tx + tx * 0.25f, tx * 0.5f + 0.5f, tx * 0.5f + 0.5f, 0x0A0A0E, 0.85f * a);
+    }
+    /** Chips knocked off the block: little cubes of its colours flying from the strike, falling. */
+    private static void chips(float x, float y, float since, float sz, int stone, int ore, float a, int seedK) {
+        if (since < 0 || since > 0.7f) return;
+        float u = since / 0.7f;
+        for (int i = 0; i < 9; i++) {
+            float vx = (0.2f + rnd(seedK * 40 + i)) * 55 * sz, vy = -(25 + 40 * rnd(seedK * 70 + i)) * sz;
+            float px = x + vx * since, py = y + vy * since + 120 * sz * since * since, r = (0.8f + 1.2f * rnd(i * 3 + seedK)) * sz;
+            box(px - r, py - r, r * 2, r * 2, i % 3 == 0 ? ore : stone, (1 - u * u) * a);
+        }
+        for (int i = 0; i < 6; i++) { float an = -2.6f + rnd(seedK * 9 + i) * 2.2f, d = eo(u) * 14 * sz; dot(x + (float) Math.cos(an) * d, y + (float) Math.sin(an) * d, i % 2 == 0 ? WHITE : 0xFFE0A0, (1 - u) * a); }   // sparks
+    }
+    /** The block breaks: every texel flies out as a little cube, spinning dust behind. */
+    private static void burst(float cx, float gy, float s, float p, float sz, int stone, int ore, float a, boolean rng) {
+        float life = rng ? 1.3f : 1.0f; if (p < 0 || p > life) return;
+        float u = p / life, tx = s / 8f;
+        for (int j = 0; j < 8; j += 1) for (int i = 0; i < 8; i += 1) {
+            if ((i + j) % 2 == 1 && !rng) continue;
+            float ox = (i - 3.5f) * tx, oy = (j - 3.5f) * tx - s / 2f, d = (float) Math.hypot(ox, oy + s / 2f) + 1;
+            float sp = (30 + 40 * rnd(i * 9 + j)) * sz * (rng ? 1.3f : 1f);
+            float px = cx + ox + ox / d * sp * p, py = gy + oy + ((oy + s / 2f) / d - 0.8f) * sp * p + 130 * sz * p * p;
+            float r = tx * 0.5f * (1f - u * 0.5f);
+            box(px - r, py - r, r * 2, r * 2, rnd(i * 13 + j * 5) > 0.72f ? ore : stone, (1 - u * u) * a);
+        }
+        if (p < 0.5f) Ritual.fillE(cx, gy - 2 * sz, (8 + 40 * eo(p / 0.5f)) * sz, (3 + 10 * eo(p / 0.5f)) * sz, 0xB8B8C4, (1 - p / 0.5f) * 0.4f * a);   // dust
+    }
     private static void ore(float t, float O, float op, float p, float cx, float gy, float sz, float a, float rumble, boolean rng) {
-        float s = 20 * sz, top = gy - 2 * s, brk = p >= 0f ? eo(p / 0.6f) : 0f;
+        float s = 34 * sz;
         Ritual.fillE(cx, gy + 2, 58 * sz, 11 * sz, 0x0C0E14, 0.8f * a);
-        float pulse = Math.max(hit(op, O, 0, 0.4f), Math.max(hit(op, O, 1, 0.4f), hit(op, O, 2, 0.4f)));
-        int struck = 0; for (int k = 0; k < 3; k++) if (beat(op, O, k) >= 0) struck++;
-        cx += (float) Math.sin(t * 80f) * (pulse * 1.4f + rumble) * sz * 1.6f;
-        if (brk < 1f) {                                                                       // the block: stone with mithril veins, cracking a little more on every strike
-            float al = a * (1 - brk);
-            for (int yy = Math.round(top); yy < Math.round(gy); yy++) for (int xx = Math.round(cx - s); xx < Math.round(cx + s); xx++) {
-                int gx = (int) ((xx - cx + s) / (s / 4)), gyy = (int) ((yy - top) / (s / 4));
-                float n = rnd(gx * 31 + gyy * 7); int col = n > 0.72f ? mix(0x5ACFC0, 0xA8FFF0, rnd(gx + gyy * 3)) : mix(0x44465A, 0x5A5C72, n);
-                if (yy == Math.round(top) || xx == Math.round(cx - s)) col = mix(col, WHITE, 0.25f);
-                Ritual.cv.set(xx, yy, Ritual.A(al, col));
-            }
-            for (int k = 0; k < struck; k++) for (int c = 0; c < 3; c++) {                 // the cracks
-                float an = rnd(k * 9 + c) * 6.28f, len = (0.5f + 0.5f * rnd(k * 4 + c)) * s;
-                Ritual.stroke(cx, gy - s, cx + (float) Math.cos(an) * len, gy - s + (float) Math.sin(an) * len, 0.6f, 0x14141C, al);
-            }
-            Ritual.glowE(cx, gy - s, s * (1 + pulse), s * (1 + pulse), 0x7FE8D8, (0.15f + 0.08f * struck + 0.4f * pulse) * al);
+        int struck = 0; float since = 9f; for (int k = 0; k < 3; k++) { float tau = beat(op, O, k); if (tau >= 0) { struck++; since = tau; } }
+        float jolt = since < 0.12f ? (1f - since / 0.12f) : 0f, jx = (float) Math.sin(t * 90f) * (jolt * 1.2f + rumble * 1.5f) * sz;
+        int stone = 0x4A4C60, stoneHi = 0x6A6C82, oreC = 0x4FCFBE, oreHi = 0xB8FFF4;
+        if (p < 0f) {
+            block(cx, gy, s, stone, stoneHi, oreC, oreHi, struck, since, a, jx);
+            Ritual.glowE(cx, gy - s / 2, s, s, 0x7FE8D8, (0.1f + 0.06f * struck + 0.35f * jolt) * a);
+            float hx = cx + s * 0.32f, hy = gy - s * 0.82f;                                            // where the tip bites: the block's top right
+            pickaxe(hx, hy, s * 1.1f, swing(op, O), sz, 0x9AE6FF, 0x3A7A8A, a, swing(op - 1 / 60f, O));
+            for (int k = 0; k < 3; k++) chips(hx, hy, beat(op, O, k), sz, stone, oreC, a, k);
+            if (jolt > 0.5f) Ritual.glowE(hx, hy, 8 * sz, 8 * sz, WHITE, (jolt - 0.5f) * 1.2f * a);
         }
-        if (p < 0f) {                                                                         // the pickaxe: lifts, then swings down on each beat
-            float sw = 0f; for (int k = 0; k < 3; k++) { float tau = beat(op, O, k); if (tau >= -0.3f && tau < 0f) sw = (tau + 0.3f) / 0.3f; else if (tau >= 0 && tau < 0.12f) sw = 1f; }
-            float ang = -2.2f + 1.5f * sw * sw, px0 = cx + s * 1.6f, py0 = top - s * 0.2f;
-            float hx = px0 + (float) Math.cos(ang) * s * 1.8f, hy = py0 + (float) Math.sin(ang) * s * 1.8f;
-            Ritual.stroke(px0, py0, hx, hy, 1.4f * sz, 0x7A4E22, a);
-            float nx = (float) Math.cos(ang + 1.57f) * s * 0.7f, ny = (float) Math.sin(ang + 1.57f) * s * 0.7f;
-            Ritual.stroke(hx - nx, hy - ny, hx + nx, hy + ny, 1.6f * sz, 0x9AE6FF, a); Ritual.stroke(hx - nx, hy - ny + 1, hx + nx, hy + ny + 1, 0.5f * sz, 0x3A7A8A, a);
-        }
-        for (int k = 0; k < 3; k++) { float tau = beat(op, O, k); if (tau < 0 || tau > 0.6f) continue;      // sparks off every strike
-            for (int i = 0; i < 12; i++) { float an = -1.6f + (rnd(k * 40 + i) - 0.5f) * 2.6f, d = eo(tau / 0.6f) * (20 + 26 * rnd(i * 3 + k)) * sz;
-                dot(cx + s * 0.6f + (float) Math.cos(an) * d, top + s * 0.4f + (float) Math.sin(an) * d + tau * tau * 40 * sz, i % 3 == 0 ? WHITE : 0xFFD070, (1 - tau / 0.6f) * a); } }
-        if (p >= 0f && p < 1.2f) for (int i = 0; i < 22; i++) {                              // the block bursts: shards and mithril chunks
-            float an = rnd(i * 7) * 6.28f, d = eo(p / 1.2f) * (30 + 50 * rnd(i)) * sz, x = cx + (float) Math.cos(an) * d, y = gy - s + (float) Math.sin(an) * d * 0.7f + p * p * 30 * sz, r = (1.5f + 2.5f * rnd(i * 5)) * sz;
-            Ritual.fillE(x, y, r, r, i % 3 == 0 ? 0x7FE8D8 : 0x50526A, (1 - p / 1.2f) * a);
-        }
+        burst(cx, gy, s, p, sz, stone, oreC, a, rng);
         Ritual.motes(t, cx, gy, 40 * sz, 10 * sz, 50 * sz, 0x7FE8D8, 0.4f * a, 10);
     }
     private static final int[] GEMS = {0x5ADC8A, 0xFFB030, 0xB060FF, 0x3A8AFF, 0xFFE040};       // jade, amber, amethyst, sapphire, topaz
@@ -394,7 +468,7 @@ final class ShowScene {
         if (p >= 0f && p < 1.2f) { float u = eo(p / 1.2f); Ritual.ringE(cx, gy - 30 * sz, (20 + 110 * u) * sz, (20 + 110 * u) * sz * 0.5f, 0xE8B8FF, (1 - p / 1.2f) * 0.8f * a, 0, 6.2832f, 0, 1); }   // the roar
         Ritual.motes(t, cx, gy, 50 * sz, 12 * sz, 70 * sz, 0xC77DFF, 0.5f * a, 14);
     }
-    // ------------------------------------------------------------------ the Glacite Mineshaft: a Frozen Corpse
+    // ------------------------------------------------------------------ the Glacite Mineshaft: a Frozen Corpse, opened with a key
     private static final String[] CORPSE = {                                            // a dwarf's corpse, front on (B bone/skin, H helmet, D dark, E eye)
         "..HHHH..",
         ".HHHHHH.",
@@ -408,71 +482,95 @@ final class ShowScene {
         "..DDDD..",
         "..D..D..",
         ".DD..DD."};
+    private static final int[] SKIN = {0xF2C8A0, 0xE0A878, 0xB87A50, 0x8A5434, 0x5E3A22};
+    private static final int[] HAIR = {0x2A1A10, 0x6A4222, 0xC89A50, 0xE8D8A0, 0x8A2A1A, 0x1A1A1E};
+    private static final int[] SHIRT = {0x3A6AD8, 0xD83A3A, 0x3AA85A, 0xE8A830, 0x8A4AD8, 0x2AB0C8, 0xE8E8E8};
+    private static final int[] KEYS = {0x9AA8B8, 0x8A5A3A, 0xE8E2C8};                      // Tungsten, Umber, Skeleton
+    /** Someone: a little Steve-like figure, random colours per animation; walking (step 0/1, -1 standing), one arm out by `reach`. */
+    private static void person(float x, float gy, float px, int step, float reach, float jump, int skin, int hair, int shirt, int pants, float a) {
+        float y = gy - 16 * px - jump;
+        box(x - 2 * px, y, 4 * px, 4 * px, skin, a); box(x - 2 * px, y, 4 * px, 1.4f * px, hair, a); box(x - 2.2f * px, y, 0.8f * px, 2.5f * px, hair, a);   // head and hair
+        box(x + 0.6f * px, y + 2 * px, 0.7f * px, 0.7f * px, 0x1A1A24, a);                                                       // an eye (facing right)
+        box(x - 2 * px, y + 4 * px, 4 * px, 6 * px, shirt, a);                                                                   // body
+        box(x - 1.2f * px - (step == 1 ? 0.8f * px : 0), y + 10 * px, 1.6f * px, 6 * px, pants, a); box(x + 0.0f * px + (step == 1 ? 0.8f * px : 0), y + 10 * px, 1.6f * px, 6 * px, mix(pants, 0x000000, 0.25f), a);   // legs
+        box(x - 3 * px, y + 4 * px, 1.2f * px, 5 * px, mix(shirt, 0x000000, 0.2f), a);                                           // the back arm
+        float ax = x + 2 * px, ay = y + 4.5f * px, an = -1.57f + 1.57f * (1f - reach) + (step >= 0 ? 0.2f * (step == 1 ? 1 : -1) : 0f);
+        an = 1.57f - reach * 1.45f;                                                                                              // down at the side to straight out
+        Ritual.stroke(ax, ay, ax + (float) Math.cos(an) * 5 * px, ay + (float) Math.sin(an) * 5 * px, 1.1f * px, shirt, a);
+        dot(ax + (float) Math.cos(an) * 5.5f * px, ay + (float) Math.sin(an) * 5.5f * px, skin, a);
+    }
     private static void corpse(float t, float O, float op, float p, float cx, float gy, float sz, float a, float rumble, boolean rng) {
-        float w = 30 * sz, h = 42 * sz, top = gy - h, brk = p >= 0f ? eo(p / 0.5f) : 0f;
-        int struck = 0; for (int k = 0; k < 3; k++) if (beat(op, O, k) >= 0) struck++;
-        float pulse = Math.max(hit(op, O, 0, 0.45f), Math.max(hit(op, O, 1, 0.45f), hit(op, O, 2, 0.45f)));
-        Ritual.fillE(cx, gy + 2, 62 * sz, 11 * sz, 0x06101C, 0.85f * a);                     // the shadow on the snow
-        Ritual.fillE(cx, gy, 54 * sz, 9 * sz, 0xCFE8F6, 0.55f * a);                          // a drift of snow round the block
-        float jx = (float) Math.sin(t * 90f) * (pulse * 1.2f + rumble * 1.4f) * sz;
-        if (brk < 1f) {
-            float al = a * (1f - brk), x0 = cx - w + jx;
-            Ritual.glowE(cx, gy - h / 2, w * 1.6f, h * 0.9f, 0x8FD8FF, (0.18f + 0.06f * struck + 0.35f * pulse) * al);
-            for (int yy = Math.round(top); yy < Math.round(gy); yy++) for (int xx = Math.round(x0); xx < Math.round(x0 + 2 * w); xx++) {     // the ice: layered blues, frosted edges
-                float fy = (yy - top) / h, fx = (xx - x0) / (2 * w);
-                int col = mix(0x5AA8D8, 0x2A6A9A, fy * 0.8f);
-                if (rnd((int) (fx * 9) * 13 + (int) (fy * 12) * 7) > 0.8f) col = mix(col, 0xBFEFFF, 0.35f);
-                if (fx < 0.06f || fy < 0.05f) col = mix(col, 0xE8FAFF, 0.6f);
-                if (fx > 0.94f || fy > 0.95f) col = mix(col, 0x10304A, 0.5f);
-                Ritual.cv.set(xx, yy, Ritual.A(al * 0.92f, col));
+        float w = 30 * sz, h = 42 * sz, top = gy - h, open = p >= 0f ? eo(p / 0.55f) : 0f;
+        int sd = seed; int skin = SKIN[Math.floorMod(sd, SKIN.length)], hair = HAIR[Math.floorMod(sd / 7, HAIR.length)], shirt = SHIRT[Math.floorMod(sd / 49, SHIRT.length)];
+        int pants = mix(shirt, 0x1A1A30, 0.7f), keyC = KEYS[Math.floorMod(sd / 343, KEYS.length)];
+        int turned = 0; float since = 9f; for (int k = 0; k < 3; k++) { float tau = beat(op, O, k); if (tau >= 0) { turned++; since = tau; } }
+        float click = since < 0.25f ? 1f - since / 0.25f : 0f;
+        Ritual.fillE(cx, gy + 2, 62 * sz, 11 * sz, 0x06101C, 0.85f * a);
+        Ritual.fillE(cx, gy, 54 * sz, 9 * sz, 0xCFE8F6, 0.55f * a);
+        float lockX = cx - w * 0.55f, lockY = gy - h * 0.48f;
+        // the ice block: whole until the last turn, then it splits down the middle and the halves fall open
+        float jx = (float) Math.sin(t * 90f) * (click * 0.8f + rumble * 1.2f) * sz;
+        for (int half = 0; half < 2; half++) {
+            float off = (half == 0 ? -1 : 1) * open * 26 * sz, tilt = open * 16 * sz, ha = a * (1f - sm((p - 0.5f) / 0.5f));
+            if (ha <= 0.01f) continue;
+            float x0 = cx - w + half * w + jx + off;
+            Ritual.glowE(cx, gy - h / 2, w * 1.6f, h * 0.9f, 0x8FD8FF, (0.18f + 0.06f * turned + 0.35f * click) * ha * 0.5f);
+            for (int yy = Math.round(top); yy < Math.round(gy); yy++) {
+                float fy = (yy - top) / h, sh = (half == 0 ? -1 : 1) * tilt * (1f - fy);          // each half leans outwards as it opens
+                for (int xx = Math.round(x0 + sh); xx < Math.round(x0 + w + sh); xx++) {
+                    float fx = (xx - (cx - w + jx + off + sh)) / (2 * w);
+                    int col = mix(0x5AA8D8, 0x2A6A9A, fy * 0.8f);
+                    if (rnd((int) (fx * 9) * 13 + (int) (fy * 12) * 7) > 0.8f) col = mix(col, 0xBFEFFF, 0.35f);
+                    if (fx < 0.06f || fy < 0.05f) col = mix(col, 0xE8FAFF, 0.6f);
+                    if (fx > 0.94f || fy > 0.95f) col = mix(col, 0x10304A, 0.5f);
+                    if (open > 0 && Math.abs(fx - 0.5f) < 0.03f) col = 0xF2FCFF;
+                    Ritual.cv.set(xx, yy, Ritual.A(ha * 0.92f, col));
+                }
             }
-            float px = Math.max(1f, 2.6f * sz), cx0 = cx + jx - 4 * px, cy0 = top + 5 * sz;                     // the corpse inside, dim through the ice
-            float eyes = cl(struck / 3f + pulse * 0.4f + rumble);
+        }
+        if (open < 0.6f) {                                                                    // the corpse inside, dim through the ice; its eyes light as the lock turns
+            float px = Math.max(1f, 2.6f * sz), cx0 = cx + jx - 4 * px, cy0 = top + 5 * sz, ca = a * (1f - open / 0.6f);
+            float eyes = cl(turned / 3f + click * 0.3f + rumble);
             for (int r = 0; r < CORPSE.length; r++) for (int q = 0; q < 8; q++) {
                 char ch = CORPSE[r].charAt(q); if (ch == '.') continue;
                 int col = ch == 'H' ? 0x6A6E7A : ch == 'B' ? 0xC8C0A8 : ch == 'E' ? mix(0x1A1A24, 0x9AF4FF, eyes) : 0x3A4A5A;
-                float ea = ch == 'E' ? 1f : 0.55f;
-                for (int yy = 0; yy < Math.round(px); yy++) for (int xx = 0; xx < Math.round(px); xx++) Ritual.cv.set(Math.round(cx0 + q * px + xx), Math.round(cy0 + r * px + yy), Ritual.A(al * ea, col));
-                if (ch == 'E' && eyes > 0.3f) Ritual.glowE(cx0 + q * px + px / 2, cy0 + r * px + px / 2, 4 * sz, 4 * sz, 0x9AF4FF, 0.5f * eyes * al);
-            }
-            for (int k = 0; k < struck; k++) for (int c = 0; c < 3; c++) {                 // the cracks, white, deeper with each strike
-                float sx = cx + jx + (k == 1 ? -0.5f : 0.5f) * w * 0.6f, sy = top + h * 0.2f, an = 1.2f + (rnd(k * 9 + c) - 0.5f) * 2.4f, len = (0.4f + 0.5f * rnd(k * 4 + c)) * h * (0.6f + 0.25f * k);
-                float mx = sx + (float) Math.cos(an) * len * 0.5f + (rnd(k * 5 + c) - 0.5f) * 4 * sz, my = sy + (float) Math.sin(an) * len * 0.5f;
-                Ritual.stroke(sx, sy, mx, my, 0.5f, 0xF2FCFF, 0.85f * al); Ritual.stroke(mx, my, sx + (float) Math.cos(an) * len, sy + (float) Math.sin(an) * len, 0.5f, 0xF2FCFF, 0.7f * al);
-            }
-            for (int i = 0; i < 5; i++) {                                                     // icicles on the top edge
-                float ix = x0 + (0.15f + 0.18f * i) * 2 * w, il = (3 + 4 * rnd(i * 3)) * sz;
-                Ritual.stroke(ix, top, ix, top + il, 0.6f * sz, 0xE8FAFF, 0.8f * al);
+                box(cx0 + q * px, cy0 + r * px, px, px, col, ca * (ch == 'E' ? 1f : 0.55f));
+                if (ch == 'E' && eyes > 0.3f) Ritual.glowE(cx0 + q * px + px / 2, cy0 + r * px + px / 2, 4 * sz, 4 * sz, 0x9AF4FF, 0.5f * eyes * ca);
             }
         }
-        if (p < 0f) {                                                                         // the pickaxe: lifts, then swings down on each beat
-            float sw = 0f; for (int k = 0; k < 3; k++) { float tau = beat(op, O, k); if (tau >= -0.3f && tau < 0f) sw = (tau + 0.3f) / 0.3f; else if (tau >= 0 && tau < 0.12f) sw = 1f; }
-            float ang = -2.2f + 1.5f * sw * sw, px0 = cx + w * 1.7f, py0 = top + h * 0.05f;
-            float hx = px0 + (float) Math.cos(ang) * w * 1.6f, hy = py0 + (float) Math.sin(ang) * w * 1.6f;
-            Ritual.stroke(px0, py0, hx, hy, 1.4f * sz, 0x6A4A2A, a);
-            float nx = (float) Math.cos(ang + 1.57f) * w * 0.6f, ny = (float) Math.sin(ang + 1.57f) * w * 0.6f;
-            Ritual.stroke(hx - nx, hy - ny, hx + nx, hy + ny, 1.6f * sz, 0xB8E8FF, a); Ritual.stroke(hx - nx, hy - ny + 1, hx + nx, hy + ny + 1, 0.5f * sz, 0x4A7A9A, a);
+        if (p < 0f) {                                                                         // the lock on the ice: a ring that turns a quarter with each click
+            Ritual.glowE(lockX, lockY, 9 * sz, 9 * sz, keyC, (0.2f + 0.5f * click) * a);
+            Ritual.ringE(lockX, lockY, 5 * sz, 5 * sz, mix(keyC, WHITE, 0.3f), a, 0, 6.2832f, turned * 1.5708f + click * 0.4f, 4);
+            box(lockX - 1.2f * sz, lockY - 2 * sz, 2.4f * sz, 4 * sz, 0x0A1A2A, a);
         }
-        for (int k = 0; k < 3; k++) { float tau = beat(op, O, k); if (tau < 0 || tau > 0.8f) continue;      // every strike: a puff of frost and ice chips
-            float u = tau / 0.8f;
-            Ritual.ringE(cx + w * 0.5f, top + h * 0.2f, (4 + 30 * eo(u)) * sz, (2 + 12 * eo(u)) * sz, 0xDFF6FF, (1 - u) * 0.6f * a, 0, 6.2832f, 0, 0);
-            for (int i = 0; i < 14; i++) { float an = -1.8f + (rnd(k * 40 + i) - 0.5f) * 2.8f, d = eo(u) * (18 + 30 * rnd(i * 3 + k)) * sz;
-                dot(cx + w * 0.5f + (float) Math.cos(an) * d, top + h * 0.2f + (float) Math.sin(an) * d + tau * tau * 50 * sz, i % 3 == 0 ? WHITE : 0xA8E4FF, (1 - u) * a); }
+        // the visitor: walks in from the left, raises the key, turns it in the lock on each beat, and jumps for joy when it opens
+        float px = Math.max(1f, 1.9f * sz), arrive = rng ? 0.26f * O : 0.28f * O, walk = cl(op / arrive);
+        float startX = cx - 120 * sz, standX = lockX - 9 * px, x = startX + (standX - startX) * eo(walk);
+        int step = walk < 1f ? ((int) (t * 8) % 2) : -1;
+        float reach = walk < 1f ? 0f : sm((op - arrive) / (BEAT[0] * O - arrive)), jump = p >= 0f ? Math.abs((float) Math.sin(p * 9f)) * 6 * sz * (1f - cl(p / 1.2f)) : 0f;
+        float pa = a * (1f - sm((p - 1.2f) / 0.4f));
+        person(x, gy, px, step, reach, jump, skin, hair, shirt, pants, pa);
+        if (p < 0f && reach > 0.05f) {                                                         // the key in the hand, turning a little on each click
+            float kx = x + 2 * px + (float) Math.cos(1.57f - reach * 1.45f) * 6 * px, ky = gy - 16 * px + 4.5f * px + (float) Math.sin(1.57f - reach * 1.45f) * 6 * px;
+            float kturn = turned * 0.5f + click * 0.3f;
+            Ritual.stroke(kx, ky, kx + (float) Math.cos(kturn) * 5 * px, ky + (float) Math.sin(kturn) * 1.5f * px, 0.9f * px, keyC, pa);
+            Ritual.ringE(kx - 0.8f * px, ky, 1.4f * px, 1.4f * px, keyC, pa, 0, 6.2832f, 0, 0);
+            if (click > 0) { Ritual.glowE(lockX, lockY, 10 * sz, 10 * sz, WHITE, 0.6f * click * a); for (int i = 0; i < 8; i++) { float an = i * 0.785f, d = (1 - click) * 12 * sz; dot(lockX + (float) Math.cos(an) * d, lockY + (float) Math.sin(an) * d, 0xDFF6FF, click * a); } }
         }
-        if (p >= 0f && p < 1.4f) {                                                            // it shatters: shards of ice flung out, a cold ring, a flurry
+        if (p >= 0f && p < 1.4f) {                                                            // it opens: shards, a cold ring, a flurry
             float u = p / 1.4f;
-            for (int i = 0; i < (rng ? 34 : 24); i++) {
-                float an = rnd(i * 7) * 6.28f, d = eo(u) * (30 + 60 * rnd(i)) * sz, x = cx + (float) Math.cos(an) * d, y = gy - h / 2 + (float) Math.sin(an) * d * 0.7f + p * p * 34 * sz;
-                float L = (2 + 4 * rnd(i * 5)) * sz, sa = an + p * 6 * (rnd(i * 9) - 0.5f);
-                Ritual.stroke(x, y, x + (float) Math.cos(sa) * L, y + (float) Math.sin(sa) * L, 1.0f * sz, i % 3 == 0 ? 0xF2FCFF : 0x8FD8FF, (1 - u) * a);
+            for (int i = 0; i < (rng ? 30 : 18); i++) {
+                float an = -1.57f + (rnd(i * 7) - 0.5f) * 2.6f, d = eo(u) * (25 + 50 * rnd(i)) * sz, x2 = cx + (float) Math.cos(an) * d, y2 = gy - h * 0.6f + (float) Math.sin(an) * d + p * p * 40 * sz;
+                float L = (2 + 3 * rnd(i * 5)) * sz, sa = an + p * 6 * (rnd(i * 9) - 0.5f);
+                Ritual.stroke(x2, y2, x2 + (float) Math.cos(sa) * L, y2 + (float) Math.sin(sa) * L, 1.0f * sz, i % 3 == 0 ? 0xF2FCFF : 0x8FD8FF, (1 - u) * a);
             }
             Ritual.ringE(cx, gy - h / 2, (10 + 80 * eo(u)) * sz, (6 + 40 * eo(u)) * sz, 0xDFF6FF, (1 - u) * 0.7f * a, 0, 6.2832f, 0, 0);
-            if (p < 0.25f) Ritual.glowE(cx, gy - h / 2, 50 * sz, 40 * sz, WHITE, (1 - p / 0.25f) * 0.7f * a);
+            if (p < 0.25f) Ritual.glowE(cx, gy - h / 2, 50 * sz, 40 * sz, WHITE, (1 - p / 0.25f) * 0.6f * a);
         }
         for (int i = 0; i < 26; i++) {                                                        // snow drifting down the shaft the whole time
             float life = 3f + 2f * rnd(i * 3), ph = ((t + rnd(i * 7) * life) % life) / life;
-            float x = cx + (rnd(i * 11) - 0.5f) * 150 * sz + (float) Math.sin(t * 1.3f + i) * 4 * sz, y = gy - 90 * sz + ph * 100 * sz;
-            dot(x, y, 0xF2FCFF, (float) Math.sin(Math.PI * ph) * 0.7f * a);
+            float x3 = cx + (rnd(i * 11) - 0.5f) * 150 * sz + (float) Math.sin(t * 1.3f + i) * 4 * sz, y3 = gy - 90 * sz + ph * 100 * sz;
+            dot(x3, y3, 0xF2FCFF, (float) Math.sin(Math.PI * ph) * 0.7f * a);
         }
     }
 }

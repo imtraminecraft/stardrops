@@ -1637,15 +1637,35 @@ public class FancyScreen extends Screen {
     // ------------------------------------------------------------------ the Bar / Text editors
     private int ePos0, eTextPos0;                              // Position Changes: what to go back to on Cancel
     private int editor;                                         // 0 none, 1 Bar Changes, 2 Text Changes
-    private boolean editWarn;
-    /** The Griffin pet's rarity colours, as in SkyBlock: Common to Mythic. */
-    private static final int[] PET_COLS = {0xFFFFFFFF, 0xFF55FF55, 0xFF5555FF, 0xFFAA00AA, 0xFFFFAA00, 0xFFFF55FF};
-    private int eBarPx, eColor, eDrag; private boolean eCustom;
+    private boolean editWarn; private int lastHoverFx = -2; private long hoverFxAt;
+    private int eBarPx, eColor, eDrag, hoverFx = -1; private boolean eCustom; private final boolean[] eFx = new boolean[25];
     private float eSpin, eGlow; private boolean eBob, eGlints; private float eItem, eHue, eSat, eVal = 1f, eAll, eTitle, eSub, eSubDelay;
-    private int eBarOp, eTFont, eBarCurve; private boolean eBarSoft; private boolean eBarPil, eBarLine, eSpinRev, eBold, eOutl; private float eBobAmp;
-    private boolean eShowOdds, eShowPrice, eShowSrc, eShowMf, eWType, eWCount, eWBanner;
+    private int eBarOp, eTFont, eBarCurve, fxGrp; private boolean eBarSoft; private boolean eBarPil, eBarLine, eSpinRev, eBold, eOutl; private float eBobAmp;
+    private boolean eShowOdds, eShowPrice, eShowSrc, eShowMf;
     private Slider slBarCurve, slBarOp, slBob, slSpin, slGlow, slItem, slBar, slAll, slTitle, slSub, slDelay, eSl; private boolean hexSync;
     private static final int[] PRESETS = {0xFF0B0E2A, 0xFF2A0B1C, 0xFF0B2418, 0xFF1A202C, 0xFF000000, 0xFF5A0F1B, 0xFF14206B, 0xFF0B3A3F, 0xFF2B1450, 0xFF4A3208, 0xFF5A1F3D, 0xFF2F3A4C};
+    private static final String[] FX_NAMES = {"Slam in", "Light sweep", "Wave", "Rainbow", "Drop in", "Pulse", "Glitch", "Neon glow", "Bounce in", "Typewriter", "Float", "Shake", "Fire", "Frost", "Twinkle", "Fade away", "Fly up", "Shrink", "Scatter", "Slide in", "Flip in", "Swing", "Gold", "Slide out", "Melt"};
+    private static final String[] FX_DESC = {"Letters start huge, then snap into place.", "A bright band runs along the words.", "Letters bob up and down like a wave.", "Colours flow along the letters.",
+        "Letters fall in from above.", "The words breathe in and out.", "A quick digital flicker, now and then.", "A soft glow pulses round each letter.",
+        "Letters drop in and bounce to a stop.", "Letters are typed out, with a blinking cursor.", "The words drift gently, like on water.", "The letters tremble, like a held breath.",
+        "Flames flicker through the letters.", "A cold shimmer, with ice glints.", "Random letters flash gold, like stars.",
+        "The letters fade out one after another.", "The letters float up as they fade.", "The letters shrink away to nothing.", "The letters drift apart and vanish.",
+        "Letters glide in from the left.", "Letters turn over like cards.", "Letters sway gently side to side.", "A warm gold shimmer.", "Letters slide off to the right.", "Letters sag down and melt away."};
+    /** The Griffin pet's rarity colours, as in SkyBlock: Common to Mythic. */
+    private static final int[] PET_COLS = {0xFFFFFFFF, 0xFF55FF55, 0xFF5555FF, 0xFFAA00AA, 0xFFFFAA00, 0xFFFF55FF};
+    private static final String[] FX_GROUP = {"Entrance", "Motion", "Colour", "Exit"};
+    private static final String[] FX_RULE = {"1 needed", "1 optional", "Up to 2", "1 optional"};
+    private static final int[][] FX_ORDER = {{0, 4, 8, 9, 19, 20}, {2, 5, 10, 11, 6, 21}, {3, 1, 7, 12, 13, 14, 22}, {15, 16, 17, 18, 23, 24}};
+    private static final int FX_N = 25;
+    private void fxToggle(int i, FancyConfig c) {
+        int gi = 0; for (int q = 0; q < FX_ORDER.length; q++) if (contains(FX_ORDER[q], i)) gi = q;
+        boolean was = c.fx(i);
+        if (!was) {
+            if (gi != 2) { for (int k : FX_ORDER[gi]) if (k != i) c.setFx(k, false); }                  // one at a time
+            else { int on = 0; for (int k : FX_ORDER[2]) if (c.fx(k)) on++; if (on >= 2) { toast("Up to 2 colour effects at once.\nTurn one off first.", 0xFFFFB86B); return; } }
+        }
+        c.setFx(i, !was); TextFx.restartText();
+    }
     private int e3Sliders() { return FancyConfig.get().itemBob ? 4 : 3; }                                                      // Float height only shows while Floating is on
     private int[] e3Box(int i) { int w = (eRw() - 4) / 2; return new int[]{eRx() + (i % 2) * (w + 4), eY() + 42 + e3Sliders() * 27 + 6 + (i / 2) * 19, w, 16}; }     // Item Changes: the toggles sit under the sliders
     private static boolean contains(int[] a, int v) { for (int x : a) if (x == v) return true; return false; }
@@ -1711,6 +1731,13 @@ public class FancyScreen extends Screen {
         Gfx.textCentered(g, font, t1, cx, ty, 0xFFFF72C6); Gfx.textCentered(g, font, t2, cx, ty + 11, 0xFFB8BDD0);
     }
 
+    private int[] eFxTab(int gi) { int w = (eRw() - 9) / 4; return new int[]{eRx() + gi * (w + 3), eY() + 58, w, 16}; }
+    private int[] eFxBox(int i) {
+        int w = (eRw() - 6) / 2;
+        for (int gi = 0; gi < FX_ORDER.length; gi++) for (int k = 0; k < FX_ORDER[gi].length; k++) if (FX_ORDER[gi][k] == i)
+            return gi != fxGrp ? new int[]{-9, -9, 0, 0} : new int[]{eRx() + (k % 2) * (w + 6), eY() + 96 + (k / 2) * 25, w, 21};
+        return new int[]{-9, -9, 0, 0};
+    }
     private int eBy() {
         int top = eY() + 38; if (editor == 2) return top;
         int grp = previewH(ePrevW()) + (editor == 1 ? 26 : 0);
@@ -1720,8 +1747,7 @@ public class FancyScreen extends Screen {
     private int[] eTogBox(int i) { int w = (eRw() - 4) / 2; return new int[]{eRx() + (i % 2) * (w + 4), eY() + 112 + (i / 2) * 19, w, 16}; }
     // every Changes menu has the same right-hand side: page tabs on top, the controls of that page below
     private int ePage;
-    private String[] ePages() { return editor == 4 ? new String[0] : editor == 1 ? new String[]{"Size", "Colour"} : editor == 3 ? new String[0] : new String[]{"Style", "Layout", "Font"}; }
-    private int[] eStyleTog(int i) { return new int[]{eRx(), eY() + 62 + i * 23, eRw(), 19}; }
+    private String[] ePages() { return editor == 4 ? new String[0] : editor == 1 ? new String[]{"Size", "Colour"} : editor == 3 ? new String[0] : new String[]{"Effects", "Layout", "Font"}; }
     private int[] ePageBox(int i) { int n = ePages().length, w = (eRw() - (n - 1) * 3) / n; return new int[]{eRx() + i * (w + 3), eY() + 34, w, 17}; }
     private int[] eFontBox(int i) { int w = (eRw() - 4) / 2; return new int[]{eRx() + (i % 2) * (w + 4), eY() + 62 + (i / 2) * 21, w, 18}; }
     private int[] eFTog(int i) { return new int[]{eRx(), eY() + 62 + 4 * 21 + 8 + i * 19, eRw(), 16}; }
@@ -1752,11 +1778,13 @@ public class FancyScreen extends Screen {
     }
     private void openEditor(int which) {
         FancyConfig c = FancyConfig.get();
-        editor = which; editWarn = false; eDrag = 0; eSl = null; ePage = 0;
-        eBarOp = c.barOpacity; eBarPil = c.barPillars; eBarLine = c.barLine; eBarCurve = c.barCurve; eBarSoft = c.barSoft; eBobAmp = c.itemBobAmp; eSpinRev = c.itemSpinRev; eBold = c.textBold; eOutl = c.textOutline; eTFont = c.textFont;
+        editor = which; editWarn = false; eDrag = 0; eSl = null; hoverFx = -1; ePage = 0;
+        eBarOp = c.barOpacity; eBarPil = c.barPillars; eBarLine = c.barLine; eBarCurve = c.barCurve; eBarSoft = c.barSoft; fxGrp = 0; eBobAmp = c.itemBobAmp; eSpinRev = c.itemSpinRev; eBold = c.textBold; eOutl = c.textOutline; eTFont = c.textFont;
         eBarPx = c.barPx; eCustom = c.barCustom; eColor = c.barColor; ePos0 = c.animPos; eTextPos0 = c.textPos;
+        for (int i = 0; i < FX_N; i++) eFx[i] = c.fx(i);
+        for (int gi = 0; gi < FX_ORDER.length; gi++) { int lim = gi == 2 ? 2 : 1, on = 0; for (int k : FX_ORDER[gi]) if (c.fx(k)) { if (++on > lim) c.setFx(k, false); } }      // 1 entrance, 1 motion, 2 colour, 1 exit
         eAll = c.textScale; eTitle = c.titleScale; eSub = c.subScale; eSubDelay = c.subDelay;
-        eShowOdds = c.showOdds; eShowPrice = c.showPrice; eShowSrc = c.showPriceSource; eShowMf = c.showMagicFind; eWType = c.wType; eWCount = c.wCount; eWBanner = c.wBanner; eItem = c.itemScale; eSpin = c.itemSpin; eGlow = c.itemGlow; eBob = c.itemBob; eGlints = c.itemGlints;
+        eShowOdds = c.showOdds; eShowPrice = c.showPrice; eShowSrc = c.showPriceSource; eShowMf = c.showMagicFind; eItem = c.itemScale; eSpin = c.itemSpin; eGlow = c.itemGlow; eBob = c.itemBob; eGlints = c.itemGlints;
         int col = c.barCustom ? c.barColor : 0xFF0B0E2A;
         float[] hsv = rgbToHsv(col); eHue = hsv[0]; eSat = hsv[1]; eVal = Math.max(0.05f, hsv[2]);
         int sv = sliderSeq; sliderSeq = 1000;                                                 // typed sliders, told apart from the menu's own
@@ -1779,9 +1807,10 @@ public class FancyScreen extends Screen {
         if (save) { FancyConfig.save(); toast("Changes saved successfully.", 0xFF62E6A8); }
         else {
             c.setBarPx(eBarPx); c.barCustom = eCustom; c.barColor = eColor; c.animPos = ePos0; c.textPos = eTextPos0;
+            for (int i = 0; i < FX_N; i++) c.setFx(i, eFx[i]);
             c.barOpacity = eBarOp; c.barPillars = eBarPil; c.barLine = eBarLine; c.barCurve = eBarCurve; c.barSoft = eBarSoft; c.itemBobAmp = eBobAmp; c.itemSpinRev = eSpinRev; c.textBold = eBold; c.textOutline = eOutl; c.textFont = eTFont;
             c.textScale = eAll; c.titleScale = eTitle; c.subScale = eSub; c.subDelay = eSubDelay;
-            c.showOdds = eShowOdds; c.showPrice = eShowPrice; c.showPriceSource = eShowSrc; c.showMagicFind = eShowMf; c.wType = eWType; c.wCount = eWCount; c.wBanner = eWBanner; c.itemScale = eItem; c.itemSpin = eSpin; c.itemGlow = eGlow; c.itemBob = eBob; c.itemGlints = eGlints;
+            c.showOdds = eShowOdds; c.showPrice = eShowPrice; c.showPriceSource = eShowSrc; c.showMagicFind = eShowMf; c.itemScale = eItem; c.itemSpin = eSpin; c.itemGlow = eGlow; c.itemBob = eBob; c.itemGlints = eGlints;
         }
         editor = 0; eDrag = 0; eSl = null; editWarn = false; hexField.setFocused(false); hexField.setVisible(false);
     }
@@ -1837,6 +1866,7 @@ public class FancyScreen extends Screen {
             else if (hexField.isFocused()) hexField.setFocused(false);
         }
         if (in(mx, my, eBtn(0))) {
+            if (editor == 2) { boolean has = false; for (int k : FX_ORDER[0]) if (c.fx(k)) has = true; if (!has) { toast("Pick an entrance effect first.\nThe words need a way to arrive.", 0xFFFF8A5C); return; } }
             closeEditor(true); return;
         }
         if (in(mx, my, eBtn(1))) { closeEditor(false); toast("Changes discarded.", 0xFFFFB86B); return; }
@@ -1877,8 +1907,8 @@ public class FancyScreen extends Screen {
             }
         } else if (editor == 2) {
             if (ePage == 0) {
-                if (in(mx, my, eStyleTog(0))) c.wType = !c.wType; else if (in(mx, my, eStyleTog(1))) c.wCount = !c.wCount; else if (in(mx, my, eStyleTog(2))) c.wBanner = !c.wBanner; else return;
-                TextFx.restartText(); return;
+                for (int gi = 0; gi < FX_ORDER.length; gi++) if (in(mx, my, eFxTab(gi))) { fxGrp = gi; return; }
+                for (int i = 0; i < FX_N; i++) if (in(mx, my, eFxBox(i))) { fxToggle(i, c); return; }
             }
             if (ePage == 1) {
                 if (in(mx, my, eTogBox(0))) c.showOdds = !c.showOdds; else if (in(mx, my, eTogBox(1))) c.showPrice = !c.showPrice;
@@ -1899,11 +1929,14 @@ public class FancyScreen extends Screen {
         pill(g, ex, ey, ew, eh, Ui.PANEL); rout(g, ex, ey, ew, eh, Ui.BORDER);
         g.fill(ex + 1, ey + 1, ex + ew - 1, ey + 2, Gfx.argb(160, Ui.ACCENT & 0xFFFFFF));
         Gfx.text(g, font, editor == 1 ? "Bar Changes" : editor == 3 ? "Item Changes" : editor == 4 ? "Position Changes" : "Text Changes", ex + 10, ey + 9, Ui.TEXT);
-        Gfx.text(g, font, editor == 1 ? "Height and colour of the cinematic bars" : editor == 4 ? "Where the animation and its words sit on the screen" : editor == 3 ? "Size, spin, glow and float of the dropped item" : "Style, sizes, font and what the words show", ex + 10, ey + 21, Ui.DIM);
+        Gfx.text(g, font, editor == 1 ? "Height and colour of the cinematic bars" : editor == 4 ? "Where the animation and its words sit on the screen" : editor == 3 ? "Size, spin, glow and float of the dropped item" : "Sizes, effects and what the words show", ex + 10, ey + 21, Ui.DIM);
         drawX(g, eClose(), in(mx, my, eClose()), "edx");
         int bw = ePrevW(), bh = previewH(bw), bx = ex + 10, by = eBy();
+        hoverFx = -1;
+        if (editor == 2 && ePage == 0) for (int i = 0; i < FX_N; i++) if (in(mx, my, eFxBox(i))) hoverFx = i;
         Row syn = new Row(); syn.x = bx; syn.y = by; syn.w = bw; syn.pkey = editor == 2 ? "myth.normal" : "myth.rng"; syn.nolabel = true;          // Mythological is the live category: bars and items show on its RNG scene, the words on its Normal one syn.pbw = bw;
-        TextFx.itemOnly = editor == 3; TextFx.itemKey = null; TextFx.textOnly = editor == 2; TextFx.fxOnly = -1;
+        TextFx.itemOnly = editor == 3; TextFx.itemKey = null; TextFx.textOnly = editor == 2; TextFx.fxOnly = editor == 2 ? hoverFx : -1;
+        if (hoverFx != lastHoverFx) { lastHoverFx = hoverFx; hoverFxAt = System.currentTimeMillis(); TextFx.restartText(); }
         TextFx.loopTxt = editor == 2; TextFx.freezeT = -1f; TextFx.barsOnly = editor == 1;
         if (editor == 4) drawPosMock(g, bx, by, bw, bh); else drawPositionPreview(g, syn);
         TextFx.textOnly = false; TextFx.itemOnly = false; TextFx.itemKey = null; TextFx.fxOnly = -1; TextFx.loopTxt = false; TextFx.freezeT = -1f; TextFx.barsOnly = false;
@@ -1925,18 +1958,30 @@ public class FancyScreen extends Screen {
         }
         if (editor == 4) drawPosPage(g, mx, my);
         if (editor == 2 && ePage == 0) {
-            String[] sn = {"Name types in", "Price counts up", "RNG banner"}; String[] si = {":fx0:", ":coin:", ":dice:"};
-            String[] sd = {"Letter by letter (off: fades in)", "From 0 to the price (off: shown at once)", "The odds stamped over an RNG drop"};
-            boolean[] sv = {c.wType, c.wCount, c.wBanner};
-            for (int i = 0; i < 3; i++) {
-                int[] b = eStyleTog(i); boolean on = sv[i], hv = in(mx, my, b);
-                tile(g, b, on, hv);
-                Gfx.push(g); Gfx.translate(g, b[0] + 5, b[1] + 2); Gfx.scale(g, 0.875f); Icons.draw(g, si[i], 0, 0, hv || on ? System.currentTimeMillis() : 2400L); Gfx.pop(g);
-                Gfx.text(g, font, sn[i], b[0] + 21, b[1] + 6, on ? Ui.TEXT : Ui.SUB);
-                if (on) g.fill(b[0] + b[2] - 8, b[1] + 8, b[0] + b[2] - 5, b[1] + 11, 0xFF62E6A8);
+            for (int gi = 0; gi < FX_ORDER.length; gi++) {                                              // four small tabs, one for each kind of effect
+                int[] tb = eFxTab(gi); boolean on = fxGrp == gi, hv = in(mx, my, tb), any = false;
+                for (int k : FX_ORDER[gi]) if (c.fx(k)) any = true;
+                pill(g, tb[0], tb[1], tb[2], tb[3], on ? Canvas.mix(Ui.ROW, Ui.ACCENT, 0.4f) : hv ? Ui.ROW_HOVER : Ui.PANEL2);
+                Gfx.textCentered(g, font, FX_GROUP[gi], tb[0] + tb[2] / 2, tb[1] + 4, on ? Ui.TEXT : hv ? Ui.SUB : Ui.DIM);
+                if (any) g.fill(tb[0] + tb[2] - 6, tb[1] + 3, tb[0] + tb[2] - 3, tb[1] + 6, 0xFF62E6A8);
             }
-            int hi = -1; for (int i = 0; i < 3; i++) if (in(mx, my, eStyleTog(i))) hi = i;
-            Gfx.text(g, font, Gfx.fit(font, hi >= 0 ? sd[hi] : "The preview plays a Normal drop, then an RNG one.", eRw()), eRx(), eY() + 62 + 3 * 23 + 4, hi >= 0 ? Ui.SUB : Ui.DIM);
+            Gfx.text(g, font, FX_GROUP[fxGrp] + "  \u00B7  " + FX_RULE[fxGrp], eRx(), eY() + 80, Canvas.mix(Ui.DIM, Ui.ACCENT, 0.5f));
+            for (int i = 0; i < FX_N; i++) {
+                int[] b = eFxBox(i); if (b[2] == 0) continue;
+                boolean on = c.fx(i), hv = i == hoverFx;
+                pill(g, b[0], b[1], b[2], b[3], on ? Canvas.mix(Ui.ROW, Ui.ACCENT, 0.3f) : hv ? Ui.ROW_HOVER : Ui.PANEL2);
+                if (on) g.fill(b[0], b[1] + 4, b[0] + 2, b[1] + b[3] - 4, Ui.ACCENT);
+                Gfx.push(g); Gfx.translate(g, b[0] + 4, b[1] + 3); Gfx.scale(g, 0.9f); Icons.draw(g, Icons.tok("fx" + i), 0, 0, hv || on ? System.currentTimeMillis() : 2400L); Gfx.pop(g);
+                int avail = b[2] - 32, tw = Gfx.w(font, FX_NAMES[i]), tcol = on ? Ui.TEXT : Ui.SUB;
+                float k = tw > avail ? avail / (float) tw : 1f;
+                if (i == hoverFx) {                                                                      // hovered: the name plays its own effect
+                    g.enableScissor(b[0] + 20, b[1], b[0] + b[2] - 1, b[1] + b[3]);
+                    TextFx.effectLabel(g, font, FX_NAMES[i], b[0] + 22 + Math.round(Math.min(tw, avail) / 2f), b[1] + 6 + Math.round((1f - k) * 4f), k, Ui.TEXT, i, ((System.currentTimeMillis() - hoverFxAt) % 4400L) / 1000f);
+                    g.disableScissor();
+                } else { Gfx.push(g); Gfx.translate(g, b[0] + 22, b[1] + 6 + (1f - k) * 4f); Gfx.scale(g, k); Gfx.text(g, font, FX_NAMES[i], 0, 0, tcol); Gfx.pop(g); }
+                if (on) g.fill(b[0] + b[2] - 6, b[1] + 8, b[0] + b[2] - 3, b[1] + 11, 0xFF62E6A8);
+            }
+            Gfx.text(g, font, Gfx.fit(font, hoverFx >= 0 ? FX_DESC[hoverFx] : "Hover an effect to see it play.", eRw()), eRx(), eY() + 96 + 4 * 25 + 2, hoverFx >= 0 ? Ui.SUB : Ui.DIM);
         } else if (editor == 2 && ePage == 1) {
             String[] lb = {"Overall text size", "Title size", "Sub Title size", "Sub Title delay"};
             Gfx.text(g, font, Gfx.fit(font, "Where the words sit is set on each animation", eRw()), eRx(), eY() + 62, Ui.DIM);
@@ -2562,7 +2607,8 @@ public class FancyScreen extends Screen {
     private void animationsLanding(FancyConfig c) {
         if (searching || "@changes".equals(dropSrc)) { animationChanges(c); return; }                  // (search also looks inside it)
         rows.add(hero(":animations:", "Animations", "Set the looks every animation shares, then open a category.", Ui.ACCENT));
-        Row ac = row(0, ":settings:", "Animation Changes", "Bars, text, item, position and size", Ui.ACCENT);
+        int fxOn = 0; for (int i = 0; i < FX_N; i++) if (c.fx(i)) fxOn++;
+        Row ac = row(0, ":settings:", "Animation Changes", "Bars, text, item, position and size  \u00B7  " + fxOn + " text effects on", Ui.ACCENT);
         ac.click = () -> openPage(-1, "@changes", "Animation Changes"); rows.add(ac);
         rows.add(section("Categories"));
         rows.add(catTiles());
@@ -2571,9 +2617,9 @@ public class FancyScreen extends Screen {
     /** The sub page of the Animations main page: the look every animation shares (bars, text, item, position) and how big they are. */
     private void animationChanges(FancyConfig c) {
         rows.add(backRow("Animations", "Back to the Animations page", Ui.ACCENT, () -> openPage(-1, null, null)));
-        int styleOn = (c.wType ? 1 : 0) + (c.wCount ? 1 : 0) + (c.wBanner ? 1 : 0);
+        int fxOn = 0; for (int i = 0; i < FX_N; i++) if (c.fx(i)) fxOn++;
         String[] lb = {"Bar Changes", "Text Changes", "Item Changes", "Position Changes"};
-        String[] sb = {c.barPx + " px tall", styleOn + " of 3 styles on", "Size " + Math.round(c.itemScale * 100) + "%", POS_NAMES[c.animPos] + "  \u00B7  words " + (c.textAbove() ? "above" : "below")};
+        String[] sb = {c.barPx + " px tall", fxOn + " effects on", "Size " + Math.round(c.itemScale * 100) + "%", POS_NAMES[c.animPos] + "  \u00B7  words " + (c.textAbove() ? "above" : "below")};
         rows.add(picker("Animation Changes", "The look every animation shares", lb, sb, new String[]{":bars:", ":text:", ":size:", ":dock_top:"}, new int[]{0xFF6C86FF, 0xFFFF72C6, 0xFFFFC857, 0xFF56D8FF}, null, 2, () -> -1, i -> openEditor(i + 1)));
         Row sz = row(0, ":size:", "Animation size", "How big every animation is", Ui.ACCENT);
         sz.ctls.add(new Slider(0.5, 1.5, 0.05, () -> c.animScale, v -> c.animScale = (float) v, () -> Math.round(50 + 50 * c.animScale) + "%").live()); rows.add(sz);
@@ -2756,10 +2802,30 @@ public class FancyScreen extends Screen {
         else lk.ctls.add(new Btn("Log in", 0xFF1DB954, () -> Spotify.login(m -> toast(m, 0xFF1ED760))));
         rows.add(lk);
         rows.add(section("Setup"));
-        Row cid = row(0, ":settings:", "Spotify Client ID", "developer.spotify.com > Create app > Redirect URI " + Spotify.REDIRECT + " > copy the Client ID", 0xFF1ED760);
+        rows.add(note("Spotify needs an app of your own to talk to (it's free and takes about two minutes). Do these once:", 0xFFB4BDD2));
+        Row s1 = row(0, ":fancydrops:", "Step 1  \u00B7  Open the Spotify dashboard", "Log in with your Spotify account at developer.spotify.com/dashboard", 0xFF1ED760);
+        s1.ctls.add(new Btn("Open", 0xFF1DB954, () -> { try { net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(this, java.net.URI.create("https://developer.spotify.com/dashboard")); } catch (Throwable ignored) { } }));
+        rows.add(s1);
+        rows.add(row(0, ":format:", "Step 2  \u00B7  Create app", "Press Create app. Any name and description work (e.g. FancyDrops)", 0xFF1ED760));
+        Row s3 = row(0, ":send:", "Step 3  \u00B7  Add the Redirect URI", "Paste " + Spotify.REDIRECT + " into Redirect URIs and press Add", 0xFF1ED760);
+        s3.ctls.add(new Btn("Copy", Ui.ROW_HOVER, () -> { net.minecraft.client.Minecraft.getInstance().keyboardHandler.setClipboard(Spotify.REDIRECT); toast("Redirect URI copied.", 0xFF62E6A8); }));
+        rows.add(s3);
+        rows.add(row(0, ":switch:", "Step 4  \u00B7  Tick Web API and save", "Under \"Which API/SDKs are you planning to use?\" tick Web API, accept the terms, Save", 0xFF1ED760));
+        Row cid = row(0, ":settings:", "Step 5  \u00B7  Paste the Client ID here", "Open the app's Settings, copy the Client ID, paste it in the box", 0xFF1ED760);
         cid.h = 44; cid.field = spotifyField; rows.add(cid);
-        rows.add(section("Music keys"));
-        rows.add(note("Play/pause, next and previous song from in game: set the keys in Options > Controls > FancyDrops: Music. Needs Spotify Premium; if you linked before, unlink and log in again once.", 0xFF8A93B0));
+        Row s6 = row(0, ":sounds:", "Step 6  \u00B7  Log in", Spotify.linked() ? "Done: you're linked" : "Press Log in at the top of this page and allow access in your browser", 0xFF1ED760);
+        rows.add(s6);
+        rows.add(note("Only you can log in to an app in Development Mode. For friends: the app's Settings > User Management, add their Spotify name and email.", 0xFF8A93B0));
+        rows.add(section("Music Functions"));
+        String[] mn = {"Play / Pause", "Next song", "Previous song"}, mi = {":play:", ":speed:", ":back:"}, md = {"Pauses or resumes what's playing", "Skips to the next song", "Goes back to the song before"};
+        for (int i = 0; i < 3; i++) {
+            net.minecraft.client.KeyMapping km = FancyDropsMod.MUSIC[i];
+            String bound = km == null ? "unavailable" : km.isUnbound() ? "Not set" : km.getTranslatedKeyMessage().getString();
+            Row mr = row(0, mi[i], mn[i] + "  \u00B7  " + bound, md[i], km != null && !km.isUnbound() ? 0xFF1ED760 : 0xFF8A93B0);
+            mr.ctls.add(new Btn("Change", Ui.ROW_HOVER, () -> net.minecraft.client.Minecraft.getInstance().setScreenAndShow(new net.minecraft.client.gui.screens.options.controls.KeyBindsScreen(this, net.minecraft.client.Minecraft.getInstance().options))));
+            rows.add(mr);
+        }
+        rows.add(note("Set them in Options > Controls > Key Binds > FancyDrops: Music. They need Spotify Premium; if you linked before these existed, unlink and log in again once.", 0xFF8A93B0));
     }
 
     private void chatPage(FancyConfig c) {
@@ -2847,7 +2913,7 @@ public class FancyScreen extends Screen {
 
     private void settingsLanding() {
         rows.add(hero(":settings:", "Settings", "Change how the menu looks, your cosmetics, where prices come from and how the drop data loads.", Ui.ACCENT));
-        String[] lb = {"Menu", "Cosmetics", "Prices", "Drop Data"}, sb = {"How the menu looks", "Shown to you and others", "Where prices come from", "Reload the drop data"}, ic = {":menu:", ":cosmetics:", ":coin:", ":refresh:"};
+        String[] lb = {"Menu", "Cosmetics", "Prices", "Drop Data"}, sb = {"How the menu looks", "Shown to you and others", "Where prices come from", "Your drops and the whole library"}, ic = {":menu:", ":cosmetics:", ":coin:", ":refresh:"};
         int[] co = {0xFFB0B6C2, 0xFFC77DFF, 0xFFFFC857, 0xFF56D8FF};
         rows.add(picker("", "", lb, sb, ic, co, null, 2, () -> -1, i -> openPage(i, null, null)));
     }
@@ -2907,6 +2973,23 @@ public class FancyScreen extends Screen {
                 rf.ctls.add(new Btn("Refresh", Ui.ROW_HOVER, () -> { PriceService.refreshAsync(); toast("Refreshing prices.", 0xFF62E6A8); }));
                 rows.add(rf);
                 rows.add(section("Drop Data"));
+                LocalLedger.P lp = LocalLedger.get();
+                Row mine = row(0, ":stats:", "Your drops", String.format(java.util.Locale.ROOT, "%,d drops  \u00B7  %,d RNG  \u00B7  %,d unique items  \u00B7  %s coins", Math.round(lp.drops), Math.round(lp.rng), lp.uniq.size(), PriceService.fmt(lp.value)), Ui.ACCENT);
+                rows.add(mine);
+                Row best = row(0, ":coin:", "Best drop", lp.best > 0 ? PriceService.fmt(lp.best) + " coins  \u00B7  counting since " + new java.text.SimpleDateFormat("d MMM yyyy").format(new java.util.Date(lp.first)) : "Nothing counted yet", Ui.ACCENT);
+                rows.add(best);
+                for (Categories.Cat dc : Categories.ALL) {                                            // one line per category: its groups and how many drops each has had
+                    StringBuilder sb2 = new StringBuilder(); int libN = 0;
+                    for (Categories.Group dg : dc.groups()) {
+                        double[] gg = lp.g.get(dg.id()); for (DropData.Source ds : DropDataExport.sourcesOf(dc, dg)) libN += ds.drops.size();
+                        if (gg != null && gg[0] > 0) sb2.append(sb2.length() > 0 ? "  \u00B7  " : "").append(dg.name()).append(" ").append(Math.round(gg[0]));
+                    }
+                    Row dcr = row(0, dc.icon(), dc.name(), libN + " drops in the library  \u00B7  " + (sb2.length() == 0 ? "none counted yet" : sb2), dc.color());
+                    rows.add(dcr);
+                }
+                Row op = row(0, ":menu:", "All drop data as a text file", "Every drop in the library and everything you've found, opened in your text editor", Ui.ACCENT);
+                op.ctls.add(new Btn("Open", Ui.ROW_HOVER, () -> toast(DropDataExport.openFile(), 0xFF62E6A8)));
+                rows.add(op);
                 Row rl = row(0, ":refresh:", "Reload drop data", "Reloads the drop data.  " + DataFiles.status, Ui.ACCENT);
                 rl.ctls.add(new Btn("Reload", Ui.ROW_HOVER, () -> { DataFiles.reloadAll(); toast("Reloading the drop data.", 0xFF62E6A8); }));
                 rows.add(rl);

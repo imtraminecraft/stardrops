@@ -203,6 +203,8 @@ final class TextFx {
     }
     /** Every coin, no K / M / B: 8010000 -> "8,010,000". */
     static String fullCoins(double v) { return String.format(java.util.Locale.ROOT, "%,d", Math.round(v)); }
+    /** The price counting up from 0 once its line starts to show (0.9 s, easing out). */
+    static double counted(double total, float delay) { float k = clamp((revealT - delay) / 0.9f); return total * (1f - (1f - k) * (1f - k) * (1f - k)); }
 
     /** Odds, chance and value in their own labelled columns with dividers. They arrive one after another, 0.35 s apart, after the title. */
     static void columns(GuiGraphicsExtractor g, Font font, int cx, int yLab, int yVal, float sc, Item it, FancyConfig c, int alpha) {
@@ -211,12 +213,13 @@ final class TextFx {
         if (c.showOdds && !it.chance.isEmpty()) cols.add(new Object[]{"CHANCE", it.chance, Ui.ANIM_SUB, 0.7f});
         if (c.showPrice && !it.untradeable && it.price != -1) {
             String lab = "VALUE" + (c.showPriceSource && it.price >= 0 && it.priceSource != null && !it.priceSource.isEmpty() ? "  ·  " + it.priceSource.toUpperCase(java.util.Locale.ROOT) : "");
-            cols.add(new Object[]{lab, it.price < 0 ? "..." : fullCoins(it.price * Math.max(1, it.amount)) + " coins", Ui.PRICE, 1.05f});
+            double tot = it.price * Math.max(1, it.amount); float pd = 1.05f * (c.subDelay / 0.35f);
+            cols.add(new Object[]{lab, it.price < 0 ? "..." : fullCoins(counted(tot, pd)) + " coins", Ui.PRICE, 1.05f, it.price < 0 ? "..." : fullCoins(tot) + " coins"});
         }
         if (cols.isEmpty()) return;
         float pad = 9f * sc, ls = sc * 0.82f;
         float[] w = new float[cols.size()]; float total = 0;
-        for (int i = 0; i < w.length; i++) { w[i] = Math.max(font.width((String) cols.get(i)[1]) * sc, font.width((String) cols.get(i)[0]) * ls); total += w[i] + (i > 0 ? pad * 2 : 0); }
+        for (int i = 0; i < w.length; i++) { w[i] = Math.max(font.width((String) cols.get(i)[cols.get(i).length > 4 ? 4 : 1]) * sc, font.width((String) cols.get(i)[0]) * ls); total += w[i] + (i > 0 ? pad * 2 : 0); }
         float x = cx - total / 2f;
         for (int i = 0; i < w.length; i++) {
             Object[] k = cols.get(i); float d = (Float) k[3], xc = x + w[i] / 2f;
@@ -237,7 +240,7 @@ final class TextFx {
         java.util.List<Object> parts = new java.util.ArrayList<>();
         if (c.showOdds && !it.odds.isEmpty()) { parts.add(lit(it.odds)); parts.add(Ui.odds(it.odds)); if (!it.chance.isEmpty()) { parts.add(lit("  " + it.chance)); parts.add(Ui.ANIM_SUB); } }
         if (c.showPrice && !it.untradeable && it.price != -1) {
-            String p = it.price < 0 ? "..." : PriceService.fmt(it.price * Math.max(1, it.amount)) + " coins";
+            String p = it.price < 0 ? "..." : PriceService.fmt(counted(it.price * Math.max(1, it.amount), lineDelay)) + " coins";
             if (!parts.isEmpty()) { parts.add(lit("   ")); parts.add(Ui.ANIM_SUB); }
             parts.add(lit(p)); parts.add(Ui.PRICE);
         }

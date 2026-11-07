@@ -798,6 +798,7 @@ final class Ritual {
         farmMode = a.group.equals("crops") || a.group.equals("feast") || a.group.equals("bounty") || a.group.equals("pests");
         expMode = a.group.equals("exp");
         showMotif = ShowScene.motifOf(a.group); showTint = dyeTint(a);
+        ShowScene.seed = (a.item == null ? 7 : a.item.name.hashCode()) * 31 + (int) (a.start / 1000L);
         farmKind = a.group.equals("feast") ? FarmScene.FEAST : a.group.equals("bounty") ? FarmScene.BOUNTY : a.group.equals("pests") ? (a.helios ? FarmScene.HELIOS : FarmScene.PEST) : FarmScene.CROPS;
         itemOffs = offsetsOf(a, sz, isc);
     }
@@ -1003,7 +1004,7 @@ final class Ritual {
             else {
                 long nowMs = System.currentTimeMillis();
                 String id = a.group + a.type + "/" + a.kind + "/" + (it == null ? 0 : it.id.hashCode()) + "/" + a.count() + "/" + TextFx.itemOnly;
-                boolean reuse = id.equals(upKey) && nowMs >= upMs && nowMs - upMs < (AnimationManager.previewing ? 40 : 30);       // the pixel scene repaints ~33 times a second (25 in menu previews); the item, glow and words still move every frame
+                boolean reuse = id.equals(upKey) && nowMs >= upMs && nowMs - upMs < (AnimationManager.previewing ? 16 : 7);       // the pixel scene repaints every frame up to ~140 a second (60 in menu previews): painting it costs under 1 ms
                 if (!reuse) {
                     begin(a, szc, isc);
                     try { paint(t, tre, type, S, ssz, isc, rc, icy, TreasureData.COLS[Math.max(0, Math.min(2, c.mythSpade))] & 0xFFFFFF, c.itemBob, c.itemBobAmp); stage(a, icy, ssz, szc, isc); } finally { end(); }
@@ -1039,7 +1040,6 @@ final class Ritual {
         }
 
         // ---- the item (flat icons stay flat, skulls are 3D and turn)
-        float itemTop = icy * u - hi * u, itemBot = icy * u + hi * u;
         if (it != null && p >= 0f && !nod && !TextFx.textOnly && !TextFx.barsOnly) {
             List<Item> all = a.items(); int n = all.size(); float[] offs = offsetsOf(a, szc, isc);
             for (int ii = 0; ii < n; ii++) {
@@ -1056,7 +1056,6 @@ final class Ritual {
             }
             ItemIcons.spinSpeed = c.itemSpin; ItemIcons.spinRev = c.itemSpinRev;
             ItemIcons.drawAlpha = Math.max(0f, Math.min(1f, itemA)); boolean still0 = Icons.STILL_ICONS; Icons.STILL_ICONS = false;                 // the dropped item always turns, whatever the menu says
-            if (ii == 0) { itemTop = gcy - 8 * s; itemBot = gcy + 8 * s; }
             try { ItemIcons.draw(g, cur.id, cur.icon, Math.round(gcx), Math.round(gcy), s); } catch (Throwable ignored) { } finally { ItemIcons.drawAlpha = 1f; Icons.STILL_ICONS = still0; ItemIcons.spinSpeed = 1f; ItemIcons.spinRev = false; }
             if (c.itemGlints && itemA > 0.05f) for (int i = 0; i < 9; i++) {                      // Item changes > Glints: little four-point sparks twinkle in and out round the item
                 float cyc = tb * 1.7f + i * 0.113f, ph = cyc - (float) Math.floor(cyc); int slot = (int) Math.floor(cyc) * 31 + i * 7;
@@ -1069,19 +1068,16 @@ final class Ritual {
             }
         }
 
-        // ---- the words (Butcher's style, DropShow) in play and the scene previews; the Text editor keeps the editable block
-        if (!TextFx.itemOnly && !TextFx.barsOnly && !TextFx.textOnly && it != null && !nod && p >= 0f) {
-            float ts = DropShow.scale(H), wa = 1f - textOut;
-            float below = c.textAbove() ? itemTop - 8 * ts - (a.count() >= 2 ? 2 : 1) * 10 * ts * (rng ? 1.6f : 1.25f) - 30 * ts : itemBot + 6 * ts;
-            float bannerY = itemTop - 10 * ts;
-            if (barsOn) { float bhg = barH * u; bannerY = Math.max(bhg + 4 + 10 * ts, bannerY); below = Math.max(bhg + 6, Math.min(H - bhg - 50 * ts, below)); }
-            DropShow.words(g, font, a, it, p, W / 2f + sx, bannerY, below, ts, wa, rng, rc);
-        }
-        else if (!TextFx.itemOnly && !TextFx.barsOnly && TextFx.textOnly && it != null) {          // the Text editor: the words alone, replayed, Normal and RNG in turn
-            float loop = 5.2f, tl = TextFx.loopClock(loop); boolean big = ((System.currentTimeMillis() / (long) (loop * 1000)) % 2) == 1;
-            float ts = Math.max(1f, Math.min(2.2f, W / 190f)), wa = 1f - sm((tl - (loop - 0.5f)) / 0.4f);
-            float below = H * (big ? 0.42f : 0.3f);
-            DropShow.words(g, font, a, it, tl, W / 2f, below - 14 * ts, below, ts, wa, big, rc);
+        // ---- the words: below the animation (top and center), above it (bottom); never over the bars
+        if (!TextFx.itemOnly && !TextFx.barsOnly && (textT > 0f || TextFx.textOnly)) {
+            float sc = c.textK() * Math.max(0.55f, Math.min(W, H) / 540f) * (0.8f + 0.2f * csz); if (TextFx.textOnly) sc = c.textK() * Math.max(1.3f, Math.min(2.6f, W / 150f));          // the Text editor shows the words big enough to read
+            float th = textH(a, it, sc, c);
+            float top = c.textAbove() ? (icy - hi - 14 * szc) * u - th : (icy + hi + 26 * szc) * u;
+            if (TextFx.textOnly) { while (th > H * 0.92f && sc > 0.8f) { sc *= 0.9f; th = textH(a, it, sc, c); } top = Math.max(2f, (H - th) / 2f); }       // the Text editor centres the words and fills the box
+            if (barsOn) { float bhg = barH * u; top = Math.max(bhg + 6, Math.min(H - bhg - th - 6, top)); }
+            float tl = TextFx.textOnly ? TextFx.loopClock(4.6f) : 0f;                                    // the Text editor replays the words on their own clock
+            TextFx.revealT = TextFx.textOnly ? tl : textT; TextFx.waveT = TextFx.textOnly ? tl : t; TextFx.waveOut = TextFx.textOnly ? sm((tl - 2.9f) / 1.1f) : textOut; TextFx.lineDelay = 0f;
+            if (a.count() >= 2) TextFx.blockN(g, font, W / 2, Math.round(top), sc, a.items(), c, 255); else TextFx.block(g, font, W / 2, Math.round(top), sc, it, c, 255);
         }
     }
 }

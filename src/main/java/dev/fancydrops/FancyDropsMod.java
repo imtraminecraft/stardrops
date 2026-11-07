@@ -28,6 +28,9 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 public class FancyDropsMod implements ClientModInitializer, ModInitializer {
+    /** The music keys (play/pause, next, previous): the Spotify page shows what they are bound to. */
+    static final net.minecraft.client.KeyMapping[] MUSIC = new net.minecraft.client.KeyMapping[3];
+
     private static int tabTick;
     /** The one version number: gradle.properties -> fabric.mod.json -> here. */
     public static final String VERSION = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("fancydrops")
@@ -53,7 +56,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerCommands(dispatcher));
 
-        net.minecraft.client.KeyMapping[] music = new net.minecraft.client.KeyMapping[3];          // music keys (unbound until you pick them in Options > Controls)
+        net.minecraft.client.KeyMapping[] music = MUSIC;          // music keys (unbound until you pick them in Options > Controls)
         try {
             var cat = net.minecraft.client.KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fancydrops", "music"));
             String[] ids = {"key.fancydrops.playpause", "key.fancydrops.next", "key.fancydrops.previous"};
