@@ -496,28 +496,25 @@ final class IconArt {
                 outline();
                 glint(13, 9 + dn, 1, 0xFFFFFF, t);
             }
-            case "sty_pop" -> {                                                              // Pop: a word bubble bursting up out of a line, sparks round it
-                float sp = sn(f) * 0.5f + 0.5f; int up = Math.round(sp * 2);
-                rect(2, 12, 12, 2, 0x5A4A6A); rect(3, 12, 4, 1, 0xB8A8C8);
-                bev(4, 4 - up, 8, 6, 0xFF9A5A); rect(5, 5 - up, 6, 1, 0xFFE0B8); rect(6, 7 - up, 4, 1, 0xFFFFFF);
-                tri(7, 10 - up, 9, 10 - up, 8, 12 - up, 0xFF9A5A);
-                pxa(2, 3 - up, 0xFFE9A0, sp); pxa(13, 2 - up, 0xFFE9A0, 1 - sp); pxa(14, 7, 0xFFFFFF, sp); pxa(1, 8, 0xFFFFFF, 1 - sp);
-                outline();
-                glint(11, 4 - up, 1, 0xFFFFFF, t);
+            case "sty_pop" -> {                                                              // Starlight: a star flaring, opening into a word
+                float fl = sn(f) * 0.5f + 0.5f;
+                rect(3, 11, 10, 1, 0xEEF2FF); rect(4, 13, 7, 1, 0x8A94C0);
+                int r = 1 + Math.round(fl * 2);
+                rect(8 - r * 2, 5, r * 4 + 1, 1, 0xC8D4FF); rect(8, 5 - r * 2, 1, r * 4 + 1, 0xC8D4FF);
+                rect(7, 4, 3, 3, 0xFFFFFF); pxa(5, 2, 0xFFFFFF, 1 - fl); pxa(12, 8, 0xFFFFFF, fl);
+                glint(8, 5, 1, 0xFFFFFF, t);
             }
-            case "sty_kara" -> {                                                             // Karaoke: a line of letters with a wipe of green running through it, a dot bouncing on top
-                int wipe = Math.round(((f % 1f) + 1f) % 1f * 12);
-                for (int i = 0; i < 6; i++) { int x = 2 + i * 2; int col = x - 2 < wipe ? 0x1ED760 : 0x6A7088; rect(x, 8, 1, 4, col); if (i % 2 == 0) rect(x, 8, 2, 1, col); }
-                int dx = Math.min(13, 2 + wipe), dy = 5 - Math.round(Math.abs(sn(f * 3)) * 2);
-                rect(dx, dy, 2, 2, 0xFFFFFF);
-                rect(2, 13, Math.max(1, wipe), 1, 0x7CFFB0);
-                outline();
+            case "sty_kara" -> {                                                             // Constellation: stars over words, joined by lines
+                int[][] st = {{2, 6}, {6, 3}, {10, 5}, {13, 2}};
+                for (int i = 1; i < st.length; i++) ln(st[i - 1][0], st[i - 1][1], st[i][0], st[i][1], 0x7A6AC8);
+                for (int i = 0; i < st.length; i++) { float tw = sn(f * 2 + i) * 0.5f + 0.5f; rect(st[i][0], st[i][1], 1, 1, 0xFFFFFF); pxa(st[i][0] - 1, st[i][1], 0xB4A0FF, tw); pxa(st[i][0] + 1, st[i][1], 0xB4A0FF, tw); }
+                rect(1, 10, 3, 1, 0xD8E2FF); rect(5, 10, 3, 1, 0xD8E2FF); rect(9, 10, 3, 1, 0xD8E2FF); rect(13, 10, 2, 1, 0xD8E2FF);
+                rect(2, 12, 11, 1, 0x4A4A7A);
             }
-            case "sty_scroll" -> {                                                           // Scroll: a lyric sheet, lines gliding up, the middle one bright
-                bev(2, 1, 12, 14, 0x2A2440); int off = Math.round(((f % 1f) + 1f) % 1f * 3);
-                for (int i = 0; i < 5; i++) { int y = 3 + i * 3 - off; if (y < 2 || y > 13) continue; boolean mid = i == 2; rect(4, y, mid ? 8 : 6 + (i % 2) * 2, 1, mid ? 0xD8C8FF : 0x6A5A9A); }
-                rect(3, 7, 1, 3, 0xB48CFF);
-                outline();
+            case "sty_scroll" -> {                                                           // Drift: lines rising through the dark, a star rising with them
+                int off = Math.round((((f % 1f) + 1f) % 1f) * 3);
+                for (int i = 0; i < 5; i++) { int y = 3 + i * 3 - off; if (y < 1 || y > 14) continue; boolean mid = i == 2; rect(mid ? 3 : 4, y, mid ? 10 : 6 + (i % 2) * 2, 1, mid ? 0xEEF2FF : 0x5A6A9A); }
+                pxa(13, 12 - off * 3, 0xFFFFFF, 0.9f); pxa(2, 9 - off * 2, 0x8AB4FF, 0.8f);
             }
             case "sty_sung" -> {                                                             // Sung line: a Now Playing card with one lyric strip docked under it
                 int dn = Math.round((sn(f) * 0.5f + 0.5f) * 1);

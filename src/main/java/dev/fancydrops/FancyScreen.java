@@ -2783,7 +2783,7 @@ public class FancyScreen extends Screen {
 
     // ---- Visuals: Now Playing, Lyrics, Spotify
     private void visualsPage(FancyConfig c) {
-        String[] wheres = {"Pop", "Glow", "Scroll", "Sung line"};
+        String[] wheres = {"Starlight", "Constellation", "Drift", "Sung line"};
         int ambOn = (c.ambGlow ? 1 : 0) + (c.ambBars ? 1 : 0) + (c.ambNotes ? 1 : 0) + (c.ambWave ? 1 : 0);
         if (searching || landing()) {
             rows.add(hero(":note:", "Visuals", "Your music in the game: what's playing, the words floating in front of you, and a little atmosphere in the album's colours.", 0xFF1ED760));
@@ -2812,8 +2812,8 @@ public class FancyScreen extends Screen {
             rows.add(toggle(":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v));
             if (!c.lyricsOn) { if (!Lyrics.status.isEmpty()) rows.add(note(Lyrics.status, 0xFF8A93B0)); return; }
             rows.add(section("Style"));
-            rows.add(picker("", "", wheres, new String[]{"White words that cascade in", "Bold words in the song's colour, a sweep of light", "A lyric sheet that glides up", "One line, docked to Now Playing"},
-                new String[]{":sty_pop:", ":sty_kara:", ":sty_scroll:", ":sty_sung:"}, new int[]{0xFFFFC8A0, 0xFF1ED760, 0xFFB48CFF, 0xFF4FC3FF}, null, 4, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
+            rows.add(picker("", "", wheres, new String[]{"Each word is born from a star", "Stars over the words, joined like a star chart", "Lines drift up through the dark", "One line, docked to Now Playing"},
+                new String[]{":sty_pop:", ":sty_kara:", ":sty_scroll:", ":sty_sung:"}, new int[]{0xFFEEF2FF, 0xFFB4A0FF, 0xFF8AB4FF, 0xFF4FC3FF}, null, 4, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
             if (c.lyricsStyle == LyricsHud.SUNG) {
                 rows.add(section("Place"));
                 Row nl = row(0, ":lyr_dock:", "Docked", "Above or below the Now Playing card", 0xFF4FC3FF);
@@ -2829,13 +2829,13 @@ public class FancyScreen extends Screen {
                 rows.add(toggle(":lyr_prev:", "Previous line", "Keep the line just sung in view", () -> c.lyricsPrev, v -> c.lyricsPrev = v));
             }
             rows.add(section("Extras"));
-            rows.add(toggle(":lyr_timing:", "Countdown line", "A line under the words that fills until the next line", () -> c.lyricsBar, v -> c.lyricsBar = v));
+            rows.add(toggle(":lyr_timing:", "Comet countdown", "A comet crosses under the words until the next line", () -> c.lyricsBar, v -> c.lyricsBar = v));
             if (c.lyricsStyle != LyricsHud.SUNG) {
-                rows.add(toggle(":lyr_burst:", "Sparkles", "A shower of tiny stars when a new line arrives", () -> c.lyricsStars, v -> c.lyricsStars = v));
-                rows.add(toggle(":amb_glow:", "Glow", "A soft light in the song's colour behind the words", () -> c.lyricsGlow, v -> c.lyricsGlow = v));
+                rows.add(toggle(":lyr_burst:", "Stardust", "A shimmer of stardust when a new line arrives", () -> c.lyricsStars, v -> c.lyricsStars = v));
+                rows.add(toggle(":amb_glow:", "Nebula glow", "A soft nebula behind the words, tinted by the album", () -> c.lyricsGlow, v -> c.lyricsGlow = v));
                 rows.add(toggle(":format:", "Backdrop", "A dark shade behind the words, so they read anywhere", () -> c.lyricsShade, v -> c.lyricsShade = v));
             }
-            rows.add(toggle(":lyr_intro:", "Song intro", "A record spins up with the song's name when it starts", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
+            rows.add(toggle(":lyr_intro:", "Song intro", "A ringed planet rises with the song's name", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
             Row off = row(0, ":lyr_timing:", "Timing", "Words early or late? Nudge them", Ui.ACCENT);
             off.ctls.add(new Slider(-1500, 1500, 50, () -> c.lyricsOffset, v -> c.lyricsOffset = (int) v, () -> (c.lyricsOffset > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", c.lyricsOffset / 1000.0))); rows.add(off);
             Spotify.Track st = Spotify.track;

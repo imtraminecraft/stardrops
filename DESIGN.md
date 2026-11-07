@@ -637,3 +637,8 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Lyrics show whole lines (no word timing). Countdown line under every style: fills from the line's start to the next line, its end lights as the next line nears (Countdown line toggle). Styles: Pop (white words cascade in with a spring), Glow (bold words in the album colour track in, a sweep of light crosses once), Scroll, Sung line. Extras: Countdown line, Sparkles (new line), Glow (light behind), Backdrop (dark shade), Song intro, Timing, This song. Beat.java removed.
 - Achievement page figures are silhouettes (mcBox: only lit >= 1, i.e. the lantern flame, keeps colour). Steve's far arm removed (read as an X).
 - Now Playing vinyl: slides 25 px out (card 226 wide, text from x 84); fine grooves, two fixed highlights, the album art as a spinning label, a spindle, the cover's shadow on it.
+- SPACE THEME (the mod is becoming stargazing / space themed). Lyrics first:
+  - Styles: Starlight (each word flares as a star with a cross of rays, then opens into the word; pale starlight 0xEEF2FF), Constellation (a star above each word at slightly different heights, joined left to right by fine lines like a star chart; the stars twinkle), Drift (the lyric sheet, neighbours in cool blue-white), Sung line.
+  - Countdown: a comet with a fading tail crossing a dotted path to a small star that brightens as the next line nears ("Comet countdown").
+  - Extras renamed: Stardust (sparkles), Nebula glow (album colour blended with violet 0x6A4AD8), Backdrop. Song intro: a ringed planet rises beside the title with a moon circling it.
+  - Icons sty_pop / sty_kara / sty_scroll redrawn as star bloom / constellation / drifting lines.
