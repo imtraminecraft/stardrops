@@ -566,3 +566,8 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - No Drops: three strikes, grey cracks, the rock crumbles into dust.
 - Sounds 2.0 (tools/make_scene_sounds.py): stone strikes with an 8-bit tick, a crunch on the burst, a chiptune fanfare reveal; RNG: heavy strike + clang, a boom, a full chip fanfare with a choir and bells.
 - Categories: Mob Drops = Slayers, Crimson Isle, The End, Mines (the Dwarven Mines' and Crystal Hollows' creatures, group "mobs"). New Mining category: Crystal Nucleus ("nucleus", chances from the loot table: 16.5 rolls over 307,212 weight), Frozen Corpses ("corpse", Vanguard weights, heard after "<TYPE> CORPSE LOOT!"), Mining Events ("fiesta": Refined Mineral, Glossy Gemstone). "Table & Dyes" (category id "dyes") holds the Experimentation Table and Dyes. mobs.json v4.
+
+## Round: the classic scenes are back, with the new words (author request Nov 7, 19:41)
+- The author rejected both DropShow scene versions (the smooth "video" one and the pixel rock). The animations are the classic Ritual scenes again, in play and in previews, with their old timings: Normal / No Drops 4 s, RNG 6 s, words 2 s after, multi-drop hold 0.5 s per extra drop (max 1.5 s).
+- KEEP the Butcher-style words: DropShow now holds only them (outlined name typed in, grey odds, gold price counting up; RNG: bold stamped odds banner over the item, price source). Ritual.draw calls DropShow.words; the Text editor still previews the editable TextFx block.
+- Sounds 2.0 and the Mining / Table & Dyes categories stay.

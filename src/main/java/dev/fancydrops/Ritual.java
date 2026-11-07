@@ -1039,6 +1039,7 @@ final class Ritual {
         }
 
         // ---- the item (flat icons stay flat, skulls are 3D and turn)
+        float itemTop = icy * u - hi * u, itemBot = icy * u + hi * u;
         if (it != null && p >= 0f && !nod && !TextFx.textOnly && !TextFx.barsOnly) {
             List<Item> all = a.items(); int n = all.size(); float[] offs = offsetsOf(a, szc, isc);
             for (int ii = 0; ii < n; ii++) {
@@ -1055,7 +1056,8 @@ final class Ritual {
             }
             ItemIcons.spinSpeed = c.itemSpin; ItemIcons.spinRev = c.itemSpinRev;
             ItemIcons.drawAlpha = Math.max(0f, Math.min(1f, itemA)); boolean still0 = Icons.STILL_ICONS; Icons.STILL_ICONS = false;                 // the dropped item always turns, whatever the menu says
-            try { ItemIcons.draw(g, cur.id, cur.icon, Math.round(gcx), Math.round(gcy), s); } finally { ItemIcons.drawAlpha = 1f; Icons.STILL_ICONS = still0; ItemIcons.spinSpeed = 1f; ItemIcons.spinRev = false; }
+            if (ii == 0) { itemTop = gcy - 8 * s; itemBot = gcy + 8 * s; }
+            try { ItemIcons.draw(g, cur.id, cur.icon, Math.round(gcx), Math.round(gcy), s); } catch (Throwable ignored) { } finally { ItemIcons.drawAlpha = 1f; Icons.STILL_ICONS = still0; ItemIcons.spinSpeed = 1f; ItemIcons.spinRev = false; }
             if (c.itemGlints && itemA > 0.05f) for (int i = 0; i < 9; i++) {                      // Item changes > Glints: little four-point sparks twinkle in and out round the item
                 float cyc = tb * 1.7f + i * 0.113f, ph = cyc - (float) Math.floor(cyc); int slot = (int) Math.floor(cyc) * 31 + i * 7;
                 float an = rnd(slot) * 6.2832f, rad = s * (9f + 8f * rnd(slot + 1)), tw = (float) Math.sin(Math.PI * ph);
@@ -1067,8 +1069,15 @@ final class Ritual {
             }
         }
 
-        // ---- the words: below the animation (top and center), above it (bottom); never over the bars
-        if (!TextFx.itemOnly && !TextFx.barsOnly && (textT > 0f || TextFx.textOnly)) {
+        // ---- the words (Butcher's style, DropShow) in play and the scene previews; the Text editor keeps the editable block
+        if (!TextFx.itemOnly && !TextFx.barsOnly && !TextFx.textOnly && it != null && !nod && p >= 0f) {
+            float ts = DropShow.scale(H), wa = 1f - textOut;
+            float below = c.textAbove() ? itemTop - 8 * ts - (a.count() >= 2 ? 2 : 1) * 10 * ts * (rng ? 1.6f : 1.25f) - 30 * ts : itemBot + 6 * ts;
+            float bannerY = itemTop - 10 * ts;
+            if (barsOn) { float bhg = barH * u; bannerY = Math.max(bhg + 4 + 10 * ts, bannerY); below = Math.max(bhg + 6, Math.min(H - bhg - 50 * ts, below)); }
+            DropShow.words(g, font, a, it, p, W / 2f + sx, bannerY, below, ts, wa, rng, rc);
+        }
+        else if (!TextFx.itemOnly && !TextFx.barsOnly && TextFx.textOnly) {
             float sc = c.textK() * Math.max(0.55f, Math.min(W, H) / 540f) * (0.8f + 0.2f * csz); if (TextFx.textOnly) sc = c.textK() * Math.max(1.3f, Math.min(2.6f, W / 150f));          // the Text editor shows the words big enough to read
             float th = textH(a, it, sc, c);
             float top = c.textAbove() ? (icy - hi - 14 * szc) * u - th : (icy + hi + 26 * szc) * u;

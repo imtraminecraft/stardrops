@@ -49,7 +49,7 @@ public final class AnimationManager {
         FancyConfig.AnimCfg cfg() { return FancyConfig.get().anim(key()); }
         float secs() { return sceneLen(type); }
         /** Extra seconds the finish is held so the words of several drops can be read (0.5 s per extra drop, at most 1.5). */
-        float hold() { int n = count(); return n <= 1 ? 0f : Math.min(1.2f, (n - 1) * 0.4f); }
+        float hold() { int n = count(); return n <= 1 ? 0f : Math.min(1.5f, (n - 1) * 0.5f); }
         /** The whole length: the scene plus the hold. */
         float total() { return secs() + hold(); }
         /** The drops this animation shows (0 to 8). */
@@ -112,16 +112,16 @@ public final class AnimationManager {
     static float pace(Anim a) { return a.speed; }
 
     // ---- the fixed lengths (author request): No Drops 4 s, Normal 4 s, RNG 6 s; the words stay 2 s after the animation ends
-    static final float TEXT_HOLD = 1.4f;
+    static final float TEXT_HOLD = 2.0f;
     /** How long the words stay after the animation: RNG a little longer. */
-    static float textHold(int type) { return type == RNG ? 1.8f : type == NO_DROPS ? 0f : TEXT_HOLD; }
+    static float textHold(int type) { return type == NO_DROPS ? 0f : TEXT_HOLD; }
     static int typeOfKey(String key) { return key.endsWith("rng") ? RNG : key.endsWith("nodrops") ? NO_DROPS : NORMAL; }
     /** The animation itself: the opening, the drop appearing and its finish. */
-    static float animLen(int type) { return type == RNG ? 3.6f : type == NO_DROPS ? 1.6f : 2.4f; }
+    static float animLen(int type) { return type == RNG ? 6f : 4f; }
     /** The whole scene without the multi-drop hold: the animation, then the words alone for 2 s (No Drops has no words). */
     static float sceneLen(int type) { return animLen(type) + textHold(type); }
-    /** When the drop appears: a short build-up (No Drops 1.0 s, Normal 1.2 s, RNG 2.2 s), then the finish. */
-    static float opening(int type) { return type == RNG ? 2.2f : type == NO_DROPS ? 1.0f : 1.2f; }
+    /** When the drop appears: the opening takes all but the last 1.4 s of the animation (the finish). */
+    static float opening(int type) { return animLen(type) - 1.4f; }
 
     /** Called every frame from the HUD. */
     public static void render(GuiGraphicsExtractor g) {
@@ -178,8 +178,7 @@ public final class AnimationManager {
 
     /** Draws one animation at time t (seconds) inside a W x H screen. */
     static void draw(GuiGraphicsExtractor g, Font font, Anim a, float t, int W, int H) {
-        if (TextFx.itemOnly || TextFx.textOnly || TextFx.barsOnly) Ritual.draw(g, font, a, t, W, H);       // the editors keep the classic scene
-        else DropShow.draw(g, font, a, t, W, H);
+        Ritual.draw(g, font, a, t, W, H);
     }
 
     // ------------------------------------------------------------------ the menu preview
