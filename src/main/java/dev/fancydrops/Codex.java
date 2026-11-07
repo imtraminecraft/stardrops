@@ -399,61 +399,73 @@ final class Codex {
         int sil = argb(a * alpha, 0x05040A);
         NebulaTex.layer(g, "land", landC, sx0, sy0, sw, sh, argb(a * alpha, 0xFFFFFF));          // the hill, its grass and the firs (baked once)
         float hx = sx0 + sw * 0.12f, hy = ground(hx) + 1;
-        // a blanket spread on the grass, lit warm by the lantern
-        for (int i = 0; i < Math.round(20 * k); i++) { float bx = hx - 9 * k + i, by = ground(bx); int c = (i / Math.max(1, Math.round(3 * k))) % 2 == 0 ? 0x3A1620 : 0x4A2A14;
-            g.fill(Math.round(bx), Math.round(by - 1.2f * k), Math.round(bx) + 1, Math.round(by + 0.5f), argb(a * alpha * 0.95f, c)); }
-        // the lantern beside them: warm light, a flame that flickers
-        float lx = hx - 16 * k, ly = ground(lx) - 2.5f * k, fl = 0.8f + 0.2f * (float) Math.sin(now / 90.0) * (float) Math.sin(now / 37.0);
-        NebulaTex.glow(g, lx + 4 * k, ground(lx) + 1.5f * k, 26 * k * fl, 5 * k, argb(0.3f * a * alpha, 0xFFA040));          // a pool of light on the grass
-        glow(lx, ly, 22 * k * fl, 0xFFB050, 0.3f * a); glow(lx, ly, 7 * k, 0xFFD890, 0.75f * a * fl);
-        for (int i = 0; i < 2; i++) { float mt = now / (700f + i * 230f) + i * 2.1f; float mxp = lx + (float) Math.cos(mt) * (4 + i * 2) * k, myp = ly - 2 * k + (float) Math.sin(mt * 1.7f) * 3 * k;      // two moths circling the lantern
+        // Minecraft, by night: Steve sitting on a red carpet, looking up through a spyglass, a cat lying by a lantern, a chest beside them.
+        // Everything is made of boxes in Minecraft's own proportions (one "pixel" of a skin = p), shaded for the dark and lit warm by the lantern.
+        float p = 0.8f * k, fl = 0.8f + 0.2f * (float) Math.sin(now / 90.0) * (float) Math.sin(now / 37.0);
+        for (float cx = hx - 36 * p; cx < hx + 16 * p; cx += 2 * p) {                               // the red carpet, its weave in two reds
+            int c = (Math.round((cx - hx) / (2 * p)) & 1) == 0 ? 0xA02424 : 0x8A1C1C;
+            mcBox(cx, ground(cx + p) - 1.1f * p, 0, 0, 0, 2.05f * p, 1.1f * p, c, 0.35f, a);
+        }
+        // the lantern: an iron frame, its flame inside, a hook on top; a pool of warm light on the grass
+        float lx = hx - 33 * p, lgy = ground(lx) - 0.5f * p, ly = lgy - 3.5f * p;
+        NebulaTex.glow(g, lx + 3 * p, lgy + 2 * p, 34 * p * fl, 7 * p, argb(0.3f * a * alpha, 0xFFA040));
+        glow(lx, ly, 30 * p * fl, 0xFFB050, 0.3f * a);
+        mcBox(lx - 3 * p, lgy - 7 * p, 0, 0, 0, 6 * p, 7 * p, 0x3A3A44, 0.5f, a); mcBox(lx - 2 * p, lgy - 6 * p, 0, 0, 0, 4 * p, 5 * p, mix(0xFFFFB050, 0xFFFFE08A, fl), 1f, a);
+        mcBox(lx - 2 * p, lgy - 8 * p, 0, 0, 0, 4 * p, 1 * p, 0x3A3A44, 0.5f, a); mcBox(lx - 0.5f * p, lgy - 9.5f * p, 0, 0, 0, 1 * p, 1.5f * p, 0x5A5A64, 0.5f, a);
+        glow(lx, ly, 6 * p, 0xFFD890, 0.6f * a * fl);
+        for (int i = 0; i < 2; i++) { float mt = now / (700f + i * 230f) + i * 2.1f; float mxp = lx + (float) Math.cos(mt) * (5 + i * 3) * p, myp = ly - 4 * p + (float) Math.sin(mt * 1.7f) * 4 * p;      // two moths round it
             g.fill(Math.round(mxp), Math.round(myp), Math.round(mxp) + 1, Math.round(myp) + 1, argb(0.8f * a * alpha, 0xFFE8C0)); }
-        bar(lx - 1.5f * k, ly - 2.5f * k, lx + 1.5f * k, ly + 2.5f * k, 0x1A120A, a); bar(lx - 0.5f * k, ly - 3.5f * k, lx + 0.5f * k, ly - 2.5f * k, 0x1A120A, a);
-        disc(g, lx, ly, 1.2f * k, argb(a * alpha * fl, 0xFFE8A0));
-        // a mug of something hot on the blanket, steam curling up off it
-        float mgx = hx - 6 * k, mgy = ground(mgx) - 1.2f * k;
-        bar(mgx - 1f * k, mgy - 2.2f * k, mgx + 1f * k, mgy, 0x1A120A, a); bar(mgx + 1f * k, mgy - 1.8f * k, mgx + 1.6f * k, mgy - 0.6f * k, 0x1A120A, a);
-        for (int i = 0; i < 3; i++) { float q = ((now / 1000f) * 0.45f + i / 3f) % 1f; glow(mgx + (float) Math.sin(q * 6 + i * 2) * 1.2f * k, mgy - 3 * k - q * 7 * k, (1.2f + 1.5f * q) * k, 0xD8D8E8, 0.22f * (1f - q) * a); }
-        // a cat curled by the lantern, its tail swishing, its ears twitching now and then
-        float cx0 = hx - 11.5f * k, cg = ground(cx0) + 0.5f, tail = (float) Math.sin(now / 600.0) * 2.5f * k, ear = (now / 3000) % 4 == 0 ? 0.4f * k : 0f;
-        disc(g, cx0, cg - 2.2f * k, 2.4f * k, sil); disc(g, cx0 + 1.2f * k, cg - 5.2f * k, 1.7f * k, sil);
-        thick(cx0 + 0.3f * k, cg - 6.2f * k, cx0 + 0.4f * k - ear, cg - 7.3f * k, 0.8f * k, 0x05040A, a); thick(cx0 + 2f * k, cg - 6.2f * k, cx0 + 2.1f * k, cg - 7.1f * k, 0.8f * k, 0x05040A, a);
-        thick(cx0 - 2 * k, cg - 0.8f * k, cx0 - 4.5f * k + tail * 0.4f, cg - 3.5f * k - Math.abs(tail) * 0.3f, 0.7f * k, 0x05040A, a);
-        // the telescope on its tripod; the tube turns to the constellation under your mouse, or sweeps slowly
-        float apX = hx + 9f * k, apY = Math.min(ground(apX), hy) - 12.5f * k, want;
-        for (float fx : new float[]{apX - 4.5f * k, apX + 4.5f * k, apX + 0.6f * k}) line(apX, apY, fx, ground(fx) + 0.5f, 0x05040A, a, 1);
+        // the cat (a ginger tabby), lying down facing Steve: legs tucked, head up, ears, and its tail flicking
+        float cx0 = hx - 27 * p, cgy = ground(cx0 + 5 * p) - 0.3f * p, flick = (float) Math.sin(now / 600.0) * 0.5f;
+        mcBox(cx0, cgy - 4 * p, 0.4f + flick, 0, -0.5f * p, 7 * p, 1 * p, 0xE0A050, 0.55f, a);            // the tail, rising off its back
+        mcBox(cx0, cgy - 4 * p, 0, 0, 0, 9 * p, 4 * p, 0xE0A050, 0.55f, a);                                // body
+        mcBox(cx0 + 2 * p, cgy - 4 * p, 0, 0, 0, 1 * p, 4 * p, 0xB0702A, 0.55f, a); mcBox(cx0 + 5 * p, cgy - 4 * p, 0, 0, 0, 1 * p, 4 * p, 0xB0702A, 0.55f, a);   // stripes
+        float blink = (now % 4200L) < 140 ? 0f : 1f;
+        mcBox(cx0 + 7 * p, cgy - 7 * p, 0, 0, 0, 5 * p, 4 * p, 0xE0A050, 0.6f, a);                         // head
+        mcBox(cx0 + 7 * p, cgy - 8 * p, 0, 0, 0, 1 * p, 1 * p, 0xE0A050, 0.6f, a); mcBox(cx0 + 10 * p, cgy - 8 * p, 0, 0, 0, 1 * p, 1 * p, 0xE0A050, 0.6f, a);   // ears
+        mcBox(cx0 + 11 * p, cgy - 5 * p, 0, 0, 0, 1.4f * p, 1 * p, 0xF0D0B0, 0.6f, a);                      // muzzle
+        if (blink > 0) mcBox(cx0 + 9.5f * p, cgy - 6 * p, 0, 0, 0, 1 * p, 1 * p, 0x7AE06A, 1f, a);          // an eye, catching the lantern
+        // a chest beside them
+        float chx = hx - 14 * p, chy = ground(chx + 3.5f * p);
+        mcBox(chx, chy - 7 * p, 0, 0, 0, 7 * p, 7 * p, 0x9A6A30, 0.5f, a);
+        mcBox(chx, chy - 7 * p, 0, 0, 0, 7 * p, 0.6f * p, 0x5A3A18, 0.5f, a); mcBox(chx, chy - 4.6f * p, 0, 0, 0, 7 * p, 0.6f * p, 0x5A3A18, 0.5f, a);
+        mcBox(chx + 6 * p, chy - 5.4f * p, 0, 0, 0, 1 * p, 2 * p, 0xC8C8D0, 0.6f, a);                      // the latch
+        // Steve, sitting with his legs out on the carpet, looking up through a spyglass at the constellation under your mouse
+        float want;
         if (film) want = -1.05f;
-        else if (hoverCon >= 0) { float[] o = centre(hoverCon); want = (float) Math.atan2(Y(o[1]) - apY, X(o[0]) - apX); }
+        else if (hoverCon >= 0) { float[] o = centre(hoverCon); want = (float) Math.atan2(Y(o[1]) - (hy - 26 * p), X(o[0]) - (hx + 2 * p)); }
         else want = -0.95f + 0.25f * (float) Math.sin(now / 5000.0);
-        want = Math.max(-2.6f, Math.min(-0.15f, want));
+        want = Math.max(-2.2f, Math.min(-0.35f, want));
         scopeAng += (want - scopeAng) * (film ? 0.2f : 0.08f);
-        float ca = (float) Math.cos(scopeAng), sa = (float) Math.sin(scopeAng), len = 15 * k;
-        float eyeX = apX - ca * len * 0.4f, eyeY = apY - sa * len * 0.4f, tx1 = apX + ca * len * 0.6f, ty1 = apY + sa * len * 0.6f;
-        lensX = tx1; lensY = ty1;
-        thick(eyeX, eyeY, tx1, ty1, 1.7f * k, 0x0A0812, a); thick(eyeX, eyeY, tx1, ty1, 0.5f * k, 0x3A2A5A, a * 0.6f);
-        thick(tx1 - ca * 1.5f * k, ty1 - sa * 1.5f * k, tx1, ty1, 2.4f * k, 0x0A0812, a);
-        disc(g, apX, apY, 1.1f * k, argb(a * alpha, 0x1A1424));
-        glow(tx1, ty1, 4 * k, 0xBFD8FF, (hoverCon >= 0 || film ? 0.55f : 0.25f) * a);
-        // the stargazer: a pack beside them, sitting with knees up; every so often they lean back from the eyepiece to look with their own eyes
-        bar(hx - 6.5f * k, hy - 6 * k, hx - 2.2f * k, hy, 0x05040A, a); bar(hx - 6 * k, hy - 6.8f * k, hx - 2.8f * k, hy - 6 * k, 0x05040A, a);
-        float lk = (now % 14000L) / 1000f, look = lk > 10.5f && lk < 13.5f ? (float) Math.sin(Math.PI * (lk - 10.5f) / 3f) : 0f; look = look * look * (3 - 2 * look);
-        float footX = hx + 9.5f * k, footY = ground(footX) - 0.6f * k;
-        thick(hx, hy - 1.5f * k, hx + 1.5f * k - look * 1.2f * k, hy - 11 * k, 5.2f * k, 0x05040A, a);                  // back
-        thick(hx + 1.5f * k, hy - 2.5f * k, hx + 7 * k, hy - 7.5f * k, 3.2f * k, 0x05040A, a);                          // thigh
-        thick(hx + 7 * k, hy - 7.5f * k, footX, footY, 2.8f * k, 0x05040A, a);                                          // shin
-        thick(hx + 1.5f * k - look * k, hy - 10 * k, eyeX, eyeY + 1.5f * k, 2.2f * k, 0x05040A, a);                    // arm on the scope
-        float headX = hx + 3 * k - look * 2.6f * k, headY = hy - 14.5f * k - look * 0.6f * k; headXs = headX; headYs = headY;
-        disc(g, headX, headY, 3.1f * k, sil);
-        // a knitted hat: its turned-up brim, the crown leaning back, a bobble that swings
-        float tilt = -0.35f - look * 0.5f, hcx = headX - 0.4f * k, hcy = headY - 1.6f * k;
-        thick(hcx - 3.2f * k, hcy + 0.6f * k, hcx + 2.8f * k, hcy + 0.2f * k, 1.6f * k, 0x05040A, a);
-        thick(hcx, hcy, hcx + (float) Math.sin(tilt) * 4.2f * k, hcy - (float) Math.cos(tilt) * 4.2f * k, 3.6f * k, 0x05040A, a);
-        float bob = (float) Math.sin(now / 520.0) * 0.6f * k, bxp = hcx + (float) Math.sin(tilt) * 5.6f * k + bob, byp = hcy - (float) Math.cos(tilt) * 5.6f * k;
-        disc(g, bxp, byp, 1.3f * k, sil);
-        // a long scarf: wound at the neck, its end streaming out behind in the wind, in one smooth curve
-        float wx = hx + 1 * k, wy = hy - 11.5f * k, px0 = wx, py0 = wy;
-        for (int i = 1; i <= 5; i++) { float q = i / 5f, wave = (float) Math.sin(now / 420.0 - q * 3.2) * 1.4f * k * q;
-            float px1 = wx - q * 7.5f * k, py1 = wy + q * 1.5f * k + wave; thick(px0, py0, px1, py1, (1.7f - 0.5f * q) * k, 0x05040A, a); px0 = px1; py0 = py1; }
+        float lk = (now % 14000L) / 1000f, rest = lk > 10.5f && lk < 13.5f ? (float) Math.sin(Math.PI * (lk - 10.5f) / 3f) : 0f; rest = rest * rest * (3 - 2 * rest);   // now and then he lowers it and just looks
+        float hipX = hx, hipY = hy - 4 * p, lean = -0.2f;
+        double up = -Math.PI / 2 + lean; float ux = (float) Math.cos(up), uy = (float) Math.sin(up);
+        float shX = hipX + ux * 11 * p, shY = hipY + uy * 11 * p, hcX = hipX + ux * 16.5f * p, hcY = hipY + uy * 16.5f * p;
+        float look = (scopeAng + (float) Math.PI / 2) * 0.55f - (float) Math.PI / 2 + (float) Math.PI / 2 * 0.45f;   // the head pitches up part of the way; the spyglass does the rest
+        look = look * (1f - rest * 0.3f);
+        mcBox(shX, shY, (float) (Math.PI / 2 + 0.7), 0, -2 * p, 11 * p, 4 * p, 0x0E8A8A, 0.3f, a);          // the far arm, propping him up behind
+        float slope = (float) Math.atan2(ground(hipX + 12 * p) - ground(hipX), 12 * p);                  // legs lie along the slope of the hill
+        mcBox(hipX, hipY, slope, -1 * p, 0, 13 * p, 4 * p, 0x3A3AA8, 0.42f, a);                            // legs
+        mcBox(hipX, hipY, slope, 10 * p, 0, 2 * p, 4 * p, 0x5A5A5A, 0.42f, a);                               // shoes
+        mcBox(hipX, hipY, (float) up, 0, -2 * p, 12 * p, 4 * p, 0x12AAAA, 0.42f, a);                        // body (the cyan shirt)
+        float hfx = (float) Math.cos(look), hfy = (float) Math.sin(look), dx = -hfy, dy = hfx;                // the head's forward and "down"
+        float eyeX = hcX + hfx * 4 * p - dx * 1 * p, eyeY = hcY + hfy * 4 * p - dy * 1 * p;
+        float sgA = scopeAng + (0f - scopeAng) * rest, sgX = eyeX + (hipX + 7 * p - eyeX) * rest, sgY = eyeY + (hipY - 3 * p - eyeY) * rest;     // the spyglass: at his eye, or resting in his lap
+        float gx = (float) Math.cos(sgA), gy = (float) Math.sin(sgA);
+        float handX = sgX + gx * 2 * p + (float) -gy * 1.2f * p, handY = sgY + gy * 2 * p + gx * 1.2f * p;
+        float ax = handX - shX, ay = handY - shY, al = (float) Math.hypot(ax, ay), aa = (float) Math.atan2(ay, ax);
+        mcBox(shX, shY, aa, 0, -2 * p, Math.max(4 * p, al - 2 * p), 4 * p, 0x12AAAA, 0.45f, a);              // the arm holding it (a cyan sleeve, the hand)
+        mcBox(shX, shY, aa, Math.max(4 * p, al - 2 * p), -2 * p, 3 * p, 4 * p, 0xC8946A, 0.5f, a);
+        headXs = hcX; headYs = hcY;
+        mcBox(hcX, hcY, look, -4 * p, -4 * p, 8 * p, 8 * p, 0xC8946A, 0.5f, a);                              // head (skin)
+        mcBox(hcX, hcY, look, -4 * p, -4 * p, 8 * p, 2 * p, 0x4A2E1A, 0.5f, a); mcBox(hcX, hcY, look, -4 * p, -2 * p, 2 * p, 4 * p, 0x4A2E1A, 0.5f, a);   // hair: the top and the back
+        mcBox(hcX, hcY, look, 2 * p, 0, 2 * p, 1 * p, 0x6A4030, 0.5f, a);                                    // a bit of beard
+        mcBox(sgX, sgY, sgA, 0, -1 * p, 7 * p, 2 * p, 0xC87A4A, 0.6f, a);                                    // the copper tube
+        mcBox(sgX, sgY, sgA, 2 * p, -1 * p, 0.8f * p, 2 * p, 0x8A4A2A, 0.6f, a); mcBox(sgX, sgY, sgA, 5 * p, -1 * p, 0.8f * p, 2 * p, 0x8A4A2A, 0.6f, a);
+        mcBox(sgX, sgY, sgA, 7 * p, -1.2f * p, 1 * p, 2.4f * p, 0x9A6AE0, 1f, a);                             // the amethyst lens
+        float tx1 = sgX + gx * 8 * p, ty1 = sgY + gy * 8 * p; lensX = tx1; lensY = ty1;
+        glow(tx1, ty1, 4 * p, 0xC8A8FF, (hoverCon >= 0 || film ? 0.5f : 0.25f) * a * (1f - rest));
+        float tx1b = tx1, ty1b = ty1;
         for (int i = 0; i < (film ? 0 : 4); i++) {                                                   // a few fireflies blinking low over the grass
             float u = (now % 3_600_000L) / 1000f, fx = sx0 + sw * (0.03f + 0.28f * rnd(i * 7)) + (float) Math.sin(u * 0.35f + i) * 6 * k, fy = ground(fx) - (5 + 10 * rnd(i * 3)) * k + (float) Math.sin(u * 0.6f + i * 2) * 2 * k;
             float bl = (float) Math.max(0, Math.sin(u * 1.3f + i * 1.7f)); bl *= bl; glow(fx, fy, 3 * k, 0xD8FF8A, 0.5f * bl * a); g.fill(Math.round(fx), Math.round(fy), Math.round(fx) + 1, Math.round(fy) + 1, argb(bl * a * alpha, 0xF4FFC8));
@@ -463,6 +475,12 @@ final class Codex {
             float ha = ease((now - hoverAt) / 400f);
             for (int i = 0; i < 30; i++) { float u = (i + ((now / 60) % 3) / 3f) / 30f; if (u * d < 6) continue; float xx = tx1 + (ox - tx1) * u, yy = ty1 + (oy - ty1) * u; G.fill(Math.round(xx), Math.round(yy), Math.round(xx) + 1, Math.round(yy) + 1, argb(0.25f * ha * a * (1f - u) * alpha, ACH_COL[hoverCon])); }
         }
+    }
+    /** A Minecraft-style box: in local coordinates (x along angle `ang` from the pivot px, py; y across it), lx, ly, w, h. The colour
+     *  is darkened for night (lit = how much of its own colour shows: 0 = a silhouette, 1 = full colour, e.g. the lantern's flame). */
+    private static void mcBox(float px, float py, float ang, float lx, float ly, float w, float h, int rgb, float lit, float a) {
+        int col = mix(0xFF07060E, 0xFF000000 | rgb, lit);
+        Gfx.push(G); Gfx.translate(G, px, py); if (ang != 0) Gfx.rotate(G, ang); Gfx.translate(G, lx, ly); G.pose().scale(w, h); G.fill(0, 0, 1, 1, argb(a * alpha, col)); Gfx.pop(G);
     }
     // ------------------------------------------------------------------ the landscape, baked once into two pictures (at twice the menu's pixels)
     private static Canvas farC, landC; private static int bakedW, bakedH;
@@ -516,8 +534,8 @@ final class Codex {
             for (int y = Math.round(base - 4 * k); y < base; y++) for (int x = Math.round(fx - 0.7f * k); x < fx + 0.7f * k; x++) l.set(x, y, dark);
             int rows = Math.round(th - 3 * k);
             for (int r = 0; r < rows; r++) {
-                float h = r / (float) rows, tier = (h * 5f) % 1f;
-                float hw = (1f - h) * th * 0.27f * (0.45f + 0.55f * (1f - tier)) + 0.6f + (h1(r * 7 + sd * 31) - 0.5f) * 1.6f * R;
+                float h = (float) Math.floor(r / (0.62f * k * 2f)) * (0.62f * k * 2f) / rows, tier = (h * 4f) % 1f;
+                float bs = 0.62f * k * 2f, hw0 = (1f - h) * th * 0.27f * (0.45f + 0.55f * (1f - tier)) + 0.6f, hw = Math.max(bs * 0.5f, Math.round(hw0 / bs) * bs);   // spruce, in blocks: widths step by whole blocks
                 int y = Math.round(base - 3 * k - r);
                 for (int x = Math.round(fx - hw); x <= Math.round(fx + hw); x++) l.set(x, y, dark);
             }
