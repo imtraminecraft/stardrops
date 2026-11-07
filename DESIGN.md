@@ -610,3 +610,9 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Song intro: a vinyl pops up beside the title, spins, a tone arm swings on and notes drift off.
 - Achievements update live: Playtime progress, "First day … left" and "Next star in" count down to the second (LocalLedger.live / firstDayLeft).
 - New star lit (StarToast): a card slides in at the top right (the star ignites in its constellation's colour, rays by tier, "NEW STAR LIT" in the tier colour, name, constellation · tier · reward, a timer bar) and a chat line with [View]. Clicking the line runs /fd star <id>: the sky opens flown to that star, blinking. Both Playtime and drop stars use it, once per star.
+- Opening shot (achievements film, 2.6 s): dusk on the hill (sunset gradient, sun glow), night falls as a time-lapse (stars come out one by one), the camera cranes up off the hill with parallax (sky moves little, the hill a lot), constellations come into focus from soft blurs. No lens push.
+- Backdrop: two mountain ranges with haze, a horizon glow and a far town, thin drifting clouds, near out-of-focus motes. Hill grass is fine pixel blades (no swaying lines); firs bend from the foot; the stargazer has a knitted bobble hat, a long scarf, a pack, a blanket, a steaming mug, and leans back to look every ~14 s.
+- Tiers: bronze 0xB4602E (deep copper), silver 0xD2DCEC, gold 0xFFE04A.
+- Sung line is a lyrics style (4th), docked Above/Below the Now Playing card; Position/Size/Next/Previous hidden for it. Strip: clean glass, note in a soft light, hairline progress. "Previous line" toggle (off by default). Star bursts only for Pop; Next line hidden for Scroll.
+- Word pacing: syllables and punctuation (commas hold) set when each word is sung; line spread over most of the gap unless the gap is long.
+- Icons: sty_pop, sty_kara, sty_scroll, sty_sung, lyr_prev; mus_play is a round button switching play/pause (never both).

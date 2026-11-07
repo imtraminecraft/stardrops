@@ -31,7 +31,7 @@ final class LocalLedger {
     static final LinkedHashMap<String, String> CH = new LinkedHashMap<>();
     static final List<Def> ACH = new ArrayList<>();
     static final String[] TIER = {"Bronze", "Silver", "Gold"};
-    static final int[] TIER_COL = {0xFFD08A4E, 0xFFCFD8E6, 0xFFFFCE4A};
+    static final int[] TIER_COL = {0xFFB4602E, 0xFFD2DCEC, 0xFFFFE04A};   // bronze (a deep reddish copper), silver, gold (bright yellow)
     static {
         try (var in = LocalLedger.class.getResourceAsStream("/fancydrops/achievements.json")) {
             var o = JsonParser.parseString(new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();

@@ -121,40 +121,30 @@ public class FancyScreen extends Screen {
      * with its lyric strip drawn where it would go. A lit frame glides to the one you pick, and the strip in it shimmers.
      */
     private class Dock extends Ctl {
-        final IntSupplier get; final IntConsumer set; static final int CELL = 34;
+        final IntSupplier get; final IntConsumer set; static final int CELL = 38;
         Dock(IntSupplier g, IntConsumer s) { get = g; set = s; }
-        int width() { return CELL * 3 + 4; }
+        int width() { return CELL * 2 + 4; }
         void draw(GuiGraphicsExtractor g, int y, int h, boolean hover) {
-            int sel = get.getAsInt(), ty = y + (h - 22) / 2; int[] order = {0, 2, 1};                // shown as Off, Above, Below
-            int selPos = sel == 0 ? 0 : sel == 2 ? 1 : 2;
-            float gx = anim("dock|" + key, selPos, 14f);
+            int sel = get.getAsInt() == 2 ? 0 : 1, ty = y + (h - 22) / 2; int[] order = {2, 1};               // Above, Below
+            float gx = anim("dock|" + key, sel, 14f);
             pill(g, x0, ty, x1 - x0, 22, Ui.PANEL2);
             int fx = Math.round(x0 + 2 + gx * CELL);
-            pill(g, fx, ty + 1, CELL, 20, Canvas.mix(Ui.PANEL2, 0xFF1ED760, 0.28f));
+            pill(g, fx, ty + 1, CELL, 20, Canvas.mix(Ui.PANEL2, 0xFF4FC3FF, 0.26f));
             float pulse = 0.5f + 0.5f * (float) Math.sin(fxNow / 300.0);
-            rout(g, fx, ty + 1, CELL, 20, Gfx.argb(Math.round(120 + 100 * pulse), 0x1ED760));
-            for (int i = 0; i < 3; i++) {
-                int mode = order[i], cx = x0 + 2 + i * CELL, on = Math.abs(gx - i) < 0.5f ? 1 : 0;
-                boolean hv = hover && lastMx >= cx && lastMx < cx + CELL;
-                int dim = on == 1 ? 0xFFFFFFFF : hv ? 0xFFC8CCD8 : 0xFF6A7088;
-                int cardY = mode == 2 ? ty + 10 : mode == 1 ? ty + 4 : ty + 7, cw = 22, ccx = cx + (CELL - cw) / 2;
-                g.fill(ccx, cardY, ccx + cw, cardY + 8, Canvas.mix(0xFF0B0D14, dim, 0.18f));          // the tiny card: cover, two lines of text
-                g.fill(ccx + 1, cardY + 1, ccx + 7, cardY + 7, on == 1 ? 0xFF1ED760 : Canvas.mix(0xFF1ED760, 0xFF2A2E3A, 0.6f));
-                g.fill(ccx + 9, cardY + 2, ccx + 19, cardY + 3, dim); g.fill(ccx + 9, cardY + 5, ccx + 16, cardY + 6, Canvas.mix(dim, 0xFF000000, 0.4f));
-                if (mode != 0) {                                                                       // the strip, above or below
-                    int sy = mode == 2 ? cardY - 5 : cardY + 10;
-                    g.fill(ccx + 2, sy, ccx + cw - 2, sy + 4, Canvas.mix(0xFF0B0D14, 0xFF1ED760, on == 1 ? 0.35f : 0.12f));
-                    int sweep = on == 1 ? Math.round(((fxNow / 18) % 40) / 40f * (cw - 6)) : cw - 6;
-                    g.fill(ccx + 3, sy + 1, ccx + 3 + sweep, sy + 3, on == 1 ? 0xFF7CFFB0 : 0xFF4A5068);
-                } else {                                                                               // Off: a small slash
-                    for (int d = 0; d < 6; d++) g.fill(ccx + cw + 1 - d, cardY + 8 + d - 9, ccx + cw + 2 - d, cardY + 9 + d - 9, on == 1 ? 0xFFFF6A6A : 0xFF4A5068);
-                }
+            rout(g, fx, ty + 1, CELL, 20, Gfx.argb(Math.round(120 + 100 * pulse), 0x4FC3FF));
+            for (int i = 0; i < 2; i++) {
+                int mode = order[i], cx = x0 + 2 + i * CELL; boolean on = Math.abs(gx - i) < 0.5f, hv = hover && lastMx >= cx && lastMx < cx + CELL;
+                int dim = on ? 0xFFFFFFFF : hv ? 0xFFC8CCD8 : 0xFF6A7088, cw = 24, ccx = cx + (CELL - cw) / 2, cardY = mode == 2 ? ty + 10 : ty + 4;
+                g.fill(ccx, cardY, ccx + cw, cardY + 8, Canvas.mix(0xFF0B0D14, dim, 0.18f));                       // the tiny card: cover, two lines of text
+                g.fill(ccx + 1, cardY + 1, ccx + 7, cardY + 7, on ? 0xFF1ED760 : Canvas.mix(0xFF1ED760, 0xFF2A2E3A, 0.6f));
+                g.fill(ccx + 9, cardY + 2, ccx + 20, cardY + 3, dim); g.fill(ccx + 9, cardY + 5, ccx + 17, cardY + 6, Canvas.mix(dim, 0xFF000000, 0.4f));
+                int sy = mode == 2 ? cardY - 5 : cardY + 10;                                                        // the strip, above or below
+                g.fill(ccx + 2, sy, ccx + cw - 2, sy + 4, Canvas.mix(0xFF0B0D14, 0xFF4FC3FF, on ? 0.35f : 0.12f));
+                int sweep = on ? Math.round(((fxNow / 18) % 40) / 40f * (cw - 6)) : cw - 6;
+                g.fill(ccx + 3, sy + 1, ccx + 3 + sweep, sy + 3, on ? 0xFFA8E4FF : 0xFF4A5068);
             }
         }
-        boolean click(double mx, int button) {
-            int i = (int) Math.max(0, Math.min(2, (mx - x0 - 2) / CELL)); int[] order = {0, 2, 1};
-            set.accept(order[i]); return true;
-        }
+        boolean click(double mx, int button) { set.accept(mx - x0 - 2 < CELL ? 2 : 1); return true; }
     }
 
     private class Btn extends Ctl {
@@ -2793,7 +2783,7 @@ public class FancyScreen extends Screen {
 
     // ---- Visuals: Now Playing, Lyrics, Spotify
     private void visualsPage(FancyConfig c) {
-        String[] wheres = {"Pop", "Karaoke", "Scroll"};
+        String[] wheres = {"Pop", "Karaoke", "Scroll", "Sung line"};
         int ambOn = (c.ambGlow ? 1 : 0) + (c.ambBars ? 1 : 0) + (c.ambNotes ? 1 : 0) + (c.ambWave ? 1 : 0);
         if (searching || landing()) {
             rows.add(hero(":note:", "Visuals", "Your music in the game: what's playing, the words floating in front of you, and a little atmosphere in the album's colours.", 0xFF1ED760));
@@ -2822,20 +2812,25 @@ public class FancyScreen extends Screen {
             rows.add(toggle(":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v));
             if (!c.lyricsOn) { if (!Lyrics.status.isEmpty()) rows.add(note(Lyrics.status, 0xFF8A93B0)); return; }
             rows.add(section("Style"));
-            rows.add(picker("", "", wheres, new String[]{"Words pop in as they're sung", "A wipe of colour runs through the line", "A lyric sheet that glides up"},
-                new String[]{":lyr_burst:", ":note:", ":menu:"}, new int[]{0xFFFFC8A0, 0xFF1ED760, 0xFFB48CFF}, null, 3, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
-            rows.add(section("Place"));
-            Row lm = row(0, ":move:", "Position", "Drag them anywhere, scroll to resize", 0xFFFFC8A0);
-            lm.ctls.add(new Btn("Move them", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.LINE)))); rows.add(lm);
-            Row ls = row(0, ":size:", "Size", "How big the words are", Ui.ACCENT);
-            ls.ctls.add(new Slider(60, 160, 5, () -> c.lyricsSize, v -> c.lyricsSize = (int) v, () -> c.lyricsSize + "%").typed(1)); rows.add(ls);
-            rows.add(toggle(":format:", "Next line", "The coming line, faintly below", () -> c.lyricsNext, v -> c.lyricsNext = v));
-            rows.add(section("Sung line"));
-            Row nl = row(0, ":lyr_dock:", "Sung line", "The line being sung, docked to Now Playing: off, above or below", 0xFF1ED760);
-            nl.ctls.add(new Dock(() -> c.npLine, i -> c.npLine = i)); rows.add(nl);
+            rows.add(picker("", "", wheres, new String[]{"Words pop in as they're sung", "A wipe of colour runs through the line", "A lyric sheet that glides up", "One line, docked to Now Playing"},
+                new String[]{":sty_pop:", ":sty_kara:", ":sty_scroll:", ":sty_sung:"}, new int[]{0xFFFFC8A0, 0xFF1ED760, 0xFFB48CFF, 0xFF4FC3FF}, null, 4, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
+            if (c.lyricsStyle == LyricsHud.SUNG) {
+                rows.add(section("Place"));
+                Row nl = row(0, ":lyr_dock:", "Docked", "Above or below the Now Playing card", 0xFF4FC3FF);
+                nl.ctls.add(new Dock(() -> c.npLine, i -> c.npLine = i)); rows.add(nl);
+                if (!c.npOn) rows.add(note("Turn on Now Playing to see it: the line rides on its card.", 0xFFFFC857));
+            } else {
+                rows.add(section("Place"));
+                Row lm = row(0, ":move:", "Position", "Drag them anywhere, scroll to resize", 0xFFFFC8A0);
+                lm.ctls.add(new Btn("Move them", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.LINE)))); rows.add(lm);
+                Row ls = row(0, ":size:", "Size", "How big the words are", Ui.ACCENT);
+                ls.ctls.add(new Slider(60, 160, 5, () -> c.lyricsSize, v -> c.lyricsSize = (int) v, () -> c.lyricsSize + "%").typed(1)); rows.add(ls);
+                if (c.lyricsStyle != LyricsHud.SCROLL) rows.add(toggle(":format:", "Next line", "The coming line, faintly below", () -> c.lyricsNext, v -> c.lyricsNext = v));          // (Scroll always shows what comes next)
+                rows.add(toggle(":lyr_prev:", "Previous line", "Keep the line just sung in view", () -> c.lyricsPrev, v -> c.lyricsPrev = v));
+            }
             rows.add(section("Extras"));
-            rows.add(toggle(":lyr_burst:", "Star bursts", "Little stars burst from each word as it's sung", () -> c.lyricsStars, v -> c.lyricsStars = v));
-            rows.add(toggle(":lyr_intro:", "Song intro", "The song's name in big letters when it starts", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
+            if (c.lyricsStyle == LyricsHud.POP) rows.add(toggle(":lyr_burst:", "Star bursts", "Little stars burst from each word as it's sung", () -> c.lyricsStars, v -> c.lyricsStars = v));          // (only Pop bursts)
+            rows.add(toggle(":lyr_intro:", "Song intro", "A record spins up with the song's name when it starts", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
             Row off = row(0, ":lyr_timing:", "Timing", "Words early or late? Nudge them", Ui.ACCENT);
             off.ctls.add(new Slider(-1500, 1500, 50, () -> c.lyricsOffset, v -> c.lyricsOffset = (int) v, () -> (c.lyricsOffset > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", c.lyricsOffset / 1000.0))); rows.add(off);
             rows.add(note(Lyrics.status.isEmpty() ? "The words take the album cover's colour and step aside during drop animations." : Lyrics.status, 0xFF8A93B0));

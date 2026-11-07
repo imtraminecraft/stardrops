@@ -496,6 +496,42 @@ final class IconArt {
                 outline();
                 glint(13, 9 + dn, 1, 0xFFFFFF, t);
             }
+            case "sty_pop" -> {                                                              // Pop: a word bubble bursting up out of a line, sparks round it
+                float sp = sn(f) * 0.5f + 0.5f; int up = Math.round(sp * 2);
+                rect(2, 12, 12, 2, 0x5A4A6A); rect(3, 12, 4, 1, 0xB8A8C8);
+                bev(4, 4 - up, 8, 6, 0xFF9A5A); rect(5, 5 - up, 6, 1, 0xFFE0B8); rect(6, 7 - up, 4, 1, 0xFFFFFF);
+                tri(7, 10 - up, 9, 10 - up, 8, 12 - up, 0xFF9A5A);
+                pxa(2, 3 - up, 0xFFE9A0, sp); pxa(13, 2 - up, 0xFFE9A0, 1 - sp); pxa(14, 7, 0xFFFFFF, sp); pxa(1, 8, 0xFFFFFF, 1 - sp);
+                outline();
+                glint(11, 4 - up, 1, 0xFFFFFF, t);
+            }
+            case "sty_kara" -> {                                                             // Karaoke: a line of letters with a wipe of green running through it, a dot bouncing on top
+                int wipe = Math.round(((f % 1f) + 1f) % 1f * 12);
+                for (int i = 0; i < 6; i++) { int x = 2 + i * 2; int col = x - 2 < wipe ? 0x1ED760 : 0x6A7088; rect(x, 8, 1, 4, col); if (i % 2 == 0) rect(x, 8, 2, 1, col); }
+                int dx = Math.min(13, 2 + wipe), dy = 5 - Math.round(Math.abs(sn(f * 3)) * 2);
+                rect(dx, dy, 2, 2, 0xFFFFFF);
+                rect(2, 13, Math.max(1, wipe), 1, 0x7CFFB0);
+                outline();
+            }
+            case "sty_scroll" -> {                                                           // Scroll: a lyric sheet, lines gliding up, the middle one bright
+                bev(2, 1, 12, 14, 0x2A2440); int off = Math.round(((f % 1f) + 1f) % 1f * 3);
+                for (int i = 0; i < 5; i++) { int y = 3 + i * 3 - off; if (y < 2 || y > 13) continue; boolean mid = i == 2; rect(4, y, mid ? 8 : 6 + (i % 2) * 2, 1, mid ? 0xD8C8FF : 0x6A5A9A); }
+                rect(3, 7, 1, 3, 0xB48CFF);
+                outline();
+            }
+            case "sty_sung" -> {                                                             // Sung line: a Now Playing card with one lyric strip docked under it
+                int dn = Math.round((sn(f) * 0.5f + 0.5f) * 1);
+                bev(1, 2, 14, 7, 0x1E2234); bev(2, 3, 5, 5, 0x4FC3FF); rect(3, 4, 3, 3, 0x0A2A3A); rect(8, 4, 6, 1, 0xFFFFFF); rect(8, 6, 4, 1, 0x8A94B0);
+                bev(2, 10 + dn, 12, 4, 0x14304A); rect(3, 11 + dn, 1, 2, 0xA8E4FF); int w = Math.round((((f % 1f) + 1f) % 1f) * 8); rect(5, 11 + dn, Math.max(1, w), 1, 0xA8E4FF); rect(5 + w, 11 + dn, 8 - w, 1, 0x4A5068);
+                outline();
+                glint(13, 3, 1, 0xFFFFFF, t);
+            }
+            case "lyr_prev" -> {                                                             // Previous line: a faint line above, a bright one below, an arrow pointing back up
+                rect(3, 4, 9, 1, 0x6A7088); rect(3, 6, 6, 1, 0x4A5068);
+                rect(3, 10, 10, 1, 0xFFFFFF); rect(3, 12, 7, 1, 0xC8CCD8);
+                ln(13, 8, 13, 3, 0xFFC8A0); px(12, 4, 0xFFC8A0); px(14, 4, 0xFFC8A0);
+                outline();
+            }
             case "lyr_timing" -> {                                                           // Timing: a metronome, its arm ticking side to side
                 quad(4, 15, 12, 15, 10, 2, 6, 2, 0x8A5A3A); quad(5, 14, 11, 14, 9.5f, 4, 6.5f, 4, 0x6A3A1E);
                 float an = sn(f) * 0.55f; float ax = 8 + (float) Math.sin(an) * 9, ay = 13 - (float) Math.cos(an) * 9;
@@ -566,7 +602,13 @@ final class IconArt {
                 bev(3, 1, 10, 14, 0x4A3A2E); rect(4, 2, 8, 12, 0x1ED760); int w = 8 - Math.round(t * 5); bev(4, 2, w, 12, 0x8A6A4A); px(4 + w - 2, 8, 0xFFE38A);
                 outline();
             }
-            case "mus_play" -> { bev(1, 1, 14, 14, 0x1A2A20); tri(5, 3, 5, 13, 12, 8, 0x1ED760); if (t > 0.5f) { rect(5, 4, 2, 8, 0xEAFFEA); rect(9, 4, 2, 8, 0xEAFFEA); } outline(); }   // play / pause, swapping
+            case "mus_play" -> {                                                             // Play / Pause: a round green button that turns from play to pause and back (one symbol at a time)
+                ball(8, 8, 6.6f, 0x0E5A2E); ball(8, 8, 5.8f, 0x1ED760); ball(7, 6, 2.5f, 0x5AF090);
+                boolean play = (f % 1f + 1f) % 1f < 0.5f;
+                if (play) tri(6, 5, 6, 11, 11, 8, 0xFFFFFF); else { rect(5, 5, 2, 6, 0xFFFFFF); rect(9, 5, 2, 6, 0xFFFFFF); }
+                outline();
+                glint(5, 4, 1, 0xFFFFFF, t);
+            }
             case "mus_next" -> { int o = Math.round(t * 2); bev(1, 1, 14, 14, 0x1A2A20); tri(3 + o, 4, 3 + o, 12, 8 + o, 8, 0x1ED760); tri(8 + o, 4, 8 + o, 12, 13 + o, 8, 0x1ED760); outline(); }
             case "mus_prev" -> { int o = Math.round(t * 2); bev(1, 1, 14, 14, 0x1A2A20); tri(13 - o, 4, 13 - o, 12, 8 - o, 8, 0x1ED760); tri(8 - o, 4, 8 - o, 12, 3 - o, 8, 0x1ED760); outline(); }
             case "src_open_water" -> { waves(f, 0x2A7AD8); ln(3, 1, 12, 9, 0x8A5A2B); ln(12, 9, 12, 10, 0xD8D8D8); int b = Math.round(sn(f) * 0.8f); px(12, 11 + b, 0xFF3A3A); px(12, 10 + b, 0xFFFFFF); outline(); }   // a rod's line and bobber on open water

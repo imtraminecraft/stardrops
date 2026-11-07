@@ -24,7 +24,7 @@ import java.util.List;
 final class LyricsHud {
     private LyricsHud() {}
 
-    static final int POP = 0, KARAOKE = 1, SCROLL = 2;
+    static final int POP = 0, KARAOKE = 1, SCROLL = 2, SUNG = 3;
 
     /** The colour of the sung words: from the album cover, made light enough to read. */
     static int colour() { return Ritual.mixc(AlbumArt.accent(), 0xFFFFFF, 0.25f); }
@@ -58,14 +58,14 @@ final class LyricsHud {
         int W = g.guiWidth(), H = g.guiHeight(); float k = c.lyricsSize / 100f, cx = W * c.lineX, cy = H * c.lyY;
         if (!demo && c.lyricsIntro) titleCard(g, f, W, H, now, vis, k);
         if (!demo && on && L.isEmpty() && Lyrics.status.startsWith("No synced")) { noLyrics(g, f, now, vis, cx, cy, k); return; }
-        if (L.isEmpty() || !on) { bx0 = bx1 = 0; return; }
+        if (L.isEmpty() || !on || c.lyricsStyle == SUNG && !demo) { bx0 = bx1 = 0; return; }       // (Sung line: the strip on the Now Playing card draws them)
         int li = at(L, pos);
         if (li != lastLine) { prevLine = lastLine; lastLine = li; lineAt = now; }
         float since = (now - lineAt) / 1000f, out = Math.min(1f, since / 0.35f);
         int maxW = Math.round(Math.min(W * 0.72f, 360f) / k);
         bx0 = Math.round(cx - maxW / 2f * k); bx1 = Math.round(cx + maxW / 2f * k); by0 = Math.round(cy - 6 * k); by1 = Math.round(cy + 22 * k);
         if (c.lyricsStyle == KARAOKE) {
-            if (prevLine >= 0 && prevLine < L.size() && out < 1f) karaoke(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 12 * k * ease(out), k, (1f - out) * vis, maxW);
+            if (c.lyricsPrev && prevLine >= 0 && prevLine < L.size() && out < 1f) karaoke(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 12 * k * ease(out), k, (1f - out) * vis, maxW);
             if (li >= 0 && li < L.size()) karaoke(g, f, L, li, pos, cx, cy + 4 * k * (1f - ease(out)), k, ease(out) * vis, maxW);
             if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + 17 * k, k * 0.75f, 0.45f * vis, maxW);
         } else if (c.lyricsStyle == SCROLL) {
@@ -73,6 +73,7 @@ final class LyricsHud {
             for (int d = -2; d <= 2; d++) {
                 int idx = li + d; if (idx < 0 || idx >= L.size()) continue;
                 if (d == 2 && glide < 0.01f) continue;
+                if (d < 0 && !c.lyricsPrev) continue;                                       // the lines already sung, only if you want them
                 float y = cy + d * step + glide * step, dist = Math.abs(d + glide);
                 float a = Math.max(0f, 1f - dist * 0.55f) * vis, sc = k * (1.15f - Math.min(1f, dist) * 0.4f);
                 if (a < 0.03f) continue;
@@ -80,7 +81,7 @@ final class LyricsHud {
                 else faint(g, f, L.get(idx).text(), cx, y - 2 * k, sc, a * 0.75f, Math.round(maxW * k / Math.max(0.3f, sc)));
             }
         } else {
-            if (prevLine >= 0 && prevLine < L.size() && out < 1f) line(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 14 * k * ease(out), k, (1f - out) * vis, maxW, c, false);
+            if (c.lyricsPrev && prevLine >= 0 && prevLine < L.size() && out < 1f) line(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 14 * k * ease(out), k, (1f - out) * vis, maxW, c, false);
             if (li >= 0 && li < L.size()) line(g, f, L, li, pos, cx, cy, k, vis, maxW, c, false);
             if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + 17 * k, k * 0.7f, 0.35f * vis, maxW);
         }
@@ -88,10 +89,36 @@ final class LyricsHud {
     private static int at(List<Lyrics.Line> l, long ms) { int i = -1; for (int k = 0; k < l.size(); k++) { if (l.get(k).atMs() <= ms) i = k; else break; } return i; }
     private static final List<Lyrics.Line> DEMO = List.of(new Lyrics.Line(0, "The words pop in as they're sung"), new Lyrics.Line(3000, "light and easy to read"), new Lyrics.Line(6000, "drag them anywhere you like"));
 
-    /** When the letter at offset ch (of total) is sung: spread over how long the line takes to sing, not the whole gap. */
-    private static long wordAt(long start, long end, int ch, int total) {
-        long span = Math.max(300, Math.min((long) ((end - start) * 0.85f), total * 85L + 250));
-        return start + span * ch / Math.max(1, total);
+    /**
+     * When the letter at offset ch of a line is sung. LRCLIB only times whole lines, so the words inside are paced the way people
+     * sing: every letter takes a beat, every syllable a little more, and a comma, dash or full stop is a held note or a breath
+     * ("Home, home, where I wanted to go" waits on each "home"). The line is spread over the time until the next line (most of it),
+     * except after a long gap (an instrumental), where it is sung at a natural pace and then simply waits.
+     */
+    private static long wordAt(String text, long start, long end, int ch) {
+        float[] cum = PACE.computeIfAbsent(text, LyricsHud::pace);
+        int n = cum.length - 1; float tot = Math.max(1f, cum[n]);
+        long gap = Math.max(300, end - start);
+        long span = Math.max(300, Math.min((long) (gap * 0.92f), (long) (tot * 105 + 600)));
+        if (gap <= 7000) span = Math.max(span, (long) (gap * 0.85f));
+        return start + (long) (span * cum[Math.max(0, Math.min(n, ch))] / tot);
+    }
+    private static final java.util.Map<String, float[]> PACE = new java.util.HashMap<>();
+    /** cum[i] = how much of the line is sung before letter i (in letter-beats). */
+    private static float[] pace(String t) {
+        float[] cum = new float[t.length() + 1]; float acc = 0; boolean prevVowel = false;
+        for (int i = 0; i < t.length(); i++) {
+            cum[i] = acc; char c = Character.toLowerCase(t.charAt(i));
+            boolean vowel = "aeiouy".indexOf(c) >= 0;
+            if (Character.isLetterOrDigit(c)) { acc += 1f; if (vowel && !prevVowel) acc += 1.6f; }       // a letter; a new syllable
+            else if (c == ' ') acc += 0.6f;
+            else if (c == ',' || c == ';' || c == ':') acc += 7f;                                             // a held note / a breath
+            else if (c == '.' || c == '!' || c == '?' || c == '-' || c == '\u2014' || c == '\u2026') acc += 5f;
+            prevVowel = vowel;
+        }
+        cum[t.length()] = acc;
+        if (PACE.size() > 400) PACE.clear();
+        return cum;
     }
 
     /** The rows of a line (at most two) and the scale that fits them. */
@@ -117,7 +144,7 @@ final class LyricsHud {
             float x = cx - f.width(row) * kk / 2f, y = y0;
             for (String w : row.split(" ")) {
                 if (w.isEmpty()) { x += f.width(" ") * kk; ch++; continue; }
-                long wa = wordAt(start, end, ch, total), nx = wordAt(start, end, ch + w.length() + 1, total);
+                long wa = wordAt(text, start, end, ch), nx = wordAt(text, start, end, ch + w.length() + 1);
                 float u = (pos - wa) / 1000f, ww = f.width(w) * kk; boolean singing = pos >= wa && pos < nx;
                 if (all || u >= 0f) {
                     float p = all ? 1f : Math.min(1f, u / 0.22f), s = p < 1f ? 0.6f + 0.4f * spring(p) : 1f;
@@ -153,7 +180,7 @@ final class LyricsHud {
             float x = cx - f.width(row) * kk / 2f;
             for (int i = 0; i < row.length(); i++) {
                 String cs = String.valueOf(row.charAt(i)); float cw = f.width(cs) * kk;
-                long ca = wordAt(start, end, ch, total), cb = wordAt(start, end, ch + 1, total);
+                long ca = wordAt(text, start, end, ch), cb = wordAt(text, start, end, ch + 1);
                 float fill = Math.max(0f, Math.min(1f, (pos - ca) / (float) Math.max(1, cb - ca)));
                 if (cs.equals(" ")) { x += cw; ch++; continue; }
                 outlined(g, f, cs, x + cw / 2f, y0, kk, a * 0.7f, 0x8A8EA0);
@@ -205,7 +232,7 @@ final class LyricsHud {
         float dt = Math.min(0.1f, (now - (dockFrame == 0 ? now : dockFrame)) / 1000f); dockFrame = now;
         List<Lyrics.Line> L = Lyrics.lines;
         boolean demo = NowPlayingHud.preview && (Spotify.track == null || L.isEmpty()); if (demo) L = DEMO;
-        boolean on = c.lyricsOn && c.npLine != 0 && (demo || Spotify.playing) && !L.isEmpty();
+        boolean on = c.lyricsOn && c.lyricsStyle == SUNG && (demo || Spotify.playing) && !L.isEmpty();
         long pos = demo ? now % 9000 : Spotify.position() + c.lyricsOffset;
         int li = on ? at(L, pos) : -1;
         boolean has = li >= 0 && !L.get(li).text().isBlank();
@@ -217,26 +244,22 @@ final class LyricsHud {
         float y = above ? -sh * s - 2 * s + 3 : h - 3 + sh * s - sh + 2 * s;           // tucked behind the card, then out
         int a = Math.round(255 * e * s), A = Math.round(255 * e);
         NebulaTex.glow(g, w / 2f, y + sh / 2f + 2, sw * 0.55f, sh, Gfx.argb(Math.round(70 * e * s), 0x000000));
-        NowPlayingHud.round(g, Math.round(sx), Math.round(y), Math.round(sw), Math.round(sh), Gfx.argb(Math.round(225 * e * s), 0x0B0D14));
-        for (int i = 0; i < 8; i++) { int x0 = Math.round(sx + 2 + i * (sw - 4) / 8), x1 = Math.round(sx + 2 + (i + 1) * (sw - 4) / 8); float u = Math.abs(i / 7f - 0.5f) * 2f;
-            g.fill(x0, Math.round(y + 1), x1, Math.round(y + sh - 1), Gfx.argb(Math.round(e * s * 46 * (1f - u * 0.8f)), acc)); }
-        g.fill(Math.round(sx + 3), Math.round(above ? y : y + sh - 1), Math.round(sx + sw - 3), Math.round(above ? y + 1 : y + sh), Gfx.argb(Math.round(50 * e * s), 0xFFFFFF));   // the lit outer edge
-        for (int side = 0; side < 2; side++) {                                                // two little clips holding it to the card
-            int cx0 = Math.round(side == 0 ? sx + 14 : sx + sw - 18); int cy0 = Math.round(above ? y + sh - 1 : y - 2);
-            g.fill(cx0, cy0, cx0 + 4, cy0 + 3, Gfx.argb(a, Ritual.mixc(acc, 0x2A2E3A, 0.5f))); g.fill(cx0 + 1, cy0 + 1, cx0 + 3, cy0 + 2, Gfx.argb(a, Ritual.mixc(acc, 0xFFFFFF, 0.4f)));
-        }
-        float bob = (float) Math.sin(now / 260.0) * 1.3f;                                    // the note
-        NebulaTex.glow(g, sx + 9, y + sh / 2f, 6, 5, Gfx.argb(Math.round(a * 0.5f), acc));
-        Gfx.push(g); Gfx.translate(g, sx + 5, y + sh / 2f - 4 + bob); Gfx.txt(g, f, "♪", 0, 0, Gfx.argb(a, Ritual.mixc(acc, 0xFFFFFF, 0.5f)), false); Gfx.pop(g);
+        NowPlayingHud.round(g, Math.round(sx), Math.round(y), Math.round(sw), Math.round(sh), Gfx.argb(Math.round(232 * e * s), 0x0B0D14));
+        NebulaTex.glow(g, w / 2f, y + sh / 2f, sw * 0.42f, sh * 0.7f, Gfx.argb(Math.round(40 * e * s), acc));          // the album's colour, softly, behind the words
+        g.fill(Math.round(sx + 3), Math.round(above ? y : y + sh - 1), Math.round(sx + sw - 3), Math.round(above ? y + 1 : y + sh), Gfx.argb(Math.round(40 * e * s), 0xFFFFFF));   // the lit outer edge
+        float bob = (float) Math.sin(now / 260.0) * 1f;                                       // the note, in a soft round light
+        NebulaTex.glow(g, sx + 9, y + sh / 2f, 6, 6, Gfx.argb(Math.round(a * 0.55f), acc));
+        Gfx.push(g); Gfx.translate(g, sx + 6.5f, y + sh / 2f - 4 + bob); Gfx.txt(g, f, "♪", 0, 0, Gfx.argb(a, Ritual.mixc(acc, 0xFFFFFF, 0.6f)), false); Gfx.pop(g);
         // the words: the old line rolls up and away, the new one rolls in from below
         float roll = Math.min(1f, (now - dockAt) / 280f); roll = 1f - (1f - roll) * (1f - roll) * (1f - roll);
         int tx0 = Math.round(sx + 17), tw = Math.round(sw - 24);
         if (dockPrev >= 0 && dockPrev < L.size() && roll < 1f) dockText(g, f, L, dockPrev, Long.MAX_VALUE / 4, tx0, tw, y + sh / 2f - 4 - 6 * roll, Math.round(a * (1f - roll)), acc);
         if (li >= 0 && li < L.size()) dockText(g, f, L, li, pos, tx0, tw, y + sh / 2f - 4 + 6 * (1f - roll), Math.round(a * roll), acc);
-        if (li >= 0) {                                                                        // how far through the line
+        if (li >= 0) {                                                                        // how far through the line: a hairline along the inner edge
             long st = L.get(li).atMs(), en = li + 1 < L.size() ? L.get(li + 1).atMs() : st + 5000;
-            float p = Math.max(0f, Math.min(1f, (pos - st) / (float) Math.max(1, en - st))); int bw = Math.round(sw - 12), bx = Math.round(sx + 6), by = Math.round(above ? y + 1 : y + sh - 2);
-            g.fill(bx + Math.round(bw * p) - 6, by, bx + Math.round(bw * p), by + 1, Gfx.argb(Math.round(a * 0.9f), Ritual.mixc(acc, 0xFFFFFF, 0.3f)));
+            float p = Math.max(0f, Math.min(1f, (pos - st) / (float) Math.max(1, en - st))); int bx = Math.round(sx + 17), bw = Math.round(sw - 24), by = Math.round(above ? y + sh - 2 : y + 1);
+            g.fill(bx, by, bx + bw, by + 1, Gfx.argb(Math.round(a * 0.12f), 0xFFFFFF));
+            g.fill(bx, by, bx + Math.round(bw * p), by + 1, Gfx.argb(Math.round(a * 0.7f), Ritual.mixc(acc, 0xFFFFFF, 0.3f)));
         }
     }
     /** One line in the strip, left to right: sung letters in the album's colour, the rest grey, scaled down to fit. */
@@ -250,7 +273,7 @@ final class LyricsHud {
         int px = 0; StringBuilder run = new StringBuilder(); int runCol = 0, runX = 0;
         for (int i = 0; i <= total; i++) {
             int col = 0;
-            if (i < total) { long ca = wordAt(start, end, i, total); col = pos >= ca ? 1 : 2; }
+            if (i < total) { long ca = wordAt(text, start, end, i); col = pos >= ca ? 1 : 2; }
             if (i == total || col != runCol) {
                 if (run.length() > 0) Gfx.txt(g, f, run.toString(), runX, 0, Gfx.argb(runCol == 1 ? a : Math.round(a * 0.55f), runCol == 1 ? sung : 0xC6CAD6), true);
                 run.setLength(0); runCol = col; runX = px;
