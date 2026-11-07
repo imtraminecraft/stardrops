@@ -3394,7 +3394,7 @@ public class FancyScreen extends Screen {
             // Launch control: off, the rocket sits docked on its pad; on, it blasts off and circles a little planet. Switching
             // plays the launch (or the landing): flame, smoke puffs, the climb into orbit.
             if (on != masterLast) { masterLast = on; masterAt = now; }
-            float tt = masterAt == 0L ? 9f : (now - masterAt) / 1000f, fly = on ? ease(Math.min(1f, tt / 1.1f)) : 1f - ease(Math.min(1f, tt / 0.9f));
+            float tt = masterAt == 0L ? 9f : (now - masterAt) / 1000f, fly = on ? Math.min(1f, tt / 2.6f) : 1f - Math.min(1f, tt / 1.8f);   // the launch takes 2.6 s, the landing 1.8 s (LaunchPad eases each part)
             LaunchPad.draw(g, font, b[0], b[1], w, h, on, fly, mv, hv, pulse, now, STILL);
         }
         // page header
