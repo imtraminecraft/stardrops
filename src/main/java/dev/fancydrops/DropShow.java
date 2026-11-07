@@ -32,56 +32,62 @@ final class DropShow {
      */
     static void words(GuiGraphicsExtractor g, Font f, Anim a, Item it, float p, float cx, float bannerY, float below, float ts, float wa, boolean rng, int rc) {
         if (wa < 0.02f) return;
+        FancyConfig c = FancyConfig.get();
+        ts *= c.textK();
         // RNG: the banner, stamped - in big, down to its size, a flash of its colour as it lands
-        if (rng) {
+        if (rng && c.wBanner) {
             float k = cl((p - 0.15f) / 0.26f);
             if (k > 0) {
                 String ban = (it.odds == null || it.odds.isEmpty() ? "RNG DROP" : it.odds.toUpperCase(java.util.Locale.ROOT)) + "!";
-                float sc = ts * (1.3f + 1.2f * (1f - eo(k))), by = bannerY - 4 * sc;
-                int bc = mix(rc, 0xFFFFFF, 0.15f);
+                float sc = ts * c.titleScale * (1.3f + 1.2f * (1f - eo(k))), by = bannerY - 4 * sc;
                 if (k < 1f) NebulaTex.glow(g, cx, by + 4 * sc, 80 * ts, 14 * ts, A(0.5f * (1f - k) * wa, rc));
-                Component c = Component.literal(ban).withStyle(ChatFormatting.BOLD);
-                outlinedC(g, f, c, cx - f.width(c) * sc / 2f, by, sc, Math.min(wa, k * 2.5f), bc);
+                Component cc = txt(ban, true);
+                out(g, f, cc, cx - f.width(cc) * sc / 2f, by, sc, Math.min(wa, k * 2.5f), mix(rc, 0xFFFFFF, 0.15f));
             }
         }
-        // the name, a letter at a time
+        // the name, a letter at a time (or fading in)
         List<Item> all = a.items(); int n = Math.min(4, all.size());
-        float ns = (rng ? 1.6f : 1.25f) * ts * (n > 1 ? 0.8f : 1f), y = below;
+        float ns = (rng ? 1.6f : 1.25f) * ts * c.titleScale * (n > 1 ? 0.8f : 1f), y = below;
         float nt = p - (rng ? 0.35f : 0.18f);
         for (int i = 0; i < n && nt > 0; i++) {
-            String name = all.get(i).title(); int shown = Math.min(name.length(), (int) ((nt - i * 0.12f) * (rng ? 32 : 40)));
-            if (shown > 0) {
-                String part = name.substring(0, shown); float w = f.width(name) * ns;
-                outlined(g, f, part, cx - w / 2f, y, ns, wa, all.get(i).color() & 0xFFFFFF);
+            String name = all.get(i).title(); float li = nt - i * 0.12f;
+            int shown = c.wType ? Math.min(name.length(), (int) (li * (rng ? 32 : 40))) : name.length();
+            float na = c.wType ? wa : wa * sm(li / 0.35f);
+            if (shown > 0 && li > 0) {
+                Component full = txt(name, c.textBold), part = txt(name.substring(0, shown), c.textBold);
+                out(g, f, part, cx - f.width(full) * ns / 2f, y, ns, na, all.get(i).color() & 0xFFFFFF);
             }
             y += 10 * ns;
         }
         // the odds, then the price counting up
-        float la = sm((p - (rng ? 0.75f : 0.45f)) / 0.25f) * wa;
+        float sd = c.subDelay - 0.35f, ss = ts * c.subScale;
+        float la = sm((p - (rng ? 0.75f : 0.45f) - sd) / 0.25f) * wa;
         if (la > 0.02f) {
-            String line = (it.chance != null && !it.chance.isEmpty() ? it.chance : "") + (it.mf != null && !it.mf.isEmpty() ? (it.chance == null || it.chance.isEmpty() ? "" : "  ·  ") + it.mf + " MF" : "");
-            if (!rng && it.odds != null && !it.odds.isEmpty()) line = it.odds + (line.isEmpty() ? "" : "  ·  " + line);
-            if (!line.isEmpty()) { outlined(g, f, line, cx - f.width(line) * ts * 0.9f / 2f, y + 1, ts * 0.9f, la, 0xC8C8C8); y += 10 * ts; }
-            if (it.price > 0) {
-                float kc = cl((p - (rng ? 0.85f : 0.55f)) / (rng ? 1.1f : 0.7f));
+            String chance = c.showOdds && it.chance != null ? it.chance : "", mf = c.showMagicFind && it.mf != null && !it.mf.isEmpty() ? it.mf + " MF" : "";
+            String line = chance + (!chance.isEmpty() && !mf.isEmpty() ? "  ·  " : "") + mf;
+            if (!rng && c.showOdds && it.odds != null && !it.odds.isEmpty()) line = it.odds + (line.isEmpty() ? "" : "  ·  " + line);
+            if (!line.isEmpty()) { Component lc = txt(line, false); out(g, f, lc, cx - f.width(lc) * ss * 0.9f / 2f, y + 1, ss * 0.9f, la, 0xC8C8C8); y += 10 * ss; }
+            if (c.showPrice && it.price > 0) {
+                float kc = c.wCount ? cl((p - (rng ? 0.85f : 0.55f) - sd) / (rng ? 1.1f : 0.7f)) : 1f;
                 long total = Math.round(it.price * Math.max(1, it.amount)), shown = Math.round(total * (1f - (1f - kc) * (1f - kc) * (1f - kc)));
-                String pr = String.format(java.util.Locale.ROOT, "%,d coins", shown); float ps = (rng ? 1.25f : 1f) * ts;
-                outlined(g, f, pr, cx - f.width(String.format(java.util.Locale.ROOT, "%,d coins", total)) * ps / 2f, y + 1, ps, la, 0xFFD84A);
+                float ps = (rng ? 1.25f : 1f) * ss;
+                Component pc = txt(String.format(java.util.Locale.ROOT, "%,d coins", shown), false), pw = txt(String.format(java.util.Locale.ROOT, "%,d coins", total), false);
+                out(g, f, pc, cx - f.width(pw) * ps / 2f, y + 1, ps, la, 0xFFD84A);
                 y += 10 * ps;
-                if (rng && it.priceSource != null && !it.priceSource.isEmpty()) outlined(g, f, it.priceSource, cx - f.width(it.priceSource) * ts * 0.75f / 2f, y + 1, ts * 0.75f, la * 0.7f, 0x9A9A9A);
-            } else if (it.price == -2) outlined(g, f, "pricing...", cx - f.width("pricing...") * ts * 0.8f / 2f, y + 1, ts * 0.8f, la * 0.7f, 0x9A9A9A);
+                if (c.showPriceSource && it.priceSource != null && !it.priceSource.isEmpty()) { Component sc2 = txt(it.priceSource, false); out(g, f, sc2, cx - f.width(sc2) * ss * 0.75f / 2f, y + 1, ss * 0.75f, la * 0.7f, 0x9A9A9A); }
+            } else if (c.showPrice && it.price == -2) { Component pc = txt("pricing...", false); out(g, f, pc, cx - f.width(pc) * ss * 0.8f / 2f, y + 1, ss * 0.8f, la * 0.7f, 0x9A9A9A); }
         }
     }
 
+    /** A piece of the words in the chosen font (Text Changes > Font), bold when asked. */
+    private static Component txt(String s, boolean bold) { Component c = Fonts.text(s, FancyConfig.get().textFont); return bold ? c.copy().withStyle(ChatFormatting.BOLD) : c; }
+    /** Outlined or not, as Text Changes > Font says. */
+    private static void out(GuiGraphicsExtractor g, Font f, Component s, float x, float y, float sc, float a, int rgb) {
+        if (FancyConfig.get().textOutline) outlinedC(g, f, s, x, y, sc, a, rgb);
+        else { if (a < 0.03f) return; Gfx.push(g); Gfx.translate(g, x, y); Gfx.scale(g, sc); Gfx.txt(g, f, s, 0, 0, A(a, rgb), true); Gfx.pop(g); }
+    }
 
     /** Text with a black outline, like the game's own drop messages. */
-    private static void outlined(GuiGraphicsExtractor g, Font f, String s, float x, float y, float sc, float a, int rgb) {
-        if (a < 0.03f || s.isEmpty()) return;
-        Gfx.push(g); Gfx.translate(g, x, y); Gfx.scale(g, sc);
-        int o = A(a * 0.9f, 0x000000);
-        Gfx.txt(g, f, s, -1, 0, o, false); Gfx.txt(g, f, s, 1, 0, o, false); Gfx.txt(g, f, s, 0, -1, o, false); Gfx.txt(g, f, s, 0, 1, o, false);
-        Gfx.txt(g, f, s, 0, 0, A(a, rgb), false); Gfx.pop(g);
-    }
     private static void outlinedC(GuiGraphicsExtractor g, Font f, Component s, float x, float y, float sc, float a, int rgb) {
         if (a < 0.03f) return;
         Gfx.push(g); Gfx.translate(g, x, y); Gfx.scale(g, sc);

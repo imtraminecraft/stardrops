@@ -68,6 +68,7 @@ public class FancyConfig {
     public float titleScale = 1f, subScale = 1f;
     public float subDelay = 0.35f;       // seconds between the title and the sub title coming in
     public boolean textBold = false, textOutline = true;
+    public boolean wType = true, wCount = true, wBanner = true;   // the words: name typed in, price counting up, RNG's stamped banner
     public boolean showPrice = true, showPriceSource = true, showOdds = true, showMagicFind = true;
     public boolean fxPop = true, fxShine = true, fxWave = false, fxRainbow = false, fxDrop = false, fxPulse = false, fxGlitch = false, fxGlow = false, fxBounce = false, fxType = false, fxFloat = false, fxShake = false, fxFire = false, fxFrost = false;
     public boolean fxTwinkle = false, fxFade = false, fxRise = false, fxShrink = false, fxScatter = false, fxSlide = false, fxFlip = false, fxSwing = false, fxGold = false, fxSlideOut = false, fxMelt = false;          // 14..24: twinkle, then the exits (fade, fly up, shrink, scatter), slide in, flip in, swing, gold, slide out, melt

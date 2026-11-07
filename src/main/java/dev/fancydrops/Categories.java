@@ -43,7 +43,7 @@ final class Categories {
 
     static final Type NO_DROPS = new Type("nodrops", "No Drops", ":nodrops:", 0xFF9AA3B5, "The ritual ends and nothing drops.");
     static final Type NORMAL = new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A drop: the item shows with a glow and its text.");
-    static final Type RNG = new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "A rare drop: cinematic bars, blur and the big finish.");
+    static final Type RNG = new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "A rare drop: cinematic bars, blur, the big finish and a stamped banner.");
     private static final List<Type> MYTH_TYPES = List.of(NO_DROPS, NORMAL, RNG);
     private static final List<Type> SLAYER_TYPES = List.of(
         new Type("nodrops", "No Drops", ":nodrops:", 0xFF9AA3B5, "The boss's place stirs three times, then falls quiet: nothing dropped."),
@@ -61,13 +61,16 @@ final class Categories {
         new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A book opens and turns three pages: the items rise from its light with their text."),
         new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "An RNG item: the book turns three pages in a storm of light, with cinematic bars and blur."));
 
-    /** Fishing, Crimson Isle and Rare Mob Drops: the creature's world rises around the item (the Showcase scene). */
+    /** Fishing, the Crimson Isle, the End and the Mines: the creature's world rises around the item (the Showcase scene). */
     private static final List<Type> SHOW_TYPES = List.of(
         new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A drop: the creature's world rises around the item, then its text."),
         new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "A rare drop: cinematic bars, blur and a big finish in the creature's colours."));
     private static final List<Type> MINE_TYPES = List.of(
         new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A find: three strikes, then the item rises from the rock with its text."),
         new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "A rare find: cinematic bars, blur and the rock bursts in a shower of gems."));
+    private static final List<Type> CORPSE_TYPES = List.of(
+        new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A find: a pickaxe strikes the Frozen Corpse's ice three times, its eyes start to glow, the ice shatters and the item rises."),
+        new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "A rare find: cinematic bars, blur, and the ice bursts in a blizzard of shards under a stamped banner."));
     private static final List<Type> DYE_TYPES = List.of(
         new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A dye: a splash of its own colour fills the screen around the vial."),
         new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "A rare dye: cinematic bars and a flood of its colour."));
@@ -88,7 +91,7 @@ final class Categories {
             new Group("mobs", "Mines", ":grp_mines:", 0xFF7FE8D8, "Rare drops of the Dwarven Mines' and the Crystal Hollows' creatures.", SHOW_TYPES))),
         new Cat("mining", "Mining", ":mining:", 0xFF55D8FF, false, "The Crystal Nucleus, Frozen Corpses and the Mining Fiesta.", List.of(
             new Group("nucleus", "Crystal Nucleus", ":grp_nucleus:", 0xFF9AE6FF, "What plays when the Nucleus loot bundle holds something rare.", MINE_TYPES),
-            new Group("corpse", "Frozen Corpses", ":grp_corpse:", 0xFF8FD8FF, "What plays when a Frozen Corpse in a Glacite Mineshaft holds something rare.", MINE_TYPES),
+            new Group("corpse", "Frozen Corpses", ":grp_corpse:", 0xFF8FD8FF, "What plays when a Frozen Corpse in a Glacite Mineshaft holds something rare.", CORPSE_TYPES),
             new Group("fiesta", "Mining Events", ":grp_fiesta:", 0xFFFFC857, "Rare finds while mining during a Mining Fiesta.", MINE_TYPES))),
         new Cat("farming", "Farming", ":farm:", 0xFF7BE05A, false, "Every rare drop you can find in the Garden.", List.of(
             new Group("crops", "Rare Crops", ":grp_crops:", 0xFF7CCB4F, "What plays when a crop turns out rare.", FARM_TYPES),

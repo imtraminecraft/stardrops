@@ -1077,15 +1077,11 @@ final class Ritual {
             if (barsOn) { float bhg = barH * u; bannerY = Math.max(bhg + 4 + 10 * ts, bannerY); below = Math.max(bhg + 6, Math.min(H - bhg - 50 * ts, below)); }
             DropShow.words(g, font, a, it, p, W / 2f + sx, bannerY, below, ts, wa, rng, rc);
         }
-        else if (!TextFx.itemOnly && !TextFx.barsOnly && TextFx.textOnly) {
-            float sc = c.textK() * Math.max(0.55f, Math.min(W, H) / 540f) * (0.8f + 0.2f * csz); if (TextFx.textOnly) sc = c.textK() * Math.max(1.3f, Math.min(2.6f, W / 150f));          // the Text editor shows the words big enough to read
-            float th = textH(a, it, sc, c);
-            float top = c.textAbove() ? (icy - hi - 14 * szc) * u - th : (icy + hi + 26 * szc) * u;
-            if (TextFx.textOnly) { while (th > H * 0.92f && sc > 0.8f) { sc *= 0.9f; th = textH(a, it, sc, c); } top = Math.max(2f, (H - th) / 2f); }       // the Text editor centres the words and fills the box
-            if (barsOn) { float bhg = barH * u; top = Math.max(bhg + 6, Math.min(H - bhg - th - 6, top)); }
-            float tl = TextFx.textOnly ? TextFx.loopClock(4.6f) : 0f;                                    // the Text editor replays the words on their own clock
-            TextFx.revealT = TextFx.textOnly ? tl : textT; TextFx.waveT = TextFx.textOnly ? tl : t; TextFx.waveOut = TextFx.textOnly ? sm((tl - 2.9f) / 1.1f) : textOut; TextFx.lineDelay = 0f;
-            if (a.count() >= 2) TextFx.blockN(g, font, W / 2, Math.round(top), sc, a.items(), c, 255); else TextFx.block(g, font, W / 2, Math.round(top), sc, it, c, 255);
+        else if (!TextFx.itemOnly && !TextFx.barsOnly && TextFx.textOnly && it != null) {          // the Text editor: the words alone, replayed, Normal and RNG in turn
+            float loop = 5.2f, tl = TextFx.loopClock(loop); boolean big = ((System.currentTimeMillis() / (long) (loop * 1000)) % 2) == 1;
+            float ts = Math.max(1f, Math.min(2.2f, W / 190f)), wa = 1f - sm((tl - (loop - 0.5f)) / 0.4f);
+            float below = H * (big ? 0.42f : 0.3f);
+            DropShow.words(g, font, a, it, tl, W / 2f, below - 14 * ts, below, ts, wa, big, rc);
         }
     }
 }

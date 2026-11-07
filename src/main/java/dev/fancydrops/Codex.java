@@ -27,7 +27,7 @@ final class Codex {
     // ---- the star groups: the heart of the map (every drop: the Ledger and Fortune chapters together), then one group for each main page of the
     //      Drop Library, round it like the points of a star. Lanes of light run from the heart to each group and fill as you complete it.
     private static final String[] ACH = {"core", "myth", "rare", "farm", "fish", "dye", "time"};
-    private static final String[] ACH_NAME = {"Every Drop", "Mythological", "Rare Drops", "Farming", "Fishing", "Dyes", "Playtime"};
+    private static final String[] ACH_NAME = {"Every Drop", "Mythological", "Mob Drops & Mining", "Farming", "Fishing", "Dyes", "Playtime"};
     private static final String[] FIGURE = {"The Pole Star", "The Griffin", "The Sword", "The Sheaf", "The Fish", "The Drop", "The Hourglass"};
     private static final int[] ACH_COL = {0xFFFFD27A, 0xFF55D8FF, 0xFFFF6A6A, 0xFF8CE86A, 0xFF4FC3FF, 0xFFFF72C6, 0xFFA9B4FF};
     private static final String[] QUOTE = {"Every find, written down.", "Dig, and the earth answers.", "They drop what they guard.", "The harvest remembers.", "Patience, then a splash.", "Every colour has a story.", "Time flies when the drops are good."};

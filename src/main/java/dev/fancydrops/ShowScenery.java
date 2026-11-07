@@ -48,6 +48,7 @@ final class ShowScenery {
             case ShowScene.MINES -> new int[]{0x0A0C12, 0x161A24, 0x222836};
             case ShowScene.NUCLEUS -> new int[]{0x0A0818, 0x1A1430, 0x2A2048};
             case ShowScene.END -> new int[]{0x04020A, 0x120A22, 0x2A1A40};
+            case ShowScene.GLACITE -> new int[]{0x040A16, 0x0C1E34, 0x1A3A56};
             case ShowScene.DYE -> new int[]{0xE8D8C0, 0xF2E6D2, 0xF8F0E2};
             case MYTH -> new int[]{0x1A1A48, 0x6A5A9A, 0xE8A8A0};
             case 9, 10, 11, 12, 13, 14 -> SlayerShow.SKY[m - SlayerShow.BASE];
@@ -72,6 +73,7 @@ final class ShowScenery {
             case ShowScene.MINES -> shaft(c, t, x0, y0, x1, y1, hz, k, a);
             case ShowScene.NUCLEUS -> cave(c, t, x0, y0, x1, y1, hz, k, a);
             case ShowScene.END -> theEnd(c, t, x0, y0, x1, y1, hz, k, a);
+            case ShowScene.GLACITE -> mineshaft(c, t, x0, y0, x1, y1, hz, k, a);
             case ShowScene.DYE -> studio(c, t, x0, y0, x1, y1, hz, k, a, tint);
             case MYTH -> hub(c, t, x0, y0, x1, y1, hz, k, a);
             case 9, 10, 11, 12, 13, 14 -> SlayerShow.place(c, m - SlayerShow.BASE, t, x0, y0, x1, y1, hz, k, a);
@@ -342,5 +344,29 @@ final class ShowScenery {
         }
         band(c, x0, x1, hz, y1, 0xD8D49A, 0x8A8660, a);                                            // end stone
         for (int i = 0; i < 20; i++) px(c, Math.round(x0 + rnd(i * 13) * (x1 - x0)), Math.round(hz + 2 + rnd(i * 5) * (y1 - hz - 3)), 0xB8B47A, 0.7f * a);
+    }
+    /** A Glacite Mineshaft: walls of blue glacite, frosted timber, a cold lamp, a snowy floor. */
+    private static void mineshaft(Canvas c, float t, int x0, int y0, int x1, int y1, int hz, float k, float a) {
+        for (int i = 0; i < 46; i++) {                                                           // glacite in the walls, glinting
+            float sx = x0 + rnd(i * 5 + 4) * (x1 - x0), sy = y0 + rnd(i * 11 + 6) * (hz - y0);
+            int col = i % 3 == 0 ? 0x8FD8FF : i % 3 == 1 ? 0x2A4A6A : 0x1A3048;
+            Ritual.fillE(sx, sy, (2 + 3 * rnd(i)) * k, (1.5f + 2 * rnd(i + 9)) * k, col, (i % 3 == 0 ? 0.3f + 0.3f * (float) Math.sin(t * 1.7f + i) : 0.6f) * a);
+        }
+        for (int b = 0; b < 2; b++) {                                                            // the timber frame, frost on top
+            int bx = Math.round(b == 0 ? x0 + 30 * k : x1 - 36 * k), bw = Math.max(3, Math.round(6 * k));
+            rect(c, bx, y0 + Math.round(16 * k), bx + bw, hz, 0x4A3A2E, a); rect(c, bx, y0 + Math.round(16 * k), bx + 1, hz, 0xBFE4F2, 0.6f * a);
+        }
+        rect(c, Math.round(x0 + 24 * k), Math.round(y0 + 14 * k), Math.round(x1 - 24 * k), Math.round(y0 + 20 * k), 0x4A3A2E, a);
+        rect(c, Math.round(x0 + 24 * k), Math.round(y0 + 14 * k), Math.round(x1 - 24 * k), Math.round(y0 + 15 * k), 0xE8F8FF, 0.7f * a);
+        for (int i = 0; i < 9; i++) {                                                            // icicles hanging off the beam
+            float ix = x0 + 30 * k + i * (x1 - x0 - 60 * k) / 8f, il = (3 + 6 * rnd(i * 7)) * k;
+            Ritual.stroke(ix, y0 + 20 * k, ix, y0 + 20 * k + il, 0.6f * k, 0xD8F4FF, 0.7f * a);
+        }
+        float lx = (x0 + x1) / 2f + 50 * k + (float) Math.sin(t * 1.1f) * 2 * k, ly = y0 + 30 * k;   // a cold lamp, swaying
+        Ritual.stroke((x0 + x1) / 2f + 50 * k, y0 + 20 * k, lx, ly, 0.5f, 0x3A4048, a);
+        Ritual.glowE(lx, ly + 3 * k, 34 * k, 28 * k, 0x8FD8FF, 0.3f * a);
+        rect(c, Math.round(lx - 2 * k), Math.round(ly), Math.round(lx + 2 * k), Math.round(ly + 5 * k), 0xD8F4FF, a);
+        band(c, x0, x1, hz, y1, 0xBFDCEA, 0x6A8AA0, a);                                          // packed snow
+        for (int i = 0; i < 18; i++) px(c, Math.round(x0 + rnd(i * 13 + 1) * (x1 - x0)), Math.round(hz + 2 + rnd(i * 5 + 2) * (y1 - hz - 3)), 0xF2FCFF, 0.8f * a);
     }
 }

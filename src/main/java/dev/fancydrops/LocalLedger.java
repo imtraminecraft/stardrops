@@ -26,7 +26,7 @@ final class LocalLedger {
     private record Def(String id, String ch, String name, String desc, String icon, double goal, ToDoubleFunction<P> stat, String reward, boolean secret) {}
 
     static final LinkedHashMap<String, String> CH = new LinkedHashMap<>();
-    static { CH.put("ledger", "The Ledger"); CH.put("fortune", "Fortune"); CH.put("myth", "Mythological"); CH.put("rare", "Rare Drops"); CH.put("farm", "Farming"); CH.put("fish", "Fishing"); CH.put("dye", "Dyes"); }
+    static { CH.put("ledger", "The Ledger"); CH.put("fortune", "Fortune"); CH.put("myth", "Mythological"); CH.put("rare", "Mob Drops & Mining"); CH.put("farm", "Farming"); CH.put("fish", "Fishing"); CH.put("dye", "Dyes"); }
 
     private static double g(P p, String k) { double[] v = p.g.get(k); return v == null ? 0 : v[0]; }
     private static double gr(P p, String k) { double[] v = p.g.get(k); return v == null ? 0 : v[1]; }

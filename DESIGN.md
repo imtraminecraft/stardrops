@@ -571,3 +571,8 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - The author rejected both DropShow scene versions (the smooth "video" one and the pixel rock). The animations are the classic Ritual scenes again, in play and in previews, with their old timings: Normal / No Drops 4 s, RNG 6 s, words 2 s after, multi-drop hold 0.5 s per extra drop (max 1.5 s).
 - KEEP the Butcher-style words: DropShow now holds only them (outlined name typed in, grey odds, gold price counting up; RNG: bold stamped odds banner over the item, price source). Ritual.draw calls DropShow.words; the Text editor still previews the editable TextFx block.
 - Sounds 2.0 and the Mining / Table & Dyes categories stay.
+
+## Round: Text Changes for the new words, Frozen Corpse scene (Nov 7, 19:45)
+- Text Changes now edits the Butcher-style words (DropShow.words) and its preview plays them (a Normal drop, then an RNG one, in turn). Pages: Style (Name types in, Price counts up, RNG banner: wType / wCount / wBanner), Layout (overall / title / sub-title size, sub-title delay, show chance / price / price source / MF), Font (font, bold name, outline). The old 25 text effects are gone from the menu.
+- New scene GLACITE (ShowScene.corpse + ShowScenery.mineshaft) for Frozen Corpses: a Glacite Mineshaft (blue walls, frosted timber, icicles, a cold lamp, packed snow); a dwarf's corpse frozen in a block of ice; a pickaxe strikes three times, frost puffs and ice chips, white cracks deepen, the corpse's eyes glow brighter each strike; it shatters into ice shards with a cold ring; snow drifts the whole time. Crystal Nucleus keeps its own scene; Mining Events use the mithril ore scene.
+- The achievement chapter "Rare Drops" is now "Mob Drops & Mining".
