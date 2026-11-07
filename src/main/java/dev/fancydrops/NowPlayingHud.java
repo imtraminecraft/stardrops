@@ -61,57 +61,51 @@ final class NowPlayingHud {
      * knob and the times under its ends.
      */
     private static void glass(GuiGraphicsExtractor g, Font font, int w, int h, float e, Spotify.Track t, long now, long since, long pos, boolean playing, String lyric, boolean art, int acc) {
-        int a = Math.round(255 * e), panel = 0x0B0D14;
-        NebulaTex.glow(g, w / 2f, h / 2f + 5, w * 0.58f, h * 0.95f, Gfx.argb(Math.round(90 * e), 0x000000));                // the shadow under it
-        round(g, 0, 0, w, h, Gfx.argb(Math.round(232 * e), panel));
-        for (int i = 0; i < 12; i++) {                                                                                 // the album's colour washing in from the left
-            int x0 = i == 0 ? 0 : 1 + i * (w - 2) / 12, x1 = 1 + (i + 1) * (w - 2) / 12; float u = i / 11f;          // (from the very edge: no dark line down the left)
-            g.fill(x0, i == 0 ? 2 : 1, x1, i == 0 ? h - 2 : h - 1, Gfx.argb(Math.round(e * 70 * (1f - u) * (1f - u)), acc));
-        }
-        round(g, 0, 0, w, h / 2, Gfx.argb(Math.round(12 * e), 0xFFFFFF));
-        g.fill(3, 0, w - 3, 1, Gfx.argb(Math.round(45 * e), 0xFFFFFF));                                               // a lit top edge
-        g.fill(3, h - 1, w - 3, h, Gfx.argb(Math.round(60 * e), Ritual.mixc(acc, 0x000000, 0.4f)));
+        int a = Math.round(255 * e), panel = 0x0D0E13;
+        NebulaTex.glow(g, w / 2f, h / 2f + 6, w * 0.58f, h * 0.9f, Gfx.argb(Math.round(110 * e), 0x000000));               // a soft shadow under it
+        round(g, 0, 0, w, h, Gfx.argb(Math.round(150 * e), 0x2A2C38));                                                  // a fine light edge
+        round(g, 1, 1, w - 2, h - 2, Gfx.argb(Math.round(242 * e), panel));                                              // plain dark glass: no colour wash
+        g.fill(4, 1, w - 4, 2, Gfx.argb(Math.round(22 * e), 0xFFFFFF));                                                  // a sheen along the top
         // the record, sliding out from behind the cover while it plays
         int as = 42, ax = 7, ay = 7;
-        float slide = playing ? Math.min(1f, (since + 300) / 700f) : 0.35f; rec += ((playing ? 1f : 0.35f) - rec) * 0.08f;
-        float rx = ax + as / 2f + rec * 12, ry = ay + as / 2f, rr = as / 2f - 2, spin = (now % 3_600_000L) / 1000f * (playing ? 2.4f : 0f);
-        disc(g, rx, ry, rr, Gfx.argb(a, 0x101014));
-        for (int ring = 0; ring < 3; ring++) circle(g, rx, ry, rr * (0.55f + ring * 0.15f), Gfx.argb(Math.round(a * 0.25f), 0x5A5E70));
-        disc(g, rx, ry, rr * 0.3f, Gfx.argb(a, acc)); disc(g, rx, ry, 1.2f, Gfx.argb(a, 0x101014));
-        float gx = rx + (float) Math.cos(spin) * rr * 0.8f, gy = ry + (float) Math.sin(spin) * rr * 0.8f;                   // the shine going round
-        NebulaTex.glow(g, gx, gy, 4, 2.5f, Gfx.argb(Math.round(a * 0.35f), 0xFFFFFF));
-        // the cover (it flips in when the song changes, dims under a pause sign when paused)
+        rec += ((playing ? 1f : 0.35f) - rec) * 0.08f;
+        float rx = ax + as / 2f + rec * 11, ry = ay + as / 2f, rr = as / 2f - 2, spin = (now % 3_600_000L) / 1000f * (playing ? 2.4f : 0f);
+        disc(g, rx, ry, rr, Gfx.argb(a, 0x111216));
+        for (int ring = 0; ring < 3; ring++) circle(g, rx, ry, rr * (0.55f + ring * 0.15f), Gfx.argb(Math.round(a * 0.22f), 0x6A6E7C));
+        disc(g, rx, ry, rr * 0.28f, Gfx.argb(a, Ritual.mixc(acc, 0x2A2C34, 0.35f))); disc(g, rx, ry, 1.2f, Gfx.argb(a, 0x111216));
+        float gx = rx + (float) Math.cos(spin) * rr * 0.8f, gy = ry + (float) Math.sin(spin) * rr * 0.8f;
+        NebulaTex.glow(g, gx, gy, 4, 2.5f, Gfx.argb(Math.round(a * 0.3f), 0xFFFFFF));
+        // the cover: a shadow under it, it flips in when the song changes, dims under a pause sign when paused
+        NebulaTex.glow(g, ax + as / 2f + 1, ay + as / 2f + 3, as * 0.62f, as * 0.6f, Gfx.argb(Math.round(e * 150), 0x000000));
         float flip = Math.min(1f, since / 400f), sx = Math.abs((float) Math.cos(Math.PI * 0.5 * (1f - flip)));
-        NebulaTex.glow(g, ax + as / 2f, ay + as / 2f + 3, as * 0.65f, as * 0.6f, Gfx.argb(Math.round(e * 110), acc));
         Gfx.push(g); Gfx.translate(g, ax + as / 2f, ay); Gfx.scale(g, Math.max(0.02f, sx), 1f); Gfx.translate(g, -as / 2f, 0);
         cover(g, font, 0, 0, as, a, art, acc);
-        g.fill(0, 0, as, 1, Gfx.argb(Math.round(a * 0.35f), 0xFFFFFF)); g.fill(0, 0, 1, as, Gfx.argb(Math.round(a * 0.2f), 0xFFFFFF));
-        for (int[] p : new int[][]{{0, 0}, {as - 1, 0}, {0, as - 1}, {as - 1, as - 1}}) g.fill(p[0], p[1], p[0] + 1, p[1] + 1, Gfx.argb(Math.round(232 * e), panel));
+        for (int[] q : new int[][]{{0, 0}, {as - 1, 0}, {0, as - 1}, {as - 1, as - 1}}) g.fill(q[0], q[1], q[0] + 1, q[1] + 1, Gfx.argb(Math.round(242 * e), panel));   // rounded corners
+        g.fill(1, 0, as - 1, 1, Gfx.argb(Math.round(a * 0.18f), 0xFFFFFF));
         if (!playing) { g.fill(0, 0, as, as, Gfx.argb(Math.round(130 * e), 0x000000)); g.fill(as / 2 - 5, as / 2 - 6, as / 2 - 2, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); g.fill(as / 2 + 2, as / 2 - 6, as / 2 + 5, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); }
         Gfx.pop(g);
         // the words
         float in = ease(Math.min(1f, since / 380f)), sl = (1f - in) * 8; int tx = 70, eqW = 16, tw = w - tx - eqW - 10;
-        small(g, font, playing ? "NOW PLAYING" : "PAUSED", tx + sl * 0.4f, 8, 0.55f, Gfx.argb(Math.round(a * 0.8f * in), Ritual.mixc(acc, 0xFFFFFF, 0.35f)));
+        small(g, font, playing ? "NOW PLAYING" : "PAUSED", tx + sl * 0.4f, 8, 0.55f, Gfx.argb(Math.round(a * 0.75f * in), 0x8A8E9C));
         Gfx.txt(g, font, marquee(font, t.name(), tw, since), Math.round(tx + sl), 15, Gfx.argb(Math.round(a * in), 0xFFFFFF), true);
-        small(g, font, cut(font, t.artists(), tw / 0.8f), tx + sl * 0.6f, 26, 0.8f, Gfx.argb(Math.round(a * 0.62f * in), 0xC6CAD6));
-        if (!lyric.isEmpty()) small(g, font, cut(font, lyric, (w - tx - 8) / 0.75f), tx, 36, 0.75f, Gfx.argb(Math.round(a * 0.9f), Ritual.mixc(acc, 0xFFFFFF, 0.4f)));
-        // a small equalizer, top right
+        small(g, font, cut(font, t.artists(), tw / 0.8f), tx + sl * 0.6f, 26, 0.8f, Gfx.argb(Math.round(a * 0.7f * in), 0xA8ACB8));
+        // a small equalizer, top right, in white
         int ex = w - eqW - 7, ey = 15;
         for (int i = 0; i < 5; i++) {
             float amp = playing ? 0.2f + 0.8f * Math.abs((float) Math.sin(now / (150.0 + i * 37) + i * 1.7) * (float) Math.sin(now / (380.0 + i * 53) + i * 0.6)) : 0.08f;
             int bh = Math.max(1, Math.round(8 * amp)), bx = ex + i * 3;
-            g.fill(bx, ey - bh, bx + 2, ey, Gfx.argb(Math.round(a * 0.9f), Ritual.mixc(acc, 0xFFFFFF, 0.2f * i / 4f)));
+            g.fill(bx, ey - bh, bx + 2, ey, Gfx.argb(Math.round(a * 0.7f), 0xFFFFFF));
         }
-        // time: a rounded bar with a glowing knob, the times under its ends
+        // time: a thin white bar with a small knob, the times under its ends
         long dur = Math.max(1, t.durationMs()); float f = Math.min(1f, pos / (float) dur);
-        int by = h - 13 - (lyric.isEmpty() ? 0 : 0), b0 = tx, b1 = w - 9, kx = Math.round(b0 + (b1 - b0) * f);
-        g.fill(b0, by, b1, by + 2, Gfx.argb(Math.round(a * 0.16f), 0xFFFFFF));
-        g.fill(b0, by, kx, by + 2, Gfx.argb(a, Ritual.mixc(acc, 0xFFFFFF, 0.15f)));
-        NebulaTex.glow(g, kx, by + 1, 5, 4, Gfx.argb(Math.round(a * 0.6f), acc));
+        int by = h - 13, b0 = tx, b1 = w - 9, kx = Math.round(b0 + (b1 - b0) * f);
+        g.fill(b0, by, b1, by + 2, Gfx.argb(Math.round(a * 0.12f), 0xFFFFFF));
+        g.fill(b0, by, kx, by + 2, Gfx.argb(Math.round(a * 0.9f), 0xFFFFFF));
+        NebulaTex.glow(g, kx, by + 1, 4, 3, Gfx.argb(Math.round(a * 0.35f), 0xFFFFFF));
         g.fill(kx - 1, by - 1, kx + 2, by + 3, Gfx.argb(a, 0xFFFFFF));
         String l = mmss(pos), r = "-" + mmss(Math.max(0, dur - pos)); float rw = font.width(r) * 0.55f;
-        small(g, font, l, b0, by + 4, 0.55f, Gfx.argb(Math.round(a * 0.55f), 0xFFFFFF));
-        small(g, font, r, b1 - rw, by + 4, 0.55f, Gfx.argb(Math.round(a * 0.55f), 0xFFFFFF));
+        small(g, font, l, b0, by + 4, 0.55f, Gfx.argb(Math.round(a * 0.5f), 0xFFFFFF));
+        small(g, font, r, b1 - rw, by + 4, 0.55f, Gfx.argb(Math.round(a * 0.5f), 0xFFFFFF));
     }
     private static float rec = 0f;
     static void disc(GuiGraphicsExtractor g, float cx, float cy, float r, int c) {

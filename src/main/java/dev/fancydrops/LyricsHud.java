@@ -67,7 +67,8 @@ final class LyricsHud {
         if (c.lyricsStyle == KARAOKE) {
             if (c.lyricsPrev && prevLine >= 0 && prevLine < L.size() && out < 1f) karaoke(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 12 * k * ease(out), k, (1f - out) * vis, maxW);
             if (li >= 0 && li < L.size()) karaoke(g, f, L, li, pos, cx, cy + 4 * k * (1f - ease(out)), k, ease(out) * vis, maxW);
-            if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + 17 * k, k * 0.75f, 0.45f * vis, maxW);
+            beatUnder(g, f, L, li, cx, cy + rowsBelow(f, L, li, maxW, k) + 3 * k, k, vis, maxW, pos);
+            if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + rowsBelow(f, L, li, maxW, k) + 9 * k, k * 0.75f, 0.45f * vis, maxW);
         } else if (c.lyricsStyle == SCROLL) {
             float glide = 1f - ease(out), step = 22 * k;                                     // the sheet moves up one line as the new one arrives
             for (int d = -2; d <= 2; d++) {
@@ -77,14 +78,26 @@ final class LyricsHud {
                 float y = cy + d * step + glide * step, dist = Math.abs(d + glide);
                 float a = Math.max(0f, 1f - dist * 0.55f) * vis, sc = k * (1.15f - Math.min(1f, dist) * 0.4f);
                 if (a < 0.03f) continue;
-                if (d == 0) { line(g, f, L, idx, pos, cx, y, sc, a, maxW, c, true); }
+                if (d == 0) { line(g, f, L, idx, pos, cx, y, sc, a, maxW, c, true); beatUnder(g, f, L, idx, cx, y + rowsBelow(f, L, idx, maxW, sc) + 2 * k, sc, a, maxW, pos); }
                 else faint(g, f, L.get(idx).text(), cx, y - 2 * k, sc, a * 0.75f, Math.round(maxW * k / Math.max(0.3f, sc)));
             }
         } else {
             if (c.lyricsPrev && prevLine >= 0 && prevLine < L.size() && out < 1f) line(g, f, L, prevLine, Long.MAX_VALUE / 4, cx, cy - 14 * k * ease(out), k, (1f - out) * vis, maxW, c, false);
             if (li >= 0 && li < L.size()) line(g, f, L, li, pos, cx, cy, k, vis, maxW, c, false);
-            if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + 17 * k, k * 0.7f, 0.35f * vis, maxW);
+            beatUnder(g, f, L, li, cx, cy + rowsBelow(f, L, li, maxW, k) + 3 * k, k, vis, maxW, pos);
+            if (c.lyricsNext && li + 1 < L.size()) faint(g, f, L.get(li + 1).text(), cx, cy + rowsBelow(f, L, li, maxW, k) + 9 * k, k * 0.7f, 0.35f * vis, maxW);
         }
+    }
+    /** How far below the line's middle its last row ends. */
+    private static float rowsBelow(Font f, List<Lyrics.Line> L, int li, int maxW, float k) {
+        if (li < 0 || li >= L.size()) return 10 * k;
+        float[] q = new float[2]; List<String> rows = rowsOf(f, L.get(li).text(), maxW, k * 1.2f, q); float kk = q[0];
+        return (rows.size() - 1) * 12 * kk / 2f + 10 * kk;
+    }
+    /** The beat line under a line of lyrics, about as wide as the words. */
+    private static void beatUnder(GuiGraphicsExtractor g, Font f, List<Lyrics.Line> L, int li, float cx, float y, float k, float a, int maxW, long pos) {
+        float w = li >= 0 && li < L.size() ? Math.min(f.width(L.get(li).text()) * k * 1.2f, maxW * k) * 0.6f : 60 * k;
+        Beat.line(g, cx, y, Math.max(48 * k, Math.min(150 * k, w)), k, a, colour(), pos);
     }
     private static int at(List<Lyrics.Line> l, long ms) { int i = -1; for (int k = 0; k < l.size(); k++) { if (l.get(k).atMs() <= ms) i = k; else break; } return i; }
     private static final List<Lyrics.Line> DEMO = List.of(new Lyrics.Line(0, "The words pop in as they're sung"), new Lyrics.Line(3000, "light and easy to read"), new Lyrics.Line(6000, "drag them anywhere you like"));
@@ -160,12 +173,6 @@ final class LyricsHud {
             }
             y0 += rowH;
         }
-        if (barX0 >= 0) {                                                                    // the bar under the word being sung, gliding to it
-            if (BAR_LINE != li) { BAR_LINE = li; barA = barX0; barB = barX1; }
-            barA += (barX0 - barA) * 0.35f; barB += (barX1 - barB) * 0.35f;
-            g.fill(Math.round(barA), Math.round(barY), Math.round(barB), Math.round(barY) + 1, Gfx.argb(Math.round(230 * a), acc));
-            NebulaTex.glow(g, (barA + barB) / 2f, barY + 0.5f, (barB - barA) * 0.6f + 2, 2.5f, Gfx.argb(Math.round(120 * a), acc));
-        }
     }
     private static int BAR_LINE = -9; private static float barA, barB;
     /** Karaoke: the line in grey, a wipe of colour running through it letter by letter, a dot bouncing over the word being sung. */
@@ -191,11 +198,6 @@ final class LyricsHud {
                 x += cw; ch++;
             }
             ch++; y0 += rowH;
-        }
-        if (dotX >= 0) {                                                                     // the bouncing dot
-            float b = Math.abs((float) Math.sin(pos / 140.0)) * 3 * kk;
-            NebulaTex.glow(g, dotX, dotY - 4 * kk - b, 3.5f * kk, 3.5f * kk, Gfx.argb(Math.round(200 * a), acc));
-            g.fill(Math.round(dotX - kk), Math.round(dotY - 5 * kk - b), Math.round(dotX + kk), Math.round(dotY - 3 * kk - b), Gfx.argb(Math.round(255 * a), 0xFFFFFF));
         }
     }
     /** A word or letter with a dark outline, so it reads on snow, sky and lava alike. mx: its middle. */
@@ -246,8 +248,9 @@ final class LyricsHud {
         float y = above ? -sh * s - 2 * s + 3 : h - 3 + sh * s - sh + 2 * s;           // tucked behind the card, then out
         int a = Math.round(255 * e * s), A = Math.round(255 * e);
         NebulaTex.glow(g, w / 2f, y + sh / 2f + 2, sw * 0.55f, sh, Gfx.argb(Math.round(70 * e * s), 0x000000));
-        NowPlayingHud.round(g, Math.round(sx), Math.round(y), Math.round(sw), Math.round(sh), Gfx.argb(Math.round(232 * e * s), 0x0B0D14));
-        NebulaTex.glow(g, w / 2f, y + sh / 2f, sw * 0.42f, sh * 0.7f, Gfx.argb(Math.round(40 * e * s), acc));          // the album's colour, softly, behind the words
+        NowPlayingHud.round(g, Math.round(sx), Math.round(y), Math.round(sw), Math.round(sh), Gfx.argb(Math.round(150 * e * s), 0x2A2C38));          // the same plain glass as the card
+        NowPlayingHud.round(g, Math.round(sx) + 1, Math.round(y) + 1, Math.round(sw) - 2, Math.round(sh) - 2, Gfx.argb(Math.round(242 * e * s), 0x0D0E13));
+
         g.fill(Math.round(sx + 3), Math.round(above ? y : y + sh - 1), Math.round(sx + sw - 3), Math.round(above ? y + 1 : y + sh), Gfx.argb(Math.round(40 * e * s), 0xFFFFFF));   // the lit outer edge
         float bob = (float) Math.sin(now / 260.0) * 1f;                                       // the note, in a soft round light
         NebulaTex.glow(g, sx + 9, y + sh / 2f, 6, 6, Gfx.argb(Math.round(a * 0.55f), acc));
@@ -257,12 +260,7 @@ final class LyricsHud {
         int tx0 = Math.round(sx + 17), tw = Math.round(sw - 24);
         if (dockPrev >= 0 && dockPrev < L.size() && roll < 1f) dockText(g, f, L, dockPrev, Long.MAX_VALUE / 4, tx0, tw, y + sh / 2f - 4 - 6 * roll, Math.round(a * (1f - roll)), acc);
         if (li >= 0 && li < L.size()) dockText(g, f, L, li, pos, tx0, tw, y + sh / 2f - 4 + 6 * (1f - roll), Math.round(a * roll), acc);
-        if (li >= 0) {                                                                        // how far through the line: a hairline along the inner edge
-            long st = L.get(li).atMs(), en = li + 1 < L.size() ? L.get(li + 1).atMs() : st + 5000;
-            float p = Math.max(0f, Math.min(1f, (pos - st) / (float) Math.max(1, en - st))); int bx = Math.round(sx + 17), bw = Math.round(sw - 24), by = Math.round(above ? y + sh - 2 : y + 1);
-            g.fill(bx, by, bx + bw, by + 1, Gfx.argb(Math.round(a * 0.12f), 0xFFFFFF));
-            g.fill(bx, by, bx + Math.round(bw * p), by + 1, Gfx.argb(Math.round(a * 0.7f), Ritual.mixc(acc, 0xFFFFFF, 0.3f)));
-        }
+        Beat.line(g, sx + 17 + (sw - 24) / 2f, above ? y + sh - 2.5f : y + 1.5f, (sw - 24) * 0.55f, 0.7f, a / 255f, acc, pos);        // the beat, along the inner edge
     }
     /** One line in the strip, left to right: sung letters in the album's colour, the rest grey, scaled down to fit. */
     private static void dockText(GuiGraphicsExtractor g, Font f, List<Lyrics.Line> L, int li, long pos, int x, int tw, float y, int a, int acc) {
