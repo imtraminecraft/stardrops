@@ -175,7 +175,10 @@ public final class AnimationManager {
     }
 
     /** Draws one animation at time t (seconds) inside a W x H screen. */
-    static void draw(GuiGraphicsExtractor g, Font font, Anim a, float t, int W, int H) { Ritual.draw(g, font, a, t, W, H); }
+    static void draw(GuiGraphicsExtractor g, Font font, Anim a, float t, int W, int H) {
+        if (TextFx.itemOnly || TextFx.textOnly || TextFx.barsOnly) Ritual.draw(g, font, a, t, W, H);       // the editors keep the classic scene
+        else DropShow.draw(g, font, a, t, W, H);
+    }
 
     // ------------------------------------------------------------------ the menu preview
 

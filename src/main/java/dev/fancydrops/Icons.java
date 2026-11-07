@@ -200,6 +200,24 @@ final class Icons {
                 r(g, x, y, 1, 1, 14, 1, 0xFF8A7650); r(g, x, y, 1, 14, 14, 1, 0xFF8A7650); r(g, x, y, 1, 1, 1, 14, 0xFF8A7650); r(g, x, y, 14, 1, 1, 14, 0xFF8A7650);
                 for (int i = 0; i < 6; i++) r(g, x, y, 3 + i * 2, 3 + i * 2, 1, 1, ((int) (s * 4f) + i) % 3 == 0 ? 0xFFFFFFFF : 0xFFF6EBD0);
             }
+            case "res_spotify" -> {                                                                     // music: a green disc with a bouncing note
+                for (int yy = 0; yy < 14; yy++) for (int xx = 0; xx < 14; xx++) { float dx = xx - 6.5f, dy = yy - 6.5f; if (dx * dx + dy * dy < 46f) r(g, x, y, 1 + xx, 1 + yy, 1, 1, dx * dx + dy * dy < 30f ? 0xFF1ED760 : 0xFF13A84A); }
+                int b = (int) ((s * 3f) % 2f);
+                r(g, x, y, 9, 3 - b, 1, 7, 0xFF0C1A10); r(g, x, y, 9, 3 - b, 3, 1, 0xFF0C1A10); r(g, x, y, 11, 4 - b, 1, 1, 0xFF0C1A10);
+                r(g, x, y, 6, 9 - b, 3, 2, 0xFF0C1A10); r(g, x, y, 7, 11 - b, 2, 1, 0xFF0C1A10);
+            }
+            case "res_lyrics" -> {                                                                      // lyrics: a speech bubble with lines that fill in
+                r(g, x, y, 1, 2, 14, 9, 0xFFFFFFFF); r(g, x, y, 2, 3, 12, 7, 0xFFF3ECFF); r(g, x, y, 3, 11, 3, 2, 0xFFFFFFFF); r(g, x, y, 3, 13, 1, 1, 0xFFFFFFFF);
+                int f = (int) ((s * 6f) % 14f);
+                for (int i = 0; i < 3; i++) { int w = i == 2 ? 6 : 10; r(g, x, y, 3, 4 + i * 2, w, 1, 0xFFC9B8F0); int lit = Math.max(0, Math.min(w, f - i * 4)); if (lit > 0) r(g, x, y, 3, 4 + i * 2, lit, 1, 0xFF8A5CF6); }
+            }
+            case "res_mojang" -> {                                                                      // players: a blocky head with a blinking face
+                r(g, x, y, 2, 2, 12, 12, 0xFF3A2614); r(g, x, y, 3, 5, 10, 8, 0xFFC99A6E); r(g, x, y, 3, 3, 10, 2, 0xFF5A3A1E);
+                boolean blink = (s % 4f) > 3.8f;
+                r(g, x, y, 4, 8, 2, blink ? 1 : 2, 0xFFFFFFFF); r(g, x, y, 10, 8, 2, blink ? 1 : 2, 0xFFFFFFFF);
+                if (!blink) { r(g, x, y, 5, 8, 1, 2, 0xFF3B5BA8); r(g, x, y, 10, 8, 1, 2, 0xFF3B5BA8); }
+                r(g, x, y, 6, 11, 4, 1, 0xFF8A5A3A);
+            }
             case "res_mc" -> {                                                                          // Minecraft: a grass block
                 for (int yy = 0; yy < 14; yy++) for (int xx = 0; xx < 14; xx++) {
                     int v = (xx * 7 + yy * 13) % 5; int c = yy < 4 ? (v < 2 ? 0xFF5FA83A : v < 4 ? 0xFF4F9230 : 0xFF74C24A) : (v < 2 ? 0xFF8A5A2C : v < 4 ? 0xFF7A4C22 : 0xFF6B4423);

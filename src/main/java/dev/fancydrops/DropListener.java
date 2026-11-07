@@ -334,7 +334,7 @@ public final class DropListener {
     /** The menu category a newer group lives in. */
     static String catOfGroup(String g) {
         if (g.startsWith("fish_")) return "fishing";
-        return switch (g) { case "dyes" -> "dyes"; case "mobs", "nucleus" -> "mining"; default -> "bosses"; };          // the Crimson Isle and the End: the Rare Drops page
+        return switch (g) { case "dyes" -> "dyes"; default -> "bosses"; };          // the Crimson Isle and the End: the Rare Drops page
     }
     /** The scene variant of a source: its place in its group (drops of the same creature stack into one animation). */
     private static int extraKind(DropData.Source src) { return Math.max(0, ExtraData.group(src.group).indexOf(src)); }

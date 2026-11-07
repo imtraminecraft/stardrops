@@ -2204,6 +2204,9 @@ public class FancyScreen extends Screen {
             {":res_neu:", "NotEnoughUpdates-REPO", "Item ids, names and the skull textures behind every icon", "GitHub", "https://github.com/NotEnoughUpdates/NotEnoughUpdates-REPO"},
             {":res_hypixel:", "Hypixel Public API", "Bazaar and lowest BIN prices for drop values", "Website", "https://api.hypixel.net"},
             {":res_fabric:", "FabricMC", "The loader, API and Loom this mod is built on", "GitHub", "https://github.com/FabricMC"},
+            {":res_spotify:", "Spotify Web API", "Now playing, playback controls and track progress for the music HUD", "Website", "https://developer.spotify.com/documentation/web-api"},
+            {":res_lyrics:", "LRCLIB", "Free synced lyrics behind the Pop and Karaoke lyrics", "Website", "https://lrclib.net"},
+            {":res_mojang:", "Mojang API", "Player names and skins for profiles and cosmetics", "Website", "https://api.mojang.com"},
             {":res_mc:", "Minecraft (Mojang Studios)", "The game itself, and the vanilla sounds some scenes use", "Website", "https://www.minecraft.net"}};
         for (String[] rs : res) {
             Row rr = row(0, rs[0], rs[1], rs[2], Ui.ACCENT); rr.noSearch = true;
