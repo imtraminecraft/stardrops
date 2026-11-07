@@ -314,7 +314,7 @@ final class LyricsHud {
     static void intro(GuiGraphicsExtractor g, Font f, int W, int H, String name, String artists, float u, float a, float size) {
         if (a < 0.02f) return;
         int acc = colour(), lite = Ritual.mixc(acc, 0xFFFFFF, 0.5f), seed = name.hashCode();
-        float k = size * 1.6f, cx = W / 2f, cy = H * 0.27f;
+        float k = size * 2.2f, cx = W / 2f, cy = H * 0.31f;
         if (f.width(name) * k > W * 0.62f) name = f.plainSubstrByWidth(name, (int) (W * 0.62f / k) - 8) + "\u2026";
         float out = Math.max(0f, (u - (INTRO - 0.9f)) / 0.9f), oe = out * out;                                   // leaving: 0..1
         float fade = a * (1f - Math.max(0f, (out - 0.6f) / 0.4f));
@@ -342,7 +342,7 @@ final class LyricsHud {
         int n = name.length(); float spread = 1f + 1.2f * (1f - ease(Math.min(1f, t0 / 0.9f)));
         float nw = 0; float[] cw = new float[n]; for (int i = 0; i < n; i++) { cw[i] = f.width(String.valueOf(name.charAt(i))) * k; nw += cw[i]; }
         float gap = (spread - 1f) * 3 * k, tot = nw + gap * Math.max(0, n - 1);
-        float cs = 26 * size, coverX = cx - tot / 2f - cs - 10 * size, ty = cy - 4 * k;
+        float cs = 36 * size, coverX = cx - tot / 2f - cs - 10 * size, ty = cy - 4 * k;
         // a dark band behind it all, a light line underneath that opens out from the middle
         float open = ease(Math.min(1f, t0 / 0.5f));
         NebulaTex.glow(g, cx, cy + 4 * k, (tot / 2f + cs + 40) * open, 26 * k, Gfx.argb(Math.round(200 * fade), 0x05061A));
@@ -362,7 +362,8 @@ final class LyricsHud {
         }
         // "NOW PLAYING", spaced, sliding in
         float lab = ease(Math.min(1f, t0 / 0.4f));
-        text(g, f, "N O W   P L A Y I N G", cx + (1f - lab) * 20 + oe * W * 0.9f, ty - 11 * size, 0.55f * size, Gfx.argb(Math.round(200 * fade * lab), lite));
+        { float lk = 0.8f * size, lx0 = cx - tot / 2f + (1f - lab) * 12 + oe * W * 0.9f;                       // "Now playing", small, over the title's first letter
+          Gfx.push(g); Gfx.translate(g, lx0, ty - 11 * size); Gfx.scale(g, lk); Gfx.txt(g, f, "Now playing", 0, 0, Gfx.argb(Math.round(210 * fade * lab), lite), true); Gfx.pop(g); }
         // the title, letter by letter: scrambled glyphs that settle into the real letters, left to right
         float x = cx - tot / 2f; long tick = (long) (u * 28);
         for (int i = 0; i < n; i++) {
@@ -384,7 +385,7 @@ final class LyricsHud {
         if (at > 0f) {
             int shown = Math.min(artists.length(), (int) (at / 0.028f)); String s = artists.substring(0, shown);
             boolean cursor = shown < artists.length() || ((long) (u * 2.5f)) % 2 == 0;
-            float ak = 0.75f * size, aw = f.width(artists) * ak, ax = cx - aw / 2f + oe * W * 1.2f, ay = cy + 13 * k;
+            float ak = 1.0f * size, aw = f.width(artists) * ak, ax = cx - aw / 2f + oe * W * 1.2f, ay = cy + 13 * k;
             Gfx.push(g); Gfx.translate(g, ax, ay); Gfx.scale(g, ak); Gfx.txt(g, f, s, 0, 0, Gfx.argb(Math.round(220 * fade), 0xD8D8F0), true); Gfx.pop(g);
             if (cursor && out < 0.3f) g.fill(Math.round(ax + f.width(s) * ak + 1), Math.round(ay), Math.round(ax + f.width(s) * ak + 1 + 2 * size), Math.round(ay + 8 * ak), Gfx.argb(Math.round(220 * fade), acc));
         }
@@ -393,7 +394,7 @@ final class LyricsHud {
         if (ct > 0f) {
             int m = 7; float[][] pts = new float[m][];
             for (int i = 0; i < m; i++) { boolean top = i % 2 == 0; float px = cx - tot / 2f - 4 + (tot + 8) * (i + 0.5f) / m + (hash(seed + i * 5) - 0.5f) * 14;
-                float py = top ? ty - 18 * size - hash(seed + i * 3) * 10 * size : cy + 26 * size + hash(seed + i * 9) * 8 * size; pts[i] = new float[]{px + oe * W * (0.8f + i * 0.05f), py}; }
+                float py = top ? ty - 20 * size - hash(seed + i * 3) * 10 * size : cy + 13 * k + 15 * size + hash(seed + i * 9) * 6 * size; pts[i] = new float[]{px + oe * W * (0.8f + i * 0.05f), py}; }
             for (int i = 0; i < m; i++) {
                 float sa = Math.min(1f, (ct - i * 0.09f) / 0.2f); if (sa <= 0f) continue;
                 if (i > 1) { float la2 = Math.min(1f, (ct - i * 0.09f) / 0.3f); float x0 = pts[i - 2][0], y0 = pts[i - 2][1], x1 = x0 + (pts[i][0] - x0) * la2, y1 = y0 + (pts[i][1] - y0) * la2;   // joined along its own row: never across the title

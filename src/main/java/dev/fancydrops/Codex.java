@@ -264,14 +264,36 @@ final class Codex {
             float u = 0.12f + 0.13f * i, x = ax + (bx - ax) * u + nx * sh * 0.015f * (i % 2 == 0 ? 1 : -1), y = ay + (by - ay) * u + ny * sh * 0.015f * (i % 2 == 0 ? 1 : -1);
             NebulaTex.glow(g, x, y, sw * 0.05f, sh * 0.025f, argb(0.22f * alpha, 0x05060F));
         }
-        // a spiral galaxy far away, turning very slowly
-        float gx = sx0 + sw * 0.6f - px * 0.6f, gy = sy0 + sh * 0.47f - py * 0.6f, gr = Math.min(sw, sh) * 0.075f, rot = tt * 0.03f;
-        NebulaTex.glow(g, gx, gy, gr * 1.7f, gr * 0.8f, argb(0.2f * alpha, 0xB89AFF)); NebulaTex.glow(g, gx, gy, gr * 0.9f, gr * 0.45f, argb(0.25f * alpha, 0xFF9AD8));
-        NebulaTex.glow(g, gx, gy, gr * 0.35f, gr * 0.2f, argb(0.45f * alpha, 0xFFF0D8));
-        for (int arm = 0; arm < 2; arm++) for (int i = 0; i < 24; i++) {
-            float k = i / 23f, an = rot + arm * (float) Math.PI + k * 4.2f, r = gr * (0.12f + 0.95f * k);
-            float x = gx + (float) Math.cos(an) * r, y = gy + (float) Math.sin(an) * r * 0.42f;
-            g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, argb((0.75f - 0.5f * k) * alpha, i % 4 == 0 ? 0xFFB8E0 : i % 3 == 0 ? 0x9AD8FF : 0xD8D0FF)); if (i % 6 == 0) glow(x, y, 2.5f, 0xC8B8FF, 0.35f * (1f - k));
+        // star layers at three depths drifting slowly sideways (the far ones slowest): the sky has depth
+        for (int L = 0; L < 3; L++) {
+            long per = L == 0 ? 900_000L : L == 1 ? 520_000L : 300_000L; float sh0 = (now % per) / (float) per;
+            int n = L == 0 ? 60 : L == 1 ? 34 : 16;
+            for (int i = 0; i < n; i++) {
+                float u = (rnd(i * 13 + L * 101) + sh0) % 1f, x = sx0 + sw * u, y = sy0 + sh * rnd(i * 7 + L * 211) * 0.92f;
+                float tw = 0.55f + 0.45f * (float) Math.sin(tt * (0.5 + rnd(i + L * 7)) + i);
+                int c = (i + L) % 6 == 0 ? 0xFFE0C0 : (i + L) % 5 == 0 ? 0xC8D8FF : 0xFFFFFF;
+                if (L == 2) { glow(x, y, 2.2f, c, 0.35f * tw); g.fill(Math.round(x), Math.round(y), Math.round(x) + 2, Math.round(y) + 2, argb(0.85f * tw * alpha * night, c)); }
+                else g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, argb((L == 0 ? 0.35f : 0.6f) * tw * alpha * night, c));
+            }
+        }
+        // a big spiral galaxy, turning very slowly: a bright core, two long arms thick with stars and pink star-forming knots, dark dust between
+        float gx = sx0 + sw * 0.58f - px * 0.6f, gy = sy0 + sh * 0.46f - py * 0.6f, gr = Math.min(sw, sh) * 0.24f, rot = (now % 2_400_000L) / 2_400_000f * (float) Math.PI * 2;
+        float tiltY = 0.42f;
+        NebulaTex.glow(g, gx, gy, gr * 1.9f, gr * 0.95f, argb(0.16f * alpha, 0x8A6AE8)); NebulaTex.glow(g, gx, gy, gr * 1.1f, gr * 0.55f, argb(0.2f * alpha, 0xFF9AD8));
+        NebulaTex.glow(g, gx, gy, gr * 0.45f, gr * 0.24f, argb(0.4f * alpha, 0xFFE8C8)); NebulaTex.glow(g, gx, gy, gr * 0.16f, gr * 0.09f, argb(0.75f * alpha, 0xFFFFF0));
+        for (int arm = 0; arm < 2; arm++) {
+            for (int i = 0; i < 26; i++) {                                                // the arms' glow
+                float k = i / 25f, an = rot + arm * (float) Math.PI + k * 4.6f, r = gr * (0.1f + 0.95f * k);
+                float x = gx + (float) Math.cos(an) * r, y = gy + (float) Math.sin(an) * r * tiltY;
+                NebulaTex.glow(g, x, y, gr * (0.16f + 0.1f * k), gr * (0.08f + 0.05f * k), argb(0.22f * (1f - k * 0.6f) * alpha, i % 2 == 0 ? 0xB89AFF : 0x9AC8FF));
+                if (i % 3 == 1) NebulaTex.glow(g, x - (float) Math.sin(an) * gr * 0.06f, y + (float) Math.cos(an) * gr * 0.03f, gr * 0.12f, gr * 0.04f, argb(0.18f * alpha, 0x05060F));   // dust lane
+            }
+            for (int i = 0; i < 70; i++) {                                                // its stars, scattered along the arms
+                float k = rnd(i * 7 + arm * 300), an = rot + arm * (float) Math.PI + k * 4.6f + (rnd(i * 11 + arm) - 0.5f) * 0.5f, r = gr * (0.1f + 0.98f * k) * (0.9f + 0.2f * rnd(i * 3 + arm));
+                float x = gx + (float) Math.cos(an) * r, y = gy + (float) Math.sin(an) * r * tiltY;
+                g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, argb((0.85f - 0.5f * k) * alpha, i % 9 == 0 ? 0xFFB8E0 : i % 4 == 0 ? 0x9AD8FF : 0xE8E0FF));
+                if (i % 14 == 0) glow(x, y, 3f, 0xFF8AC8, 0.4f * (1f - k));             // pink knots where stars are being born
+            }
         }
         // bright stars with long diffraction spikes, breathing
         float[][] bright = {{0.14f, 0.12f}, {0.47f, 0.08f}, {0.72f, 0.46f}, {0.93f, 0.62f}, {0.33f, 0.4f}};
@@ -453,7 +475,7 @@ final class Codex {
         fb(0, 0, 8, 8, a);                                                                             // head
         fb(8, 0, 12, 4 + breath, a);                                                                   // body (rising and falling a little)
         fb(20, 0, 12, 4, a);                                                                           // the straight leg
-        fbr(20, 1, -0.95f, 9.5f, 4, a); fbr(25.5f, 8.6f, 1.05f, 9.5f, 4, a);                                // the other: thigh up to the knee, shin down
+        fbar(21, 2, 26, 9, 3.8f, a); fbar(26, 9, 31, 1.9f, 3.8f, a); fb(29.5f, 0, 3, 2.5f, a);   // the other: hip to knee, knee down to the foot (joined at the knee)                                // the other: thigh up to the knee, shin down
         // the arm: folded behind the head, or reaching over to stroke the cat
         float[] cb = toFrame(catBack[0], catBack[1]); float shx = 10, shy = 3.5f, rx = 3, ry = 9.5f, px2 = cb[0] + stroke, py2 = cb[1];
         float hx2 = rx + (px2 - rx) * pet, hy2 = ry + (py2 - ry) * pet;
@@ -588,15 +610,27 @@ final class Codex {
     }
 
     // ------------------------------------------------------------------ the sky's furniture: a moon, a ringed planet, far hills with town lights, a satellite
+    // depth, period (ms), phase, height, climb across, radius, day, night, rim, bands, ring
+    private static final float[][] PL = {
+        {1.0f, 420_000, 0.82f, 0.34f, -0.08f, 5.6f, 0xD8A070, 0x5A3A2A, 0xFFE0B8, 0.35f, 1},     // the ringed giant, nearest
+        {0.7f, 640_000, 0.35f, 0.10f, 0.04f, 3.4f, 0xC8CCD8, 0x2A2E3A, 0xF4F6FF, 0f, 0},           // a pale moon
+        {0.45f, 900_000, 0.12f, 0.22f, -0.05f, 1.7f, 0x6AA8E8, 0x14243A, 0xC8E8FF, 0f, 0},         // a small blue world, far off
+        {0.85f, 520_000, 0.6f, 0.52f, -0.1f, 2.6f, 0xE87A8A, 0x3A1420, 0xFFD0D8, 0.25f, 0},        // a rose-red world
+        {0.3f, 1_100_000, 0.5f, 0.15f, 0.03f, 1.1f, 0xB8F0C8, 0x18302A, 0xE8FFF0, 0f, 0}};        // a tiny green one, very far
     private static void scenery(GuiGraphicsExtractor g, float a) {
         if (a < 0.02f) return;
         float k = sh / 150f;
         // far planets, deep behind everything (they barely slide as you look around): real spheres, lit from one side, a soft
         // atmosphere on the lit limb; the big one has a tilted ring that passes in front of it and behind it
         float fx = parX(0.12f), fy = parY(0.12f), pa0 = a; a = a * (1f - 0.8f * day);                // (faint in daylight)
-        planet(g, sx0 + sw * 0.9f + fx, sy0 + sh * 0.36f + fy, 5.2f * k, 0xD8A070, 0x5A3A2A, 0xFFE0B8, -0.6f, 0.35f, a, true);
-        planet(g, sx0 + sw * 0.5f + parX(0.06f), sy0 + sh * 0.09f + parY(0.06f), 3.4f * k, 0xC8CCD8, 0x2A2E3A, 0xF4F6FF, -0.9f, 0f, a, false);   // a pale moon
-        planet(g, sx0 + sw * 0.27f + parX(0.09f), sy0 + sh * 0.2f + parY(0.09f), 1.6f * k, 0x6AA8E8, 0x14243A, 0xC8E8FF, -0.5f, 0f, a * 0.85f, false);  // a small blue world
+        // the planets drift across the sky, each at its own depth: near ones bigger, brighter and quicker, far ones small, hazy and
+        // slow (each crosses fully off screen before it comes round again, so the loop never jumps)
+        for (int i = 0; i < PL.length; i++) {
+            float[] q = PL[i]; float d = q[0]; long per = (long) q[1];
+            float u = ((q[2] + (now % per) / (float) per) % 1f) * 1.5f - 0.25f, bob = (float) Math.sin((now % per) / (double) per * Math.PI * 4 + i) * 0.02f;
+            float x = sx0 + sw * u, y = sy0 + sh * (q[3] + bob + (u - 0.5f) * q[4]);
+            planet(g, x, y, q[5] * k, (int) q[6], (int) q[7], (int) q[8], -0.6f, q[9], a * (0.45f + 0.55f * d), q[10] > 0);
+        }
         a = pa0; int base = sy0 + sh;
         NebulaTex.glow(g, sx0 + sw * 0.7f, base, sw * 0.5f, sh * 0.16f, argb(0.22f * a * alpha, 0x6A4A9A));          // a haze of far light along the horizon
         NebulaTex.glow(g, sx0 + sw * 0.86f, base, sw * 0.12f, sh * 0.06f, argb(0.25f * a * alpha, 0xFFB070));         // a distant town's glow
