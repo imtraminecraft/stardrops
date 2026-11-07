@@ -1,5 +1,5 @@
 {
- "v": 3,
+ "v": 5,
  "sources": [
   {
    "id": "open_water",
@@ -143,7 +143,8 @@
      "skull": false,
      "odds": "Occasional · Trash Gobbler",
      "chance": "1 in 20",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Aquamarine Dye",
@@ -161,7 +162,8 @@
      "skull": false,
      "odds": "Occasional · Dumpster Diver",
      "chance": "1 in 50",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Enchanted Lily Pad",
@@ -179,7 +181,8 @@
      "skull": false,
      "odds": "Rare · Dumpster Diver",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Torn Cloth",
@@ -188,7 +191,8 @@
      "skull": false,
      "odds": "Occasional · Banshee",
      "chance": "1 in 33.3",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Calcified Heart",
@@ -197,7 +201,8 @@
      "skull": false,
      "odds": "Extraordinary · Banshee",
      "chance": "1 in 1,000",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Enchanted Slimeball",
@@ -215,7 +220,8 @@
      "skull": false,
      "odds": "Rare · Bayou Sludge",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Blessing VI",
@@ -242,7 +248,8 @@
      "skull": false,
      "odds": "Rare · Alligator, Titanoboa",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Bobbin' Scriptures",
@@ -251,7 +258,8 @@
      "skull": false,
      "odds": "Rare · Titanoboa",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Titanoboa Shed",
@@ -260,7 +268,8 @@
      "skull": false,
      "odds": "Extraordinary · Titanoboa",
      "chance": "1 in 500",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Snake Eyes",
@@ -297,7 +306,8 @@
      "skull": false,
      "odds": "Occasional · Lotus Guardian",
      "chance": "1 in 20",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Silver Lotus",
@@ -306,7 +316,8 @@
      "skull": false,
      "odds": "Occasional · gorF, Drowned Captain",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "eroC enotS egrofeR",
@@ -315,7 +326,8 @@
      "skull": false,
      "odds": "Rare · gorF",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Enchanted Gold Block",
@@ -333,7 +345,8 @@
      "skull": false,
      "odds": "Rare · Drowned Captain",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Gold Lotus",
@@ -342,7 +355,8 @@
      "skull": false,
      "odds": "Occasional · Puddle Jumper, Frog Prince",
      "chance": "1 in 20",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Prince's Crown Jewel",
@@ -375,8 +389,8 @@
     {
      "name": "Enchanted Mangrove Log",
      "id": "ENCHANTED_MANGROVE_LOG",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Occasional · Wetwing, Tadgang",
      "chance": "1 in 10",
      "rank": 0
@@ -388,7 +402,8 @@
      "skull": false,
      "odds": "Occasional · Wetwing",
      "chance": "1 in 40",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Enchanted Sea Lumies",
@@ -397,7 +412,8 @@
      "skull": false,
      "odds": "Occasional · Tadgang, Ent, The Loch Emperor",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Gill Membrane",
@@ -406,7 +422,8 @@
      "skull": false,
      "odds": "Occasional · Tadgang",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Uncommon Foraging Exp Boost",
@@ -424,7 +441,8 @@
      "skull": false,
      "odds": "Occasional · Ent, The Loch Emperor, Nessie",
      "chance": "1 in 10",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Emperor's Skull",
@@ -433,7 +451,8 @@
      "skull": false,
      "odds": "Occasional · The Loch Emperor",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Rare Flying Fish Pet",
@@ -478,13 +497,14 @@
      "skull": false,
      "odds": "Rare · Nessie",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Vibrant Coral",
      "id": "VIBRANT_CORAL",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare · Nessie",
      "chance": "1 in 200",
      "rank": 1
@@ -533,7 +553,8 @@
      "skull": false,
      "odds": "Occasional · Haggard, Brineling, Sprawl +1",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Aquamarine Dye",
@@ -551,7 +572,8 @@
      "skull": false,
      "odds": "Rare · Brineling",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Helixis",
@@ -560,7 +582,8 @@
      "skull": false,
      "odds": "Occasional · Torrid, Silkbreeze, Giant Isopod",
      "chance": "1 in 20",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Veilshroom Bunch",
@@ -569,7 +592,8 @@
      "skull": false,
      "odds": "Occasional · Torrid, Silkbreeze, Giant Isopod",
      "chance": "1 in 20",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Water Hyacinth",
@@ -578,7 +602,8 @@
      "skull": false,
      "odds": "Rare · Torrid",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Sublime Silk",
@@ -587,7 +612,8 @@
      "skull": false,
      "odds": "Occasional · Silkbreeze",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Distant Echo",
@@ -596,7 +622,8 @@
      "skull": false,
      "odds": "Rare · Silkbreeze",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Isopod Husk",
@@ -605,7 +632,8 @@
      "skull": false,
      "odds": "Occasional · Giant Isopod",
      "chance": "1 in 50",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Reinforced Netting",
@@ -614,7 +642,8 @@
      "skull": false,
      "odds": "Rare · Giant Isopod",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     }
    ]
   },
@@ -633,7 +662,8 @@
      "skull": false,
      "odds": "Occasional · Nurse Shark",
      "chance": "1 in 10",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Carnival Ticket",
@@ -660,7 +690,8 @@
      "skull": false,
      "odds": "Occasional · Blue Shark",
      "chance": "1 in 10",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Tiger Shark Tooth",
@@ -669,7 +700,8 @@
      "skull": false,
      "odds": "Occasional · Tiger Shark",
      "chance": "1 in 10",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Epic Megalodon Pet",
@@ -687,7 +719,8 @@
      "skull": false,
      "odds": "Occasional · Great White Shark",
      "chance": "1 in 10",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Legendary Megalodon Pet",
@@ -724,7 +757,8 @@
      "skull": false,
      "odds": "Occasional · Inkling",
      "chance": "1 in 25",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Enchanted Ink Sac",
@@ -760,7 +794,8 @@
      "skull": false,
      "odds": "Rare · Snapping Turtle",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Edible Seaweed",
@@ -814,7 +849,8 @@
      "skull": false,
      "odds": "Rare · Wiki Tiki",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Troubled Bubble",
@@ -851,7 +887,8 @@
      "skull": false,
      "odds": "Occasional · Mithril Grubber",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Plasma",
@@ -860,7 +897,8 @@
      "skull": false,
      "odds": "Occasional · Mithril Grubber",
      "chance": "1 in 40",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Aquamarine Dye",
@@ -923,7 +961,8 @@
      "skull": false,
      "odds": "Occasional · Water Worm, Poisoned Water Worm",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Flawed Amethyst Gemstone",
@@ -932,7 +971,8 @@
      "skull": false,
      "odds": "Occasional · Abyssal Miner",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Flawed Jade Gemstone",
@@ -941,7 +981,8 @@
      "skull": false,
      "odds": "Occasional · Abyssal Miner",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Flawed Sapphire Gemstone",
@@ -950,7 +991,8 @@
      "skull": false,
      "odds": "Occasional · Abyssal Miner",
      "chance": "1 in 5",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Piscary VI",
@@ -1005,7 +1047,8 @@
      "skull": false,
      "odds": "Occasional · Lava Leech",
      "chance": "1 in 20",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Pitchin' Koi",
@@ -1014,7 +1057,8 @@
      "skull": false,
      "odds": "Extraordinary · Lava Leech",
      "chance": "1 in 250",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Charm I",
@@ -1041,7 +1085,8 @@
      "skull": false,
      "odds": "Occasional · Fire Eel",
      "chance": "1 in 20",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Taurus Helmet",
@@ -1077,7 +1122,8 @@
      "skull": false,
      "odds": "Rare · Lord Jawbus",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Radioactive Vial",
@@ -1105,7 +1151,8 @@
      "skull": false,
      "odds": "Occasional · Fried Chicken",
      "chance": "1 in 10",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Carmine Dye",
@@ -1123,7 +1170,8 @@
      "skull": false,
      "odds": "Occasional · Volcanic Snail",
      "chance": "1 in 25",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Silver Magmafish",
@@ -1132,7 +1180,8 @@
      "skull": false,
      "odds": "Rare · Volcanic Snail",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Enchanted Glowstone Dust",
@@ -1159,7 +1208,8 @@
      "skull": false,
      "odds": "Rare · Fireproof Witch",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Enchanted Glowstone",
@@ -1213,7 +1263,8 @@
      "skull": false,
      "odds": "Rare · Ragnarok",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Chain of the End Times",
@@ -1231,7 +1282,8 @@
      "skull": false,
      "odds": "Rare · Ragnarok",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Burnt Texts",
@@ -1277,7 +1329,8 @@
      "skull": false,
      "odds": "Rare · Lava Blaze",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Magma Core",
@@ -1286,7 +1339,8 @@
      "skull": false,
      "odds": "Rare · Lava Blaze, Lava Pigman",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     }
    ]
   },
@@ -1323,7 +1377,8 @@
      "skull": false,
      "odds": "Rare · Plhlegblast",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Carmine Dye",
@@ -1351,7 +1406,8 @@
      "skull": false,
      "odds": "Occasional · Jumpin' Jack",
      "chance": "1 in 10",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Enchanted Pumpkin",
@@ -1396,7 +1452,8 @@
      "skull": false,
      "odds": "Rare · Werewolf, Phantom Fisher, Grim Reaper",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Spooky Hook",
@@ -1405,7 +1462,8 @@
      "skull": false,
      "odds": "Rare · Phantom Fisher",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Vampire Fang",
@@ -1423,7 +1481,8 @@
      "skull": false,
      "odds": "Occasional · Grim Reaper",
      "chance": "1 in 50",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Bobbin' Scriptures",
@@ -1432,7 +1491,8 @@
      "skull": false,
      "odds": "Rare · Grim Reaper",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Shredded Line",
@@ -1441,7 +1501,8 @@
      "skull": false,
      "odds": "Rare · Grim Reaper",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     }
    ]
   },
@@ -1460,7 +1521,8 @@
      "skull": false,
      "odds": "Rare · Frozen Steve",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Iceberg Dye",
@@ -1541,7 +1603,8 @@
      "skull": false,
      "odds": "Rare · Yeti",
      "chance": "1 in 100",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Bobbin' Scriptures",
@@ -1550,7 +1613,45 @@
      "skull": false,
      "odds": "Rare · Reindrake",
      "chance": "1 in 100",
+     "rank": 1,
+     "flat": true
+    }
+   ]
+  },
+  {
+   "id": "fishing_treasure",
+   "name": "Treasure",
+   "boss": "Treasure",
+   "icon": "chest",
+   "color": "#FFC857",
+   "group": "fish_treasure",
+   "drops": [
+    {
+     "name": "Titanic Experience Bottle",
+     "id": "TITANIC_EXP_BOTTLE",
+     "icon": "experience_bottle",
+     "skull": false,
+     "odds": "Great Catch",
+     "chance": "",
      "rank": 1
+    },
+    {
+     "name": "Guardian Pet",
+     "id": "PET_GUARDIAN",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Great Catch",
+     "chance": "",
+     "rank": 2
+    },
+    {
+     "name": "Squid Pet",
+     "id": "PET_SQUID",
+     "icon": "player_head",
+     "skull": true,
+     "odds": "Great Catch",
+     "chance": "",
+     "rank": 2
     }
    ]
   }

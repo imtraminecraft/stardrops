@@ -1,5 +1,5 @@
 {
- "v": 4,
+ "v": 5,
  "sources": [
   {
    "id": "exp",
@@ -35,7 +35,8 @@
      "icon": "glass_bottle",
      "odds": "Extraordinary",
      "chance": "1 in 89 (1.1236%)",
-     "rank": 1
+     "rank": 1,
+     "skull": true
     },
     {
      "name": "Guardian Pet",
@@ -195,7 +196,8 @@
      "icon": "book",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Chain of the End Times",
@@ -203,7 +205,8 @@
      "icon": "string",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "End Stone Idol",
@@ -211,7 +214,8 @@
      "icon": "end_stone",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Ensnared Snail",
@@ -219,7 +223,8 @@
      "icon": "nautilus_shell",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Fateful Stinger",
@@ -227,7 +232,8 @@
      "icon": "spider_eye",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Gold Bottle Cap",
@@ -235,7 +241,8 @@
      "icon": "gold_nugget",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Golden Bounty",
@@ -243,7 +250,8 @@
      "icon": "gold_ingot",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Octopus Tendril",
@@ -251,7 +259,8 @@
      "icon": "ink_sac",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Severed Hand",
@@ -259,7 +268,8 @@
      "icon": "bone",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Severed Pincer",
@@ -267,7 +277,8 @@
      "icon": "iron_nugget",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Troubled Bubble",
@@ -275,7 +286,8 @@
      "icon": "heart_of_the_sea",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,704 (0.027%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     },
     {
      "name": "Vibrant Coral",
@@ -491,7 +503,8 @@
      "icon": "pink_dye",
      "odds": "RNGesus Incarnate",
      "chance": "1 in 8,333 (0.012%)",
-     "rank": 3
+     "rank": 3,
+     "skull": true
     }
    ]
   }

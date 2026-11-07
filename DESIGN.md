@@ -584,3 +584,10 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - GLACITE (Frozen Corpses): someone random (skin, hair, shirt) walks in with a key (Tungsten / Umber / Skeleton colour), turns it in a lock on the ice on each beat while the corpse's eyes light up; the ice splits in two and falls open; they jump for joy. ShowScene.seed is set per animation.
 - Settings > Drop Data: your counts (drops, RNG, unique, value, best), one line per category, and "All drop data as a text file" (config/fancydrops/drop_data.txt, opened in your editor).
 - Visuals > Spotify > Setup is a 6-step guide (Open dashboard, Create app, Redirect URI with a Copy button, Web API, paste Client ID, Log in), then "Music Functions": the three music keys and what they're bound to, with Change opening Key Binds.
+
+## Round: fishing icons and treasure, icon redo, flat textures, achievements 2.0, /fd achievement (Nov 7-8)
+- Fishing sources have their own drawn icons (:src_<id>:), never the dye they carry. New group fish_treasure (Fishing > Treasure): "GREAT/OUTSTANDING CATCH! You found a X." plays; an unlisted treasure still plays (Great = Normal, Outstanding = RNG). Good Catches stay quiet.
+- Redrawn: grp_slayers, grp_mines, grp_crimson (a volcano), mining, grp_corpse, grp_crops, cat_table. Drops Hypixel draws with its own texture carry "flat": true and never show a skull skin.
+- Achievements come from ONE table: tools/achievements_src.py -> tools/make_achievements.py writes src/main/resources/fancydrops/achievements.json and the TABLE block in tools/worn-worker.js. Tiers: Common, Uncommon, Rare, Legendary. RNG = a drop worth 10M coins or more. First-day stars count drops while playtime < 24 h (missed after). Groups keep {drops, RNG, coins}.
+- Constellations: Every Drop, Mythological, Mob Drops, Farming, Fishing, Table & Dyes, Playtime (played time to the second), Mining (The Pickaxe). Stars whose goal moved past your numbers go dark; new stars you already earned light on load.
+- /fd achievement (and /fd achievements) opens the sky straight away.

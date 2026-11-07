@@ -1,5 +1,5 @@
 {
- "v": 4,
+ "v": 6,
  "sources": [
   {
    "id": "mines",
@@ -10,22 +10,24 @@
    "group": "mobs",
    "drops": [
     {
+     "name": "Glacite Jewel",
+     "id": "GLACITE_JEWEL",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 25",
+     "rank": 1,
+     "flat": true
+    },
+    {
      "name": "Sorrow",
      "id": "SORROW",
      "icon": "ghast_tear",
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 833",
-     "rank": 1
-    },
-    {
-     "name": "Plasma",
-     "id": "PLASMA",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Pray RNGesus",
-     "chance": "1 in 1,000",
-     "rank": 3
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Volta",
@@ -34,16 +36,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 500",
-     "rank": 1
-    },
-    {
-     "name": "Ghostly Boots",
-     "id": "GHOST_BOOTS",
-     "icon": "leather_boots",
-     "skull": false,
-     "odds": "RNGesus Incarnate",
-     "chance": "1 in 10,000",
-     "rank": 3
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Pure Mithril Gem",
@@ -53,6 +47,45 @@
      "odds": "Rare",
      "chance": "1 in 100",
      "rank": 1
+    },
+    {
+     "name": "Synthetic Heart",
+     "id": "SYNTHETIC_HEART",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 1,
+     "flat": true
+    },
+    {
+     "name": "Glacite Chunk",
+     "id": "GLACITE_SHARD",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,000",
+     "rank": 3,
+     "flat": true
+    },
+    {
+     "name": "Plasma",
+     "id": "PLASMA",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,000",
+     "rank": 3,
+     "flat": true
+    },
+    {
+     "name": "Ghostly Boots",
+     "id": "GHOST_BOOTS",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 10,000",
+     "rank": 3
     },
     {
      "name": "Legendary Bal Pet",
@@ -71,15 +104,6 @@
      "odds": "Pray RNGesus",
      "chance": "1 in 7,937",
      "rank": 3
-    },
-    {
-     "name": "Synthetic Heart",
-     "id": "SYNTHETIC_HEART",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Rare",
-     "chance": "1 in 100",
-     "rank": 1
     }
    ]
   },
@@ -98,16 +122,18 @@
      "skull": false,
      "odds": "RNGesus Incarnate",
      "chance": "1 in 1,095",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Flawless Jasper Gemstone",
      "id": "FLAWLESS_JASPER_GEM",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "RNGesus Incarnate",
      "chance": "1 in 3,724",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Quick Claw",
@@ -121,71 +147,78 @@
     {
      "name": "Flawless Ruby Gemstone",
      "id": "FLAWLESS_RUBY_GEM",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 1,241",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Flawless Amethyst Gemstone",
      "id": "FLAWLESS_AMETHYST_GEM",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 1,241",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Flawless Jade Gemstone",
      "id": "FLAWLESS_JADE_GEM",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 1,241",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Flawless Amber Gemstone",
      "id": "FLAWLESS_AMBER_GEM",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 1,241",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Flawless Sapphire Gemstone",
      "id": "FLAWLESS_SAPPHIRE_GEM",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 1,241",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Flawless Topaz Gemstone",
      "id": "FLAWLESS_TOPAZ_GEM",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 1,241",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Fine Jasper Gemstone",
      "id": "FINE_JASPER_GEM",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Very Rare",
      "chance": "1 in 93",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Recall Potion",
      "id": "RECALL_POTION",
      "icon": "potion",
-     "skull": false,
+     "skull": true,
      "odds": "Very Rare",
      "chance": "1 in 74",
      "rank": 2
@@ -193,29 +226,32 @@
     {
      "name": "Precious Pearl",
      "id": "PRECIOUS_PEARL",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare",
      "chance": "1 in 37",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Claw Fossil",
      "id": "CLAW_FOSSIL",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare",
      "chance": "1 in 37",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Gemstone Mixture",
      "id": "GEMSTONE_MIXTURE",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare",
      "chance": "1 in 27",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Jaderald",
@@ -224,7 +260,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 13",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Jasper Crystal",
@@ -233,16 +270,18 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 7",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Helix Fossil",
      "id": "HELIX",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare",
      "chance": "1 in 5",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     }
    ]
   },
@@ -284,38 +323,42 @@
     {
      "name": "Skeleton Key",
      "id": "SKELETON_KEY",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Very Rare",
      "chance": "1 in 352",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Umber Plate",
      "id": "UMBER_PLATE",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare",
      "chance": "1 in 117",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Tungsten Plate",
      "id": "TUNGSTEN_PLATE",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare",
      "chance": "1 in 117",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Mithril Plate",
      "id": "MITHRIL_PLATE",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare",
      "chance": "1 in 59",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Dwarven O's Metallic Minis",
@@ -339,20 +382,22 @@
     {
      "name": "Glossy Gemstone",
      "id": "GLOSSY_GEMSTONE",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Very Rare",
      "chance": "1 in 725",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Refined Mineral",
      "id": "REFINED_MINERAL",
-     "icon": "player_head",
-     "skull": true,
+     "icon": "paper",
+     "skull": false,
      "odds": "Rare",
      "chance": "1 in 375",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     }
    ]
   },
@@ -389,7 +434,8 @@
      "skull": false,
      "odds": "Very Rare",
      "chance": "3% per eye (450 weight)",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Dragon Horn",
@@ -398,7 +444,8 @@
      "skull": false,
      "odds": "Very Rare",
      "chance": "",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Dragon Claw",
@@ -407,7 +454,8 @@
      "skull": false,
      "odds": "Very Rare",
      "chance": "",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Summoning Eye",
@@ -416,7 +464,8 @@
      "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 2,500",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     }
    ]
   }

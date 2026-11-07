@@ -13,6 +13,7 @@ public final class DropData {
         public java.util.Map<String, Long> george;  // pets: what George pays per rarity
         public double[] pct;                        // Mythological: the drop chance in percent for a Common..Mythic Griffin pet (0 = that pet cannot meet it)
         public String color = "";                   // Dyes: the dye's own colour
+        public boolean flat = false;                 // Hypixel draws it with its own texture (not a head): show the flat picture, never a skin
         public int rank = -1;                       // 0 blue, 1 purple, 2 pink, 3 gold
     }
     public static class Cube { public String base = "#5E9E52", dark = "#3D6B36", eye = "#10200E"; }

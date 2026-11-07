@@ -31,7 +31,7 @@ final class ShowScene {
     /** The scene of an animation group, or -1 for a group that is not a Showcase. */
     static int motifOf(String group) {
         return switch (group) {
-            case "fish_water" -> WATER; case "fish_lava" -> LAVA; case "fish_spooky" -> SPOOKY; case "fish_winter" -> WINTER;
+            case "fish_water", "fish_treasure" -> WATER; case "fish_lava" -> LAVA; case "fish_spooky" -> SPOOKY; case "fish_winter" -> WINTER;
             case "crimson" -> CRIMSON; case "mobs" -> MINES; case "nucleus" -> NUCLEUS; case "corpse" -> GLACITE; case "fiesta" -> MINES; case "dragon" -> END; case "dyes" -> DYE;
             default -> -1;
         };

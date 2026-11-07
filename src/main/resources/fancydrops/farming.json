@@ -1,5 +1,5 @@
 {
- "v": 12,
+ "v": 13,
  "sources": [
   {
    "id": "crops",
@@ -20,7 +20,8 @@
      "odds": "",
      "chance": "1 in 2,000",
      "rank": 0,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Squash",
@@ -29,7 +30,8 @@
      "odds": "",
      "chance": "1 in 3,333",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Fermento",
@@ -38,7 +40,8 @@
      "odds": "",
      "chance": "1 in 14,286",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Helianthus",
@@ -47,7 +50,8 @@
      "odds": "",
      "chance": "1 in 25,000",
      "rank": 2,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Warty",
@@ -56,7 +60,8 @@
      "odds": "",
      "chance": "1 in 1,000",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Rarefinder Chip",
@@ -65,7 +70,8 @@
      "odds": "",
      "chance": "1 in 200,000",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     }
    ]
   },
@@ -109,7 +115,8 @@
      "chance": "1 in 18,000",
      "rank": 1,
      "untradeable": false,
-     "img": "Deepfries"
+     "img": "Deepfries",
+     "flat": true
     },
     {
      "name": "Aggourdian",
@@ -169,7 +176,8 @@
      "chance": "1 in 18,000",
      "rank": 1,
      "untradeable": false,
-     "img": "Feastfungus"
+     "img": "Feastfungus",
+     "flat": true
     },
     {
      "name": "Botroot",
@@ -199,7 +207,8 @@
      "chance": "1 in 18,000",
      "rank": 1,
      "untradeable": false,
-     "img": "Crystalized_Moonlight"
+     "img": "Crystalized_Moonlight",
+     "flat": true
     },
     {
      "name": "Floral Gelatin",
@@ -252,7 +261,8 @@
      "odds": "",
      "chance": "1 in 500",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Overclocker 3000",
@@ -261,7 +271,8 @@
      "odds": "",
      "chance": "1 in 2,000",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Ethereal Vine",
@@ -270,7 +281,8 @@
      "odds": "",
      "chance": "1 in 20",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Evergreen Chip",
@@ -279,7 +291,8 @@
      "odds": "",
      "chance": "1 in 33",
      "rank": 0,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Synthesis Chip",
@@ -288,7 +301,8 @@
      "odds": "",
      "chance": "1 in 33",
      "rank": 0,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Iridium",
@@ -297,7 +311,8 @@
      "odds": "",
      "chance": "1 in 500",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Overgrown Grass",
@@ -306,7 +321,8 @@
      "odds": "",
      "chance": "1 in 1,000",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     }
    ]
   },
@@ -329,7 +345,8 @@
      "odds": "",
      "chance": "1 in 33",
      "rank": 0,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Chirping Stereo",
@@ -338,7 +355,8 @@
      "odds": "",
      "chance": "1 in 100",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Locust Larva",
@@ -347,7 +365,8 @@
      "odds": "",
      "chance": "1 in 25",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Legendary Rat Pet",
@@ -371,7 +390,8 @@
      "odds": "",
      "chance": "1 in 50",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Bookworm's Favorite Book",
@@ -390,7 +410,8 @@
      "odds": "",
      "chance": "1 in 200",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "skull": true
     },
     {
      "name": "Wriggling Larva",
@@ -399,7 +420,8 @@
      "odds": "",
      "chance": "1 in 100",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Epic Slug Pet",
@@ -447,7 +469,8 @@
      "odds": "",
      "chance": "1 in 50",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Fire in a Bottle",
@@ -456,7 +479,8 @@
      "odds": "",
      "chance": "1 in 50",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Mantid Claw",
@@ -465,7 +489,8 @@
      "odds": "",
      "chance": "1 in 50",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Sunset I",
@@ -483,7 +508,8 @@
      "odds": "",
      "chance": "1 in 20",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Squeaky Mousemat",
@@ -492,7 +518,8 @@
      "odds": "",
      "chance": "1 in 100",
      "rank": 1,
-     "untradeable": false
+     "untradeable": false,
+     "flat": true
     },
     {
      "name": "Pretty Fly Vinyl",

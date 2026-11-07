@@ -98,12 +98,13 @@ final class Categories {
             new Group("feast", "Harvest Feast", ":grp_feast:", 0xFFFFA63A, "What plays when the Harvest Feast serves a rare crop.", FARM_TYPES),
             new Group("bounty", "Harvest Bounty", ":grp_bounty:", 0xFFB8E860, "What plays when a Harvest Bounty drops something.", FARM_TYPES),
             new Group("pests", "Pest Drops", ":grp_pests:", 0xFFD2603F, "What plays when a pest drops something.", PEST_TYPES))),
-        new Cat("fishing", "Fishing", ":fishing:", 0xFF4FC3FF, false, "Sea creatures and the rare things they carry.", List.of(
+        new Cat("fishing", "Fishing", ":fishing:", 0xFF4FC3FF, false, "Sea creatures, the rare things they carry, and treasure.", List.of(
             new Group("fish_water", "Water", ":grp_water:", 0xFF4FC3FF, "Open water, Backwater Bayou, Galatea's waters, the Fishing Festival, hotspots and special catches.", SHOW_TYPES),
             new Group("fish_lava", "Lava", ":grp_lava:", 0xFFFF7A2E, "The Crimson Isle, its hotspots, the Magma Fields and the Plhlegblast Pool.", SHOW_TYPES),
             new Group("fish_spooky", "Spooky", ":grp_spooky:", 0xFFFF9A2E, "The Spooky Festival's sea creatures.", SHOW_TYPES),
-            new Group("fish_winter", "Winter", ":grp_winter:", 0xFF9FE4FF, "Jerry's Workshop's sea creatures.", SHOW_TYPES))),
-        new Cat("dyes", "Table & Dyes", ":dye:", 0xFFFF72C6, false, "The Experimentation Table's rewards, and every dye in the game.", List.of(
+            new Group("fish_winter", "Winter", ":grp_winter:", 0xFF9FE4FF, "Jerry's Workshop's sea creatures.", SHOW_TYPES),
+            new Group("fish_treasure", "Treasure", ":grp_fish_treasure:", 0xFFFFC857, "Great and Outstanding Catches: the treasure your rod pulls up.", SHOW_TYPES))),
+        new Cat("dyes", "Table & Dyes", ":cat_table:", 0xFFFF72C6, false, "The Experimentation Table's rewards, and every dye in the game.", List.of(
             new Group("exp", "Experimentation Table", ":grp_exp:", 0xFFB56BFF, "What plays when the Table gives out rewards.", EXP_TYPES),
             new Group("dyes", "Dyes", ":dye:", 0xFFFF72C6, "What plays when a dye drops.", DYE_TYPES))));
 

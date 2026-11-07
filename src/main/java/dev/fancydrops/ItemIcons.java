@@ -142,7 +142,7 @@ public final class ItemIcons {
             }
         }
         if (c.heads == null && c.wikiPixels == null && "@COIN".equals(id)) c.wikiPixels = coinSprite();      // offline: the drawn coin until the real head arrives
-        if (c.heads == null) {                       // second source: Hypixel's own item list knows every skull's skin
+        if (c.heads == null && !flatFlag(id)) {                       // second source: Hypixel's own item list knows every skull's skin
             try {
                 String skin = apiSkin(id);
                 if (skin != null) { c.heads = fetchHead(skin); c.face = c.heads[4]; c.headTexture = skin; }
@@ -413,7 +413,19 @@ public final class ItemIcons {
         return null;
     }
     /** Cache version: farming icons are 14, so the pictures cached from the old img pages are fetched again. */
-    private static int ver(String id) { return farmDrop(id) != null ? 15 : 13; }
+    private static int ver(String id) { return farmDrop(id) != null ? 15 : flatFlag(id) ? 14 : 13; }
+    /** A drop Hypixel draws with its own texture (the data says "flat"): its wiki picture, never an old skull skin. */
+    private static volatile java.util.Set<String> FLAT; private static volatile long flatAt;
+    static boolean flatFlag(String id) {
+        long now = System.currentTimeMillis();
+        if (FLAT == null || now - flatAt > 5000) { java.util.Set<String> f = new java.util.HashSet<>(); for (DropData.Source s : DropData.sources()) for (DropData.Drop d : s.drops) if (d.flat) f.add(d.id.toUpperCase(java.util.Locale.ROOT)); FLAT = f; flatAt = now; }
+        return FLAT.contains(id.toUpperCase(java.util.Locale.ROOT));
+    }
+    /** The art to show: for a flat item with a picture, the head (an old skin, or one saved in art/heads by an older version) is left out. */
+    private static Cached shown(String id, Cached d) {
+        if (d != null && d.heads != null && d.wikiPixels != null && flatFlag(id)) { d.heads = null; d.face = null; d.iso = null; d.spin = null; d.faces6 = null; }
+        return d;
+    }
 
     /** Use the configured display name as the Wiki page title, not the internal SkyBlock id. */
     private static String wikiPageName(String id) {
@@ -639,7 +651,7 @@ public final class ItemIcons {
     static ItemModel model(String id, int tint) {
         Icon ic = get(id);
         if (!ic.ready) return null;
-        Cached d = ic.data;
+        Cached d = shown(id, ic.data);
         if (d != null && d.heads != null ) {
             Render3D.Box b = new Render3D.Box(4, 4, 4);
             for (int f = 0; f < 6; f++) b.face(f, d.heads[f], 8);
@@ -716,7 +728,7 @@ public final class ItemIcons {
     public static void draw(GuiGraphicsExtractor g, String id, String fallback, int cx, int cy, float scale) {
         if (scale <= 0.01f || drawAlpha <= 0.01f) return;
         Icon ic = get(id);
-        Cached d = ic.ready ? ic.data : null;
+        Cached d = ic.ready ? shown(id, ic.data) : null;
         Gfx.push(g); Gfx.translate(g, cx, cy);
         int[] spun = null;
         boolean head = d != null && d.heads != null;                                   // any item that is a skull (NEU says so) shows a 3D head block, never the flat wiki picture (Myth the Fish, pets, fragments...)

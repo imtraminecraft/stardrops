@@ -2292,7 +2292,9 @@ public class FancyScreen extends Screen {
         Row b = row(0, ":back:", title, sub, accent); b.noSearch = true; b.backGo = go; b.backLabel = title; return b;
     }
     /** A creature's menu icon (wiki head or drawn), or a slayer boss's drawn one. */
+    private static final java.util.Map<String, Boolean> SRC_ART = new java.util.HashMap<>();
     private static String srcIcon(DropData.Source s) {
+        if (SRC_ART.computeIfAbsent(s.id, k -> IconArt.has("src_" + k))) return ":src_" + s.id + ":";                       // a picture of its own (the fishing spots)
         if (s.group != null && !s.group.isEmpty() && !s.drops.isEmpty()) return ":it_" + s.drops.get(s.drops.size() - 1).id.toLowerCase(java.util.Locale.ROOT).replace(';', '~') + ":";      // fishing, Crimson, mobs: the rarest thing it carries
         return SlayerData.byId(s.id) == s ? ":boss_" + s.id + ":" : ":mob_" + s.id + ":";
     }

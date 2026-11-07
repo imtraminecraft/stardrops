@@ -40,7 +40,8 @@
      "amount": true,
      "odds": "Occasional",
      "chance": "1 in 7.35 (T5)",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Pestilence Rune I",
@@ -67,7 +68,8 @@
      "skull": false,
      "odds": "Extraordinary",
      "chance": "1 in 58.8 (T5)",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Beheaded Horror",
@@ -94,7 +96,8 @@
      "skull": false,
      "odds": "Extraordinary",
      "chance": "1 in 118 (T5)",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Snake Rune I",
@@ -190,7 +193,8 @@
      "amount": true,
      "odds": "Occasional",
      "chance": "1 in 7.86 (T5)",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Bite Rune I",
@@ -226,7 +230,8 @@
      "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 566 (T5)",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Tarantula Catalyst",
@@ -235,7 +240,8 @@
      "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 236 (T5)",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Tarantula Talisman",
@@ -253,7 +259,8 @@
      "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 472 (T5)",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Paragon Shard",
@@ -315,7 +322,8 @@
      "icon": "string",
      "odds": "Occasional",
      "chance": "1 in 7.08 (T5)",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Enchanted Book (Bane of Arthropods VI)",
@@ -375,7 +383,8 @@
      "skull": false,
      "odds": "Extraordinary",
      "chance": "1 in 61.7 (T4)",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Red Claw Egg",
@@ -453,7 +462,8 @@
      "amount": true,
      "odds": "Occasional",
      "chance": "1 in 7.87 (T4)",
-     "rank": 0
+     "rank": 0,
+     "flat": true
     },
     {
      "name": "Endersnake Rune I",
@@ -471,7 +481,8 @@
      "skull": false,
      "odds": "Extraordinary",
      "chance": "1 in 179 (T4)",
-     "rank": 2
+     "rank": 2,
+     "flat": true
     },
     {
      "name": "Transmission Tuner",
@@ -489,7 +500,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 20.2 (T4)",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Pocket Espresso Machine",
@@ -684,7 +696,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 47.4 (T4)",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Kelvin Inverter",
@@ -693,7 +706,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 37.9 (T4)",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Gabagool Distillate",
@@ -775,7 +789,8 @@
      "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 1,111 (T4)",
-     "rank": 3
+     "rank": 3,
+     "flat": true
     },
     {
      "name": "Enchanted Blaze Powder",
@@ -793,7 +808,8 @@
      "odds": "Rare",
      "chance": "1 in 34.5 (T4)",
      "amount": true,
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Enchanted Book (Duplex I)",
@@ -852,7 +868,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 11.1 (T5)",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Fang-tastic Chocolate Chip",

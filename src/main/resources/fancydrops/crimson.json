@@ -16,7 +16,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Fire Veil Wand",
@@ -25,7 +26,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Flaming Fist",
@@ -34,7 +36,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Fire Freeze Staff",
@@ -43,7 +46,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Wand of Strength",
@@ -52,7 +56,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Legendary Magma Cube Pet",
@@ -79,7 +84,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     },
     {
      "name": "Molten Cube",
@@ -88,7 +94,8 @@
      "skull": false,
      "odds": "Rare",
      "chance": "1 in 200",
-     "rank": 1
+     "rank": 1,
+     "flat": true
     }
    ]
   }

@@ -180,6 +180,8 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
     private static LiteralArgumentBuilder<FabricClientCommandSource> buildRoot(String name) {
         return ClientCommands.literal(name)
             .executes(ctx -> { openMenu = true; return Command.SINGLE_SUCCESS; })          // opened next tick so the chat screen doesn't close it again
+            .then(ClientCommands.literal("achievement").executes(ctx -> { FancyScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))      // straight to the achievements sky
+            .then(ClientCommands.literal("achievements").executes(ctx -> { FancyScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))
             .then(ClientCommands.literal("help").executes(ctx -> help(ctx.getSource()))
                 .then(ClientCommands.literal("simulate").executes(ctx -> helpSimulate(ctx.getSource()))))
             .then(ClientCommands.literal("mute").executes(ctx -> {                        // every sound on or off
@@ -229,6 +231,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
         s.sendFeedback(waveTitle("FancyDrops").copy().append(Chat.color("  \u00B7  Quick guide", Chat.DIM)));
         helpLine(s, "/fd", "Open the menu");
         helpLine(s, "/fd <words>", "Open the menu and search for them (for example /fd minos)");
+        helpLine(s, "/fd achievement", "Open the achievements");
         helpLine(s, "/fd mute", "Turn every sound on or off");
         helpLine(s, "/fd toggle", "Turn the whole mod on or off");
         helpLine(s, "/fd help simulate", "Category: every /fd simulate command");

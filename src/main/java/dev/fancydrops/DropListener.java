@@ -43,6 +43,7 @@ public final class DropListener {
                 else dlog("left in chat (not a listed dye): " + dye[1]);
                 continue;
             }
+            if (catchLine(line)) { drop = true; continue; }                // "GREAT CATCH! You found a ...": fishing treasure
             if (lootLine(line, now)) { drop = true; continue; }           // the Crystal Nucleus bundle and the Ender Dragon's loot have no DROP! line
             ChatParser.Drop d = ChatParser.parseDrop(line);
             if (d == null) { if (line.toUpperCase(java.util.Locale.ROOT).contains("DROP!")) dlog("not a drop line I can read: " + line.trim()); continue; }
@@ -83,6 +84,24 @@ public final class DropListener {
         if (src == null || !group.equals(src.group)) return false;
         dlog("heard: " + line.trim() + "  ->  " + group + " loot: " + name);
         return playExtra(new ChatParser.Drop("RARE", name, amount, null, false));
+    }
+
+    /** "⛃ GREAT CATCH! You found a Titanic Experience Bottle." / "OUTSTANDING CATCH! ...": the treasure page plays (Good Catches are
+     *  everyday junk and stay quiet). A treasure the library doesn't list still plays: Great as Normal, Outstanding as RNG. */
+    private static final java.util.regex.Pattern CATCH = java.util.regex.Pattern.compile("^\\W*(GOOD|GREAT|OUTSTANDING) CATCH! You found an? (.+?)\\.?\\s*$");
+    private static boolean catchLine(String line) {
+        java.util.regex.Matcher m = CATCH.matcher(line.trim()); if (!m.matches()) return false;
+        String tier = m.group(1), name = m.group(2).trim();
+        if (name.startsWith("[Lvl")) name = name.replaceFirst("^\\[Lvl \\d+\\]\\s*", "") + " Pet";
+        DropData.Source src = ExtraData.sourceOf(name);
+        dlog("heard: " + line.trim() + "  ->  " + tier + " catch: " + name);
+        if (src != null) return playExtra(new ChatParser.Drop("RARE", name, 1, null, false));
+        if (tier.equals("GOOD")) return false;
+        List<DropData.Source> tr = ExtraData.group("fish_treasure"); if (tr.isEmpty()) return false;
+        DropData.Source s = tr.get(0); DropData.Drop dr = new DropData.Drop(); dr.name = name; dr.id = name.toUpperCase(java.util.Locale.ROOT).replaceAll("[^A-Z0-9]+", "_"); dr.icon = "chest"; dr.odds = tier.equals("GREAT") ? "Great Catch" : "Outstanding Catch"; dr.rank = tier.equals("GREAT") ? 1 : 3;
+        Item it = dropItem(s, dr, null, false); it.amount = 1;
+        Plan pl = plan(s, dr, it, "fishing", s.group);
+        return pl != null && show(s.group, pl, null, 0, false);
     }
 
     /** A dye drop comes as two lines (the slayer's RARE DROP and the "WOW! ... found ... Dye" one): only the first plays. True when this dye was heard in the last 20 s. */

@@ -26,14 +26,14 @@ final class Codex {
 
     // ---- the star groups: the heart of the map (every drop: the Ledger and Fortune chapters together), then one group for each main page of the
     //      Drop Library, round it like the points of a star. Lanes of light run from the heart to each group and fill as you complete it.
-    private static final String[] ACH = {"core", "myth", "rare", "farm", "fish", "dye", "time"};
-    private static final String[] ACH_NAME = {"Every Drop", "Mythological", "Mob Drops & Mining", "Farming", "Fishing", "Dyes", "Playtime"};
-    private static final String[] FIGURE = {"The Pole Star", "The Griffin", "The Sword", "The Sheaf", "The Fish", "The Drop", "The Hourglass"};
-    private static final int[] ACH_COL = {0xFFFFD27A, 0xFF55D8FF, 0xFFFF6A6A, 0xFF8CE86A, 0xFF4FC3FF, 0xFFFF72C6, 0xFFA9B4FF};
-    private static final String[] QUOTE = {"Every find, written down.", "Dig, and the earth answers.", "They drop what they guard.", "The harvest remembers.", "Patience, then a splash.", "Every colour has a story.", "Time flies when the drops are good."};
-    private static final float[][] HOME = {{0.42f, 0.56f}, {0.37f, 0.17f}, {0.8f, 0.77f}, {0.6f, 0.82f}, {0.22f, 0.67f}, {0.19f, 0.27f}, {0.6f, 0.21f}};      // fractions of the width, of the height
+    private static final String[] ACH = {"core", "myth", "mob", "farm", "fish", "dye", "time", "mine"};
+    private static final String[] ACH_NAME = {"Every Drop", "Mythological", "Mob Drops", "Farming", "Fishing", "Table & Dyes", "Playtime", "Mining"};
+    private static final String[] FIGURE = {"The Pole Star", "The Griffin", "The Sword", "The Sheaf", "The Fish", "The Drop", "The Hourglass", "The Pickaxe"};
+    private static final int[] ACH_COL = {0xFFFFD27A, 0xFF55D8FF, 0xFFFF6A6A, 0xFF8CE86A, 0xFF4FC3FF, 0xFFFF72C6, 0xFFA9B4FF, 0xFF55D8FF};
+    private static final String[] QUOTE = {"Every find, written down.", "Dig, and the earth answers.", "They drop what they guard.", "The harvest remembers.", "Patience, then a splash.", "Every colour has a story.", "Time flies when the drops are good.", "Strike the rock, and listen."};
+    private static final float[][] HOME = {{0.42f, 0.56f}, {0.37f, 0.17f}, {0.8f, 0.83f}, {0.6f, 0.82f}, {0.22f, 0.67f}, {0.19f, 0.27f}, {0.6f, 0.21f}, {0.85f, 0.4f}};      // fractions of the width, of the height
     /** Which group a server chapter belongs to. */
-    private static int groupOf(String ch) { return switch (ch) { case "myth" -> 1; case "rare" -> 2; case "farm" -> 3; case "fish" -> 4; case "dye" -> 5; case "time" -> 6; default -> 0; }; }
+    private static int groupOf(String ch) { return switch (ch) { case "myth" -> 1; case "rare", "mob" -> 2; case "mine" -> 7; case "farm" -> 3; case "fish" -> 4; case "dye" -> 5; case "time" -> 6; default -> 0; }; }
 
     static boolean open;
     private static long openAt, closeAt, zoomAt, hoverAt, blinkAt;
@@ -371,7 +371,7 @@ final class Codex {
     private static Object treesFor;
     // Each group is drawn as its own figure: a faint outline (the picture) with the achievements as the bright stars on it.
     // Coordinates are in units of the figure's radius, y down. KEY lists where the stars go, most important first.
-    private static final float[][][] OUTLINE = new float[7][][], KEY = new float[7][][];
+    private static final float[][][] OUTLINE = new float[8][][], KEY = new float[8][][];
     static {
         float[][] star = new float[11][], key0 = new float[16][];
         for (int i = 0; i <= 10; i++) { double an = -Math.PI / 2 + i * Math.PI / 5; float r = i % 2 == 0 ? 1f : 0.42f; star[i] = new float[]{(float) Math.cos(an) * r, (float) Math.sin(an) * r}; }
@@ -392,6 +392,8 @@ final class Codex {
         KEY[5] = pts(0f, -1f, .5f, .5f, -.5f, .5f, 0f, .85f, .55f, .1f, -.55f, .1f, .3f, -.45f, -.3f, -.45f, .25f, .78f, -.25f, .78f);
         OUTLINE[6] = new float[][]{{-.6f, -1f, .6f, -1f}, {-.6f, 1f, .6f, 1f}, {-.5f, -1f, -.08f, -.05f, -.5f, 1f}, {.5f, -1f, .08f, -.05f, .5f, 1f}, {-.3f, .85f, 0f, .55f, .3f, .85f}};   // the hourglass, sand settling at the bottom
         KEY[6] = pts(-.5f, -1f, .5f, -1f, -.27f, -.5f, .27f, -.5f, 0f, -.05f, -.27f, .5f, .27f, .5f, 0f, .85f, -.5f, 1f, .5f, 1f);
+        OUTLINE[7] = new float[][]{{-1f, -.25f, -.55f, -.7f, 0f, -.85f, .55f, -.7f, 1f, -.25f}, {0f, -.85f, 0f, 1f}};          // the pickaxe: its curved head, the handle
+        KEY[7] = pts(-1f, -.25f, 1f, -.25f, 0f, -.85f, 0f, 1f, -.55f, -.7f, .55f, -.7f, 0f, -.3f, 0f, .3f, 0f, .65f, -.8f, -.48f);
     }
     private static float[] flat(float[][] p) { float[] o = new float[p.length * 2]; for (int i = 0; i < p.length; i++) { o[i * 2] = p[i][0]; o[i * 2 + 1] = p[i][1]; } return o; }
     private static float[][] pts(float... v) { float[][] o = new float[v.length / 2][]; for (int i = 0; i < o.length; i++) o[i] = new float[]{v[i * 2], v[i * 2 + 1]}; return o; }
@@ -553,8 +555,8 @@ final class Codex {
             if (!lastHoverStar.equals(a.id())) { lastHoverStar = a.id(); sound("sky_star", 0.9f + 0.05f * n.depth(), 0.45f); }
             String nm = a.secret() && !a.done() ? "???" : a.name();
             String rew = a.reward().isEmpty() ? "" : Ledger.rewardName(a.reward());
-            String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".") + (!a.done() && !open ? "  Star " + n.depth() + " comes first." : "");
-            String extra = "Star " + (n.depth() + 1) + " of " + tree(c).size() + "  ·  " + (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal()));
+            String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  First day only." : "  Missed: your first day is over.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".") + (!a.done() && !open ? "  Star " + n.depth() + " comes first." : "");
+            String extra = LocalLedger.TIER[Math.max(0, Math.min(3, a.tier()))] + "  ·  Star " + (n.depth() + 1) + " of " + tree(c).size() + "  ·  " + (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal()));
             host.tip(nm + "\n" + ACH_NAME[c] + "\n" + (a.done() ? 3 : 0) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
         }
     }

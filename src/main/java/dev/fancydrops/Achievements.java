@@ -20,7 +20,7 @@ final class Achievements {
     private Achievements() {}
 
     /** One achievement as the server describes it. */
-    record Ach(String id, String ch, String chapter, String name, String desc, String icon, double goal, double progress, boolean done, long at, String reward, boolean secret) {}
+    record Ach(String id, String ch, String chapter, String name, String desc, String icon, double goal, double progress, boolean done, long at, String reward, boolean secret, int tier, boolean first) {}
     /** Everything the server knows about you. */
     record Profile(Map<String, Double> stats, Map<String, double[]> groups, List<Ach> list, Set<String> cosmetics, LinkedHashMap<String, String> chapters, long since) {}
 
@@ -55,12 +55,12 @@ final class Achievements {
     static Profile profile() {
         refresh(false);
         Profile p = profile; long now = System.currentTimeMillis();
-        int done = 0; for (Playtime.Goal g : Playtime.GOALS) if (FancyConfig.get().playMinutes >= g.minutes()) done++;
+        int done = (int) FancyConfig.get().playMinutes;
         if (merged == null || mergedFrom != p || mergedDone != done || mergedLocal != LocalLedger.version() || now - mergedAt > 30_000) {
             mergedLocal = LocalLedger.version();
             Profile lp = LocalLedger.merge(p, LocalLedger.profile());                    // what the server knows plus what was counted here (drops still waiting count too)
             Profile p0 = p; p = lp;
-            List<Ach> l = new ArrayList<>(p.list()); l.addAll(Playtime.list());
+            List<Ach> l = new ArrayList<>(p.list());
             Map<String, Double> st = new HashMap<>(p == null ? Map.of() : p.stats()); st.put("playMinutes", FancyConfig.get().playMinutes);
             merged = new Profile(st, p == null ? new HashMap<>() : p.groups(), l, p == null ? new HashSet<>() : p.cosmetics(), p == null ? new LinkedHashMap<>() : p.chapters(), p == null ? 0 : p.since());
             mergedFrom = p0; mergedDone = done; mergedAt = now;
@@ -102,7 +102,7 @@ final class Achievements {
         List<Ach> list = new ArrayList<>();
         for (var e : o.getAsJsonArray("achievements")) {
             JsonObject a = e.getAsJsonObject();
-            list.add(new Ach(str(a, "id"), str(a, "ch"), str(a, "chapter"), str(a, "name"), str(a, "desc"), str(a, "icon"), num(a, "goal"), num(a, "progress"), a.has("done") && a.get("done").getAsBoolean(), (long) num(a, "at"), str(a, "reward"), a.has("secret") && a.get("secret").getAsBoolean()));
+            list.add(new Ach(str(a, "id"), str(a, "ch"), str(a, "chapter"), str(a, "name"), str(a, "desc"), str(a, "icon"), num(a, "goal"), num(a, "progress"), a.has("done") && a.get("done").getAsBoolean(), (long) num(a, "at"), str(a, "reward"), a.has("secret") && a.get("secret").getAsBoolean(), (int) num(a, "tier"), a.has("first") && a.get("first").getAsBoolean()));
         }
         Set<String> cos = new HashSet<>(); if (o.has("cosmetics")) for (var e : o.getAsJsonArray("cosmetics")) cos.add(e.getAsString());
         LinkedHashMap<String, String> ch = new LinkedHashMap<>(); if (o.has("chapters")) for (var e : o.getAsJsonObject("chapters").entrySet()) ch.put(e.getKey(), e.getValue().getAsString());
@@ -117,7 +117,7 @@ final class Achievements {
         if (it == null || it.sim) return;
         JsonObject e = new JsonObject();
         e.addProperty("g", group); e.addProperty("src", it.source == null ? "" : it.source.id); e.addProperty("id", it.id == null ? it.name : it.id);
-        e.addProperty("item", it.name); e.addProperty("r", it.rank); e.addProperty("rng", rng);
+        e.addProperty("item", it.name); e.addProperty("r", it.rank); e.addProperty("rng", rng); e.addProperty("pt", Math.round(FancyConfig.get().playMinutes));
         synchronized (PENDING) { if (PENDING.isEmpty()) firstPending = System.currentTimeMillis(); PENDING.add(e); PRICED.put(e, it); }
     }
     private static final Map<JsonObject, AnimationManager.Item> PRICED = new IdentityHashMap<>();
