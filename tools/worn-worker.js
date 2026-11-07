@@ -7,7 +7,11 @@
 //
 //   GET  /worn                 every player's worn cosmetics      { code: { s, f, a, t } }
 //   POST /worn                 { name, serverId, suffix, fx, aura }   (only cosmetics you own are accepted)
-//   POST /event                { name, serverId, events: [ { g, src, id, item, r, rng, v, n } ] }   drops you found
+//   POST /event                { name, serverId, events: [ { g, src, id, item, r, rng, v, n } ] }   drops you found (an empty list is a heartbeat: playtime)
+//
+// The server trusts as little as it can: a drop's coins are capped at what the item really sells for (Hypixel's bazaar and the
+// lowest BIN prices, cached here), there are daily limits per player, and playtime is counted by this server from the gaps between
+// your heartbeats (never a number the game sends).
 //   GET  /profile/<code>       stats, every achievement with progress, and the cosmetics you have unlocked
 //
 // A player's code is the SHA-256 of their lowercase dashed UUID (Cosmetics.code() in the mod).
@@ -45,6 +49,27 @@ const SETS = {
 };
 const GRANT_KEY = { sparkle: "sparkle", patreon: "patreon", bughunter: "bugfinder", contributor: "contributors" };
 const BETA = ["betamark", "pulse"];
+
+// ---------------------------------------------------------------- what things are really worth (cached 15 minutes)
+const UNKNOWN_CAP = 25_000_000;                    // an item the markets don't know (untradeable, very rare) counts for at most this much
+async function market(env) {
+  let m = await env.WORN.get("market", "json");
+  if (m && Date.now() - m.at < 900_000) return m;
+  const out = { at: Date.now(), bz: {}, bin: {} };
+  try { const r = await fetch("https://api.hypixel.net/v2/skyblock/bazaar"); const j = await r.json(); for (const [id, pr] of Object.entries(j.products || {})) { const q = pr.quick_status || {}; const v = Math.max(q.buyPrice || 0, q.sellPrice || 0); if (v > 0) out.bz[id] = v; } } catch {}
+  try { const r = await fetch("https://moulberry.codes/lowestbin.json"); const j = await r.json(); for (const [id, v] of Object.entries(j || {})) if (v > 0) out.bin[id] = v; } catch {}
+  if (Object.keys(out.bz).length || Object.keys(out.bin).length) { await env.WORN.put("market", JSON.stringify(out)); return out; }
+  return m || out;
+}
+/** The coins a drop may count for: what the game says, but never more than 1.6x what the item sells for (times how many dropped). */
+function fair(m, id, n, v) {
+  const unit = m.bz[id] ?? m.bin[id];
+  if (unit === undefined) return Math.min(v, UNKNOWN_CAP);
+  return Math.min(v, unit * Math.max(1, Math.min(64, n || 1)) * 1.6);
+}
+/** Playtime, counted here: the time since your last heartbeat or drop, if it was recent (the game sends one every 5 minutes). */
+function beat(p, now) { if (p.beat && now - p.beat <= 420_000) p.pt = (p.pt || 0) + (now - p.beat) / 60000; p.beat = now; }
+const DAY_DROPS = 1500, DAY_RNG = 30, DAY_GROUP = 600;   // more than this in one day is not real play
 
 // ---------------------------------------------------------------- helpers
 const json = (o, extra = {}) => new Response(JSON.stringify(o), { headers: { "content-type": "application/json", ...CORS, ...extra } });
@@ -127,17 +152,21 @@ export default {
     // /event: drops you found
     const events = Array.isArray(b.events) ? b.events.slice(0, 40) : [];
     const p = await load(env, code), now = Date.now();
+    beat(p, now);
     p.recent = (p.recent || []).filter((t) => now - t < 3_600_000);
     const day = new Date(now).toISOString().slice(0, 10);
+    if (!p.today || p.today.d !== day) p.today = { d: day, n: 0, rng: 0, g: {} };
+    const m = events.length ? await market(env) : null;
     let taken = 0;
     for (const e of events) {
       if (p.recent.length >= 400) break;                                                  // more than 400 drops an hour is not real play
       const grp = String(e.g || ""), id = String(e.id || "").slice(0, 64), item = String(e.item || "").slice(0, 64);
       if (!/^[a-z_]{2,16}$/.test(grp) || !id) continue;
-      const v = Math.max(0, Math.min(Number(e.v) || 0, 5_000_000_000)), rng = v >= 10_000_000, r = Math.max(0, Math.min(3, Number(e.r) || 0));
-      const pt = Math.max(0, Math.min(Number(e.pt) || 0, 10_000_000)); p.pt = Math.max(p.pt || 0, pt);
+      const v = fair(m, id, Number(e.n) || 1, Math.max(0, Math.min(Number(e.v) || 0, 5_000_000_000))), rng = v >= 10_000_000, r = Math.max(0, Math.min(3, Number(e.r) || 0));
+      const t = p.today; if (t.n >= DAY_DROPS || (t.g[grp] || 0) >= DAY_GROUP || (rng && t.rng >= DAY_RNG)) continue;   // the daily limits
+      t.n++; t.g[grp] = (t.g[grp] || 0) + 1; if (rng) t.rng++;
       p.drops++; p.recent.push(now); taken++;
-      if (e.pt !== undefined && pt < 1440) { p.fd = (p.fd || 0) + 1; if (rng) p.fdr = (p.fdr || 0) + 1; }       // your first day of playing with FancyDrops
+      if ((p.pt || 0) < 1440) { p.fd = (p.fd || 0) + 1; if (rng) p.fdr = (p.fdr || 0) + 1; }       // your first day of playing with FancyDrops (by this server's own playtime)
       if (rng) p.rng++;
       if (rng && v >= 1_000_000) p.bigRng++;
       if (r >= 3) p.r3++;

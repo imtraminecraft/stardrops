@@ -117,22 +117,26 @@ final class Achievements {
         if (it == null || it.sim) return;
         JsonObject e = new JsonObject();
         e.addProperty("g", group); e.addProperty("src", it.source == null ? "" : it.source.id); e.addProperty("id", it.id == null ? it.name : it.id);
-        e.addProperty("item", it.name); e.addProperty("r", it.rank); e.addProperty("rng", rng); e.addProperty("pt", Math.round(FancyConfig.get().playMinutes));
+        e.addProperty("item", it.name); e.addProperty("r", it.rank); e.addProperty("rng", rng); e.addProperty("n", Math.max(1, it.amount));
         synchronized (PENDING) { if (PENDING.isEmpty()) firstPending = System.currentTimeMillis(); PENDING.add(e); PRICED.put(e, it); }
     }
     private static final Map<JsonObject, AnimationManager.Item> PRICED = new IdentityHashMap<>();
+    private static long lastBeat;
 
     /** Every tick: sends what has waited 6 seconds (prices have arrived by then), signed with your Minecraft login. */
     static void tick(Minecraft mc) {
         refresh(false); loadPending();
         List<JsonObject> batch;
         synchronized (PENDING) {
-            if (PENDING.isEmpty() || posting || System.currentTimeMillis() - firstPending < 6000L || System.currentTimeMillis() < retryAt) return;
+            boolean beatDue = PENDING.isEmpty() && mc.level != null && !mc.isPaused() && System.currentTimeMillis() - lastBeat > 300_000L;   // a heartbeat every 5 minutes: the server counts your playtime
+            if (beatDue && !posting && System.currentTimeMillis() >= retryAt) { lastBeat = System.currentTimeMillis(); }
+            else if (PENDING.isEmpty() || posting || System.currentTimeMillis() - firstPending < 6000L || System.currentTimeMillis() < retryAt) return;
+            lastBeat = System.currentTimeMillis();
             batch = new ArrayList<>(PENDING); PENDING.clear();
             for (JsonObject e : batch) { AnimationManager.Item it = PRICED.remove(e); if (it == null && e.has("v")) continue; double v = it == null || it.price < 0 ? 0 : it.price * Math.max(1, it.amount); e.addProperty("v", Math.round(v)); }
             savePending(batch);
         }
-        for (JsonObject e : batch) if (!e.has("c")) { e.addProperty("c", 1); for (String id : LocalLedger.add(e)) announce(id); }   // counted here first, so nothing is lost while the server can't confirm you
+        for (JsonObject e : batch) if (!e.has("c")) { e.addProperty("c", 1); LocalLedger.add(e); }   // counted here too (shown as waiting until the server confirms)
         savePending(batch);
         String b = base(); UUID me = Cosmetics.me(); if (b == null || me == null) return;
         String name = mc.getUser().getName(), token = mc.getUser().getAccessToken();
@@ -164,7 +168,7 @@ final class Achievements {
     private static final Set<String> ANNOUNCED = java.util.concurrent.ConcurrentHashMap.newKeySet();
     /** "Achievement unlocked" in chat and as a notice in the menu. */
     private static void announce(String id) {
-        if (!ANNOUNCED.add(id) || LocalLedger.get().unlocked.containsKey(id) && LocalLedger.get().unlocked.get(id) < System.currentTimeMillis() - 120_000) return;   // once per star
+        if (!ANNOUNCED.add(id)) return;                                                             // once per star (only the server lights stars, so this is always news)
         Profile p = profile(); if (p == null) return;
         for (Ach a : p.list()) if (a.id().equals(id)) {
             Minecraft.getInstance().execute(() -> {

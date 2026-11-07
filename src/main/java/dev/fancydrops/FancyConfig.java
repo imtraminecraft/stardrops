@@ -139,6 +139,7 @@ public class FancyConfig {
     public boolean lyricsPrev = false;                                  // show the line just sung (Scroll: the lines above; Pop / Karaoke: it rolls away)
     public boolean lyricsNext = true, lyricsIntro = true;               // the coming line under the current one; the song's name when it starts
     public int lyricsOffset = 0;                                        // ms the words come early (+) or late (-)
+    public boolean ledgerSigned = false;                                // the local ledger file carries a seal (ledger_local.sig)
     public java.util.Map<String, Integer> songOffset = new java.util.LinkedHashMap<>();   // a timing fix for one song (Spotify id -> ms), on top of lyricsOffset
     /** The timing fix for the song playing now: yours for every song plus this song's own. */
     static int lyricsShift() { FancyConfig c = get(); Spotify.Track t = Spotify.track; Integer s = t == null || c.songOffset == null ? null : c.songOffset.get(t.id()); return c.lyricsOffset + (s == null ? 0 : s); }

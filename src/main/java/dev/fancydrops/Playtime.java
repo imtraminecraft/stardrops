@@ -21,11 +21,7 @@ final class Playtime {
         if (mc.level == null || mc.player == null || mc.isPaused()) return;
         FancyConfig c = FancyConfig.get();
         double before = c.playMinutes; c.playMinutes += dt / 60000.0;
-        if ((long) before != (long) c.playMinutes) for (String id : LocalLedger.timeTick()) {                // a Playtime star is earned: note when, and say so
-            LocalLedger.Def g = LocalLedger.def(id); if (g == null) continue;
-            c.playDone.put(id, now);
-            StarToast.lit(g.id(), g.name(), g.ch(), g.tier(), g.reward());                                   // a clickable line in chat and a card on screen
-        }
+        if ((long) before != (long) c.playMinutes) LocalLedger.timeTick();                                     // (the server counts playtime itself and lights the stars; this is only the local view)
         if (now - savedAt > 120_000) { savedAt = now; try { FancyConfig.save(); } catch (Throwable ignored) { } }
     }
 

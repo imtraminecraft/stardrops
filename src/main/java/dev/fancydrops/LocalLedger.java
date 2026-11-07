@@ -76,14 +76,32 @@ final class LocalLedger {
     static synchronized P get() {
         if (p != null) return p;
         p = new P();
-        try { if (Files.exists(file())) { P q = new com.google.gson.Gson().fromJson(Files.readString(file()), P.class); if (q != null) p = q; } } catch (Throwable ignored) { }
+        try {
+            if (Files.exists(file())) {
+                String text = Files.readString(file()); boolean ok;
+                if (Files.exists(sigFile())) ok = sign(text).equals(Files.readString(sigFile()).trim());
+                else ok = !FancyConfig.get().ledgerSigned;                                          // (files from before the check: accepted once, then signed)
+                if (ok) { P q = new com.google.gson.Gson().fromJson(text, P.class); if (q != null) p = q; }
+                else System.out.println("[FancyDrops] ledger_local.json was edited by hand: it is ignored (your real progress is on the server).");
+            }
+        } catch (Throwable ignored) { }
         if (p.g == null) p.g = new HashMap<>(); if (p.unlocked == null) p.unlocked = new HashMap<>();
         for (var e : FancyConfig.get().playDone.entrySet()) p.unlocked.putIfAbsent(e.getKey(), e.getValue());          // Playtime stars lit before they joined the table
         for (Def d : ACH) { Long at = p.unlocked.get(d.id); if (at != null && stat(p, d.stat) < d.goal) p.unlocked.remove(d.id); }   // the table changed: a star whose goal moved past what you have goes dark again
         check(p, System.currentTimeMillis());                                                     // and a new star you already have the numbers for lights at once
         return p;
     }
-    private static synchronized void save() { try { Files.writeString(file(), new com.google.gson.Gson().toJson(p)); } catch (Throwable ignored) { } }
+    private static synchronized void save() {
+        try { String text = new com.google.gson.Gson().toJson(p); Files.writeString(file(), text); Files.writeString(sigFile(), sign(text));
+              if (!FancyConfig.get().ledgerSigned) { FancyConfig.get().ledgerSigned = true; FancyConfig.save(); } } catch (Throwable ignored) { }
+    }
+    private static Path sigFile() { return DataFiles.dir().resolve("ledger_local.sig"); }
+    /** A seal over the file, so a hand-edited ledger is noticed (it only stops casual edits: the real record is the server's). */
+    private static String sign(String text) {
+        try { javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256"); mac.init(new javax.crypto.spec.SecretKeySpec("fancydrops-ledger-v1-7f3a91c2".getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+              byte[] d = mac.doFinal(text.getBytes(java.nio.charset.StandardCharsets.UTF_8)); StringBuilder b = new StringBuilder(); for (byte x : d) b.append(String.format("%02x", x)); return b.toString(); }
+        catch (Throwable t) { return ""; }
+    }
     static long version() { return version; }
 
     /** Counts one drop (the same event the server gets). Returns the ids of the achievements it just earned. */
@@ -133,8 +151,15 @@ final class LocalLedger {
     }
 
     /** The server's word and this computer's count together: each number is the larger of the two, a star is lit if either says so. */
+    /** Stars counted here that the server hasn't confirmed yet: shown as waiting, never lit. */
+    static final Set<String> WAITING = java.util.concurrent.ConcurrentHashMap.newKeySet();
     static Achievements.Profile merge(Achievements.Profile server, Achievements.Profile local) {
-        if (server == null) return local;
+        WAITING.clear();
+        if (server == null) {                                                                     // no word from the server yet: nothing is lit, what you have here waits
+            List<Achievements.Ach> l0 = new ArrayList<>();
+            for (Achievements.Ach l : local.list()) { if (l.done()) WAITING.add(l.id()); l0.add(new Achievements.Ach(l.id(), l.ch(), l.chapter(), l.name(), l.desc(), l.icon(), l.goal(), l.progress(), false, 0, l.reward(), l.secret(), l.tier(), l.first())); }
+            return new Achievements.Profile(local.stats(), local.groups(), l0, new HashSet<>(), local.chapters(), local.since());
+        }
         Map<String, Double> st = new HashMap<>(server.stats()); local.stats().forEach((k, v) -> st.merge(k, v, Math::max));
         Map<String, double[]> gr = new HashMap<>(); server.groups().forEach((k, v) -> gr.put(k, Arrays.copyOf(v, 3)));
         local.groups().forEach((k, v) -> gr.merge(k, v, (a, b) -> new double[]{Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.max(a[2], b[2])}));
@@ -142,8 +167,9 @@ final class LocalLedger {
         List<Achievements.Ach> list = new ArrayList<>();
         for (Achievements.Ach l : local.list()) {                                                 // the table here decides the stars; the server only adds what it has seen
             Achievements.Ach a = srv.get(l.id());
-            if (a == null) { list.add(l); continue; }
-            boolean done = a.done() || l.done(); long at = a.done() ? a.at() : l.at();
+            if (a == null) { if (l.done()) WAITING.add(l.id()); list.add(new Achievements.Ach(l.id(), l.ch(), l.chapter(), l.name(), l.desc(), l.icon(), l.goal(), l.progress(), false, 0, l.reward(), l.secret(), l.tier(), l.first())); continue; }
+            boolean done = a.done(); long at = a.done() ? a.at() : 0;                                 // only the server lights a star
+            if (!done && l.done()) WAITING.add(l.id());
             list.add(new Achievements.Ach(l.id(), l.ch(), l.chapter(), l.name(), l.desc(), l.icon(), l.goal(), Math.max(Math.min(l.goal(), a.progress()), l.progress()), done, at, l.reward(), l.secret(), l.tier(), l.first()));
         }
         return new Achievements.Profile(st, gr, list, server.cosmetics(), new LinkedHashMap<>(local.chapters()), server.since() == 0 ? local.since() : Math.min(server.since(), local.since()));

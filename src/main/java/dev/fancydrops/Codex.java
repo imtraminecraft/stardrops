@@ -119,8 +119,7 @@ final class Codex {
         float t = now - openAt, closeT = closeAt == 0 ? -1f : now - closeAt;
         if (closeT >= CLOSE) { open = false; return; }
         boolean film = openAt > introFrom;                                              // this opening has the film
-        float fu = film && closeT < 0 ? now - introFrom : 1e9f;
-        bake();                       // ms into the opening shot
+        float fu = film && closeT < 0 ? now - introFrom : 1e9f;                       // ms into the opening shot
         if (film && introSounds < 1 && fu >= 700) { introSounds = 1; sound("sky_zoom", 0.9f, 0.7f); }
         open0 = 1f - ease(fu / 650f);                                                       // out of black, like opening your eyes
         dusk = 1f - ease((fu - 200f) / 2200f);                                              // the last of the sunset low on the horizon, fading
@@ -154,6 +153,7 @@ final class Codex {
         warp = Math.max(closeT >= 0 || film ? 0f : 1f - ease((t - 120f) / (OPEN - 120f)), flyWarp * 0.7f);
         int showFocus = zoomAt > now ? -1 : fc;
 
+        bake();                                                                          // (only when the size changed)
         g.enableScissor(sx0, sy0, sx0 + sw, sy0 + sh);
         boolean tilting = tilt > 0.001f;
         if (tilting) { g.fill(sx0, sy0, sx0 + sw, sy0 + sh, 0xFF05060F); Gfx.push(g); Gfx.translate(g, 0, tilt * sh * 0.07f); }
@@ -774,6 +774,10 @@ final class Codex {
             glow(x, y, r * (tier == 0 ? 0.9f : 1.2f), tier == 0 ? 0xFFD8B0 : 0xFFFFFF, fade);
         } else {                                                                             // not lit yet: a real, small star; its rim says its tier, and an arc shows how far along you are
             plainStar(x, y, (0.55f + 0.2f * prog) * fade * dK, n.depth() + c * 13, tier == 2 || near);
+            if (LocalLedger.WAITING.contains(a.id())) {                                           // earned here, waiting for the server to confirm: a slow breathing ring in its tier's colour
+                float br = 0.5f + 0.5f * (float) Math.sin(now / 700.0 + n.depth());
+                ring(x, y, (near ? 7.5f : 5f) * dK, argb((0.3f + 0.4f * br) * fade * alpha, tc), 1f); glow(x, y, 6f * tk, tc, 0.25f * br * fade);
+            }
             glow(x, y, 3.2f * tk, tc, 0.22f * fade);
             if (prog > 0.001f && (near || hv || prog > 0.25f)) { float rr = (near ? 7f : 4.8f) * dK; ring(x, y, rr, argb(0.2f * fade * alpha, 0xC8D0F0), 1f); ring(x, y, rr, argb(0.85f * fade * alpha, col), prog); }
         }
@@ -807,7 +811,7 @@ final class Codex {
             String nm = a.secret() && !a.done() ? "???" : a.name();
             String rew = a.reward().isEmpty() ? "" : Ledger.rewardName(a.reward());
             String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  First day only: " + LocalLedger.firstDayLeft() + " left." : "  Missed: your first day is over.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".");
-            String extra = (a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : (isTime(a) ? Ledger.hms(LocalLedger.live(a)) + " / " + Ledger.hms(a.goal()) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal())));
+            String extra = (!a.done() && LocalLedger.WAITING.contains(a.id()) ? "Earned: waiting for the server to confirm it" : a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : (isTime(a) ? Ledger.hms(LocalLedger.live(a)) + " / " + Ledger.hms(a.goal()) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal())));
             host.tip(nm + "\n" + ACH_NAME[c] + "\nT" + Math.max(0, Math.min(2, a.tier())) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
         }
     }
@@ -818,7 +822,7 @@ final class Codex {
     private static void cards(GuiGraphicsExtractor g, float a) {
         Achievements.Profile p = Achievements.profile(); if (p == null || a < 0.02f) return;
         List<Achievements.Ach> next = new ArrayList<>(), recent = new ArrayList<>();
-        for (Achievements.Ach q : p.list()) { if (q.done()) recent.add(q); else if (!q.secret() && q.goal() > 0) next.add(q); }
+        for (Achievements.Ach q : p.list()) { if (q.done()) recent.add(q); else if (!q.secret() && q.goal() > 0 && !LocalLedger.WAITING.contains(q.id())) next.add(q); }
         next.sort(Comparator.comparingDouble(q -> -(LocalLedger.live(q) / q.goal())));
         recent.sort(Comparator.comparingLong(q -> -q.at()));
         int w = Math.max(110, Math.round(sw * 0.2f)), x = sx0 + sw - w - 10, y = sy0 + 26;
@@ -905,6 +909,7 @@ final class Codex {
         String ttl = spaced("ACHIEVEMENTS");
         text(g, ttl, x, y, argb(ia, 0xFFE9B8), true);
         String cnt = p == null ? (Achievements.status.isEmpty() ? "Reading the stars..." : Achievements.status) : lit + " of " + all + " stars lit";
+        if (p != null && !LocalLedger.WAITING.isEmpty()) cnt += "  \u00B7  " + LocalLedger.WAITING.size() + " waiting for the server";
         if (p != null && Achievements.unsent > 0) cnt += "  \u00B7  " + Achievements.unsent + " drop" + (Achievements.unsent == 1 ? "" : "s") + " waiting to be counted";
         small(g, cnt, x + host.width(ttl) + 10, y + 1, argb(0.8f * ia, 0xB8C0DA));
         if (p != null && all > 0) { int bw = host.width(ttl); g.fill(x, y + 11, x + bw, y + 12, argb(0.2f * ia, 0xFFE9B8)); g.fill(x, y + 11, x + Math.round(bw * lit / (float) all), y + 12, argb(ia, 0xFFE9B8)); }
