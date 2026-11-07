@@ -90,98 +90,73 @@ final class IconArt {
         if (n.startsWith("fx") && n.length() <= 4 && Character.isDigit(n.charAt(n.length() - 1))) return fx(Integer.parseInt(n.substring(2)), f);
         switch (n) {
             // ---- the tab icons (0.8.0, "vault" set): one family, gold trim, a dark outline, light from the top left, one small motion each
-            case "home" -> {                                                                 // a little keep: violet slate roof with a gold ridge, a warm lit door, a spark from the chimney
-                bev(11, 3, 2, 5, 0x6A5A8E);
-                bev(3, 8, 10, 6, 0xEADFC6);
-                tri(1, 8.6f, 8, 1.6f, 15, 8.6f, 0x8572C8);
-                rect(2, 8, 12, 1, 0x4A3E7A);
-                px(8, 2, 0xFFE3A0); px(7, 3, 0xE8B84A); px(9, 3, 0xE8B84A);
-                int door = mix(0xC8902A, 0xFFE9A8, t);
-                bev(7, 10, 3, 4, 0x5C3A1E); rect(8, 11, 1, 3, door);
-                bev(4, 10, 2, 2, mix(0x8FA8FF, 0xFFE08A, t)); bev(11, 10, 2, 2, mix(0x8FA8FF, 0xFFE08A, t));
-                outline();
-                float u = f; pxa(12 + Math.round((float) Math.sin(u * 7)), Math.round(2 - u * 2.5f), 0xFFD060, (1f - u));
-                glow(8, 12, 5, 0xFFD890, 0.10f + 0.10f * t);
-            }
-            case "dropped" -> {                                                              // the drop library: an open chest with gold bands, a gem bobbing out of it
-                int bob = Math.round(1.5f * s);
-                quad(2, 8, 14, 8, 13, 5, 3, 5, 0x6E4622); rect(3, 5, 10, 1, 0xE8B84A);
-                float[] gx = {8, 10.5f, 8, 5.5f}, gy = {0.5f + bob, 3f + bob, 5.5f + bob, 3f + bob};
-                poly(gx, gy, 0x55D8FF);
-                bev(2, 8, 12, 6, 0x8A5A2B);
-                rect(2, 10, 12, 1, 0xE8B84A); rect(2, 8, 12, 1, 0xC8902A);
-                bev(7, 9, 2, 3, 0xFFD25A);
-                outline();
-                glint(7, 2 + bob, 1, 0xFFFFFF, 0.4f + 0.6f * t);
-                glow(8, 4, 4, 0x55D8FF, 0.12f + 0.1f * t);
-            }
-            case "animations" -> {                                                           // a star that turns and pulses, little sparks flying off it
-                float rot = f * TAU / 5f, rr = 6.2f + 0.6f * t;
-                float[] xs = new float[10], ys = new float[10];
-                for (int i = 0; i < 10; i++) { float an = rot + i * TAU / 10f - TAU / 4f, r = i % 2 == 0 ? rr : rr * 0.45f; xs[i] = 8 + (float) Math.cos(an) * r; ys[i] = 8.2f + (float) Math.sin(an) * r; }
-                poly(xs, ys, 0xF2C04E);
-                outline();
-                for (int i = 0; i < 4; i++) { float u = (f + i / 4f) % 1f; float an = i * TAU / 4f + TAU / 8f; pxa(Math.round(8 + (float) Math.cos(an) * (5 + u * 3)), Math.round(8 + (float) Math.sin(an) * (5 + u * 3)), i % 2 == 0 ? 0xFF8AD0 : 0xB48CFF, 1f - u); }
-                glint(6, 6, 1, 0xFFFFFF, 0.5f + 0.5f * t);
-            }
-            case "sounds" -> {                                                               // a gold speaker, its cone pushing out, sound arcs travelling away
-                int push = f < 0.15f ? 1 : 0;
-                bev(1, 6, 3, 5, 0xE8B84A);
-                quad(4, 6, 8 + push, 2, 8 + push, 14, 4, 11, 0x5A4C86);
-                rect(4, 7, 1, 3, 0x3A3160);
-                outline();
-                for (int i = 0; i < 3; i++) {
-                    float u = (f + i / 3f) % 1f, r = 2.5f + u * 5.5f, a = (1f - u) * (u < 0.15f ? u / 0.15f : 1f);
-                    for (int k = -4; k <= 4; k++) { float ang = k * 0.22f; pxa(Math.round(8.5f + (float) Math.cos(ang) * r), Math.round(8 + (float) Math.sin(ang) * r * 1.1f), i == 0 ? 0xFFE3A0 : 0xE8B84A, a); }
-                }
-            }
-            case "chat" -> {                                                                 // an ivory speech bubble with a gold rim, three gold dots typing in turn
-                bev(1, 2, 14, 9, 0xF3EAD8);
-                tri(4, 11, 4, 14.5f, 8, 11, 0xD9CCB0);
-                rect(4, 10, 4, 1, 0xD9CCB0);
-                rect(2, 2, 12, 1, 0xFFF6E6);
-                outline();
-                for (int i = 0; i < 3; i++) { float on = Math.max(0f, (float) Math.sin(f * TAU - i * 1.2f)); int dy = Math.round(on * 1.5f); rect(4 + i * 3, 6 - dy, 2, 2, mix(0xB8862A, 0xFFD25A, on)); }
-            }
-            case "settings" -> {                                                             // Settings: a dark panel with three sliders, their gold knobs gliding to new values
-                bev(1, 2, 14, 12, 0x2E2840);
-                for (int i = 0; i < 3; i++) {
-                    int y = 4 + i * 4; rect(3, y, 10, 1, 0x5A5068);
-                    float v = 0.5f + 0.4f * (float) Math.sin(f * TAU + i * 2.1f); int kx = 3 + Math.round(v * 8);
-                    rect(3, y, kx - 3, 1, i == 0 ? 0xE8B84A : i == 1 ? 0x7FC8B0 : 0xB9A8F0);
-                    bev(kx - 1, y - 1, 3, 3, 0xFFE3A0);
-                }
+            case "home" -> {                                                                                 // Home: a little observatory dome on a moon, its slit open, a telescope peeking out, stars over it
+                ball(8, 16, 9, 0x2A2858); ball(8, 15.5f, 8, 0x3A3870);                                // the moon's curve
+                ball(8, 9.5f, 5, 0xC8C4E8); rect(3, 9, 11, 3, 0xC8C4E8); ball(7, 8.5f, 3.5f, 0xE8E4FF);   // the dome
+                rect(7, 5, 2, 6, 0x1A1848); ln(8, 7, 12, 3 + Math.round(s), 0x9B7BFF);              // the slit, the telescope
+                rect(3, 12, 11, 1, 0x7672AE);
+                glint(13, 2, 1, 0xFFFFFF, 0.5f + 0.5f * t); px(2, 3, 0xFFE38A); px(4, 1, 0xFFFFFF);
                 outline();
             }
-            case "collection" -> {                                                           // the Collection: a leather book with gold corners and a star; the cover lifts a little and light spills out
-                float lift = Math.max(0f, sn(f * 2f - 0.5f)) * 1.5f; int ly = Math.round(lift);
-                rect(3, 3, 11, 11, 0xEDE0C2); rect(3, 13, 11, 1, 0xC8B48A); for (int y = 4; y < 13; y += 2) px(13, y, 0xC8B48A);     // the pages
-                if (ly > 0) { glow(9, 3, 5, 0xFFE3A0, 0.25f * lift); for (int i = 0; i < 3; i++) pxa(6 + i * 3, 2 - ly, 0xFFF4C8, 0.5f * lift); }
-                bev(2, 2 - ly, 11, 12, 0x6A3424); rect(2, 2 - ly, 2, 12, 0x4A2418);                               // the cover and its spine
-                px(3, 3 - ly, 0xE8B84A); px(12, 3 - ly, 0xE8B84A); px(3, 12 - ly, 0xE8B84A); px(12, 12 - ly, 0xE8B84A);
-                int sc = mix(0xE8B84A, 0xFFF4C8, t);
-                px(8, 5 - ly, sc); rect(7, 6 - ly, 3, 3, sc); px(6, 7 - ly, sc); px(10, 7 - ly, sc); px(8, 9 - ly, sc); px(8, 10 - ly, 0xC8902A);
-                rect(13, 7, 1, 3, 0xC8902A);                                                                 // the clasp
+            case "dropped" -> {                                                                                 // the Drop Library: a meteor falling into a glowing crater, a gem glinting where it lands
+                ball(8, 14, 7, 0x2A2858); ball(8, 13.6f, 5, 0x1A1848);                                // the crater
+                glow(8, 13, 5, 0xFF7AD9, 0.35f + 0.2f * t);
+                float u = f % 1f; int hx = Math.round(3 + u * 5), hy = Math.round(1 + u * 9);
+                for (int i = 1; i < 5; i++) pxa(hx - i, hy - i, i < 2 ? 0xFFFFFF : 0x9B7BFF, 1f - i / 5f);
+                ball(hx, hy, 1.4f, 0xFFF4D8);
+                tri(8, 9.5f, 6, 12, 10, 12, 0xB48CFF); px(8, 11, 0xFFFFFF);                         // the gem
                 outline();
-                glint(11, 4 - ly, 1, 0xFFFFFF, t);
             }
-            case "trophy" -> {                                                               // Achievements: a gold cup on a dark base, a glint sliding over it
-                quad(3, 2, 13, 2, 11.5f, 8, 4.5f, 8, 0xE8B84A);
-                rect(2, 3, 1, 3, 0xC8902A); rect(13, 3, 1, 3, 0xC8902A); px(3, 6, 0xC8902A); px(12, 6, 0xC8902A);       // handles
-                rect(7, 8, 2, 3, 0xC8902A);
-                bev(4, 11, 8, 2, 0xE8B84A); bev(3, 13, 10, 2, 0x5A4C86);
-                rect(4, 3, 8, 1, 0xFFE3A0);
+            case "animations" -> {                                                                                 // Animations: a planet with a moon swinging round it, a motion trail behind the moon
+                ball(8, 8, 4.5f, 0x5A4AA8); ball(7, 7, 3.6f, 0x9B7BFF); px(6, 6, 0xE8E0FF);
+                for (int i = 0; i < 16; i++) { float an = i / 16f * TAU; pxa(Math.round(8 + (float) Math.cos(an) * 7), Math.round(8 + (float) Math.sin(an) * 3), 0x7672AE, 0.5f); }
+                float an = f * TAU; for (int k = 3; k >= 0; k--) { float a2 = an - k * 0.25f; pxa(Math.round(8 + (float) Math.cos(a2) * 7), Math.round(8 + (float) Math.sin(a2) * 3), k == 0 ? 0xFFFFFF : 0xFF7AD9, 1f - k * 0.25f); }
+                ball(8 + (float) Math.cos(an) * 7, 8 + (float) Math.sin(an) * 3, 1.3f, 0xFFE9F8);
                 outline();
-                int gx = 3 + Math.round(f * 12); for (int y = 2; y < 8; y++) pxa(gx + (y - 2) / 3, y, 0xFFFFFF, 0.55f);
-                glint(11, 3, 1, 0xFFFFFF, t);
             }
-            case "stats" -> {                                                                // Stats: a little chart window, a gold line climbing through blinking points
-                bev(1, 2, 14, 12, 0x2E2840);
-                for (int x = 3; x < 13; x += 3) for (int y = 4; y < 13; y++) if (y % 2 == 0) px(x, y, 0x3E3654);
-                float[] ys = {11, 9, 10, 6, 7, 4};
-                for (int i = 0; i < 5; i++) { float a = ys[i] - (i == 4 ? t : 0), b = ys[i + 1] - (i + 1 == 5 ? t : 0); ln(2.5f + i * 2.1f, a, 2.5f + (i + 1) * 2.1f, b, 0xE8B84A); }
+            case "sounds" -> {                                                                                 // Sounds: a radio dish on its stand, signal arcs travelling out into space
+                rect(4, 12, 6, 2, 0x5A5A88); rect(6, 9, 2, 3, 0x7672AE);
+                quad(1, 6, 7, 2, 10, 7, 4, 11, 0xC8C4E8); ln(2, 7, 8, 3, 0xFFFFFF);                   // the dish
+                ln(5, 6, 8, 4, 0x7672AE); px(9, 3, 0xFF7AD9);                                        // its feed
+                for (int i = 0; i < 3; i++) { float u = (f + i / 3f) % 1f; int r = 3 + Math.round(u * 4);
+                    for (int k = -2; k <= 2; k++) { float a2 = -0.8f + k * 0.25f; pxa(Math.round(9 + (float) Math.cos(a2) * r), Math.round(3 + (float) Math.sin(a2) * r), 0x9B7BFF, 1f - u); } }
                 outline();
-                int on = (int) (f * 6) % 6; for (int i = 0; i < 6; i++) px(Math.round(2.5f + i * 2.1f), Math.round(ys[i] - (i >= 4 ? t : 0)), i == on ? 0xFFFFFF : 0xFFE3A0);
+            }
+            case "chat" -> {                                                                                 // Chat: a speech bubble shaped from a little nebula, three stars in it lighting up in turn
+                ball(5, 7, 4, 0x6A4AD8); ball(10, 7, 4.5f, 0x8A6AE8); rect(4, 6, 8, 5, 0x7A5AE0); tri(3, 10, 6, 10, 2, 14, 0x6A4AD8);
+                ball(9, 5.5f, 2, 0xA88AFF);
+                for (int i = 0; i < 3; i++) { float on = Math.max(0f, (float) Math.sin(f * TAU - i * 1.2f)); int x = 5 + i * 3; px(x, 8, mix(0xC8B4FF, 0xFFFFFF, on)); if (on > 0.6f) { pxa(x - 1, 8, 0xFFFFFF, on - 0.4f); pxa(x + 1, 8, 0xFFFFFF, on - 0.4f); pxa(x, 7, 0xFFFFFF, on - 0.4f); pxa(x, 9, 0xFFFFFF, on - 0.4f); } }
+                outline();
+            }
+            case "settings" -> {                                                                                 // Settings: a cog cut from a ringed planet, turning slowly
+                float rot = f * TAU / 8f;
+                for (int i = 0; i < 8; i++) { float an = rot + i * TAU / 8f; ball(8 + (float) Math.cos(an) * 5.6f, 8 + (float) Math.sin(an) * 5.6f, 1.5f, 0x7672AE); }
+                ball(8, 8, 5.2f, 0x9B7BFF); ball(7.4f, 7.4f, 4.2f, 0xB8A0FF); ball(8, 8, 2.2f, 0x1A1848);
+                for (int x = 1; x < 16; x++) { int y = Math.round(8 + (x - 8) * -0.35f); if (x < 5 || x > 11) pxa(x, y, 0xFF7AD9, 0.9f); }   // its ring
+                px(6, 5, 0xFFFFFF);
+                outline();
+            }
+            case "collection" -> {                                                                                 // the Collection: a star atlas, the cover lifting, light and a constellation spilling out
+                bev(2, 6, 12, 9, 0x2C2A66); rect(3, 7, 10, 7, 0x1A1848);
+                int lift = Math.round(2 * t); quad(2, 6 - lift, 14, 6 - lift, 13, 4 - lift, 3, 4 - lift, 0x5A4AA8);
+                glow(8, 6, 5, 0xC8B4FF, 0.3f * t);
+                px(5, 9, 0xFFFFFF); px(8, 11, 0xFFE38A); px(11, 9, 0xFFFFFF); ln(5, 9, 8, 11, 0x7672AE); ln(8, 11, 11, 9, 0x7672AE);
+                outline();
+            }
+            case "trophy" -> {                                                                                 // Achievements: a cup made of starlight on a dark base, a star glinting on it
+                rect(5, 13, 6, 2, 0x2C2A66); rect(7, 10, 2, 3, 0x7672AE);
+                quad(3, 3, 13, 3, 11, 9, 5, 9, 0xC8B4FF); quad(4, 3, 8, 3, 7, 8, 5, 8, 0xE8E0FF);
+                ln(2, 4, 3, 7, 0x9B7BFF); ln(14, 4, 13, 7, 0x9B7BFF);
+                glint(10, 5, 1, 0xFFFFFF, 0.5f + 0.5f * t); px(8, 5, 0xFF7AD9);
+                outline();
+            }
+            case "stats" -> {                                                                                 // Stats: a little star chart, points joined by a climbing line, the newest twinkling
+                bev(1, 2, 14, 12, 0x14163E); rect(2, 3, 12, 10, 0x0E1030);
+                int[] xs = {3, 6, 9, 12}, ys = {11, 9, 10, 5};
+                for (int i = 0; i < 3; i++) ln(xs[i], ys[i], xs[i + 1], ys[i + 1], 0x9B7BFF);
+                for (int i = 0; i < 4; i++) px(xs[i], ys[i], i == 3 ? mix(0xFF7AD9, 0xFFFFFF, t) : 0xE8E0FF);
+                glint(12, 5, 1, 0xFFFFFF, t); px(4, 4, 0x5A5A88); px(10, 7, 0x5A5A88);
+                outline();
             }
             case "mytho" -> {                                                                // the minotaur: a horned head with glaring eyes
                 tri(2, 7, 1, 2, 5.5f, 5.2f, 0xF4EBD2); tri(14, 7, 15, 2, 10.5f, 5.2f, 0xF4EBD2);
@@ -468,12 +443,11 @@ final class IconArt {
                 outline();
                 glow(7.5f, 4, 3, 0xFF4FC8, 0.15f + 0.15f * t);
             }
-            case "move" -> {                                                                 // Position: a crosshair with four arrows, nudging outward
-                int o = Math.round(t); int cc = 0x8FE3B0;
-                rect(7, 3, 2, 10, dark(cc, 0.25f)); rect(3, 7, 10, 2, dark(cc, 0.25f));
-                tri(8, 0.5f - o, 5, 3.5f - o, 11, 3.5f - o, cc); tri(8, 15.5f + o, 5, 12.5f + o, 11, 12.5f + o, cc);
-                tri(0.5f - o, 8, 3.5f - o, 5, 3.5f - o, 11, cc); tri(15.5f + o, 8, 12.5f + o, 5, 12.5f + o, 11, cc);
-                bev(6, 6, 4, 4, 0xEAFFF2); px(7, 7, 0xFFFFFF);
+            case "move" -> {                                                                                 // Position: a little astronaut drifting, a crosshair round them
+                for (int i = 2; i < 14; i++) { if (i > 5 && i < 10) continue; pxa(i, 8, 0x7672AE, 0.8f); pxa(8, i, 0x7672AE, 0.8f); }
+                int dx = Math.round(s), dy = Math.round((float) Math.cos(f * TAU));
+                ball(8 + dx, 7 + dy, 2.6f, 0xE8ECFF); rect(7 + dx, 6 + dy, 3, 2, 0x5A8AE8); px(7 + dx, 6 + dy, 0xBFE8FF);   // helmet, visor
+                rect(7 + dx, 9 + dy, 3, 3, 0xE8ECFF); px(6 + dx, 10 + dy, 0xC8CCE8); px(10 + dx, 10 + dy, 0xC8CCE8);
                 outline();
             }
             case "lyr_burst" -> {                                                            // Star bursts: a word on a line, little stars bursting off it
@@ -861,11 +835,9 @@ final class IconArt {
                 if (w > 3.5f) { rect(7, 5, 2, 6, 0xB8861E); rect(6, 6, 4, 1, 0xB8861E); rect(6, 9, 4, 1, 0xB8861E); }
                 outline();
             }
-            case "size" -> {                                                                 // a frame growing, a corner arrow
-                int g = Math.round(2 * t);
-                bev(3 - g / 2, 3 - g / 2, 8 + g, 8 + g, 0x7A92E0);
-                rect(4 - g / 2, 4 - g / 2, 6 + g, 6 + g, 0x1B2236);
-                ln(9, 9, 14, 14, 0xFFFFFF); ln(14, 11, 14, 14, 0xFFFFFF); ln(11, 14, 14, 14, 0xFFFFFF);
+            case "size" -> {                                                                                 // Size: a planet growing and shrinking inside its frame
+                for (int i = 1; i < 15; i++) { if (i % 3 == 0) continue; px(i, 1, 0x7672AE); px(i, 14, 0x7672AE); px(1, i, 0x7672AE); px(14, i, 0x7672AE); }
+                float r = 3.2f + 2.2f * t; ball(8, 8, r, 0x5A4AA8); ball(7.3f, 7.3f, r * 0.8f, 0x9B7BFF); px(Math.round(7 - r * 0.4f), Math.round(7 - r * 0.4f), 0xFFFFFF);
                 outline();
             }
             case "text" -> {                                                                 // a letter in a tile, a blinking cursor
@@ -976,37 +948,36 @@ final class IconArt {
                 outline();
                 if (sw > 0.85f) { glint(2, 12, 1, 0xFFFFFF, 1f); px(1, 11, 0xFFE27A); px(8, 12, 0xFFE27A); }
             }
-            case "back" -> {                                                                 // an arrow pointing back, nudging
-                int nx = Math.round(-1f * t);
-                tri(1 + nx, 8, 8 + nx, 2, 8 + nx, 14, 0x8FA8FF);
-                bev(7 + nx, 5, 7, 6, 0x8FA8FF);
+            case "back" -> {                                                                                 // Back: a little rocket turning for home, nudging left
+                int o = -Math.round(t);
+                rect(5 + o, 7, 7, 3, 0xE8ECFF); tri(5 + o, 6.5f, 5 + o, 10.5f, 2 + o, 8.5f, 0xFF7AD9);   // body, nose (pointing left)
+                px(7 + o, 8, 0x7AD8FF); rect(11 + o, 5, 2, 2, 0xFF7AD9); rect(11 + o, 10, 2, 2, 0xFF7AD9);
+                pxa(13 + o, 8, 0xFFB050, 0.9f); pxa(14 + o, 8, 0xFFE07A, 0.6f + 0.4f * t);
                 outline();
             }
-            case "updates", "refresh" -> {                                                   // a circular arrow turning
-                float rot = f * TAU;
-                for (int a = 0; a < 44; a++) { float ang = rot + a / 44f * 5.0f; float r = 5.2f; px(Math.round(8 + (float) Math.cos(ang) * r), Math.round(8 + (float) Math.sin(ang) * r), a > 36 ? 0xFFFFFF : mix(0x4AD8A0, 0x8FFFD0, a / 44f)); px(Math.round(8 + (float) Math.cos(ang) * (r - 1)), Math.round(8 + (float) Math.sin(ang) * (r - 1)), dark(0x4AD8A0, 0.15f)); }
-                float ea = rot + 5.0f; float ex = 8 + (float) Math.cos(ea) * 5.2f, ey = 8 + (float) Math.sin(ea) * 5.2f;
-                tri(ex + (float) Math.cos(ea + 1.57f) * 3, ey + (float) Math.sin(ea + 1.57f) * 3, ex - (float) Math.cos(ea + 1.57f) * 2.4f, ey - (float) Math.sin(ea + 1.57f) * 2.4f, ex + (float) Math.cos(ea + 1.57f * 2) * 3.2f, ey + (float) Math.sin(ea + 1.57f * 2) * 3.2f, 0xBFFFE8);
+            case "updates", "refresh" -> {                                                                                 // Updates: a satellite turning, a signal blinking
+                float an = f * TAU * 0.25f;
+                rect(6, 6, 4, 4, 0xC8CCE8); px(7, 7, 0xFFFFFF);
+                rect(1, 7, 4, 2, 0x5A8AE8); rect(11, 7, 4, 2, 0x5A8AE8); px(1, 7, 0x8AB8FF); px(11, 7, 0x8AB8FF);   // solar panels
+                ln(8, 6, 8 + Math.round((float) Math.cos(an) * 2), 2, 0x9A9EC8); px(8 + Math.round((float) Math.cos(an) * 2), 2, t > 0.5f ? 0x7AF0B0 : 0x2A6A4A);
                 outline();
             }
-            case "switch" -> {                                                               // a toggle sliding
-                bev(1, 4, 14, 8, mix(0x55606E, 0x4AD8A0, t));
-                int kx = 2 + Math.round(t * 7);
-                bev(kx, 5, 5, 6, 0xF4F8FF);
+            case "switch" -> {                                                                                 // a toggle: a track with a star for a knob, sliding across
+                bev(1, 5, 14, 6, 0x2C2A66); rect(2, 6, 12, 4, 0x1A1848);
+                int kx = 4 + Math.round(t * 7); rect(2, 6, kx - 1, 4, 0x5A4AA8);
+                ball(kx, 8, 2.5f, 0xE8E0FF); px(kx, 6, 0xFFFFFF); px(kx - 1, 8, 0xFFFFFF); px(kx + 1, 8, 0xFFFFFF); px(kx, 10, 0xFFFFFF); px(kx, 8, 0xFF7AD9);
                 outline();
             }
-            case "speed" -> {                                                                // a bolt
-                poly(new float[]{10, 4, 8, 13, 5, 7, 11}, new float[]{1, 8, 8, 15, 9, 9, 1}, 0xFFD25A);
+            case "speed" -> {                                                                                 // Speed: a rocket streaking right, speed lines behind it
+                for (int i = 0; i < 3; i++) { float u = (f + i / 3f) % 1f; int y = 5 + i * 3, x0 = Math.round(1 + u * 3); for (int k = 0; k < 4; k++) pxa(x0 + k, y, 0x9B7BFF, (1f - u) * (1f - k / 4f)); }
+                rect(6, 7, 6, 3, 0xE8ECFF); tri(12, 6.5f, 12, 10.5f, 15, 8.5f, 0xFF7AD9); px(9, 8, 0x7AD8FF);
+                rect(6, 5, 2, 2, 0xFF7AD9); rect(6, 10, 2, 2, 0xFF7AD9); pxa(5, 8, 0xFFB050, 0.9f); pxa(4, 8, 0xFFE07A, 0.5f + 0.5f * t);
                 outline();
-                glow(8, 8, 7, 0xFFE27A, 0.2f + 0.2f * t);
-                glint(12, 4 + Math.round(t * 2), 1, 0xFFFFFF, 1f);
             }
-            case "clock" -> {                                                                // a ticking clock
-                ball(8, 8, 6.8f, 0xF4F0E4);
-                for (int i = 0; i < 12; i++) { float a = i * TAU / 12; px(Math.round(8 + (float) Math.cos(a) * 5.4f), Math.round(8 + (float) Math.sin(a) * 5.4f), 0x6A5A3A); }
-                float ma = f * TAU - 1.57f; ln(8, 8, 8 + (float) Math.cos(ma) * 4.6f, 8 + (float) Math.sin(ma) * 4.6f, 0xD8503A);
-                ln(8, 8, 8 + (float) Math.cos(-0.5f) * 3f, 8 + (float) Math.sin(-0.5f) * 3f, 0x2A2A3A);
-                px(8, 8, 0x2A2A3A);
+            case "clock" -> {                                                                                 // Time: a moon going through its phases
+                ball(8, 8, 6, 0xE8E4FF); ball(7, 7, 1.2f, 0xC8C4E8); ball(10, 10, 0.9f, 0xC8C4E8);
+                float ph = f * 2f - 1f; ball(8 + ph * 8, 8, 6, 0x14163E);                             // the shadow sweeping across
+                px(2, 2, 0xFFFFFF); px(14, 13, 0xFFE38A);
                 outline();
             }
             case "send" -> {                                                                 // a paper plane flying off

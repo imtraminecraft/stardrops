@@ -541,6 +541,12 @@ final class Ritual {
         float itemA = TextFx.itemOnly ? 1f : sm(p / 0.22f) * (1f - sm((t - (fxEnd - 0.6f)) / 0.6f));
         float tb = TextFx.itemOnly ? (System.currentTimeMillis() % 100000L) / 1000f : t;                // the item keeps bobbing while the Item editor holds the scene
         cv.clear();
+        if (SpaceScenes.ON) {   // Stardrops: slayers play the space bounty hunt, every other group the space WIP gate (the old scenes stay in the code for now)
+            float cyS = itemY(t, p, gy, icy, sz, itemBob, bobAmp);
+            if (slayerMode) SpaceScenes.slayer(t, O, p, icx, gy, icy, sz, isc, Math.floorMod(kind - 12, 6), energy, rc, rng, nod, itemA, bg, itemOffs, cyS);
+            else SpaceScenes.wip(t, O, p, icx, gy, icy, sz, isc, rc, rng, nod, itemA, bg, itemOffs, cyS);
+            return;
+        }
         float inh = cl((t - 0.78f * O) / (0.22f * O));                                     // the last stretch of the opening: power drawn in
         float op = Math.min(t, O);
 
@@ -793,6 +799,7 @@ final class Ritual {
     /** Sets the scene flags for an animation; end() clears them again. */
     static float hold;                                                                  // seconds the finish of the animation being drawn is held (several drops: time to read them)
     static void begin(Anim a, float sz, float isc) {
+        try { SpaceScenes.beats = AnimationManager.cueTimes(a.key(), a.hold())[0]; } catch (Throwable ignored) { }
         hold = a.hold();
         slayerMode = isSlayer(a); if (slayerMode) { kind = 12 + slTheme(a); slSeed = System.identityHashCode(a) & 0xFFFF; }
         farmMode = a.group.equals("crops") || a.group.equals("feast") || a.group.equals("bounty") || a.group.equals("pests");
@@ -1048,7 +1055,7 @@ final class Ritual {
             if (pi < 0f) continue;
             float grow = 0.25f + 0.75f * eob(pi / 0.7f);
             float s = 3f * (H / 270f) * sz * isc * grow * (rng ? 1.2f : 1f) * (TextFx.itemOnly ? 1.9f : 1f) * sizeOf(n);
-            float gcx = CW / 2f * W / CW + sx + offs[Math.min(ii, offs.length - 1)] * u, gcy = -liftOf(ii, n, szc) * u + itemY(tb, p, a.group.equals("exp") ? BookScene.baseY(icy, ssz) : icy + 22 * ssz, icy, ssz, c.itemBob, c.itemBobAmp) * u + sy;
+            float gcx = CW / 2f * W / CW + sx + offs[Math.min(ii, offs.length - 1)] * u, gcy = -liftOf(ii, n, szc) * u + itemY(tb, p, icy + 22 * ssz, icy, ssz, c.itemBob, c.itemBobAmp) * u + sy;
             if (c.itemGlow > 0.02f) {                                                          // the glow behind the item (Item changes > Glow), in the drop's colour
                 int gr = Math.round(s * 11f), gcol = mixc(rc, WHITE, 0.25f); float ga = Math.max(0f, Math.min(1f, itemA)) * Math.min(1f, c.itemGlow);
                 int al = Math.round(Math.min(46f, 26f * ga * (0.6f + c.itemGlow)) / 1.6f);                   // two soft pictures (it used to be hundreds of fills)

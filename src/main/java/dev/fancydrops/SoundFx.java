@@ -42,18 +42,18 @@ public final class SoundFx {
     private static boolean isMc(String name) { return name != null && name.startsWith("mc_"); }
 
     static {
-        // 1.0 (tools/make_scene_sounds.py): every Normal and No Drops scene shares one soft, short set; only RNG gets the big cinematic set
-        reg("std_beat", "Soft tick", SoundEvents.AMETHYST_BLOCK_HIT, 0.7f);
-        reg("std_burst", "Soft pop", SoundEvents.AMETHYST_BLOCK_BREAK, 0.75f);
-        reg("std_reveal", "Chime", SoundEvents.AMETHYST_BLOCK_CHIME, 0.75f);
-        reg("std_glow", "Soft glow", SoundEvents.AMETHYST_BLOCK_RESONATE, 0.4f);
-        reg("std_end", "Close", SoundEvents.AMETHYST_BLOCK_CHIME, 0.55f);
-        reg("std_fizzle", "Fizzle", SoundEvents.AMETHYST_BLOCK_RESONATE, 0.6f);
-        reg("rng_beat", "RNG: heartbeat", SoundEvents.AMETHYST_BLOCK_HIT, 0.85f);
-        reg("rng_burst", "RNG: impact", SoundEvents.AMETHYST_BLOCK_BREAK, 0.9f);
-        reg("rng_reveal", "RNG: fanfare", SoundEvents.BEACON_ACTIVATE, 0.9f);
-        reg("rng_glow", "RNG: sparkle bed", SoundEvents.BEACON_AMBIENT, 0.5f);
-        reg("rng_end", "RNG: farewell", SoundEvents.AMETHYST_BLOCK_CHIME, 0.65f);
+        // Stardrops space pack (tools/make_space_sounds.py; was tools/make_scene_sounds.py): every Normal and No Drops scene shares one soft, short set; only RNG gets the big cinematic set
+        reg("std_beat", "Laser zap", SoundEvents.AMETHYST_BLOCK_HIT, 0.7f);
+        reg("std_burst", "Plasma pop", SoundEvents.AMETHYST_BLOCK_BREAK, 0.75f);
+        reg("std_reveal", "Star chime", SoundEvents.AMETHYST_BLOCK_CHIME, 0.75f);
+        reg("std_glow", "Space hum", SoundEvents.AMETHYST_BLOCK_RESONATE, 0.4f);
+        reg("std_end", "Warp away", SoundEvents.AMETHYST_BLOCK_CHIME, 0.55f);
+        reg("std_fizzle", "Power down", SoundEvents.AMETHYST_BLOCK_RESONATE, 0.6f);
+        reg("rng_beat", "RNG: heavy laser", SoundEvents.AMETHYST_BLOCK_HIT, 0.85f);
+        reg("rng_burst", "RNG: supernova", SoundEvents.AMETHYST_BLOCK_BREAK, 0.9f);
+        reg("rng_reveal", "RNG: cosmic fanfare", SoundEvents.BEACON_ACTIVATE, 0.9f);
+        reg("rng_glow", "RNG: deep space", SoundEvents.BEACON_AMBIENT, 0.5f);
+        reg("rng_end", "RNG: warp out", SoundEvents.AMETHYST_BLOCK_CHIME, 0.65f);
         reg("sky_open", "Achievements: open", SoundEvents.AMETHYST_BLOCK_CHIME, 0.7f);              // the achievements sky
         reg("sky_close", "Achievements: close", SoundEvents.AMETHYST_BLOCK_HIT, 0.6f);
         reg("sky_zoom", "Achievements: fly", SoundEvents.PLAYER_ATTACK_SWEEP, 0.6f);
