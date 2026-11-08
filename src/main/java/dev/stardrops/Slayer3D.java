@@ -110,7 +110,7 @@ final class Slayer3D {
         @Override protected String getTextureLabel() { return "stardrops slayer"; }
         @Override protected void renderToTexture(State s, PoseStack ignored, SubmitNodeCollector c) {
             try { Scene.render(s, c, proj); }
-            catch (Throwable e) { broken = true; System.err.println("[Stardrops] 3D slayer scene failed, using the pixel scene: " + e); }
+            catch (Throwable e) { broken = true; StringBuilder sb = new StringBuilder("[Stardrops] 3D slayer scene failed, using the pixel scene: " + e); StackTraceElement[] st = e.getStackTrace(); for (int i = 0; i < Math.min(6, st.length); i++) sb.append("\n    at ").append(st[i]); System.err.println(sb); }
         }
         /** The texture is drawn with the scene's fade (premultiplied: every channel scales). */
         @Override protected void blitTexture(State s, GuiRenderState gs) {
@@ -503,6 +503,7 @@ final class Slayer3D {
                     case 4 -> EntityTypes.BLAZE.create(mc.level, EntitySpawnReason.LOAD);
                     default -> EntityTypes.VINDICATOR.create(mc.level, EntitySpawnReason.LOAD);
                 };
+                if (e != null) e.setId(-7300 - boss);                                         // never in the world: a private id so equipment and models can be resolved
                 if (e != null && boss == 0) { e.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.DIAMOND_CHESTPLATE)); e.setItemSlot(EquipmentSlot.LEGS, new ItemStack(Items.DIAMOND_LEGGINGS)); }
                 if (e != null && boss == 5) e.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_AXE));
                 MOBS[boss] = e;
