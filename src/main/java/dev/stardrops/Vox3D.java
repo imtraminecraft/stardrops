@@ -32,7 +32,7 @@ final class Vox3D {
     }
     /** One frame: the camera and the meshes in draw order (opaque, then the view-space sky, sky glows, veils, glows). */
     static final class Frame {
-        Matrix4f proj, view; Mesh opq = new Mesh(false), back = new Mesh(false), sky = new Mesh(true), veil = new Mesh(true), add = new Mesh(true);
+        Matrix4f proj, view; Mesh ground; Mesh opq = new Mesh(false), back = new Mesh(false), sky = new Mesh(true), veil = new Mesh(true), add = new Mesh(true);
     }
 
     static int argb(float a, int rgb) { return Math.round(cl(a) * 255) << 24 | (rgb & 0xFFFFFF); }
@@ -45,6 +45,7 @@ final class Vox3D {
     static Frame F; static Matrix4f projView; static final Vector3f eye = new Vector3f(), right = new Vector3f(), up = new Vector3f();
     static Matrix4f M = new Matrix4f(); static final ArrayDeque<Matrix4f> STACK = new ArrayDeque<>();
     static boolean mobMode; static int rimCol;
+    static int pass; static boolean dyn;                         // pass 1: build the still scenery once; pass 2: only what moves (dyn)
     static float tint; static int tintCol;                      // a flash over everything drawn (hits: white / red)
     static final float FOV = 30f;
     static float dbgDist; static Vector3f dbgTarget;                 // bench close-ups only
@@ -75,6 +76,7 @@ final class Vox3D {
 
     /** A box from (x0,y0,z0) to (x1,y1,z1) in the current transform, its faces cut into pixels (px per unit), with a black rim if ol > 0. faces: bit mask of faces to draw. */
     static void box(float x0, float y0, float z0, float x1, float y1, float z1, Skin skin, float px, float ol, int faces) {
+        if ((pass == 1 && dyn) || (pass == 2 && !dyn)) return;                                   // the cached still parts / the moving parts
         float sx = x1 - x0, sy = y1 - y0, sz = z1 - z0;
         float[] dims = {sx, sy, sz};
         for (int f = 0; f < 6; f++) {
@@ -93,23 +95,37 @@ final class Vox3D {
                 rim = (float) Math.pow(1f - nd, 1.6f) * 0.55f * (0.35f + Math.max(0f, -n.dot(LIGHT)));
                 pxw = M.transformDirection(new Vector3f(ux, uy, uz)).length() / w;
             }
-            for (int u = 0; u < w; u++) for (int v = 0; v < h; v++) {
-                int col = skin.at(f, u, v, w, h); int tag = col >>> 24; if (tag == 0x01) continue;  // 0x01xxxxxx: a hole
-                if (tag == 0x02) {                                                                  // 0x02xxxxxx: glows (eyes, embers)
-                    col &= 0xFFFFFF;
-                    if (pxw > 0) { float cu = (u + 0.5f) / w, cv = (v + 0.5f) / h; Vector3f gp = M.transformPosition(new Vector3f(ox + ux * cu + vx * cv, oy + uy * cu + vy * cv, oz + uz * cu + vz * cv)).add(new Vector3f(n).mul(0.02f)); glow(F.add, gp.x, gp.y, gp.z, pxw * 2.6f, col, 0.55f); }
-                } else {
-                    float ss = s;
-                    if (mobMode && f != 2 && f != 3) ss *= 0.74f + 0.26f * (v + 0.5f) / h + (v == h - 1 ? 0.06f : 0f);   // darker toward the bottom of each part, a lit top edge
-                    col = mixc(mul(col & 0xFFFFFF, ss), 0x1E2A50, 0.12f);
-                    if (rim > 0) col = mixc(col, rimCol, rim);
+            Vector3f WO = M.transformPosition(new Vector3f(ox, oy, oz)), WU = M.transformDirection(new Vector3f(ux, uy, uz)), WV = M.transformDirection(new Vector3f(vx, vy, vz));
+            int[] row = new int[w];
+            for (int v = 0; v < h; v++) {
+                for (int u = 0; u < w; u++) {
+                    int col = skin.at(f, u, v, w, h); int tag = col >>> 24;
+                    if (tag == 0x01) { row[u] = -1; continue; }                                         // 0x01xxxxxx: a hole
+                    if (tag == 0x02) {                                                                  // 0x02xxxxxx: glows (eyes, embers)
+                        col &= 0xFFFFFF;
+                        if (pxw > 0) { float cu = (u + 0.5f) / w, cv = (v + 0.5f) / h; glow(F.add, WO.x + WU.x * cu + WV.x * cv + n.x * 0.02f, WO.y + WU.y * cu + WV.y * cv + n.y * 0.02f, WO.z + WU.z * cu + WV.z * cv + n.z * 0.02f, pxw * 2.6f, col, 0.55f); }
+                    } else {
+                        float ss = s;
+                        if (mobMode && f != 2 && f != 3) ss *= 0.74f + 0.26f * (v + 0.5f) / h + (v == h - 1 ? 0.06f : 0f);   // darker toward the bottom of each part, a lit top edge
+                        col = mixc(mul(col & 0xFFFFFF, ss), 0x1E2A50, 0.12f);
+                        if (rim > 0) col = mixc(col, rimCol, rim);
+                    }
+                    if (tint > 0) col = mixc(col, tintCol, tint);
+                    row[u] = col & 0xFFFFFF;
                 }
-                if (tint > 0) col = mixc(col, tintCol, tint);
-                float a0 = u / (float) w, a1 = (u + 1) / (float) w, b0 = v / (float) h, b1 = (v + 1) / (float) h;
-                quad(F.opq, ox + ux * a0 + vx * b0, oy + uy * a0 + vy * b0, oz + uz * a0 + vz * b0,
-                        ox + ux * a1 + vx * b0, oy + uy * a1 + vy * b0, oz + uz * a1 + vz * b0,
-                        ox + ux * a1 + vx * b1, oy + uy * a1 + vy * b1, oz + uz * a1 + vz * b1,
-                        ox + ux * a0 + vx * b1, oy + uy * a0 + vy * b1, oz + uz * a0 + vz * b1, 0xFF000000 | col, false);
+                float b0 = v / (float) h, b1 = (v + 1) / (float) h;
+                for (int u = 0; u < w; ) {                                                              // runs of one colour become one quad
+                    int c0 = row[u], e = u + 1; while (e < w && row[e] == c0) e++;
+                    if (c0 >= 0) {
+                        float a0 = u / (float) w, a1 = e / (float) w; int col = 0xFF000000 | c0;
+                        float ax = WO.x + WU.x * a0 + WV.x * b0, ay = WO.y + WU.y * a0 + WV.y * b0, az = WO.z + WU.z * a0 + WV.z * b0;
+                        float bx = WO.x + WU.x * a1 + WV.x * b0, by = WO.y + WU.y * a1 + WV.y * b0, bz = WO.z + WU.z * a1 + WV.z * b0;
+                        float cx = WO.x + WU.x * a1 + WV.x * b1, cy = WO.y + WU.y * a1 + WV.y * b1, cz = WO.z + WU.z * a1 + WV.z * b1;
+                        float dx = WO.x + WU.x * a0 + WV.x * b1, dy = WO.y + WU.y * a0 + WV.y * b1, dz = WO.z + WU.z * a0 + WV.z * b1;
+                        F.opq.v(ax, ay, az, col); F.opq.v(bx, by, bz, col); F.opq.v(cx, cy, cz, col); F.opq.v(ax, ay, az, col); F.opq.v(cx, cy, cz, col); F.opq.v(dx, dy, dz, col);
+                    }
+                    u = e;
+                }
             }
         }
         if (ol > 0) outline(x0 - ol, y0 - ol, z0 - ol, x1 + ol, y1 + ol, z1 + ol);
@@ -225,9 +241,9 @@ final class Vox3D {
         Vector3f target = new Vector3f(0.2f, 0.85f, 0f);
         if (dbgDist > 0) { dist = dbgDist; target = dbgTarget; }
         eye.set(target.x + (float) (Math.sin(yaw) * Math.cos(pitch)) * dist, target.y + (float) Math.sin(pitch) * dist, target.z + (float) (Math.cos(yaw) * Math.cos(pitch)) * dist);
-        float jx = (rnd((int) (t * 60)) - 0.5f) * 0.22f * sh, jy = (rnd((int) (t * 60) + 31) - 0.5f) * 0.22f * sh;
+        float jx = 0.11f * sh * (float) (Math.sin(t * 53) + Math.sin(t * 31 + 1.3)) * 0.5f, jy = 0.11f * sh * (float) (Math.sin(t * 47 + 2.1) + Math.sin(t * 37 + 0.4)) * 0.5f;   // smooth shake, no steps
         Matrix4f view = new Matrix4f().lookAt(eye.x + jx, eye.y + jy, eye.z, target.x + jx * 0.5f, target.y + jy * 0.5f, target.z, 0, 1, 0);
-        if (sh > 0.01f) view = new Matrix4f().rotateZ((rnd((int) (t * 30)) - 0.5f) * 0.04f * sh).mul(view);
+        if (sh > 0.01f) view = new Matrix4f().rotateZ(0.02f * sh * (float) Math.sin(t * 29 + 0.7)).mul(view);
         right.set(view.m00(), view.m10(), view.m20()); up.set(view.m01(), view.m11(), view.m21());
         Matrix4f persp = new Matrix4f().setPerspective((float) Math.toRadians(FOV), aspect, 1000f, 0.05f, z01);         // reversed depth, like the game's
         Vector4f cr = new Matrix4f(persp).mul(view).transform(new Vector4f(FRONT.x, FRONT.y, FRONT.z, 1f));
@@ -238,8 +254,13 @@ final class Vox3D {
         Theme th = THEMES[boss];
         sky(F.back, aspect, 400f, mixc(th.skyTop, 0x000000, 0.5f * dim), mixc(th.skyMid, 0x000000, 0.5f * dim), mixc(th.skyLow, 0x000000, 0.4f * dim), 0.96f);
         stars(t, dim, aspect); moon(th, aspect);
-        island(boss, th);
-        props(t, boss, th);
+        if (groundBoss != boss || groundMesh == null) {                                              // the island never changes: built once per boss
+            Mesh keep = F.opq, ka = F.add, kv = F.veil; F.opq = new Mesh(false); F.add = new Mesh(false); F.veil = new Mesh(false);
+            pass = 1; island(boss, th); props(0f, boss, th); pass = 0;
+            groundMesh = F.opq; F.opq = keep; F.add = ka; F.veil = kv; groundBoss = boss;
+        }
+        F.ground = groundMesh;
+        pass = 2; props(t, boss, th); pass = 0;
         mob(t, type, boss, hits, last, energy, th);
         for (int i = 0; i < hits.length; i++) meteor(t, type, boss, i, hits, th);
         if (p > 0 && type > 0) reveal(t, p, type, A, energy);
@@ -288,6 +309,7 @@ final class Vox3D {
 
     // ------------------------------------------------------------------ the island
     static final float IRX = 4.6f, IRZ = 3.4f;
+    static Mesh groundMesh; static int groundBoss = -1;
     static int depth(int i, int j) {
         float r = (float) Math.sqrt((i / IRX) * (i / IRX) + (j / IRZ) * (j / IRZ)) + (rnd(i * 31 + j * 17) - 0.5f) * 0.16f;
         if (r > 1f) return 0;
@@ -337,6 +359,7 @@ final class Vox3D {
                 box(-0.45f, 1.25f, -0.14f, 0.45f, 1.45f, 0.14f, stone, 12f, 0.035f);
                 pop();
                 // the grave in front: a mound of dirt the boss bursts out of
+                dyn = true;
                 float burst = sm((t - SlayerScene.RISE) / 0.25f);
                 if (burst < 1f) { push(); M.translate(sx, 0, sz - 0.05f); box(-0.5f, 0f, -0.75f, 0.5f, 0.28f * (1f - burst), 0.75f, noisy(0x6A4A2C, 0.15f, 3), 10f, 0.03f); pop(); }
                 if (t > SlayerScene.RISE) for (int i = 0; i < 14; i++) {                                  // the dirt thrown up
@@ -346,6 +369,7 @@ final class Vox3D {
                     push(); M.translate(sx + (float) Math.cos(an) * v * d, y, sz + (float) Math.sin(an) * v * d * 0.7f).rotateXYZ(d * 6 + i, d * 4, i);
                     float s = 0.1f + 0.06f * rnd(i); box(-s, -s, -s, s, s, s, flat(i % 2 == 0 ? 0x6A4A2C : 0x4E3620), 2f, 0.02f); pop();
                 }
+                dyn = false;
                 // more graves round the edge, wooden crosses
                 float[][] g = {{-2.9f, -1.6f, 0.4f}, {-3.4f, 0.6f, -0.2f}, {2.9f, -1.9f, -0.3f}, {3.3f, 0.4f, 0.25f}};
                 for (int k = 0; k < g.length; k++) { push(); M.translate(g[k][0], 0, g[k][1]).rotateY(g[k][2]); box(-0.32f, 0f, -0.1f, 0.32f, 0.7f, 0.1f, stone, 10f, 0.03f); box(-0.22f, 0.7f, -0.1f, 0.22f, 0.82f, 0.1f, stone, 10f, 0.03f); box(-0.35f, 0f, 0.15f, 0.35f, 0.12f, 1.0f, noisy(0x5E4428, 0.15f, k), 8f, 0.025f); pop(); }
@@ -378,9 +402,9 @@ final class Vox3D {
                 Skin brick = (f, u, v, w, h) -> { boolean mortar = v % 3 == 0 || (u + (v / 3) * 2) % 5 == 0; return mortar ? 0x1E0E10 : mul(0x4A1A1E, 0.85f + rnd(u * 7 + v * 13 + f) * 0.3f); };
                 for (float[] pl : new float[][]{{-2.9f, -1.3f, 2.4f}, {3.0f, -1.5f, 2.8f}}) {
                     push(); M.translate(pl[0], 0, pl[1]); box(-0.45f, 0f, -0.45f, 0.45f, pl[2], 0.45f, brick, 8f, 0.035f); pop();
-                    fire(t, pl[0], pl[2], pl[1], 1f);
+                    dyn = true; fire(t, pl[0], pl[2], pl[1], 1f); dyn = false;
                 }
-                lava(t, sx, sz);
+                dyn = true; lava(t, sx, sz); dyn = false;
             }
             default -> {
                 Skin cry = (f, u, v, w, h) -> { float n = rnd(f * 31 + u * 7 + v * 13 + 99); return n < 0.2f ? 0x8A2AD8 : mul(0x1A0E26, 0.8f + n * 0.4f); };
@@ -431,6 +455,8 @@ final class Vox3D {
     }
 
     // ------------------------------------------------------------------ the boss
+    /** Angles blended the short way round. */
+    static float alerp(float a, float b, float f) { float d = (float) Math.atan2(Math.sin(b - a), Math.cos(b - a)); return a + d * f; }
     static Vector3f bossAt(float t) {
         float w = sm((t - SlayerScene.WALK) / (SlayerScene.WALK_END - SlayerScene.WALK));
         return new Vector3f(lerp(SPAWN.x, FRONT.x, w), 0f, lerp(SPAWN.z, FRONT.z, w));
@@ -457,7 +483,7 @@ final class Vox3D {
         Vector3f at = bossAt(t); float x = at.x, y = 0f, z = at.z;
         float ar = (t - SlayerScene.RISE) / 0.9f;
         switch (boss) {
-            case 0 -> y = lerp(-2.0f, 0f, eo(ar));
+            case 0 -> y = lerp(-2.0f, 0f, sm(ar)) + 0.06f * (float) Math.sin(Math.PI * cl(ar));
             case 1 -> { y = lerp(5.5f, 0f, eo(ar)); if (ar < 1.2f) column(F.veil, x, y + 0.5f, z, 9f, 0.02f, 0xE8ECF8, 0.7f); }
             case 2 -> z -= 1.4f * (1f - eo(ar / 0.8f));
             case 3 -> { if (ar < 0.6f && ((int) (t * 24)) % 3 == 0) return; }
@@ -468,14 +494,16 @@ final class Vox3D {
         boolean shatter = since >= 0 && type > 0;
         float fall = type == 0 && since > 0 ? sm(since / 0.45f) : 0f, sink = type == 0 && since > 0 ? sm((since - 0.6f) / 0.7f) : 0f;
         if (sink >= 1f) { ash(since, x, z); return; }
-        float hitT = 1e9f, kb = 0f; for (float h : hits) { float d = t - h; if (d >= 0) { hitT = Math.min(hitT, d); if (d < 0.35f) kb += (1f - d / 0.35f) * 0.16f; } }
+        float hitT = 1e9f, kb = 0f; for (float h : hits) { float d = t - h; if (d >= 0) { hitT = Math.min(hitT, d); kb += 0.16f * (d < 0.07f ? sm(d / 0.07f) : (float) Math.exp(-(d - 0.07f) * 7f)); } }
         tint = hitT < 0.12f && !shatter ? 0.3f * (1f - hitT / 0.12f) : 0f; tintCol = 0xFFB0A0;
         crumble = type == 0 && since > 0 ? Math.min(1f, since / 0.8f) : 0f;
-        boolean walking = (t > SlayerScene.WALK && t < SlayerScene.WALK_END) || (boss == 2 && ar > 0 && ar < 0.8f);
+        float walking = sm((t - SlayerScene.WALK + 0.1f) / 0.3f) * (1f - sm((t - SlayerScene.WALK_END + 0.25f) / 0.35f));
+        if (boss == 2) walking = Math.max(walking, sm(ar / 0.15f) * (1f - sm((ar - 0.6f) / 0.25f)));
         float dx = FRONT.x - SPAWN.x, dz = FRONT.z - SPAWN.z, face = (float) Math.atan2(dx, dz), toCam = (float) Math.atan2(eye.x - x, eye.z - z);
-        float yawNow = t < SlayerScene.WALK ? toCam : t < SlayerScene.WALK_END ? face : lerp(face, toCam, sm((t - SlayerScene.WALK_END) / 0.4f));
-        float walk = walking ? (float) Math.sin(t * 9f) : 0f;
-        push(); M.translate(x, y - sink * 1.6f, z - kb).rotateY(yawNow);
+        float turnIn = sm((t - SlayerScene.WALK + 0.35f) / 0.4f), turnOut = sm((t - SlayerScene.WALK_END + 0.1f) / 0.55f);
+        float yawNow = alerp(alerp(toCam, face, turnIn), toCam, turnOut);
+        float walk = walking * (float) Math.sin((t - SlayerScene.WALK) * 8.5f);
+        push(); M.translate(x, y - sink * 1.6f + walking * 0.05f * Math.abs((float) Math.sin((t - SlayerScene.WALK) * 8.5f)), z - kb).rotateY(yawNow);
         if (fall > 0) M.rotateX(-fall * 1.45f);
         float sc = MOB_K[boss] / 16f; M.scale(sc);
         burstD = shatter ? since : -1f; partNo = 0; mobMode = true; rimCol = mixc(energy, 0xFFFFFF, 0.25f);

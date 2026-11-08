@@ -140,7 +140,7 @@ final class Slayer3D {
         RenderSystem.setProjectionMatrix(pb.getBuffer(f.proj), ProjectionType.PERSPECTIVE);
         RenderSystem.getModelViewStack().set(f.view);
         PoseStack ws = new PoseStack(), vs = new PoseStack(); vs.mulPose(new Matrix4f(f.view).invert());
-        put(c, 0, ws, OPQ, f.opq); put(c, -3, vs, TRANS, f.back); put(c, -2, ws, ADD, f.sky); put(c, 1, ws, TRANS, f.veil); put(c, 2, ws, ADD, f.add);
+        put(c, 0, ws, OPQ, f.ground); put(c, 0, ws, OPQ, f.opq); put(c, -3, vs, TRANS, f.back); put(c, -2, ws, ADD, f.sky); put(c, 1, ws, TRANS, f.veil); put(c, 2, ws, ADD, f.add);
     }
     static void put(SubmitNodeCollector c, int order, PoseStack ps, RenderType rt, Vox3D.Mesh m) {
         if (m.n == 0) return;
