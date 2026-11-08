@@ -2,6 +2,7 @@
 
 ## 0.9.0
 - **Stardrops:** FancyDrops is now Stardrops, space themed from top to bottom. Your settings and saved data move over on first launch.
+- **Slayer in 3D:** the meteor scene is drawn with real Minecraft models, the real mob, a floating island of real blocks and deep space behind it (stars, nebulae, a ringed planet, distant islands, haze), in a soft-edged window that never covers the screen.
 - **Slayer meteors:** the boss climbs out of its spawn (the Revenant from its grave) and walks toward you on a floating island. Nothing dropped: one meteor strikes and it crumbles. A drop: a barrage of meteors shatters it and your drop rises in a beam. RNG: a meteor shower climbs through the rarity colours, the sky holds its breath, and a golden meteor brings a pillar of gold.
 - **Slayer sounds:** five moments per animation (rise, approach, the strikes, the reveal, after), three sounds to choose from for each. Picks from the old set move to the same take of the new one.
 - **Text duration:** set how long the drop text stays (Animations > Text Changes > Layout).

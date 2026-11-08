@@ -149,6 +149,7 @@ final class Ritual {
         SlayerScene.paint(t, AnimationManager.animLen("slayer", type), Math.floorMod(kind - 12, 6), energy, rc, rng, nod, icx, icy, sz, isc, itemA, itemOffs, cyS, bg);
     }
 
+    static boolean threeD;                                                              // this frame's slayer scene is drawn in 3D (Slayer3D); the canvas only keeps the item's glow
     static boolean slayerMode;                                                          // set by the caller: paint() draws a slayer scene
     static float[] itemOffs = {0f};                                                     // canvas units from the middle to each drop (one entry per drop)
 
@@ -289,11 +290,19 @@ final class Ritual {
         int sx = Math.round((rnd((int) (t * 60)) - 0.5f) * 2f * shake * u), sy = Math.round((rnd((int) (t * 60) + 77) - 0.5f) * 2f * shake * u);
 
         boolean sceneOff = TextFx.textOnly || TextFx.itemOnly || TextFx.barsOnly;            // the Changes previews show only the part being edited
+        threeD = sl && !sceneOff && Slayer3D.on();
         if (!sceneOff) {
             // ---- the blur: the world dims and softens at the edges (RNG, switchable)
             if (blurOn && barSlide > 0.01f) {                                             // a soft shade only behind the stage, so the item stands out (the rest of the screen stays as it is)
                 int rr = Math.round(78 * csz * K * u), ccy = Math.round(icy * u);
                 NebulaTex.glow(g, W / 2f, ccy, rr * 1.15f, rr * 1.15f, Gfx.argb(Math.round(150 * barSlide), 0x04050E));          // one soft picture instead of hundreds of fills
+            }
+            if (threeD) {                                                                      // slayer in 3D: a soft-edged window of space round the stage, the crater under the item
+                float top = Math.max(0f, icy - 92 * ssz), bot = Math.min(CH, icy + 132 * ssz), hw = Math.min(CW / 2f, 185 * ssz), A = AnimationManager.animLen(a.group, type);
+                float craterY = 1f - 2f * ((icy + 36 * ssz) - top) / Math.max(1f, bot - top);
+                float al = sm(t / 0.35f) * (1f - sm((t - (A + hd - 0.7f)) / 0.7f)) * (1f - 0.35f * sm((p - 0.8f) / 0.8f));
+                Slayer3D.submit(g, Math.round((CW / 2f - hw) * u) + sx, Math.round(top * u) + sy, Math.round((CW / 2f + hw) * u) + sx, Math.round(bot * u) + sy,
+                        t, A + hd, Math.floorMod(kind - 12, 6), type, SL_ENERGY[Math.floorMod(kind - 12, 6)], al, craterY);
             }
             {
                 long nowMs = System.currentTimeMillis();
@@ -305,9 +314,9 @@ final class Ritual {
                     SceneTexture.upload(cv); upKey = id; upMs = nowMs;
                 }
             }
-            float[] cam = sl ? slayerCam(t, p, type) : null;                                 // slayer: a camera that moves like a film (dolly in, beats, punch, roll)
+            float[] cam = sl && !threeD ? slayerCam(t, p, type) : null;                                 // slayer: a camera that moves like a film (dolly in, beats, punch, roll)
             if (cam != null) { float pvx = W / 2f + sx + cam[2] * u, pvy = icy * u + sy + cam[3] * u; Gfx.push(g); Gfx.translate(g, pvx, pvy); Gfx.rotate(g, cam[1]); Gfx.scale(g, cam[0]); Gfx.translate(g, -pvx + cam[2] * u, -pvy + cam[3] * u); }
-            if (sl) SlayerScene.backdrop(g, (float) W / CW, sx, sy);                          // the patch of night sky: soft GPU glows under the pixel scene
+            if (sl && !threeD) SlayerScene.backdrop(g, (float) W / CW, sx, sy);                          // the patch of night sky: soft GPU glows under the pixel scene
             if (!SceneTexture.draw(g, cv, sx, sy, W, H, 1f)) { int cell = Math.max(1, Math.round((float) W / CW)); cv.flush((x0, y0, x1, y1, col) -> g.fill(x0 + sx, y0 + sy, x1 + sx, y1 + sy, col), 0, 0, cell, 1f); }
             if (rng && p > 0 && p < 0.45f) { float fl = (1f - p / 0.45f) * (1f - p / 0.45f); int rr = Math.round(46 * csz * K * u * (1f + 0.4f * p)); NebulaTex.glow(g, W / 2f + sx, icy * u + sy, rr * 1.1f, rr * 1.1f, Gfx.argb(Math.round(230 * fl), 0xFFFFFF)); }                  // the flash: a burst of light on the item, not the whole screen
             if (cam != null) Gfx.pop(g);

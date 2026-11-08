@@ -79,7 +79,7 @@ final class SlayerScene {
     static final float[][] HITS = {{3.0f}, {2.45f, 2.62f, 2.78f, 2.92f, 3.04f, 3.14f, 3.36f}, {2.25f, 2.42f, 2.57f, 2.70f, 2.81f, 2.90f, 3.38f}};
     static final float RISE = 0.45f, WALK = 1.45f, WALK_END = 2.5f;
     /** How long a meteor flies before it lands. */
-    private static float flight(int type, int i) { int n = HITS[type].length; return type == 0 ? 0.45f : i == n - 1 ? (type == 2 ? 0.55f : 0.42f) : 0.32f; }
+    static float flight(int type, int i) { int n = HITS[type].length; return type == 0 ? 0.45f : i == n - 1 ? (type == 2 ? 0.55f : 0.42f) : 0.32f; }
     /** The camera's kick from the impacts at time t: 0..~1. */
     static float shake(int type, float t) {
         float s = 0f; float[] h = HITS[type];
@@ -87,13 +87,17 @@ final class SlayerScene {
         return Math.min(1.2f, s);
     }
     /** The rarity each meteor of an RNG shower burns with (white, blue, purple, gold). */
-    private static final int[] TIER = {0xEAF2FF, 0x6AB8FF, 0x6AB8FF, 0xB56BFF, 0xB56BFF, 0xFF7AD9, 0xFFD24A};
+    static final int[] TIER = {0xEAF2FF, 0x6AB8FF, 0x6AB8FF, 0xB56BFF, 0xB56BFF, 0xFF7AD9, 0xFFD24A};
 
     // ------------------------------------------------------------------ the scene
     static void paint(float t, float A, int boss, int energy, int rc, boolean rng, boolean nod, float icx, float icy, float sz, float isc,
                       float itemA, float[] offs, float cy0, float bg) {
         final float O = AnimationManager.SL_PIVOT; float p = t - O;
         int type = nod ? 0 : rng ? 2 : 1; float[] hits = HITS[type]; float last = hits[hits.length - 1];
+        if (Ritual.threeD) {                                                                        // the 3D scene draws everything but the glow round the item
+            if (p >= 0 && !nod) for (float off : offs) { glowE(icx + off, cy0, 24 * sz * isc, 24 * sz * isc, rng ? 0xFFD24A : energy, 0.4f * itemA); glowE(icx + off, cy0, 10 * sz * isc, 10 * sz * isc, WHITE_, 0.22f * itemA); }
+            return;
+        }
         int hot = mixc(energy, WHITE_, 0.55f);
         float stage = bg * sm(t / 0.4f) * (1f - sm((t - (A - 0.6f)) / 0.6f));
         // the patch of night sky (GPU glows, drawn by Ritual under the pixels), stars and a moon in it

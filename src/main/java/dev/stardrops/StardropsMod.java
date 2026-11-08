@@ -78,6 +78,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
     @Override
     public void onInitializeClient() {
         StardropsConfig.load();
+        Slayer3D.register();                                       // the 3D slayer scene (falls back to the pixel scene if it cannot)
         Cosmetics.checkIcons();
         DataFiles.reloadAll();   // slayer drop tables
 
