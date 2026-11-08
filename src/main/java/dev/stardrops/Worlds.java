@@ -20,6 +20,11 @@ final class Worlds {
     /** A whole world at (x, y), radius r, alpha a (0..255). spin: how far its surface has turned (seconds). */
     static void draw(GuiGraphicsExtractor g, float x, float y, float r, int a, int seed, float spin) {
         if (a < 4 || r < 1) return;
+        int xi = (int) Math.floor(x), yi = (int) Math.floor(y);                                   // drawn on whole pixels, then slid by the fraction: it glides instead of stepping
+        Gfx.push(g); Gfx.translate(g, x - xi, y - yi);
+        try { draw0(g, xi, yi, r, a, seed, spin); } finally { Gfx.pop(g); }
+    }
+    private static void draw0(GuiGraphicsExtractor g, float x, float y, float r, int a, int seed, float spin) {
         int k = kind(seed);
         NebulaTex.glow(g, x, y, r * 2.1f, r * 2.1f, Gfx.argb(Math.round(a * 0.35f), HALO[k]));
         if (k == 0) ringHalf(g, x, y, r, a, true);

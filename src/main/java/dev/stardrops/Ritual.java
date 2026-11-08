@@ -146,7 +146,7 @@ final class Ritual {
         cv.clear();
         if (!slayerMode) return;                                                                // Stardrops: only Slayer has its new animation; the rest are being remade
         float cyS = itemY(t, p, gy, icy, sz, itemBob, bobAmp);
-        SlayerHole.paint(t, AnimationManager.animLen("slayer", type), Math.floorMod(kind - 12, 6), energy, rc, rng, nod, icx, icy, sz, isc, itemA, itemOffs, cyS, bg);
+        SlayerScene.paint(t, AnimationManager.animLen("slayer", type), Math.floorMod(kind - 12, 6), energy, rc, rng, nod, icx, icy, sz, isc, itemA, itemOffs, cyS, bg);
     }
 
     static boolean slayerMode;                                                          // set by the caller: paint() draws a slayer scene
@@ -244,22 +244,15 @@ final class Ritual {
 
     private static float textH(Anim a, Item it, float sc, StardropsConfig c) { return a.count() >= 2 ? TextFx.blockHeightN(a.items(), sc, c) : TextFx.blockHeight(it, sc, c); }
 
-    /** The slayer camera at time t: {zoom, roll (radians), shake x, shake y (canvas units)}, round the black hole. A slow dolly in while the
-     *  boss is pulled, a kick and a jolt on every heartbeat, a punch-in on the last gulp; a drop eases back to 1 as it appears (the item sits
-     *  on the pivot, so it stays lined up); no drops dives into the hole as it swallows the scene; RNG is blown back by the supernova. */
+    /** The slayer camera at time t: {zoom, roll (radians), shake x, shake y (canvas units)}. A slow dolly in while the boss walks toward you,
+     *  a shake on every meteor (SlayerScene.shake), and for RNG a held zoom before the golden one lands, then a kick back as it hits. */
     static float[] slayerCam(float t, float p, int type) {
-        float O = AnimationManager.SL_PIVOT, bt = SlayerHole.beat(t), pull = sm(t / O), settle = 1f - sm(p / 0.5f);
-        float z = 1f + 0.14f * pull * settle + 0.045f * bt;
-        float punch = p < 0 ? sm((p + 0.35f) / 0.35f) : 1f - eo(p / 0.45f);
-        float r = (0.045f * (float) Math.sin(t * 1.25f) + (rnd((int) (t * 30)) - 0.5f) * 0.02f * bt) * pull * settle;
-        float jx = (rnd((int) (t * 60)) - 0.5f) * 3.2f * bt, jy = (rnd((int) (t * 60) + 31) - 0.5f) * 3.2f * bt;
-        if (type == AnimationManager.NO_DROPS) {
-            float dive = sm((p - 0.15f) / 1.3f);
-            z += 0.12f * punch * (p < 0 ? 1f : 0f) + 1.1f * dive * dive; r += 0.35f * dive * dive;
-        } else if (type == AnimationManager.RNG) {
-            float blast = p > 0 ? sm(p / 0.12f) * (1f - sm((p - 0.12f) / 0.9f)) : 0f, rum = p > 0 ? Math.max(0f, 1f - p / 1.6f) : 0f;
-            z += 0.22f * punch - 0.08f * blast; jx += (rnd((int) (t * 60) + 7) - 0.5f) * 5f * rum; jy += (rnd((int) (t * 60) + 13) - 0.5f) * 5f * rum;
-        } else z += 0.16f * punch;
+        int ty = type == AnimationManager.NO_DROPS ? 0 : type == AnimationManager.RNG ? 2 : 1;
+        float settle = 1f - sm(p / 0.6f), walk = sm((t - SlayerScene.WALK) / (SlayerScene.WALK_END - SlayerScene.WALK)), sh = SlayerScene.shake(ty, t);
+        float z = 1f + 0.10f * walk * settle + 0.06f * sh;                                          // a slow push in as the boss walks up, a kick on every hit
+        if (ty == 2) z += 0.14f * sm((t - 2.95f) / 0.4f) * (1f - sm(p / 0.35f)) - 0.06f * (p > 0 ? sm(p / 0.1f) * (1f - sm((p - 0.1f) / 0.8f)) : 0f);   // RNG: lean in for the big one, blown back by it
+        float r = 0.018f * (float) Math.sin(t * 1.3f) * walk * settle + (rnd((int) (t * 30)) - 0.5f) * 0.04f * sh;
+        float jx = (rnd((int) (t * 60)) - 0.5f) * 7f * sh, jy = (rnd((int) (t * 60) + 31) - 0.5f) * 7f * sh;
         return new float[]{z, r, jx, jy};
     }
 
@@ -314,7 +307,7 @@ final class Ritual {
             }
             float[] cam = sl ? slayerCam(t, p, type) : null;                                 // slayer: a camera that moves like a film (dolly in, beats, punch, roll)
             if (cam != null) { float pvx = W / 2f + sx + cam[2] * u, pvy = icy * u + sy + cam[3] * u; Gfx.push(g); Gfx.translate(g, pvx, pvy); Gfx.rotate(g, cam[1]); Gfx.scale(g, cam[0]); Gfx.translate(g, -pvx + cam[2] * u, -pvy + cam[3] * u); }
-            if (sl) SlayerHole.backdrop(g, (float) W / CW, sx, sy);                          // the black hole's patch of space: soft GPU glows under the pixel scene
+            if (sl) SlayerScene.backdrop(g, (float) W / CW, sx, sy);                          // the patch of night sky: soft GPU glows under the pixel scene
             if (!SceneTexture.draw(g, cv, sx, sy, W, H, 1f)) { int cell = Math.max(1, Math.round((float) W / CW)); cv.flush((x0, y0, x1, y1, col) -> g.fill(x0 + sx, y0 + sy, x1 + sx, y1 + sy, col), 0, 0, cell, 1f); }
             if (rng && p > 0 && p < 0.45f) { float fl = (1f - p / 0.45f) * (1f - p / 0.45f); int rr = Math.round(46 * csz * K * u * (1f + 0.4f * p)); NebulaTex.glow(g, W / 2f + sx, icy * u + sy, rr * 1.1f, rr * 1.1f, Gfx.argb(Math.round(230 * fl), 0xFFFFFF)); }                  // the flash: a burst of light on the item, not the whole screen
             if (cam != null) Gfx.pop(g);
@@ -372,13 +365,13 @@ final class Ritual {
             }
         }
 
-        // ---- slayer, nothing dropped: the words where the hole was, once it has winked out
+        // ---- slayer, nothing dropped: the words over the crater, once the boss has crumbled
         if (sl && nod && !sceneOff) {
-            float na = sm((t - (O + 1.25f)) / 0.4f) * (1f - sm((t - (S - 0.6f)) / 0.5f));
+            float na = sm((t - (O + 0.55f)) / 0.4f) * (1f - sm((t - (S - 0.6f)) / 0.5f));
             if (na > 0.01f) {
                 int boss = slTheme(a), en = SL_ENERGY[boss];
                 float sc = Math.max(1f, Math.min(W, H) / 270f) * 1.1f;
-                String l1 = "Nothing dropped", l2 = SlayerHole.NAMES[boss];
+                String l1 = "Nothing dropped", l2 = SlayerScene.NAMES[boss];
                 int y0 = Math.round(icy * u - 6 * sc);
                 Gfx.push(g); Gfx.translate(g, W / 2f - font.width(l1) * sc / 2f, y0 + (1f - na) * 4); Gfx.scale(g, sc); Gfx.txt(g, font, l1, 0, 0, Gfx.argb(Math.round(240 * na), 0xFFFFFF), true); Gfx.pop(g);
                 float s2 = sc * 0.65f;

@@ -2227,7 +2227,7 @@ public class StardropsScreen extends Screen {
     private void resourcesPage() {
         Row bk = row(0, ":back:", "Home", "Back to the home page", Ui.ACCENT); bk.noSearch = true;
         bk.backGo = () -> openPage(-1, null, null); bk.backLabel = "Home"; rows.add(bk);
-        Row hero = row(0, ":res_heart:", "Resources used", "Stardrops stands on the work of these projects and communities. Thank you!", Ui.ACCENT);
+        Row hero = row(0, ":resources:", "Resources used", "Stardrops stands on the work of these projects and communities. Thank you!", Ui.ACCENT);
         hero.kind = HERO; hero.h = 84; hero.noSearch = true; rows.add(hero);
         rows.add(section("Credits"));
         String[][] res = {
@@ -2682,9 +2682,9 @@ public class StardropsScreen extends Screen {
 
     /** The Animation Editor of one group: pick the type, then its length and size (and the bars and blur of RNG). */
     private static final String[] SLAYER_BLURB = {
-        "Nothing dropped: a black hole in the boss's colour tears the boss apart pixel by pixel while the camera creeps in and jolts on every heartbeat, then dives into the hole as it swallows the scene; \"Nothing dropped\" stays as long as any drop's words.",
-        "A drop: the camera drifts in as the boss is pulled apart, punches in on the last gulp, and the hole fires its jets and spits your drop out of its heart. The words stay after it for as long as Text Changes says.",
-        "RNG: the boss is eaten, the hole collapses and goes supernova; the camera is blown back and shakes while a pulsar sweeps behind your drop. The bars close in and your HUD slides away until it ends."};
+        "Nothing dropped: the boss climbs out of its spawn (the Revenant from its grave) and walks toward you, then one meteor strikes it and it crumbles to ash; \"Nothing dropped\" stays as long as any drop's words.",
+        "A drop: the boss rises and walks toward you, a barrage of meteors pounds it until the last one shatters it, and your drop rises out of the crater in a beam. The words stay after it for as long as Text Changes says.",
+        "RNG: the boss rises and walks toward you, and a meteor shower climbs through the rarity colours like a gacha roll. The sky holds its breath, the golden one lands, and your drop rises in a pillar of gold while the bars close in."};
     private void animationEditor(Categories.Cat cat, Categories.Group gr, StardropsConfig c) {
         int ti = Math.max(0, Math.min(gr.types().size() - 1, edType));
         Categories.Type ty = gr.types().get(ti);
@@ -2725,19 +2725,19 @@ public class StardropsScreen extends Screen {
 
     private static final String[] SLOT_NAMES = {"Beat", "Burst", "Reveal", "Linger", "End"};
     private static final String[] SLOT_SUBS = {"Every beat of the opening", "The moment the animation pivots", "The item appears", "The glow after it", "The animation fades out"};
-    /** Slayer has one soundtrack scored to the whole animation; the other slots are not used. */
+    /** What each Slayer slot plays: the five moments of the meteor scene. */
     private static final Map<String, String[]> SL_SLOT = Map.ofEntries(
-        Map.entry("open", new String[]{"Open", "The black hole tears open"}),
-        Map.entry("pull", new String[]{"Pull", "The boss is pulled apart, heartbeats on every throb"}),
-        Map.entry("swallow", new String[]{"Swallow", "The hole swallows the scene"}),
-        Map.entry("wink", new String[]{"Wink", "The hole winks out"}),
+        Map.entry("rise", new String[]{"Rise", "The boss climbs out of its spawn"}),
+        Map.entry("approach", new String[]{"Approach", "It walks toward you"}),
+        Map.entry("strike", new String[]{"Strike", "One meteor falls and hits"}),
+        Map.entry("dust", new String[]{"Dust", "The boss crumbles to ash"}),
         Map.entry("none", new String[]{"Nothing", "Under \"Nothing dropped\""}),
-        Map.entry("spit", new String[]{"Spit", "The jets fire and spit your drop out"}),
-        Map.entry("reveal", new String[]{"Reveal", "Your drop appears"}),
-        Map.entry("close", new String[]{"Close", "The hole shrinks away"}),
-        Map.entry("nova", new String[]{"Supernova", "The hole collapses and explodes"}),
-        Map.entry("fanfare", new String[]{"Fanfare", "Your drop appears in the blast"}),
-        Map.entry("pulsar", new String[]{"Pulsar", "The pulsar sweeps behind your drop"}));
+        Map.entry("barrage", new String[]{"Barrage", "Meteors rain down, the last one shatters it"}),
+        Map.entry("reveal", new String[]{"Reveal", "Your drop rises in a beam"}),
+        Map.entry("close", new String[]{"Close", "The scene fades away"}),
+        Map.entry("shower", new String[]{"Shower", "A climbing meteor shower, a held breath, the big one"}),
+        Map.entry("jackpot", new String[]{"Jackpot", "Your drop appears in a golden pillar"}),
+        Map.entry("glow", new String[]{"Glow", "The glow around your drop"}));
     private static String slotName(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_NAMES[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[0]; }
     private static String slotSub(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_SUBS[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[1] + "  \u00B7  3 takes"; }
 

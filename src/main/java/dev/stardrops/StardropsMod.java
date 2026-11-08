@@ -38,6 +38,22 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
             if (java.nio.file.Files.isDirectory(oldDir) && !java.nio.file.Files.exists(newDir)) java.nio.file.Files.move(oldDir, newDir);
             if (java.nio.file.Files.isRegularFile(oldJson) && !java.nio.file.Files.exists(newJson)) java.nio.file.Files.move(oldJson, newJson);
         } catch (Throwable t) { System.err.println("[Stardrops] could not move the old FancyDrops settings: " + t); }
+        try {                                                                                      // the music keys you bound under the old name keep their keys
+            java.nio.file.Path opt = net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().resolve("options.txt");
+            if (!java.nio.file.Files.isRegularFile(opt)) return;
+            java.util.List<String> lines = new java.util.ArrayList<>(java.nio.file.Files.readAllLines(opt));
+            String oldK = "key_key." + "fancy" + "drops.", newK = "key_key.stardrops.";
+            java.util.Map<String, Integer> at = new java.util.HashMap<>();
+            for (int i = 0; i < lines.size(); i++) { String l = lines.get(i); if (l.startsWith(newK) && l.indexOf(':') > 0) at.put(l.substring(0, l.indexOf(':')), i); }
+            boolean changed = false;
+            for (String l : java.util.List.copyOf(lines)) {
+                int c = l.indexOf(':'); if (!l.startsWith(oldK) || c < 0 || l.endsWith(":key.keyboard.unknown")) continue;
+                String nk = newK + l.substring(oldK.length(), c); Integer i = at.get(nk);
+                if (i == null) { lines.add(nk + l.substring(c)); changed = true; }
+                else if (lines.get(i).endsWith(":key.keyboard.unknown")) { lines.set(i, nk + l.substring(c)); changed = true; }   // only fills a key the new name has not bound
+            }
+            if (changed) java.nio.file.Files.write(opt, lines);
+        } catch (Throwable t) { System.err.println("[Stardrops] could not move the old FancyDrops keys: " + t); }
     }
     /** The music keys (play/pause, next, previous): the Spotify page shows what they are bound to. */
     static final net.minecraft.client.KeyMapping[] MUSIC = new net.minecraft.client.KeyMapping[5];
@@ -80,14 +96,13 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
             if (openMenu) { openMenu = false; mc.setScreenAndShow(new StardropsScreen()); }
             if (openEdit) { openEdit = false; mc.setScreenAndShow(new HudEditScreen(null, HudEditScreen.ALL)); }   // /sd edit   // 26.2: setScreenAndShow
             if (reopenMenu && !AnimationManager.isPlaying()) { reopenMenu = false; mc.setScreenAndShow(new StardropsScreen()); }
-            DropListener.tick(mc);
-            AuraWorld.tick(mc);
-            Playtime.tick(mc);
-            Spotify.tick();
+            if (Flicker.on(Flicker.TICKS)) DropListener.tick(mc);
+            if (Flicker.on(Flicker.AURAS)) AuraWorld.tick(mc);
+            if (Flicker.on(Flicker.TICKS)) { Playtime.tick(mc); Spotify.tick(); }
             tabTick++;                                                                        // who wears what changes rarely: look every quarter second, every tick only while a name is moving
-            if ((Cosmetics.tabMoving && Cosmetics.tabOpen(mc)) || tabTick % 20 == 0) Cosmetics.tickTab(mc);   // a second apart unless the tab list is open
-            if (tabTick % 5 == 0) { Cosmetics.tickAura(mc); Achievements.tick(mc); }
-            Cosmetics.tickChat(mc);
+            if (Flicker.on(Flicker.NAMES) && ((Cosmetics.tabMoving && Cosmetics.tabOpen(mc)) || tabTick % 20 == 0)) Cosmetics.tickTab(mc);   // a second apart unless the tab list is open
+            if (tabTick % 5 == 0 && Flicker.on(Flicker.TICKS)) { Cosmetics.tickAura(mc); Achievements.tick(mc); }
+            if (Flicker.on(Flicker.NAMES)) Cosmetics.tickChat(mc);
         });
 
         ClientReceiveMessageEvents.MODIFY_GAME.register((message, overlay) -> overlay ? message : Cosmetics.apply(message));
@@ -101,7 +116,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
 
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("stardrops", "drop_animation"),
-                (graphics, deltaTracker) -> AnimationManager.render(graphics));
+                (graphics, deltaTracker) -> { if (Flicker.on(Flicker.HUD)) AnimationManager.render(graphics); });
 
         try {                                                                                  // auras are real particles in the world: hidden by blocks and bodies, always on the player
             net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_EXTRACTION.register(AuraFx::extract);
@@ -109,7 +124,8 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("stardrops", "lyrics"),
-                (graphics, deltaTracker) -> { AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false));
+                (graphics, deltaTracker) -> { if (Flicker.on(Flicker.AURAS)) AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false));
+                    if (!Flicker.on(Flicker.HUD)) return;
                     float away = Math.min(1f, slideOffset(true) / 63f);                                      // a big scene: our own HUD slides up out of the way with the hotbar going down
                     if (away < 0.99f) { boolean mv = away > 0.01f; if (mv) { Gfx.push(graphics); Gfx.translate(graphics, 0, -away * 90f); }
                         CosmosHud.render(graphics); AmbienceHud.render(graphics); LyricsHud.hud(graphics); NowPlayingHud.hud(graphics);
@@ -118,11 +134,11 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
 
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("stardrops", "auras"),
-                (graphics, deltaTracker) -> AuraFx.render(graphics));
+                (graphics, deltaTracker) -> { if (Flicker.on(Flicker.AURAS)) AuraFx.render(graphics); });
 
         try {                                                                                  // moving name effects: refresh the tab list every frame, just before it is drawn
             HudElementRegistry.attachElementBefore(Identifier.withDefaultNamespace("player_list"), Identifier.fromNamespaceAndPath("stardrops", "tab_fx"),
-                    (graphics, deltaTracker) -> Cosmetics.tickTabFrame(Minecraft.getInstance()));
+                    (graphics, deltaTracker) -> { if (Flicker.on(Flicker.NAMES)) Cosmetics.tickTabFrame(Minecraft.getInstance()); });
         } catch (Throwable t) { System.err.println("[Stardrops] smooth tab effects unavailable: " + t); }
 
         // While a scene plays, the bottom of the screen slides away: the hearts and bars with the hotbar. When it ends the hearts slide back first, then the hotbar.
@@ -131,6 +147,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
             final float mult = el.equals("overlay_message") ? 1.7f : 1f;       // the words above the hearts have further to go
             try {
                 HudElementRegistry.replaceElement(Identifier.withDefaultNamespace(el), original -> (graphics, deltaTracker) -> {
+                    if (!Flicker.on(Flicker.SLIDE)) { callHud(original, graphics, deltaTracker); return; }
                     float off = slideOffset(hotbar) * mult;
                     if (off >= 63f * mult) return;                                                    // fully away: nothing to draw
                     if (off > 0.05f) { Gfx.push(graphics); Gfx.translate(graphics, 0, off); }
@@ -204,6 +221,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
             .then(ClientCommands.literal("help").executes(ctx -> help(ctx.getSource()))
                 .then(ClientCommands.literal("simulate").executes(ctx -> helpSimulate(ctx.getSource()))))
             .then(ClientCommands.literal("edit").executes(ctx -> { openEdit = true; return Command.SINGLE_SUCCESS; }))   // move every HUD at once
+            .then(ClientCommands.literal("flicker").executes(ctx -> { ctx.getSource().sendFeedback(Chat.msg(Flicker.next())); return Command.SINGLE_SUCCESS; }))   // test: parts off one at a time
             .then(ClientCommands.literal("mute").executes(ctx -> {                        // every sound on or off
                 StardropsConfig c = StardropsConfig.get(); c.sound = !c.sound; StardropsConfig.save();
                 say(ctx.getSource(), c.sound ? "Sounds on (" + c.volume + "%)" : "Sounds muted");

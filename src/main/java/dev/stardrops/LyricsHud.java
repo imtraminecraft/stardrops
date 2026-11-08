@@ -161,14 +161,14 @@ final class LyricsHud {
             for (String w : words(row)) {
                 float ww = f.width(w) * kk;
                 if (!w.isEmpty()) {
-                    float u = (t - wi * 0.05f) / 0.42f, mx = x + ww / 2f, my = y0 + 4 * kk;
+                    float lift = lift(li, wi, kk), u = (t - wi * 0.05f) / 0.42f, mx = x + ww / 2f, my = y0 + lift + 4 * kk;
                     if (u > 0f && u < 1f) {                                                       // the star it is born from
                         float fl = (float) Math.sin(Math.PI * Math.min(1f, u * 1.4f)), rr = (3 + 5 * fl) * kk;
                         NebulaTex.glow(g, mx, my, rr * 1.6f, rr * 1.6f, Gfx.argb(Math.round(a * 200 * fl), 0xFFFFFF));
                         NebulaTex.glow(g, mx, my, rr * 3.2f, 0.7f * kk, Gfx.argb(Math.round(a * 160 * fl), 0xDDE6FF)); NebulaTex.glow(g, mx, my, 0.7f * kk, rr * 2.2f, Gfx.argb(Math.round(a * 160 * fl), 0xDDE6FF));
                     }
                     float v = Math.max(0f, Math.min(1f, (u - 0.25f) / 0.75f));
-                    if (v > 0f) outlined(g, f, w, mx, y0 + (1f - ease(v)) * 1.5f * kk, kk * (0.35f + 0.65f * ease(v)), a * Math.min(1f, v * 1.6f), STARLIGHT);
+                    if (v > 0f) outlined(g, f, w, mx, y0 + lift + (1f - ease(v)) * 1.5f * kk, kk * (0.35f + 0.65f * ease(v)), a * Math.min(1f, v * 1.6f), STARLIGHT);
                     wi++;
                 }
                 x += ww + f.width(" ") * kk;
@@ -195,10 +195,12 @@ final class LyricsHud {
             for (String w : words(row)) {
                 float ww = f.width(w) * kk;
                 if (!w.isEmpty()) {
-                    int i = stars.size(); float sy = y0 - 4 * kk - (rnd(li * 13 + i) * 3f) * kk;       // the stars sit at slightly different heights, like a real chart
+                    int i = stars.size(); float lift = lift(li, i, kk);                                 // each word at its own height, swaying a little, like stars on a chart
+                    float sy = y0 + lift - 4 * kk - (rnd(li * 13 + i) * 2f) * kk;
                     stars.add(new float[]{x + ww / 2f, sy, i, rowIx});
                     float v = Math.max(0f, Math.min(1f, (t - 0.1f - i * 0.06f) / 0.35f));
-                    outlined(g, f, w, x + ww / 2f, y0, kk, a * v, Ritual.mixc(STARLIGHT, acc, 0.15f));
+                    float pop = v >= 1f ? 1f : 0.55f + 0.45f * eob(v);                                   // it pops in a touch big and settles
+                    outlined(g, f, w, x + ww / 2f, y0 + lift - (1f - ease(v)) * 3 * kk, kk * pop, a * Math.min(1f, v * 1.5f), Ritual.mixc(STARLIGHT, acc, 0.15f));
                 }
                 x += ww + f.width(" ") * kk;
             }
@@ -220,6 +222,13 @@ final class LyricsHud {
             g.fill(Math.round(st[0]) - 1, Math.round(st[1]) - 1, Math.round(st[0]) + 1, Math.round(st[1]) + 1, Gfx.argb(Math.round(a * 255 * on), 0xFFFFFF));
         }
     }
+    /** How far a word sits above or below the line (gui units): its own fixed height plus a slow sway, so a line reads like a melody. */
+    private static float lift(int li, int i, float kk) {
+        float base = (rnd(li * 7 + i * 3 + 1) * 2f - 1f) * 2.4f;
+        float sway = (float) Math.sin(System.currentTimeMillis() / 700.0 + i * 0.9 + li) * 0.9f;
+        return (base + sway) * kk;
+    }
+    private static float eob(float x) { float c1 = 1.70158f, c3 = c1 + 1f; return 1f + c3 * (float) Math.pow(x - 1, 3) + c1 * (float) Math.pow(x - 1, 2); }
     private static float rnd(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }
     /** A word or letter with a dark outline, so it reads on snow, sky and lava alike. mx: its middle. */
     private static void outlined(GuiGraphicsExtractor g, Font f, String w, float mx, float y, float k, float a, int rgb) {
@@ -334,7 +343,7 @@ final class LyricsHud {
             NebulaTex.glow(g, cx, cy, 40 + 80 * q, 24 + 40 * q, Gfx.argb(Math.round(230 * fl * a), 0xFFFFFF));
             int n = 120;
             for (int i = 0; i < n; i++) { double an = Math.PI * 2 * i / n; float x = cx + (float) Math.cos(an) * r, y = cy + (float) Math.sin(an) * r * 0.42f;
-                g.fill(Math.round(x), Math.round(y), Math.round(x) + 1, Math.round(y) + 1, Gfx.argb(Math.round(200 * (1f - q) * a), i % 2 == 0 ? lite : acc)); }
+                NowPlayingHud.dot(g, x, y, Gfx.argb(Math.round(200 * (1f - q) * a), i % 2 == 0 ? lite : acc)); }
         }
         if (u < 0.65f) return;
         float t0 = u - 0.65f;                                                                                  // time since arrival

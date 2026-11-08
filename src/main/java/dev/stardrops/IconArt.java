@@ -1042,16 +1042,20 @@ final class IconArt {
                 outline();
                 glint(bx + 4, 5, 1, 0xFFFFFF, 1f);
             }
-            case "stardrops" -> {                                                           // the logo: a star falling as a drop, a violet droplet with a gold star inside, a trail of sparkles above
-                ball(8, 10, 5.2f, 0x5A3AC8); tri(8, 1.5f, 3.4f, 8.5f, 12.6f, 8.5f, 0x5A3AC8);              // the drop
-                ball(7.4f, 9.4f, 4.4f, 0x8A62F0); tri(8, 3.2f, 4.6f, 8.6f, 11.4f, 8.6f, 0x8A62F0);
-                pxa(5, 7, 0xE8DCFF, 0.9f); pxa(5, 8, 0xE8DCFF, 0.6f); pxa(6, 6, 0xE8DCFF, 0.5f);            // its shine
-                float k = 1f + 0.12f * t; float[] sx = new float[10], sy = new float[10];                   // the star inside, breathing
-                for (int q = 0; q < 10; q++) { double an = -Math.PI / 2 + q * Math.PI / 5; float r = (q % 2 == 0 ? 3.3f : 1.4f) * k; sx[q] = 8 + (float) Math.cos(an) * r; sy[q] = 10.2f + (float) Math.sin(an) * r; }
-                poly(sx, sy, 0xFFD25A); px(8, 9, 0xFFF6C8);
+            case "stardrops" -> {                                                           // the logo: a shooting star diving down-left, a gold star with a white heart, a pink-to-violet tail, sparks shed behind it
+                for (int k = 0; k < 9; k++) {                                                    // the tail, thick near the star and thinning out
+                    float u = k / 8f; float tx = 8.2f + u * 6.6f, ty = 7.8f - u * 6.6f; int col = mix(0xFF8AD8, 0x6A4AE8, u);
+                    ball(tx, ty, 1.7f * (1f - u) + 0.5f, col);
+                }
+                float k2 = 1f + 0.1f * t; float[] sx = new float[10], sy = new float[10];
+                for (int q = 0; q < 10; q++) { double an = -Math.PI / 2 - 0.25 + q * Math.PI / 5; float r = (q % 2 == 0 ? 6.2f : 2.4f) * k2; sx[q] = 6.5f + (float) Math.cos(an) * r; sy[q] = 9.5f + (float) Math.sin(an) * r; }
+                poly(sx, sy, 0xFFC830);
+                float[] ix = new float[10], iy = new float[10];
+                for (int q = 0; q < 10; q++) { ix[q] = 6.5f + (sx[q] - 6.5f) * 0.45f; iy[q] = 9.5f + (sy[q] - 9.5f) * 0.45f; }
+                poly(ix, iy, 0xFFE98A); px(6, 9, 0xFFFFFF);
                 outline();
-                for (int q = 0; q < 3; q++) { float v = (f + q / 3f) % 1f; pxa(12 + q, Math.round(1 + v * 3) - q, 0xFFE9A0, 1f - v); }
-                glint(13, 2, 1, 0xFFFFFF, t);
+                for (int q = 0; q < 3; q++) { float v = (f + q / 3f) % 1f; pxa(Math.round(9 + q * 2 + v * 2), Math.round(2 + q * 2 - v * 2), q == 1 ? 0xFFE9A0 : 0xFFFFFF, 1f - v); }
+                pxa(6, 9, 0xFFFFFF, 0.5f + 0.5f * t);
             }
             case "discord" -> {                                                              // community: a space crew radio, a little handheld with its antenna blinking and voices (two bubbles) coming out
                 bev(3, 6, 7, 9, 0x5865B8); rect(4, 7, 5, 3, 0x1A1E48); pxa(5, 8, 0x8AA0FF, 0.9f); pxa(7, 8, 0x8AA0FF, 0.6f);

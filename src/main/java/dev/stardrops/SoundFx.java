@@ -34,17 +34,17 @@ public final class SoundFx {
 
     private static final Map<String, Fx> ALL = new LinkedHashMap<>();
     /** The Slayer sound families (one per moment) and the names of their three takes. */
-    static final String[] SL_FAM = {"open", "pull", "swallow", "wink", "none", "spit", "reveal", "close", "nova", "fanfare", "pulsar"};
+    static final String[] SL_FAM = {"rise", "approach", "strike", "dust", "none", "barrage", "reveal", "close", "shower", "jackpot", "glow"};
     private static final String[][] SL_TAKES = {
-        {"Rift", "Gravity well", "Event horizon"}, {"Heartbeat", "Spaghettify", "Tidal choir"}, {"Implode", "Gulp", "Vanish"},
-        {"Wink", "Pop", "Blink"}, {"Minor notes", "Falling sine", "Static"}, {"Thwup and jets", "Ejection", "Jet stream"},
-        {"Major chord", "Glass bells", "Starlight"}, {"Sigh", "Fading chord", "Soft bell"}, {"Supernova", "Shockwave", "Collapse"},
-        {"Choir", "Cosmic fanfare", "Glock run"}, {"Pulsar groove", "Beacon", "Quasar"}};
-    private static final SoundEvent[] SL_VAN = {SoundEvents.BEACON_ACTIVATE, SoundEvents.BEACON_AMBIENT, SoundEvents.BEACON_DEACTIVATE, SoundEvents.AMETHYST_BLOCK_HIT,
-        SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.FIREWORK_ROCKET_LAUNCH, SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.AMETHYST_BLOCK_RESONATE,
-        SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.BEACON_POWER_SELECT, SoundEvents.BEACON_AMBIENT};
+        {"Grave", "Summon", "Portal"}, {"Stomp", "Drumline", "Heartbeat"}, {"Thunderbolt", "Meteor", "Falling star"},
+        {"Ash", "Crumble", "Wind"}, {"Minor notes", "Falling sine", "Static"}, {"Bombardment", "Rain of fire", "Arcade"},
+        {"Major chord", "Glass bells", "Starlight"}, {"Sigh", "Fading chord", "Soft bell"}, {"Gacha roll", "Star shower", "Slot machine"},
+        {"Jackpot", "Choir", "Level up"}, {"Warm glow", "Halo", "Music box"}};
+    private static final SoundEvent[] SL_VAN = {SoundEvents.ZOMBIE_AMBIENT, SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.SAND_BREAK,
+        SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.AMETHYST_BLOCK_RESONATE,
+        SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundEvents.BEACON_AMBIENT};
     /** Which family each of the five slots of a Slayer animation plays: No Drops, a drop, RNG. */
-    private static final String[][] SL_SLOTS = {{"open", "pull", "swallow", "wink", "none"}, {"open", "pull", "spit", "reveal", "close"}, {"open", "pull", "nova", "fanfare", "pulsar"}};
+    private static final String[][] SL_SLOTS = {{"rise", "approach", "strike", "dust", "none"}, {"rise", "approach", "barrage", "reveal", "close"}, {"rise", "approach", "shower", "jackpot", "glow"}};
     static String slayerFamily(String scene, int slot) { return SL_SLOTS[scene.endsWith("nodrops") ? 0 : scene.endsWith("rng") ? 2 : 1][slot]; }
     /** The sounds offered for one slot: for a Slayer slot in the Stardrops set, its three takes; otherwise every sound of the set. */
     public static List<String> slotChoices(String scene, String slot) {
@@ -144,7 +144,7 @@ public final class SoundFx {
             d0.add(new String[]{g + ".normal", NONE, NONE, NONE, NONE, NONE});
             d0.add(new String[]{g + ".rng", NONE, NONE, NONE, NONE, NONE});
         }
-        d0.removeIf(r -> r[0].startsWith("slayer."));                         // Slayer has its own black-hole set
+        d0.removeIf(r -> r[0].startsWith("slayer."));                         // Slayer has its own meteor set
         for (String ty : new String[]{"nodrops", "normal", "rng"}) {                               // the first take of each moment
             String[] r = new String[6]; r[0] = "slayer." + ty;
             for (int k = 0; k < 5; k++) r[k + 1] = "slr_" + slayerFamily(r[0], k) + "_a";
@@ -184,6 +184,11 @@ public final class SoundFx {
         String key = scene + "." + slot;
         boolean custom = StardropsConfig.get().customSounds;
         String v = picks().get(key);
+        int k = java.util.Arrays.asList(SLOTS).indexOf(slot);
+        if (v != null && custom && scene.startsWith("slayer") && k >= 0 && v.startsWith("slr_")) {   // a pick from an older Slayer set: the same take of this slot's new family
+            String fam = slayerFamily(scene, k);
+            if (!v.startsWith("slr_" + fam + "_")) { v = "slr_" + fam + "_" + v.charAt(v.length() - 1); picks().put(key, v); }
+        }
         if (v != null && (v.equals(NONE) || (ALL.containsKey(v) && isMc(v) != custom))) return v;
         return (custom ? DEFAULTS : MC_DEFAULTS).get(key);
     }

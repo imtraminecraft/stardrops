@@ -82,7 +82,7 @@ final class NowPlayingHud {
             float sp = 3f + 9f * hash(i * 7), x = 3 + ((hash(i * 13) * (w - 6) - drift * sp * (1f + warp * 30f)) % (w - 6) + (w - 6)) % (w - 6), y = 3 + hash(i * 29) * (h - 6);
             float tw = 0.4f + 0.6f * Math.abs((float) Math.sin(drift * (1 + hash(i)) + i)), len = 1 + warp * 18 * (0.5f + hash(i * 3));
             len = Math.min(len, w - 3 - x); if (len < 1) continue;
-            g.fill(Math.round(x), Math.round(y), Math.round(x + len), Math.round(y) + 1, Gfx.argb(Math.round(a * (0.25f + 0.35f * tw + 0.3f * warp)), i % 6 == 0 ? 0xD8C8FF : STAR));
+            Gfx.push(g); Gfx.translate(g, x, y); g.pose().scale(len, 1f); g.fill(0, 0, 1, 1, Gfx.argb(Math.round(a * (0.25f + 0.35f * tw + 0.3f * warp)), i % 6 == 0 ? 0xD8C8FF : STAR)); Gfx.pop(g);
         }
         g.fill(4, 1, w - 4, 2, Gfx.argb(Math.round(26 * e), 0xFFFFFF));
         // the cover, with a violet rim and a moon circling it (behind it on the far side of its orbit)
@@ -136,8 +136,8 @@ final class NowPlayingHud {
         int N = 90;
         for (int i = 0; i <= N; i++) {
             float u = i / (float) N, px = bz(sx, cxp, ex, u), py = bz(sy, cyp, ey, u);
-            if (u > f + 0.03f) { if (i % 3 == 0) g.fill(Math.round(px), Math.round(py), Math.round(px) + 1, Math.round(py) + 1, Gfx.argb(Math.round(a * 0.4f * show), 0xB9B6E6)); }
-            else if (u >= tail && u <= f) { float q = (f - u) / Math.max(0.001f, f - tail); g.fill(Math.round(px), Math.round(py), Math.round(px) + 1, Math.round(py) + 1, Gfx.argb(Math.round(a * 0.85f * (1f - q) * show * (1f - orbit)), Ritual.mixc(PINK, V, q))); }
+            if (u > f + 0.03f) { if (i % 3 == 0) dot(g, px, py, Gfx.argb(Math.round(a * 0.4f * show), 0xB9B6E6)); }
+            else if (u >= tail && u <= f) { float q = (f - u) / Math.max(0.001f, f - tail); dot(g, px, py, Gfx.argb(Math.round(a * 0.85f * (1f - q) * show * (1f - orbit)), Ritual.mixc(PINK, V, q))); }
         }
         // the worlds (faded at the card's edges as they pan in and out)
         Worlds.draw(g, ox, yb, r0, Math.round(a * edge(ox, tx, w)), seed(prev2Id), spin);
@@ -188,6 +188,8 @@ final class NowPlayingHud {
         Gfx.push(g); Gfx.translate(g, x, y); if (ang != 0f) Gfx.rotate(g, ang); rocket(g, 0, 0, a, now, firing, boost); Gfx.pop(g);
     }
     private static void rout1(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { g.fill(x + 1, y, x + w - 1, y + 1, c); g.fill(x + 1, y + h - 1, x + w - 1, y + h, c); g.fill(x, y + 1, x + 1, y + h - 1, c); g.fill(x + w - 1, y + 1, x + w, y + h - 1, c); }
+    /** One pixel at a fractional place: it slides smoothly instead of hopping from pixel to pixel. */
+    static void dot(GuiGraphicsExtractor g, float x, float y, int c) { Gfx.push(g); Gfx.translate(g, x - 0.5f, y - 0.5f); g.fill(0, 0, 1, 1, c); Gfx.pop(g); }
     private static float hash(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }
     private static float rec = 0f;
     static void disc(GuiGraphicsExtractor g, float cx, float cy, float r, int c) {

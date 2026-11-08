@@ -79,6 +79,7 @@ final class AuraFx {
     private static boolean warned;
     /** End of the game's extraction step: style the name tags about to be drawn. */
     static void extract(net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext ctx) {
+        if (!Flicker.on(Flicker.NAMES)) return;
         try { styleNameTags(ctx.levelState()); }
         catch (Throwable t) { if (!warned) { warned = true; System.err.println("[Stardrops] name tags failed: " + t); } }
     }
