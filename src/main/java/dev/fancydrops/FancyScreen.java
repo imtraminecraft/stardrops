@@ -273,7 +273,7 @@ public class FancyScreen extends Screen {
         boolean arrow, open;
         EditBox field; String fieldBtn; int btnX0, btnX1; boolean phBtns;
         int dropRank;                  // a Drop Library row: the drop's rank (2 and up plays RNG unless you pick Normal)
-        boolean dropCols;              // section header that labels the Animation / Preview / Chat Alert columns
+        boolean dropCols, dropPrev;              // section header that labels the Animation / Preview / Chat Alert columns
         int cell;                      // > 0: every control sits centred in its own column of this width
         boolean pVert; String[] pLabels, pIcons, pSubs; int pTh = 27, pColsForce, pTop = 22; int[] pColors; boolean[] pWip; int pCols; IntSupplier pSel; IntConsumer pSet; java.util.function.IntPredicate pOn; boolean[] pLock; String[] pTips, pFx, pIds, pSetId; int[] pRar, pBg; Runnable[] pAct; boolean pFontTiles;      // PICKER rows: the tiles (pOn: which are switched on, pLock: which are locked)
         boolean locked;               // greyed out, not clickable (coming soon)
@@ -2346,10 +2346,11 @@ public class FancyScreen extends Screen {
     private Row catTiles() {
         int n = Categories.ALL.size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n]; boolean[] wp = new boolean[n];
         for (int i = 0; i < n; i++) {
-            Categories.Cat k = Categories.ALL.get(i); lb[i] = k.name(); ic[i] = k.icon(); co[i] = k.color(); wp[i] = locked(k);     // WIP until its new animation is out
+            Categories.Cat k = Categories.ALL.get(i); lb[i] = k.name(); ic[i] = k.icon(); co[i] = k.color(); wp[i] = tab != Tab.DROPS && locked(k);     // Animations / Sounds: WIP until its new animation is out
+            sb[i] = k.wip() ? "Soon\u2122" : tileCount(k);
         }
-        Row r = picker("", "", lb, null, ic, co, wp, 4, () -> -1, i -> openPage(i, null, null));        // just the name: no counts under it
-        r.pVert = true; r.pTh = 38; return fit(r);
+        Row r = picker("", "", lb, sb, ic, co, wp, 4, () -> -1, i -> openPage(i, null, null));
+        r.pVert = true; r.pTh = 44; return fit(r);
     }
 
     // ---- animation state buttons
@@ -2575,7 +2576,7 @@ public class FancyScreen extends Screen {
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n]; int[] co = new int[n]; String[] ic = new String[n]; boolean[] wp = new boolean[n];
         for (int i = 0; i < n; i++) {
             Categories.Group g = cat.groups().get(i); int t = 0; for (DropData.Source s : cat.sources(g.id())) t += s.drops.size();
-            lb[i] = g.name(); sb[i] = null; co[i] = g.color(); ic[i] = g.icon(); wp[i] = g.wip() || !g.id().equals("slayer");
+            lb[i] = g.name(); sb[i] = g.wip() ? "Soon\u2122" : t + " drops"; co[i] = g.color(); ic[i] = g.icon(); wp[i] = g.wip();
         }
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
         boolean anyLive = false; for (Categories.Group g : cat.groups()) anyLive |= g.id().equals("slayer");
@@ -2605,11 +2606,12 @@ public class FancyScreen extends Screen {
         String nm = srcName(s);
         FancyConfig.SourceCfg sc = c.source(s.id);
         if (!single) { rows.add(backRow(grp.name(), "Back to all the " + grp.name(), grp.color(), () -> openPage(curSub(), grp.id(), grp.name()))); rows.add(hero(srcIcon(s), nm, s.drops.size() + " drops", s.color())); }
-        Row cols = section(""); cols.dropCols = true; cols.h = 14; rows.add(cols);
+        boolean live = isSlayerSrc(s);                                                        // only animated pages get a Preview column
+        Row cols = section(""); cols.dropCols = true; cols.dropPrev = live; cols.h = 14; rows.add(cols);
         AnimAll aa = new AnimAll(); List<FancyConfig.DropCfg> all = new ArrayList<>();
         for (DropData.Drop d : s.drops) { FancyConfig.DropCfg dc = c.drop(s.id, d.name); FancyConfig.initDrop(dc, Math.max(0, d.rank)); aa.cfgs.add(dc); all.add(dc); }
         Row mr = row(0, ":dropped:", "All drops", "Set every drop of this page at once", s.color()); mr.cell = CELL;
-        mr.ctls.add(aa); mr.ctls.add(new Gap());
+        if (live) mr.ctls.add(new Gap()); mr.ctls.add(aa);
         mr.ctls.add(tog(() -> { for (FancyConfig.DropCfg d : all) if (!d.announce) return false; return !all.isEmpty(); }, v -> { for (FancyConfig.DropCfg d : all) d.announce = v; FancyConfig.save(); }, 0xFFD98A1F));
         rows.add(mr);
         for (DropData.Drop d : s.drops) rows.add(dropRow(s, d, c));
@@ -2617,15 +2619,16 @@ public class FancyScreen extends Screen {
         if (!grp.id().equals("slayer")) animWip(nm);
     }
 
-    /** One drop: its animation, a Preview button and its chat alert. */
+    private static boolean isSlayerSrc(DropData.Source s) { return SlayerData.byId(s.id) == s; }
+    /** One drop: a Preview button (animated pages only), its animation and its chat alert. */
     private Row dropRow(DropData.Source s, DropData.Drop d, FancyConfig c) {
         FancyConfig.DropCfg dc = c.drop(s.id, d.name);
         FancyConfig.initDrop(dc, Math.max(0, d.rank));
         Row dr = row(0, d.icon, d.name, d.chance.isEmpty() ? "chance unknown" : d.chance, s.color());
         dr.iconId = s == TreasureData.SOURCE && !TreasureData.headArt(d.id) ? null : d.id; dr.subColor = d.chance.isEmpty() ? Ui.DIM : Ui.odds(d.odds);
         dr.cell = CELL; dr.dcfg = dc; dr.dropRank = Math.max(0, d.rank);
+        if (isSlayerSrc(s)) dr.ctls.add(new Btn("▶", GREEN, () -> play(() -> DropListener.playDrop(s, d))));      // Preview: only where there is an animation to show
         dr.ctls.add(new AnimBtn(dc));
-        dr.ctls.add(new Btn("▶", GREEN, () -> play(() -> DropListener.playDrop(s, d))));
         dr.ctls.add(tog(() -> dc.announce, v -> { dc.announce = v; FancyConfig.save(); }, 0xFFD98A1F));
         return dr;
     }
@@ -2673,7 +2676,7 @@ public class FancyScreen extends Screen {
     private void groupTiles(Categories.Cat cat, String hint) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb() + " " + hint, cat.color()));
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n]; boolean[] wp = new boolean[n];
-        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); boolean lock = g.wip() || !g.id().equals("slayer"); lb[i] = g.name(); sb[i] = null; ic[i] = g.icon(); co[i] = g.color(); wp[i] = lock; }   // being remade for Stardrops: only Slayer is open
+        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); boolean lock = g.wip() || !g.id().equals("slayer"); lb[i] = g.name(); sb[i] = g.types().size() + (tab == Tab.SOUNDS ? " animations \u00B7 " + g.types().size() * SoundFx.SLOTS.length + " sounds" : " animations"); ic[i] = g.icon(); co[i] = g.color(); wp[i] = lock; }   // being remade for Stardrops: only Slayer is open
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
     }
 
@@ -3681,7 +3684,7 @@ public class FancyScreen extends Screen {
         if (r.dropCols) {
             // labels over the Preview / Animation / Chat Alert columns of the drop rows below: same right-to-left columns, each CELL wide
             int edge = cx + cw - 8;
-            String[] labels = {"Chat Alert", "Preview", "Animation"};
+            String[] labels = r.dropPrev ? new String[]{"Chat Alert", "Animation", "Preview"} : new String[]{"Chat Alert", "Animation"};
             for (String label : labels) {
                 Gfx.textCentered(g, font, label, edge - CELL / 2, r.y + 3, Ui.DIM);
                 edge -= CELL;
