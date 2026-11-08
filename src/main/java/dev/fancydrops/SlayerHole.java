@@ -42,30 +42,50 @@ final class SlayerHole {
 
     // ------------------------------------------------------------------ the bosses (front or side view, Minecraft style)
     private static final String[][] SPR = {
-        {"..gGGGGGGg..", "..GGGGGGGG..", "..GRRGGRRG..", "..GGGggGGG..", "..GgGGGGgG..", "..GgEggEgG..", "..GGGGGGGG..", "..gGGGGGGg..",
-         "GGAAAAAAAAGG", "GGAaAAAAaAGG", "GgAAAAAAAAgG", "GGAAaAAaAAGG", "GgAAAAAAAAgG", "GGAAAAAAAAGG", "gGaaaaaaaagG",
-         "..BBBBBBBB..", "..BBB..BBB..", "..BBB..BBB..", "..BBB..BBB..", "..BBB..BBB..", "..KKK..KKK..", "..KKK..KKK.."},
-        {"L..............L", ".L....SSSS....L.", "..L..SSSSSS..L..", "LLLLSRRSSRRSLLLL", "...LSSSSSSSSL...", "LLLLSSrSSrSSLLLL", "..L.SSSSSSSS.L..", ".L...SSSSSS...L.", "L.....SSSS.....L"},
-        {"..WW..............", ".WWWW.............", "WWEWWWWWWWWWWWW..T", "NWWWWWWWWWWWWWWWTT", ".WWWWWWWWWWWWWWW.T", "...WwwwwwwwwwwW...", "...WW.WW..WW.WW...", "...WW.WW..WW.WW...", "...GG.GG..GG.GG..."},
-        {"XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX", "XPPXXPPX", "XXXXXXXX", "XXXXXXXX", "XXXXXXXX",
-         "X.YYYY.X", "X.YYYY.X", "X.YYYY.X", "X.YYYY.X", "X.YYYY.X", "X.YYYY.X", "X.YYYY.X", "X..YY..X",
-         "X.Y..Y.X", "X.Y..Y.X", "X.Y..Y.X", "X.Y..Y.X", "..Y..Y..", "..Y..Y..", "..Y..Y..", "..Y..Y..", "..Y..Y.."},
-        {".O........O.", ".O..YYYY..O.", "...YYYYYY...", "O.YYYYYYYY.O", "O.YDDYYDDY.O", "..YYYYYYYY..", "..YYDDDDYY..", "...YYYYYY...",
-         ".O..YYYY..O.", ".O........O.", "....O..O....", "....O..O....", "...O....O..."},
-        {"..HHHHHHHH..", "..HHHHHHHH..", "..FFFFFFFF..", "..FRRFFRRF..", "..FFFFFFFF..", "..FFvFFvFF..", "..FFFFFFFF..", "...FFFFFF...",
-         "CCCMMMMMMCCC", "CCCMMMMMMCCC", "CCCMMrrMMCCC", "CCCMMMMMMCCC", "CCCMMMMMMCCC", "CCCMMMMMMCCC", "CCC.MMMM.CCC", "CCC.MMMM.CCC",
-         "CC..MM.MM.CC", "C...MM.MM..C", "....MM.MM...", "....MM.MM...", "....KK.KK..."}};
+        {"..hGGhGGGg..", "..GGGgGGhG..", "..gGhGGGGg..", "..GEeGGeEg..", "..GGGgGGGG..", "..gGMMMMGg..", "..GGMggMGG..", "..gGGGGGgg..", "lDDDDDDDDDDd", "DllDDDDDDDdd", "GgDlDDDDDDgg", "GgDDDdDDdDgg", "hgdDDDDDDdgG", "GgDDdDDdDDgg", "Gg.LLLLLL.gg", "...LlL.LLL..", "...LLL.LdL..", "...LdL.LLL..", "...LLL.LLL..", "...BBB.BBB.."},
+        {"L................L", ".L..............L.", "..LL..ssssss..LL..", "LL..LsSSSSSSsL..LL", "..LLSSrSSSSrSSLL..", "LL..SRRSSSSRRS..LL", "..LLSSSrSSrSSSLL..", ".L..sSSSSSSSSs..L.", "L..L.sSSmmSSs.L..L", "..L...ssSSss...L..", ".L......ss......L."},
+        {"..wW..............", ".WWWw.............", "WWWWWW............", "WWEWWWWwWWWWWWWw..", "NWWWWWWWWWWWWWWWwT", "kkWWWWwWWWWWWWWWTT", "..WWWWWWWwWWWWWw.T", "..rWwwwwwwwwwwwW..", "...WW.WW...WW.WW..", "...WW.WW...WW.WW..", "...ww.ww...ww.ww.."},
+        {"XXXXXXXX", "XxXXXXxX", "XXXXxXXX", "XXxXXXXX", "PpPXXPpP", "XXXXXXXX", "XxXXXXXX", "XXXXXxXX", "X.YyYY.X", "X.YYYy.X", "X.yYYY.X", "X.YYyY.X", "X.YYYY.X", "x.YyYY.X", "X.YYYY.x", "X..YY..X", "X.Y..Y.X", "X.Y..y.X", "X.y..Y.X", "X.Y..Y.X", "..Y..Y..", "..y..Y..", "..Y..y..", "..Y..Y.."},
+        {".O........O.", ".o..YYYY..o.", "...YyYYyYY..", "O.YYYYYYYY.O", "o.YDDYYDDY.o", "..YyYYYYyY..", "..YYDDDDYY..", "...yYYYYy...", ".O..yYYy..O.", ".o........o.", "....O..O....", "....o..o....", "...O....O..."},
+        {"..HHHHHHHH..", "..HhHHHHhH..", "..HFFFFFFH..", "..FRRFFRRF..", "..FFFfFFFF..", "..FFvFFvFF..", "..fFFFFFFf..", "...FFFFFF...", "CccMMWWMMccC", "CcCMMWWMMCcC", "CcCMMrrMMCcC", "CccMMMMMMccC", "CcCMmMMmMCcC", "CccMMMMMMccC", "Ccc.MMMM.ccC", "CcC.MMMM.CcC", "Cc..MM.MM.cC", "C...MM.MM..C", "....MM.MM...", "....mM.Mm...", "....KK.KK..."}};
     private static int pal(int boss, char ch) {
         return switch (boss) {
-            case 0 -> switch (ch) { case 'G' -> 0x5A9A3A; case 'g' -> 0x3E7A2A; case 'R' -> 0xFF3030; case 'A' -> 0x7AD8E0; case 'a' -> 0x3A8A9A; case 'B' -> 0x3A3A8A; case 'K' -> 0x2A2A30; default -> 0x101010; };
-            case 1 -> switch (ch) { case 'S' -> 0x2E1A20; case 'r' -> 0xC02020; case 'R' -> 0xFF2A2A; default -> 0x4A3238; };
-            case 2 -> switch (ch) { case 'W' -> 0xE8ECF4; case 'w' -> 0xB8BCC8; case 'E' -> 0xFF3030; case 'N' -> 0x202020; case 'T' -> 0xD8DCE8; default -> 0x9A9EA8; };
-            case 3 -> switch (ch) { case 'X' -> 0x160C20; case 'Y' -> 0x24143A; default -> 0xE070FF; };
-            case 4 -> switch (ch) { case 'Y' -> 0xFFC830; case 'D' -> 0x5A2A0A; default -> 0xFF8A20; };
-            default -> switch (ch) { case 'H' -> 0x1A0A10; case 'F' -> 0xE8DCE0; case 'R' -> 0xFF2030; case 'v' -> 0xFFFFFF; case 'C' -> 0x7A0A18; case 'M' -> 0x241420; case 'r' -> 0xFF3040; default -> 0x0A0A0A; };
+            case 0 -> switch (ch) { case 'h' -> 0x8AC060; case 'G' -> 0x6A9A48; case 'g' -> 0x4A7A30; case 'E' -> 0xFF2A2A; case 'e' -> 0xFF9A8A; case 'M' -> 0x2A3E1E;
+                                    case 'D' -> 0x6FE0DA; case 'l' -> 0xC4FFF8; case 'd' -> 0x3AA0AA; case 'L' -> 0x2E8C96; case 'B' -> 0x3A3A46; default -> 0x101010; };
+            case 1 -> switch (ch) { case 'S' -> 0x3A2A30; case 's' -> 0x5E4A54; case 'r' -> 0xC81E1E; case 'R' -> 0xFF2A2A; case 'm' -> 0x6A2020; default -> 0x56444A; };
+            case 2 -> switch (ch) { case 'W' -> 0xF2F2F2; case 'w' -> 0xC8CACE; case 'E' -> 0xFF2A2A; case 'N' -> 0x1E1E1E; case 'k' -> 0x5A1010; case 'r' -> 0xC02030; default -> 0xE4E4E8; };
+            case 3 -> switch (ch) { case 'X' -> 0x141018; case 'x' -> 0x241A2E; case 'P' -> 0xD040FF; case 'p' -> 0xF4A8FF; case 'y' -> 0x2A1E36; default -> 0x1C1424; };
+            case 4 -> switch (ch) { case 'Y' -> 0xFFD040; case 'y' -> 0xE8962A; case 'D' -> 0x5A2E0A; case 'o' -> 0xC86A10; default -> 0xFFB040; };
+            default -> switch (ch) { case 'H' -> 0x1A0A12; case 'h' -> 0x3A1A2A; case 'F' -> 0xEADDE2; case 'f' -> 0xC8B4BE; case 'R' -> 0xFF2030; case 'v' -> 0xFFFFFF;
+                                     case 'C' -> 0x8A0A1C; case 'c' -> 0x4A0610; case 'M' -> 0x241420; case 'm' -> 0x3A2236; case 'W' -> 0xF0F0F0; case 'r' -> 0xFF3040; default -> 0x0A0A0A; };
         };
     }
-    private static boolean glows(int boss, char ch) { return ch == 'R' || ch == 'E' && boss == 2 || ch == 'P' || ch == 'r' && boss == 5; }
+    private static boolean glows(int boss, char ch) { return switch (boss) { case 0 -> ch == 'E' || ch == 'e'; case 1 -> ch == 'r' || ch == 'R'; case 2 -> ch == 'E'; case 3 -> ch == 'P' || ch == 'p'; case 5 -> ch == 'R' || ch == 'r'; default -> false; }; }
+    /** Each boss's pixels, shaded once like a Minecraft texture: a little grain in every pixel, light catching the top and left edges,
+     *  shadow on the bottom and right edges and toward the feet (glowing eyes stay pure). */
+    private static final int[][][] SHADE = new int[6][][];
+    private static int shaded(int boss, int x, int y) {
+        if (SHADE[boss] == null) {
+            String[] gr = SPR[boss]; int h = gr.length, w = gr[0].length(); int[][] o = new int[h][w];
+            for (int yy = 0; yy < h; yy++) for (int xx = 0; xx < w; xx++) {
+                char ch = gr[yy].charAt(xx); if (ch == '.') continue;
+                int c = pal(boss, ch);
+                if (!glows(boss, ch)) {
+                    int hs = (xx * 73856093) ^ (yy * 19349663) ^ (boss * 83492791); hs ^= hs >>> 13; hs *= 0x5bd1e995; hs ^= hs >>> 15;
+                    float grain = ((hs & 255) / 255f - 0.5f) * 0.16f;
+                    c = grain > 0 ? mixc(c, 0xFFFFFF, grain) : mixc(c, 0x000000, -grain);
+                    boolean up = yy == 0 || gr[yy - 1].charAt(xx) == '.', lf = xx == 0 || gr[yy].charAt(xx - 1) == '.';
+                    boolean dn = yy == h - 1 || gr[yy + 1].charAt(xx) == '.', rt = xx == w - 1 || gr[yy].charAt(xx + 1) == '.';
+                    if (up || lf) c = mixc(c, 0xFFFFFF, 0.16f);
+                    if (dn || rt) c = mixc(c, 0x000000, 0.3f);
+                    c = mixc(c, 0x000000, 0.14f * yy / (float) h);
+                }
+                o[yy][xx] = c;
+            }
+            SHADE[boss] = o;
+        }
+        return SHADE[boss][y][x];
+    }
 
     // ------------------------------------------------------------------ the scene
     static void paint(float t, float A, int boss, int energy, int rc, boolean rng, boolean nod, float icx, float icy, float sz, float isc,
@@ -166,7 +186,7 @@ final class SlayerHole {
     /** The boss beside the hole: it shimmers in (a scan line), leans toward the hole, then is pulled apart pixel by pixel. */
     private static void boss(float t, int boss, float hx, float hy, float rh0, float sz, int energy, int hot, float a) {
         String[] g = SPR[boss]; int h = g.length, w = g[0].length();
-        float px = (w > 14 ? 4.4f : 5.0f) * sz * (h > 24 ? 0.8f : 1f), bw = w * px, bh = h * px;
+        float px = (w > 14 ? 4.4f : 5.0f) * sz * (h >= 24 ? 0.8f : 1f), bw = w * px, bh = h * px;
         float mx = hx + rh0 * 3.4f + bw * 0.5f + 4 * sz, my = hy;                                      // its centre, to the right of the hole
         float beam = cl((t - 0.45f) / 0.6f);                                                         // beamed in, top to bottom
         float su = cl((t - 1.15f) / 2.25f), suck = su * su * (3 - 2 * su) * (0.7f + 0.3f * su);              // one long pull, speeding up
@@ -183,7 +203,7 @@ final class SlayerHole {
                 float d0 = (float) Math.hypot(X - hx, Y - hy), ord = (d0 - dmin) / Math.max(1f, dmax - dmin);
                 X -= lean * (1f - ord) * 6 * sz; Y += lean * (Y - hy) * -0.08f;
                 float q = cl(suck * 1.15f - ord * 0.15f); q = q * q * (3 - 2 * q);
-                int col = pal(boss, ch);
+                int col = shaded(boss, x, y);
                 float al = a * rowIn;
                 if (q <= 0.001f) {
                     float sc = rowIn < 1f ? 0.6f : 1f;
