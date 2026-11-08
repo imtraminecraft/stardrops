@@ -66,7 +66,11 @@ final class AuraWorld {
             if (mc.level == null || mc.player == null || SIMS.isEmpty()) return;
             FancyConfig cf = FancyConfig.get();
             var cam = mc.gameRenderer.mainCamera(); Vec3 cp = cam.position();
-            Matrix4f vp = cam.getViewRotationProjectionMatrix(new Matrix4f());
+            // Our own view-projection, built from the camera's rotation and fov. NOT cam.getViewRotationProjectionMatrix(): that getter
+            // caches the matrix and clears the camera's dirty flag, and calling it from the HUD made the world's sky flicker every other frame.
+            int W0 = g.guiWidth(), H0 = g.guiHeight();
+            Matrix4f vp = new Matrix4f().perspective((float) Math.toRadians(cam.getFov()), W0 / (float) Math.max(1, H0), 0.05f, 1024f)
+                    .mul(new Matrix4f().rotation(new org.joml.Quaternionf(cam.rotation()).conjugate()));
             int W = g.guiWidth(), H = g.guiHeight();
             double ppb = H / (2 * Math.tan(Math.toRadians(mc.options.fov().get()) / 2));          // screen pixels per block at one block away
             List<float[]> draw = new ArrayList<>(); List<AuraSim.Part> who = new ArrayList<>();
