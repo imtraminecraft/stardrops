@@ -36,7 +36,7 @@ final class Spotify {
     static volatile String status = "";
     private static volatile String access = ""; private static volatile long expires;
     private static volatile boolean busy, polling;
-    private static volatile long lastPoll, lastGood, pollStart;
+    private static volatile long lastPoll, lastGood, pollStart, holdUntil;
     private static final java.util.concurrent.ExecutorService WORKER = java.util.concurrent.Executors.newSingleThreadExecutor(r -> { Thread t = new Thread(r, "Stardrops Spotify"); t.setDaemon(true); t.setPriority(Thread.MIN_PRIORITY); return t; });
 
     static boolean linked() { return !StardropsConfig.get().spotifyRefresh.isBlank(); }
@@ -84,7 +84,7 @@ final class Spotify {
                 }
                 if (code == null) throw new IOException(err);
                 JsonObject tok = post("grant_type=authorization_code&code=" + enc(code) + "&redirect_uri=" + enc(REDIRECT) + "&client_id=" + enc(id) + "&code_verifier=" + verifier);
-                keep(tok);
+                keep(tok); holdUntil = 0;
                 status = "Linked."; say.accept("Spotify is linked. Lyrics will show while a song plays.");
             } catch (SocketTimeoutException e) { status = "The login timed out."; say.accept("Spotify login timed out. Try again."); }
             catch (BindException e) { status = "Port " + PORT + " is busy."; say.accept("Couldn't listen on port " + PORT + ". Close whatever uses it and try again."); }
@@ -124,7 +124,8 @@ final class Spotify {
             if (now - lastGood > 4000 && now - progressAt > track.durationMs() - progressMs + 4000) { progressMs = track.durationMs(); progressAt = now; playing = false; status = "Waiting for Spotify..."; }   // nothing new 4 s after the end: don't sit on the last line pretending it plays
         }
         if (polling) { if (now - pollStart < 12_000) return; polling = false; }                                       // a request that never came back no longer blocks the next one
-        if (now - lastPoll < 3000) return; lastPoll = now;
+        if (now < holdUntil) return;                                                                                    // Spotify told us to wait
+        if (now - lastPoll < (playing ? 3000 : 6000)) return; lastPoll = now;                                           // every 3 s while a song plays, 6 s otherwise
         polling = true; pollStart = now; WORKER.execute(() -> { try { poll(); } finally { polling = false; } });
     }
     private static void poll() {
@@ -132,7 +133,12 @@ final class Spotify {
             if (!fresh()) return;
             long sentAt = System.currentTimeMillis();
             HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create("https://api.spotify.com/v1/me/player/currently-playing")).timeout(java.time.Duration.ofSeconds(6)).header("Authorization", "Bearer " + access).GET().build(), HttpResponse.BodyHandlers.ofString());
-            if (r.statusCode() == 429) { lastPoll = System.currentTimeMillis() + 7000; status = "Spotify asked to slow down."; return; }
+            if (r.statusCode() == 429) {                                                                   // rate limited: wait as long as Spotify says (Retry-After), not a fixed few seconds
+                long wait = r.headers().firstValue("Retry-After").map(v -> { try { return Long.parseLong(v.trim()); } catch (Exception e) { return 30L; } }).orElse(30L);
+                wait = Math.max(5, Math.min(3600, wait)); holdUntil = System.currentTimeMillis() + wait * 1000L;
+                status = "Spotify asked to wait " + (wait >= 120 ? (wait + 59) / 60 + " min" : wait + " s") + " (too many requests).";
+                return;
+            }
             if (r.statusCode() == 401) { access = ""; expires = 0; lastPoll = 0; return; }                 // the login ran out: refresh it and ask again straight away
             if (r.statusCode() != 200 && r.statusCode() != 204) { status = "Spotify answered " + r.statusCode() + ": " + r.body().replaceAll("\\s+", " ").substring(0, Math.min(160, r.body().replaceAll("\\s+", " ").length())); return; }   // an error is not an answer: after 10 s of these the clock stops (tick)
             lastGood = System.currentTimeMillis();
