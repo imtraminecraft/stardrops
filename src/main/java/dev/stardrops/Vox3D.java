@@ -58,9 +58,16 @@ final class Vox3D {
     static void pop() { M = STACK.pop(); }
 
     /** How far a world point is toward the window's soft edge: 1 inside, 0 at the edge (or behind us). */
+    /** The window-space radius of a world point (0 centre, 1 the window's edge; 9 behind us). */
+    static float edgeR(float x, float y, float z) {
+        Matrix4f m = projView; float w = m.m03() * x + m.m13() * y + m.m23() * z + m.m33(); if (w <= 0.01f) return 9f;
+        float nx = (m.m00() * x + m.m10() * y + m.m20() * z + m.m30()) / w, ny = (m.m01() * x + m.m11() * y + m.m21() * z + m.m31()) / w;
+        return (float) Math.sqrt(nx * nx * 0.9f + ny * ny);
+    }
     static float edge(float x, float y, float z) {
-        Vector4f v = projView.transform(new Vector4f(x, y, z, 1f)); if (v.w <= 0.01f) return 0f;
-        float nx = v.x / v.w, ny = v.y / v.w, r = (float) Math.sqrt(nx * nx * 0.9f + ny * ny);
+        Matrix4f m = projView;                                                                      // by hand: no allocation (called for every faded vertex)
+        float w = m.m03() * x + m.m13() * y + m.m23() * z + m.m33(); if (w <= 0.01f) return 0f;
+        float nx = (m.m00() * x + m.m10() * y + m.m20() * z + m.m30()) / w, ny = (m.m01() * x + m.m11() * y + m.m21() * z + m.m31()) / w, r = (float) Math.sqrt(nx * nx * 0.9f + ny * ny);
         return 1f - sm((r - 0.72f) / 0.27f);
     }
 
