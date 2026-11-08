@@ -298,7 +298,7 @@ final class Ritual {
                 NebulaTex.glow(g, W / 2f, ccy, rr * 1.15f, rr * 1.15f, Gfx.argb(Math.round(150 * barSlide), 0x04050E));          // one soft picture instead of hundreds of fills
             }
             if (threeD) {                                                                      // slayer in 3D: a soft-edged window of space round the stage, the crater under the item
-                float top = Math.max(0f, icy - 92 * ssz), bot = Math.min(CH, icy + 132 * ssz), hw = Math.min(CW / 2f, 185 * ssz), A = AnimationManager.animLen(a.group, type);
+                float top = Math.max(0f, icy - 70 * ssz), bot = Math.min(CH, icy + 110 * ssz), hw = Math.min(CW / 2f, 130 * ssz), A = AnimationManager.animLen(a.group, type);
                 float craterY = 1f - 2f * ((icy + 36 * ssz) - top) / Math.max(1f, bot - top);
                 float al = sm(t / 0.35f) * (1f - sm((t - (A + hd - 0.7f)) / 0.7f)) * (1f - 0.35f * sm((p - 0.8f) / 0.8f));
                 Slayer3D.submit(g, Math.round((CW / 2f - hw) * u) + sx, Math.round(top * u) + sy, Math.round((CW / 2f + hw) * u) + sx, Math.round(bot * u) + sy,
