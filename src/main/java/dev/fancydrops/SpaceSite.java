@@ -24,19 +24,22 @@ final class SpaceSite {
         NebulaTex.glow(g, x + w * 0.78f, y + h * 0.75f, w * 0.34f, h * 0.5f, Gfx.argb(36, 0x2F8BFF));
         NebulaTex.glow(g, x + w * 0.55f, y + h * 0.15f, w * 0.2f, h * 0.3f, Gfx.argb(22, 0xFF5FB0));
         stars(g, x, y, w, h, T);
-        float pr = Math.min(19, h * 0.13f); planet(g, x + w - pr * 2.3f - 6, y + pr + 14, pr, T);
+        float pr = Math.min(22, h * 0.17f); planet(g, x + w - pr * 2.4f - 4, y + h - pr * 0.9f, pr, T);          // a ringed planet rising at the bottom right
         comet(g, x, y, w, h, T);
+        float k = Math.max(0.6f, Math.min(1.2f, h / 150f));                                // everything in the yard scales with the panel's height
         float far = (float) Math.sin(T * 0.4f);                                            // a far astronaut, small and slow, waving
-        astronaut(g, x + w * 0.9f - 6 + far * 4, y + h * 0.78f + (float) Math.sin(T * 0.7f) * 3, 0.55f, -0.3f + far * 0.15f, T + 3f, 2);
-        station(g, x, y, w, h, T);
-        float ax = x + w * 0.3f + (float) Math.sin(T * 0.33f) * w * 0.04f, ay = y + h * 0.3f + (float) Math.sin(T * 0.51f) * 7;    // the tumbler, tethered to the truss
-        tether(g, x + w * 0.26f, y + h * 0.62f, ax - 4, ay + 4, T);
-        astronaut(g, ax, ay, 1.15f, T * 0.35f, T, 1);
-        astronaut(g, x + w * 0.13f, y + h * 0.5f + (float) Math.sin(T * 1.1f) * 1.5f, 1f, 0.35f, T + 1.3f, 0);     // the welder on the truss
-        sparks(g, x + w * 0.13f + 12, y + h * 0.5f + 10, T);
+        astronaut(g, x + w * 0.5f + far * 4, y + h * 0.82f + (float) Math.sin(T * 0.7f) * 3, 0.5f * k, -0.3f + far * 0.15f, T + 3f, 2);
+        float cy = y + h * 0.56f;
+        station(g, x, y, w, h, T, k, cy);
+        float ax = x + w * 0.25f + (float) Math.sin(T * 0.33f) * w * 0.03f, ay = y + h * 0.24f + (float) Math.sin(T * 0.51f) * 4 * k;    // the tumbler, tethered to the truss
+        tether(g, x + w * 0.22f, cy - 4 * k, ax - 4 * k, ay + 4 * k, T);
+        astronaut(g, ax, ay, 0.95f * k, T * 0.35f, T, 1);
+        float wx = x + w * 0.39f, wy = cy - 15 * k + (float) Math.sin(T * 1.1f) * 1.5f;                            // the welder at the unfinished end of the truss
+        astronaut(g, wx, wy, 0.85f * k, 0.35f, T + 1.3f, 0);
+        sparks(g, wx + 10 * k, wy + 9 * k, T);
         debris(g, x, y, w, h, T);
         bubbles(g, x, y, w, h, T);
-        hologram(g, font, x + w * 0.68f, y + h * 0.43f, w, h, T, title, sub);
+        hologram(g, font, x + w * 0.71f, y + h * 0.4f, w, h, T, title, sub);
         g.disableScissor();
     }
 
@@ -104,46 +107,80 @@ final class SpaceSite {
 
     // ---- the yard
 
-    private static void station(GuiGraphicsExtractor g, int x, int y, int w, int h, float T) {
-        float by = y + h * 0.66f, bx0 = x - 4, bx1 = x + w * 0.48f;
-        // the habitat module at the left end: a lit cylinder with windows
-        int mx0 = x + 4, my0 = Math.round(by) - 13, mx1 = x + Math.round(w * 0.13f), my1 = Math.round(by) + 10;
-        g.fill(mx0, my0, mx1, my1, STEEL); g.fill(mx0, my1 - 4, mx1, my1, STEEL_D); g.fill(mx0, my0, mx1, my0 + 1, 0xFFC0C8DE);
-        for (int i = 0, wx = mx0 + 4; wx + 3 < mx1; wx += 7, i++) {
-            boolean lit = ((int) (T * 0.8f) + i) % 5 != 0; g.fill(wx, my0 + 5, wx + 3, my0 + 9, lit ? 0xFFFFE08A : 0xFF3A4060);
-            if (lit) g.fill(wx - 1, my0 + 4, wx + 4, my0 + 10, 0x22FFE08A);
-        }
-        g.fill(mx1, my0 + 3, mx1 + 3, my1 - 3, STEEL_D);
-        // the truss: built segments with cross bracing, the last ones only a frame being welded
-        int seg = 9; float sl = (bx1 - mx1) / seg;
+    /** The station: a spinning habitat ring round a hub, a truss running out of it (chase lights along the top, radiator fins under it,
+     *  a pair of solar wings with light gliding over the cells), the last bays only a bare frame being welded, a crane swinging the next
+     *  girder in, and a maintenance drone circling the ring. */
+    private static void station(GuiGraphicsExtractor g, int x, int y, int w, int h, float T, float k, float cy) {
+        float hx = x + w * 0.09f, R = h * 0.36f, rx = R * 0.42f, bx1 = x + w * 0.43f;
+        NebulaTex.glow(g, hx, cy, R * 1.6f, R * 1.4f, Gfx.argb(40, 0x5FA8FF));
+        float spin = T * 0.55f; int n = 22;
+        ring(g, hx, cy, rx, R, spin, n, k, false);                                                        // the far half of the ring
+        for (int sp = 0; sp < 4; sp++) { float an = spin + sp * 1.5708f; if (Math.cos(an) < 0) line(g, hx, cy, hx + (float) Math.cos(an) * rx, cy + (float) Math.sin(an) * R, 1, STEEL_D); }
+        // the truss
+        float tx0 = hx + 6 * k; int seg = 8; float sl = (bx1 - tx0) / seg; int top = Math.round(cy - 5 * k), bot = Math.round(cy + 5 * k);
         for (int i = 0; i < seg; i++) {
-            float sx = mx1 + 3 + i * sl; boolean done = i < 6;
-            int top = Math.round(by - 6), bot = Math.round(by + 6), a = done ? 255 : 150;
+            float sx = tx0 + i * sl; boolean done = i < 6; int a = done ? 255 : 140;
             g.fill(Math.round(sx), top, Math.round(sx + sl), top + 2, Gfx.argb(a, done ? STEEL : STEEL_D));
-            if (i < 8) g.fill(Math.round(sx), bot - 2, Math.round(sx + sl), bot, Gfx.argb(a, done ? STEEL_D : 0x3A4058));
+            g.fill(Math.round(sx), bot - 2, Math.round(sx + sl), bot, Gfx.argb(a, done ? STEEL_D : 0x3A4058));
             g.fill(Math.round(sx), top, Math.round(sx) + 1, bot, Gfx.argb(a, STEEL));
-            if (done) { line(g, sx, top + 1, sx + sl, bot - 1, 1, Gfx.argb(200, STEEL_D)); line(g, sx, bot - 1, sx + sl, top + 1, 1, Gfx.argb(200, STEEL_D)); }
-            if (i % 3 == 0) { boolean on = ((T + i * 0.37f) % 1.4f) < 0.25f; g.fill(Math.round(sx), top - 2, Math.round(sx) + 2, top, on ? 0xFFFF4A5E : 0xFF5A1A24); if (on) NebulaTex.glow(g, sx + 1, top - 1, 5, 5, 0x90FF4A5E); }
+            if (done) { line(g, sx, top + 1, sx + sl, bot - 1, 1, Gfx.argb(190, STEEL_D)); line(g, sx, bot - 1, sx + sl, top + 1, 1, Gfx.argb(190, STEEL_D)); }
+            if (i >= 1 && i <= 3) for (int f = 0; f < 3; f++) { int fx = Math.round(sx + 2 + f * sl / 3f); g.fill(fx, bot, fx + 2, bot + Math.round(9 * k), 0xFFE8ECF6); g.fill(fx + 1, bot, fx + 2, bot + Math.round(9 * k), 0xFFB0B8CC); }   // radiators
         }
-        // a solar wing folding open above the module
-        float open = 0.55f + 0.45f * (float) Math.sin(T * 0.25f);
-        int px0 = mx0 + 6, pw = Math.round(w * 0.12f * open), py1 = my0 - 3;
-        g.fill(px0 + 3, py1 - 2, px0 + 5, py1 + 3, STEEL_D);
-        for (int r = 0; r < 3; r++) for (int c = 0; c * 6 < pw; c++) {
-            int cx0 = px0 + c * 6, cy0 = py1 - 18 + r * 5; g.fill(cx0, cy0, cx0 + 5, cy0 + 4, 0xFF1D3F8A); g.fill(cx0, cy0, cx0 + 5, cy0 + 1, 0xFF3D6FCA);
-            if (((int) (T * 3) + c + r) % 11 == 0) g.fill(cx0 + 1, cy0 + 1, cx0 + 3, cy0 + 2, 0xFFAEE0FF);
+        float chase = (T * 1.6f) % 1f;                                                                       // a light running out along the top
+        for (int i = 0; i < 6; i++) { float u = i / 6f; float d = Math.abs(u - chase); boolean lit = d < 0.08f; int lx = Math.round(tx0 + u * sl * 6 + 2); g.fill(lx, top - 1, lx + 2, top, lit ? 0xFF5FE8FF : 0xFF1E4A5A); if (lit) NebulaTex.glow(g, lx + 1, top - 1, 4, 3, 0xA05FE8FF); }
+        boolean strobe = (T % 1.3f) < 0.12f; g.fill(Math.round(bx1 - sl * 2) - 1, top - 3, Math.round(bx1 - sl * 2) + 1, top - 1, strobe ? 0xFFFF4A5E : 0xFF5A1A24); if (strobe) NebulaTex.glow(g, bx1 - sl * 2, top - 2, 7, 7, 0xC0FF4A5E);
+        // solar wings on a mast, light gliding over the cells
+        float mx = tx0 + sl * 4.5f; int mast = Math.round(22 * k);
+        g.fill(Math.round(mx), top - mast, Math.round(mx) + 2, bot + mast, STEEL_D);
+        float glide = (T * 0.35f) % 1.6f;
+        for (int side = -1; side <= 1; side += 2) for (int r = 0; r < 3; r++) for (int c = 0; c < 2; c++) {
+            int cw = Math.round(7 * k), ch = Math.round(5 * k), cx0 = Math.round(mx) - cw - 1 + c * (cw + 3), cy0 = side < 0 ? top - mast + r * (ch + 1) : bot + mast - (3 - r) * (ch + 1);
+            g.fill(cx0 - 1, cy0 - 1, cx0 + cw + 1, cy0 + ch + 1, 0xFFB08A30);
+            float gl = Math.max(0f, 1f - Math.abs(glide - (r * 0.2f + c * 0.1f + (side + 1) * 0.15f)) / 0.18f);
+            g.fill(cx0, cy0, cx0 + cw, cy0 + ch, Canvas.mix(0xFF1D3F8A, 0xFF7AC8FF, gl * 0.8f)); g.fill(cx0, cy0, cx0 + cw, cy0 + 1, Canvas.mix(0xFF3D6FCA, 0xFFFFFFFF, gl));
         }
-        // the crane: an arm from the truss end swinging a girder in on a cable
-        float cbx = bx1 - sl * 1.5f, cby = by - 6, ang = -1.95f + 0.25f * (float) Math.sin(T * 0.45f), L = h * 0.3f;
+        // the hub: a short cylinder, a docking port blinking green
+        int hw = Math.round(7 * k), hh = Math.round(9 * k);
+        g.fill(Math.round(hx) - hw, Math.round(cy) - hh, Math.round(hx) + hw, Math.round(cy) + hh, STEEL); g.fill(Math.round(hx) - hw, Math.round(cy) + hh - 3, Math.round(hx) + hw, Math.round(cy) + hh, STEEL_D);
+        g.fill(Math.round(hx) - hw, Math.round(cy) - hh, Math.round(hx) + hw, Math.round(cy) - hh + 1, 0xFFD0D8EC);
+        for (int wn = -1; wn <= 1; wn++) { boolean lit = ((int) (T * 0.7f) + wn) % 4 != 0; g.fill(Math.round(hx) + wn * 4 - 1, Math.round(cy) - 3, Math.round(hx) + wn * 4 + 1, Math.round(cy) + 1, lit ? 0xFFFFE08A : 0xFF3A4060); }
+        boolean dock = ((int) (T * 2f)) % 2 == 0; g.fill(Math.round(hx) - hw - 2, Math.round(cy) - 2, Math.round(hx) - hw, Math.round(cy) + 2, dock ? 0xFF4AFF7A : 0xFF1A5A2A);
+        if (dock) NebulaTex.glow(g, hx - hw - 1, cy, 6, 6, 0x904AFF7A);
+        ring(g, hx, cy, rx, R, spin, n, k, true);                                                         // the near half, over the hub
+        for (int sp = 0; sp < 4; sp++) { float an = spin + sp * 1.5708f; if (Math.cos(an) >= 0) line(g, hx, cy, hx + (float) Math.cos(an) * rx, cy + (float) Math.sin(an) * R, 1, STEEL); }
+        // a maintenance drone circling the ring, its light blinking
+        float da = T * 0.9f, dxp = hx + (float) Math.cos(da) * (rx + 12 * k), dyp = cy + (float) Math.sin(da) * (R + 6 * k);
+        g.fill(Math.round(dxp) - 2, Math.round(dyp) - 1, Math.round(dxp) + 3, Math.round(dyp) + 2, 0xFFB8C0D8); g.fill(Math.round(dxp), Math.round(dyp) - 2, Math.round(dxp) + 1, Math.round(dyp) - 1, ((int) (T * 4)) % 2 == 0 ? 0xFFFFC830 : 0xFF5A4A10);
+        // the crane at the open end, swinging the next girder in
+        float cbx = bx1 - sl * 0.8f, cby = top, ang = -1.95f + 0.25f * (float) Math.sin(T * 0.45f), L = 34 * k;
         float ex = cbx + (float) Math.cos(ang) * L, ey = cby + (float) Math.sin(ang) * L;
         line(g, cbx, cby, ex, ey, 2, HAZ); line(g, cbx, cby - 2, ex, ey - 2, 1, 0xFF8A6A10);
         g.fill(Math.round(cbx) - 2, Math.round(cby) - 2, Math.round(cbx) + 3, Math.round(cby) + 3, STEEL_D);
-        float sw = (float) Math.sin(T * 0.9f) * 3f, gx = ex + sw, gy = ey + 14 + (float) Math.sin(T * 0.6f) * 2;
+        float sw = (float) Math.sin(T * 0.9f) * 3f, gx = ex + sw, gy = ey + 10 * k + (float) Math.sin(T * 0.6f) * 2;
         line(g, ex, ey, gx, gy, 1, 0xFFB0B6C8);
-        Gfx.push(g); Gfx.translate(g, gx, gy); Gfx.rotate(g, (float) Math.sin(T * 0.5f) * 0.25f);
+        Gfx.push(g); Gfx.translate(g, gx, gy); Gfx.rotate(g, (float) Math.sin(T * 0.5f) * 0.25f); Gfx.scale(g, k);
         g.fill(-11, 0, 11, 2, STEEL); g.fill(-11, 4, 11, 6, STEEL_D); for (int i = -11; i <= 9; i += 5) g.fill(i, 0, i + 1, 6, STEEL);
         g.fill(-11, -1, -7, 0, HAZ); g.fill(7, -1, 11, 0, HAZ);
         Gfx.pop(g);
+    }
+    /** Half of the spinning habitat ring (seen nearly edge on): a solid band, six pods with lit windows sliding round it. */
+    private static void ring(GuiGraphicsExtractor g, float cx, float cy, float rx, float ry, float spin, int n, float k, boolean front) {
+        int th = Math.max(2, Math.round(3 * k));
+        for (int i = 0; i < 140; i++) {
+            float an = i * 6.2832f / 140; float c = (float) Math.cos(an); if ((c >= 0) != front) continue;
+            int px = Math.round(cx + c * rx), py = Math.round(cy + (float) Math.sin(an) * ry);
+            int col = front ? Canvas.mix(0xFF6A7290, 0xFFE0E6F4, 0.3f + 0.7f * c) : Canvas.mix(0xFF1E2238, 0xFF4A526C, 1f + c);
+            g.fill(px - th / 2, py - 1, px - th / 2 + th, py + 1, col);
+        }
+        int pw = Math.max(4, Math.round(8 * k)), ph = Math.max(3, Math.round(6 * k));
+        for (int i = 0; i < 6; i++) {
+            float an = spin + i * 6.2832f / 6; float c = (float) Math.cos(an); if ((c >= 0) != front) continue;
+            int px = Math.round(cx + c * rx), py = Math.round(cy + (float) Math.sin(an) * ry);
+            int w2 = Math.max(3, Math.round(pw * (0.55f + 0.45f * Math.abs(c))));
+            int col = front ? Canvas.mix(0xFF8A93AE, 0xFFF0F4FF, 0.3f + 0.7f * c) : 0xFF3A4058;
+            g.fill(px - w2 / 2, py - ph / 2, px - w2 / 2 + w2, py - ph / 2 + ph, col);
+            if (front) { g.fill(px - w2 / 2 + 1, py - 1, px - w2 / 2 + w2 - 1, py + 1, i % 3 == 0 ? 0xFF5FE8FF : 0xFFFFE08A); g.fill(px - w2 / 2, py - ph / 2, px - w2 / 2 + w2, py - ph / 2 + 1, 0xFFFFFFFF); }
+        }
     }
 
     private static void tether(GuiGraphicsExtractor g, float x0, float y0, float x1, float y1, float T) {
@@ -246,7 +283,7 @@ final class SpaceSite {
         String head = "UNDER CONSTRUCTION", t = title == null ? "" : title;
         float hs = 0.6f; int hw = Math.round(Gfx.w(font, head) * hs), tw = Gfx.w(font, t);
         String sb = sub == null ? "" : sub; float ss = 0.6f; int sw = Math.round(Gfx.w(font, sb) * ss);
-        int maxW = Math.round(w * 0.56f); if (sw > maxW - 12) { while (sb.length() > 4 && Math.round(Gfx.w(font, sb + "...") * ss) > maxW - 12) sb = sb.substring(0, sb.length() - 1); sb = sb.trim() + "..."; sw = Math.round(Gfx.w(font, sb) * ss); }
+        int maxW = Math.round(w * 0.5f); if (sw > maxW - 12) { while (sb.length() > 4 && Math.round(Gfx.w(font, sb + "...") * ss) > maxW - 12) sb = sb.substring(0, sb.length() - 1); sb = sb.trim() + "..."; sw = Math.round(Gfx.w(font, sb) * ss); }
         int pw = Math.min(maxW, Math.max(Math.max(hw, tw), sw) + 26), ph = sb.isEmpty() ? 38 : 46;
         float bob = (float) Math.sin(T * 1.4f) * 1.5f;
         int x0 = Math.round(cx - pw / 2f), y0 = Math.round(cy - ph / 2f + bob), x1 = x0 + pw, y1 = y0 + ph;

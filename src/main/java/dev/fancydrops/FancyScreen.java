@@ -831,7 +831,9 @@ public class FancyScreen extends Screen {
             int rar = r.pRar == null ? -1 : r.pRar[i];                                                  // rarity: 0 common, 1 rare, 2 achievement, 3 legendary, 4 special (the colours of its set)
             int sch = r.pBg != null ? r.pBg[i] : rar == 2 ? 0xFF8FB8FF : rar == 1 ? 0xFF3B5BDB : rar == 0 ? 0xFF9AA3B5 : col;     // the colour scheme of the tile: every tile of a set shares it
             int bgBase = rar < 0 ? Ui.PANEL2 : Canvas.mix(Ui.PANEL2, sch, rar == 4 ? 0.12f : rar == 2 ? 0.13f : rar == 1 ? 0.14f : rar == 3 ? 0.08f : 0.07f);
-            pill(g, b[0], b[1], b[2], b[3], Canvas.mix(bgBase, Canvas.mix(Ui.ROW_HOVER, sch, 0.22f), k));
+            boolean holo = rar < 0 && r.pBg == null;                                                   // menu tiles (not cosmetics): the space-glass style
+            if (holo) holoTile(g, b[0], b[1], b[2], b[3], col, k, on, hv, i * 31 + r.pLabels[i].hashCode(), now);
+            else pill(g, b[0], b[1], b[2], b[3], Canvas.mix(bgBase, Canvas.mix(Ui.ROW_HOVER, sch, 0.22f), k));
             if (rar == 4 || rar == 2) {                                                                  // special and achievement tiles have a background of their own (legendary, rare and common have none)
                 g.enableScissor(b[0] + 1, b[1] + 1, b[0] + b[2] - 1, b[1] + b[3] - 1);
                 if (rar == 4) { int seg = 8, sw2 = b[2] / seg + 1; for (int q = 0; q < seg; q++) g.fill(b[0] + q * b[2] / seg, b[1] + 1, b[0] + q * b[2] / seg + sw2, b[1] + b[3] - 1, Gfx.argb(Math.round(52 * (1f - q / (float) seg) + 6), Canvas.mix(sch, 0xFFFFFFFF, 0.25f * (1f - q / (float) seg)) & 0xFFFFFF)); }
@@ -840,25 +842,25 @@ public class FancyScreen extends Screen {
             }
             if (on) {
                 int pulse = r.pOn != null ? Math.round(30 * (0.5f + 0.5f * (float) Math.sin(fxNow / 500.0))) : 0;                    // a worn cosmetic glows softly
-                rout(g, b[0], b[1], b[2], b[3], Gfx.argb(200 + pulse, sch & 0xFFFFFF)); g.fill(b[0] + 3, b[1] + b[3] - 3, b[0] + b[2] - 3, b[1] + b[3] - 2, sch);
+                if (!holo) { rout(g, b[0], b[1], b[2], b[3], Gfx.argb(200 + pulse, sch & 0xFFFFFF)); g.fill(b[0] + 3, b[1] + b[3] - 3, b[0] + b[2] - 3, b[1] + b[3] - 2, sch); }
                 if (r.pOn != null) { int cx2 = b[0] + b[2] - 12, cy2 = b[1] + 6; g.fill(cx2 + 4, cy2 + 5, cx2 + 6, cy2 + 7, sch); g.fill(cx2 + 2, cy2 + 3, cx2 + 4, cy2 + 5, sch); g.fill(cx2 + 6, cy2 + 1, cx2 + 8, cy2 + 5, sch); g.fill(cx2 + 7, cy2 - 1, cx2 + 9, cy2 + 1, sch); }
             }
-            else rout(g, b[0], b[1], b[2], b[3], Gfx.argb(hv ? 210 : rar == 4 ? 130 : rar >= 0 ? 90 : 50, (rar >= 0 ? sch : col) & 0xFFFFFF));
+            else if (!holo) rout(g, b[0], b[1], b[2], b[3], Gfx.argb(hv ? 210 : rar == 4 ? 130 : rar >= 0 ? 90 : 50, (rar >= 0 ? sch : col) & 0xFFFFFF));
             if (r.pVert) {                                                                              // a tall tile: the icon on top, the name under it, shrunk to fit (never cut off)
-                boolean ic0 = r.pIcons[i] != null; int top = b[1] + 4;
+                boolean ic0 = r.pIcons[i] != null; boolean hasSub = r.pSubs != null && r.pSubs[i] != null; int top = hasSub ? b[1] + 4 : b[1] + Math.max(3, (b[3] - (ic0 ? 27 : 8)) / 2);
                 if (ic0) Icons.draw(g, r.pIcons[i], b[0] + (b[2] - 16) / 2, top, hv || on ? now : 2400L);
                 String nm0 = r.pLabels[i]; int nw0 = Math.max(1, Gfx.w(font, nm0)); float nk0 = Math.min(1f, (b[2] - 6) / (float) nw0);
                 Gfx.push(g); Gfx.translate(g, b[0] + (b[2] - nw0 * nk0) / 2f, top + (ic0 ? 19 : 4) + (1f - nk0) * 2f); Gfx.scale(g, nk0);
                 Gfx.text(g, font, nm0, 0, 0, on ? Ui.TEXT : wip ? Ui.DIM : Ui.SUB); Gfx.pop(g);
                 if (r.pSubs != null && r.pSubs[i] != null) { String sv = r.pSubs[i]; float sk = Math.min(0.7f, (b[2] - 6) / (float) Math.max(1, Gfx.w(font, sv))); Gfx.push(g); Gfx.translate(g, b[0] + (b[2] - Gfx.w(font, sv) * sk) / 2f, b[1] + b[3] - 11); Gfx.scale(g, sk); Gfx.text(g, font, sv, 0, 0, on ? Canvas.mix(Ui.SUB, col, 0.45f) : Ui.DIM); Gfx.pop(g); }
-                if (wip) { pill(g, b[0] + b[2] - 20, b[1] + 3, 17, 9, 0xFF3A3220); small(g, "WIP", b[0] + b[2] - 18, b[1] + 4, 0xFFFFC857, 0.75f); }
+                if (wip) wipChip(g, b[0] + b[2] - 21, b[1] + 4, 0.75f);
                 continue;
             }
             boolean ico = r.pIcons[i] != null; int iw = ico ? 21 : 0, iy = b[1] + (b[3] - 16) / 2;
             int avN = b[2] - 18 - iw - (wip ? 22 : 0), fullW = Gfx.w(font, r.pLabels[i]);
             float nk = fullW > avN && r.pSubs == null && !r.pFontTiles && r.pFx == null ? Math.max(0.72f, avN / (float) fullW) : 1f;          // a long name shrinks a little instead of losing its end
             String nm = Gfx.fit(font, r.pLabels[i], Math.round(avN / nk));
-            String sb2 = r.pSubs != null ? Gfx.fit(font, r.pSubs[i], Math.round((b[2] - 18 - iw) / 0.8f)) : null;          // the small line under a title is drawn smaller than the title
+            String sb2 = r.pSubs != null && r.pSubs[i] != null ? Gfx.fit(font, r.pSubs[i], Math.round((b[2] - 18 - iw) / 0.8f)) : null;          // the small line under a title is drawn smaller than the title
             int tw2 = Math.max(Gfx.w(font, nm), sb2 == null ? 0 : Math.round(Gfx.w(font, sb2) * 0.8f)), gx = b[0] + 9, tx = gx + iw;          // every tile lines up the same way: the icon in one column on the left, the text right after it
             if (ico) Icons.draw(g, r.pIcons[i], gx, iy, hv ? now : r.pOn != null ? 2400L : on ? now : 2400L);          // cosmetic icons stand still
             int ny = sb2 != null ? b[1] + 7 : b[1] + (b[3] - 8) / 2 - 1, nx = tx;
@@ -872,7 +874,7 @@ public class FancyScreen extends Screen {
                 if (Gfx.w(font, r.pSubs[i]) * 0.8f > sAv) scrollText(g, r.pSubs[i], tx, b[1] + 19, sAv, 0.8f, on ? Canvas.mix(Ui.SUB, col, 0.45f) : Ui.DIM, now);
                 else { Gfx.push(g); Gfx.translate(g, tx, b[1] + 19); Gfx.scale(g, 0.8f); Gfx.text(g, font, sb2, 0, 0, on ? Canvas.mix(Ui.SUB, col, 0.45f) : Ui.DIM); Gfx.pop(g); }
             }
-            if (wip) { pill(g, b[0] + b[2] - 22, b[1] + 5, 18, 10, 0xFF3A3220); Gfx.text(g, font, "WIP", b[0] + b[2] - 20, b[1] + 6, 0xFFFFC857); }
+            if (wip) wipChip(g, b[0] + b[2] - 23, b[1] + 5, 1f);
             if (lk) {                                                                                  // locked: dimmed, with a padlock
                 g.fill(b[0] + 1, b[1] + 1, b[0] + b[2] - 1, b[1] + b[3] - 1, 0x70080A10);
                 int lx = b[0] + b[2] - 16, ly = b[1] + 5, lc = shk != null && now - shk < 420 ? 0xFFFF6B6B : 0xFFB9C0D6;
@@ -880,6 +882,42 @@ public class FancyScreen extends Screen {
                 g.fill(lx, ly + 4, lx + 10, ly + 10, lc); g.fill(lx + 4, ly + 6, lx + 6, ly + 8, 0xFF1A1C26);
             }
         }
+    }
+    /** A menu tile, Stardrops style: dark glass with cut corners, faint scanlines and a few twinkling stars, a thin edge and bright corner
+     *  brackets in the tile's colour; pointing at it lights it up and sweeps a beam of light across; the open one has a glowing base line. */
+    private static void holoTile(GuiGraphicsExtractor g, int x, int y, int w, int h, int col, float k, boolean on, boolean hv, int seed, long now) {
+        int c = 3, bg = Canvas.mix(0xFF090B22, Canvas.mix(0xFF12183E, col, 0.22f), Math.max(k, on ? 0.6f : 0f));
+        for (int i = 0; i < c; i++) { g.fill(x + c - i, y + i, x + w - c + i, y + i + 1, bg); g.fill(x + i + 1, y + h - 1 - i, x + w - i - 1, y + h - i, bg); }
+        g.fill(x, y + c, x + w, y + h - c, bg);
+        g.fill(x + c, y + 1, x + w - c, y + Math.max(2, h / 3), Gfx.argb(18, col));                                 // light from the top
+        for (int yy = y + 2; yy < y + h - 1; yy += 3) g.fill(x + 1, yy, x + w - 1, yy + 1, 0x0AFFFFFF);            // scanlines
+        for (int q = 0; q < 5; q++) {                                                                              // a few stars
+            int hsh = (seed * 73856093) ^ (q * 19349663); hsh ^= hsh >>> 13; hsh *= 0x5bd1e995; hsh ^= hsh >>> 15;
+            int sx = x + 4 + Math.floorMod(hsh, Math.max(1, w - 8)), sy = y + 3 + Math.floorMod(hsh >>> 8, Math.max(1, h - 6));
+            float tw = STILL ? 0.6f : 0.35f + 0.65f * Math.abs((float) Math.sin(now / (700.0 + q * 230) + q + seed));
+            g.fill(sx, sy, sx + 1, sy + 1, Gfx.argb(Math.round(110 * tw), q % 3 == 0 ? 0xC8D8FF : 0xFFFFFF));
+        }
+        int ea = on ? 190 : hv ? 150 : 60, ec = Gfx.argb(ea, col);
+        g.fill(x + c, y, x + w - c, y + 1, ec); g.fill(x + c, y + h - 1, x + w - c, y + h, ec);
+        g.fill(x, y + c, x + 1, y + h - c, ec); g.fill(x + w - 1, y + c, x + w, y + h - c, ec);
+        for (int i = 1; i < c; i++) { g.fill(x + i, y + c - i, x + i + 1, y + c - i + 1, ec); g.fill(x + w - 1 - i, y + c - i, x + w - i, y + c - i + 1, ec); g.fill(x + i, y + h - c + i - 1, x + i + 1, y + h - c + i, ec); g.fill(x + w - 1 - i, y + h - c + i - 1, x + w - i, y + h - c + i, ec); }
+        int bc = Gfx.argb(on || hv ? 255 : 170, Canvas.mix(col, 0xFFFFFFFF, 0.35f) & 0xFFFFFF), L = Math.min(6, w / 5);       // corner brackets
+        g.fill(x + c, y, x + c + L, y + 1, bc); g.fill(x, y + c, x + 1, y + c + L, bc);
+        g.fill(x + w - c - L, y, x + w - c, y + 1, bc); g.fill(x + w - 1, y + c, x + w, y + c + L, bc);
+        g.fill(x + c, y + h - 1, x + c + L, y + h, bc); g.fill(x, y + h - c - L, x + 1, y + h - c, bc);
+        g.fill(x + w - c - L, y + h - 1, x + w - c, y + h, bc); g.fill(x + w - 1, y + h - c - L, x + w, y + h - c, bc);
+        if ((hv || on) && !STILL) {                                                                                  // a beam of light sweeping across
+            float ph = (now % 1600L) / 1600f; int sx = x + Math.round(ph * (w + 24)) - 12;
+            for (int j = 0; j < 4; j++) { int x0 = Math.max(x + 1, sx + j * 2 - (h - 2) / 3), x1 = Math.min(x + w - 1, x0 + 2); if (x1 > x0) g.fill(x0, y + 1, x1, y + h - 1, Gfx.argb(14 - j * 3, 0xFFFFFF)); }
+        }
+        if (on) { g.fill(x + c + 2, y + h - 3, x + w - c - 2, y + h - 2, col); g.fill(x + c + 6, y + h - 4, x + w - c - 6, y + h - 3, Gfx.argb(90, col)); }
+    }
+    /** The WIP mark on a tile: an amber holo chip with a blinking light. */
+    private void wipChip(GuiGraphicsExtractor g, int x, int y, float s) {
+        int w = Math.round(20 * s), h = Math.round(10 * s);
+        g.fill(x, y, x + w, y + h, 0xC0201806); g.fill(x, y, x + w, y + 1, 0x90FFC857); g.fill(x, y + h - 1, x + w, y + h, 0x90FFC857);
+        boolean bl = STILL || (System.currentTimeMillis() / 500L) % 2 == 0; g.fill(x + 2, y + h / 2 - 1, x + 4, y + h / 2 + 1, bl ? 0xFFFFC857 : 0xFF6A5020);
+        Gfx.push(g); Gfx.translate(g, x + 5 * s + 1, y + (h - 8 * s) / 2f + 0.5f); Gfx.scale(g, s * 0.85f); Gfx.text(g, font, "WIP", 0, 0, 0xFFFFC857); Gfx.pop(g);
     }
     private static final Map<String, Long> lockShake = new HashMap<>();
     private static String tipText, hoverCos; private static int tipCol;                      // the hover card of the tile under the mouse (drawn last, on top of everything)
@@ -2304,11 +2342,10 @@ public class FancyScreen extends Screen {
     private Row catTiles() {
         int n = Categories.ALL.size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n]; boolean[] wp = new boolean[n];
         for (int i = 0; i < n; i++) {
-            Categories.Cat k = Categories.ALL.get(i); lb[i] = k.name(); ic[i] = k.icon(); co[i] = k.color(); wp[i] = k.wip();
-            sb[i] = k.wip() ? "Soon™" : tileCount(k);
+            Categories.Cat k = Categories.ALL.get(i); lb[i] = k.name(); ic[i] = k.icon(); co[i] = k.color(); wp[i] = locked(k);     // WIP until its new animation is out
         }
-        Row r = picker("", "", lb, sb, ic, co, wp, 4, () -> -1, i -> openPage(i, null, null));
-        r.pVert = true; r.pTh = 44; return fit(r);
+        Row r = picker("", "", lb, null, ic, co, wp, 4, () -> -1, i -> openPage(i, null, null));        // just the name: no counts under it
+        r.pVert = true; r.pTh = 38; return fit(r);
     }
 
     // ---- animation state buttons
@@ -2534,7 +2571,7 @@ public class FancyScreen extends Screen {
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n]; int[] co = new int[n]; String[] ic = new String[n]; boolean[] wp = new boolean[n];
         for (int i = 0; i < n; i++) {
             Categories.Group g = cat.groups().get(i); int t = 0; for (DropData.Source s : cat.sources(g.id())) t += s.drops.size();
-            lb[i] = g.name(); sb[i] = g.wip() ? "Soon\u2122" : t + " drops"; co[i] = g.color(); ic[i] = g.icon(); wp[i] = g.wip();
+            lb[i] = g.name(); sb[i] = null; co[i] = g.color(); ic[i] = g.icon(); wp[i] = g.wip() || !g.id().equals("slayer");
         }
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
         boolean anyLive = false; for (Categories.Group g : cat.groups()) anyLive |= g.id().equals("slayer");
@@ -2542,8 +2579,7 @@ public class FancyScreen extends Screen {
     }
     /** Under a drop page whose animation is being remade: the station at work. Drops still pick their animation and chat alert now; the picks carry over. */
     private void animWip(String name) {
-        rows.add(section("Animation"));
-        Row w = row(0, ":wip:", name, "New animation in the works. Your picks carry over.", Ui.DIM); w.kind = PANEL; w.h = 170; w.noSearch = true; rows.add(w);
+        Row w = row(0, ":wip:", name, "New animation in the works. Your picks carry over.", Ui.DIM); w.kind = PANEL; w.h = 112; w.noSearch = true; rows.add(w);
     }
 
     /** Mythological Mobs: the pet that decides who can spawn, then the creatures. */
@@ -2635,7 +2671,7 @@ public class FancyScreen extends Screen {
     private void groupTiles(Categories.Cat cat, String hint) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb() + " " + hint, cat.color()));
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n]; boolean[] wp = new boolean[n];
-        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); boolean lock = g.wip() || !g.id().equals("slayer"); lb[i] = g.name(); sb[i] = lock ? "Soon\u2122" : "New \u00B7 black hole"; ic[i] = g.icon(); co[i] = g.color(); wp[i] = lock; }   // being remade for Stardrops: only Slayer is open
+        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); boolean lock = g.wip() || !g.id().equals("slayer"); lb[i] = g.name(); sb[i] = null; ic[i] = g.icon(); co[i] = g.color(); wp[i] = lock; }   // being remade for Stardrops: only Slayer is open
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
     }
 
@@ -3262,12 +3298,14 @@ public class FancyScreen extends Screen {
             }
         }
         Gfx.text(g, font, "v" + FancyDropsMod.VERSION + "  \u00B7  " + FancyDropsMod.CHANNEL, px + 40, py + 22, Ui.DIM);
-        if (Spotify.linked()) {                                                                 // linked to Spotify: a small green chip after the version, its dot breathing while music plays
-            String vs = "v" + FancyDropsMod.VERSION + "  \u00B7  " + FancyDropsMod.CHANNEL, sl = "Spotify Linked"; int lx = px + 40 + Gfx.w(font, vs) + 8, lw2 = Gfx.w(font, sl) + 16;
-            pill(g, lx, py + 20, lw2, 12, Canvas.mix(Ui.PANEL2, 0xFF1ED760, 0.16f)); rout(g, lx, py + 20, lw2, 12, 0x661ED760);
-            float br = Spotify.playing && !STILL ? 0.5f + 0.5f * (float) Math.sin(now / 260.0) : 1f;
-            g.fill(lx + 4, py + 24, lx + 8, py + 28, Gfx.argb(Math.round(140 + 115 * br), 0x1ED760));
-            Gfx.text(g, font, sl, lx + 11, py + 22, 0xFF8AF0B0);
+        if (Spotify.linked() && !cosWin()) {                                                     // linked to Spotify: a small chip in the sidebar under the logo, its dot breathing while music plays
+            String sl = "Spotify Linked"; int lw2 = Gfx.w(font, sl) + 16, lx = px + (sw - lw2) / 2, ly = py + 50 - sideScroll;
+            if (ly >= py + 40) {
+                pill(g, lx, ly, lw2, 13, Canvas.mix(Ui.PANEL2, 0xFF1ED760, 0.14f)); rout(g, lx, ly, lw2, 13, 0x661ED760);
+                float br = Spotify.playing && !STILL ? 0.5f + 0.5f * (float) Math.sin(now / 260.0) : 1f;
+                g.fill(lx + 4, ly + 4, lx + 8, ly + 8, Gfx.argb(Math.round(140 + 115 * br), 0x1ED760));
+                Gfx.text(g, font, sl, lx + 11, ly + 3, 0xFF8AF0B0);
+            }
         }
         }
         if (!cosWin()) {
