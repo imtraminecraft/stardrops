@@ -1,0 +1,194 @@
+package dev.stardrops;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.minecraft.client.Minecraft;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * Achievements and the cosmetics they unlock. Every real drop is counted on this computer at once (LocalLedger), so stars light
+ * even when the server is unreachable; it is also sent to the server (tools/worn-worker.js), signed with your Minecraft login,
+ * which alone decides which cosmetics you have unlocked.
+ */
+final class Achievements {
+    private Achievements() {}
+
+    /** One achievement as the server describes it. */
+    record Ach(String id, String ch, String chapter, String name, String desc, String icon, double goal, double progress, boolean done, long at, String reward, boolean secret, int tier, boolean first) {}
+    /** Everything the server knows about you. */
+    record Profile(Map<String, Double> stats, Map<String, double[]> groups, List<Ach> list, Set<String> cosmetics, LinkedHashMap<String, String> chapters, long since) {}
+
+    private static volatile Profile profile;
+    private static volatile long fetchedAt, failedAt; private static volatile boolean fetching, posting;
+    static volatile String status = "Connecting to the ledger...";
+    private static final List<JsonObject> PENDING = new ArrayList<>();
+    private static long firstPending, retryAt;
+    /** How sending drops is going, for the star map: "" while fine. */
+    static volatile String syncNote = ""; static volatile int unsent;
+    private static boolean pendingLoaded;
+    /** Drops that could not be sent yet wait in config/stardrops/unsent_drops.json, and go out with the next send (even after a restart). */
+    private static java.nio.file.Path pendingFile() { return DataFiles.dir().resolve("unsent_drops.json"); }
+    private static void savePending(List<JsonObject> l) {
+        try { com.google.gson.JsonArray a = new com.google.gson.JsonArray(); for (JsonObject e : l) a.add(e); java.nio.file.Files.writeString(pendingFile(), a.toString()); unsent = l.size(); } catch (Throwable ignored) { }
+    }
+    private static void loadPending() {
+        if (pendingLoaded) return; pendingLoaded = true;
+        try {
+            java.nio.file.Path f = pendingFile(); if (!java.nio.file.Files.exists(f)) return;
+            List<JsonObject> l = new ArrayList<>(); for (var e : JsonParser.parseString(java.nio.file.Files.readString(f)).getAsJsonArray()) l.add(e.getAsJsonObject());
+            synchronized (PENDING) { if (!l.isEmpty()) { PENDING.addAll(0, l); firstPending = 0; unsent = l.size(); } }
+        } catch (Throwable ignored) { }
+    }
+    private static void requeue(List<JsonObject> batch, String why) {
+        synchronized (PENDING) { PENDING.addAll(0, batch); if (PENDING.size() > 500) PENDING.subList(0, PENDING.size() - 500).clear(); savePending(new ArrayList<>(PENDING)); }
+        retryAt = System.currentTimeMillis() + 60_000L; syncNote = why;
+    }
+
+    private static Profile merged, mergedFrom; private static int mergedDone = -1; private static long mergedAt, mergedLocal = -1;
+    /** The server's profile with the Playtime stars (counted on this computer) added; rebuilt when either changes. */
+    static Profile profile() {
+        refresh(false);
+        Profile p = profile; long now = System.currentTimeMillis();
+        int done = (int) StardropsConfig.get().playMinutes;
+        if (merged == null || mergedFrom != p || mergedDone != done || mergedLocal != LocalLedger.version() || now - mergedAt > 30_000) {
+            mergedLocal = LocalLedger.version();
+            Profile lp = LocalLedger.merge(p, LocalLedger.profile());                    // what the server knows plus what was counted here (drops still waiting count too)
+            Profile p0 = p; p = lp;
+            List<Ach> l = new ArrayList<>(p.list());
+            Map<String, Double> st = new HashMap<>(p == null ? Map.of() : p.stats()); st.put("playMinutes", StardropsConfig.get().playMinutes);
+            merged = new Profile(st, p == null ? new HashMap<>() : p.groups(), l, p == null ? new HashSet<>() : p.cosmetics(), p == null ? new LinkedHashMap<>() : p.chapters(), p == null ? 0 : p.since());
+            mergedFrom = p0; mergedDone = done; mergedAt = now;
+        }
+        return merged;
+    }
+    static boolean ready() { return profile != null; }
+    /** True when the server says you have unlocked this cosmetic through an achievement. */
+    static boolean hasCosmetic(String id) { Profile p = profile; return p != null && p.cosmetics().contains(id); }
+    /** The achievement that unlocks a cosmetic, or null. */
+    static Ach unlocking(String cosmetic) { Profile p = profile; if (p == null) return null; for (Ach a : p.list()) if (cosmetic.equals(a.reward())) return a; return null; }
+
+    private static String base() { return Cosmetics.wornUrl; }
+
+    /** Reads your profile from the server (at most once a minute unless forced). */
+    static void refresh(boolean force) {
+        String b = base(); UUID me = Cosmetics.me(); long now = System.currentTimeMillis();
+        if (b == null || me == null || fetching) return;
+        if (!force && (now - fetchedAt < 60_000L || now - failedAt < 20_000L)) return;
+        fetching = true; fetchedAt = now;
+        CompletableFuture.runAsync(() -> {
+            try {
+                var res = Net.HTTP.send(HttpRequest.newBuilder(URI.create(b + "/profile/" + Cosmetics.code(me))).header("User-Agent", "Stardrops").GET().build(), HttpResponse.BodyHandlers.ofString());
+                if (res.statusCode() != 200) { status = res.statusCode() == 404 ? "The ledger is being updated. Back soon." : "The ledger server answered " + res.statusCode() + "."; System.err.println("[Stardrops] ledger: GET /profile answered " + res.statusCode() + " (the worker needs tools/worn-worker.js deployed)"); failedAt = System.currentTimeMillis(); return; }
+                profile = parse(JsonParser.parseString(res.body()).getAsJsonObject()); status = ""; CosmeticData.changed();
+            } catch (Throwable t) { status = "Can't reach the ledger right now."; failedAt = System.currentTimeMillis(); }
+            finally { fetching = false; }
+        });
+    }
+
+    static Profile parse(JsonObject o) {
+        Map<String, Double> stats = new HashMap<>(); Map<String, double[]> groups = new HashMap<>(); long since = 0;
+        if (o.has("stats")) {
+            JsonObject s = o.getAsJsonObject("stats");
+            for (var e : s.entrySet()) if (e.getValue().isJsonPrimitive()) stats.put(e.getKey(), e.getValue().getAsDouble());
+            if (s.has("groups")) for (var e : s.getAsJsonObject("groups").entrySet()) { JsonObject gg = e.getValue().getAsJsonObject(); groups.put(e.getKey(), new double[]{gg.has("d") ? gg.get("d").getAsDouble() : 0, gg.has("rng") ? gg.get("rng").getAsDouble() : 0}); }
+            if (s.has("since")) since = s.get("since").getAsLong();
+        }
+        List<Ach> list = new ArrayList<>();
+        for (var e : o.getAsJsonArray("achievements")) {
+            JsonObject a = e.getAsJsonObject();
+            list.add(new Ach(str(a, "id"), str(a, "ch"), str(a, "chapter"), str(a, "name"), str(a, "desc"), str(a, "icon"), num(a, "goal"), num(a, "progress"), a.has("done") && a.get("done").getAsBoolean(), (long) num(a, "at"), str(a, "reward"), a.has("secret") && a.get("secret").getAsBoolean(), (int) num(a, "tier"), a.has("first") && a.get("first").getAsBoolean()));
+        }
+        Set<String> cos = new HashSet<>(); if (o.has("cosmetics")) for (var e : o.getAsJsonArray("cosmetics")) cos.add(e.getAsString());
+        LinkedHashMap<String, String> ch = new LinkedHashMap<>(); if (o.has("chapters")) for (var e : o.getAsJsonObject("chapters").entrySet()) ch.put(e.getKey(), e.getValue().getAsString());
+        return new Profile(stats, groups, list, cos, ch, since);
+    }
+    private static String str(JsonObject o, String k) { return o.has(k) && !o.get(k).isJsonNull() ? o.get(k).getAsString() : ""; }
+    private static double num(JsonObject o, String k) { return o.has(k) && !o.get(k).isJsonNull() ? o.get(k).getAsDouble() : 0; }
+
+    // ---------------------------------------------------------------- reporting drops
+    /** A real drop happened (never a simulated one): it is sent to the server a few seconds later, when its price is known. */
+    static void report(AnimationManager.Item it, String group, boolean rng) {
+        if (it == null || it.sim) return;
+        JsonObject e = new JsonObject();
+        e.addProperty("g", group); e.addProperty("src", it.source == null ? "" : it.source.id); e.addProperty("id", it.id == null ? it.name : it.id);
+        e.addProperty("item", it.name); e.addProperty("r", it.rank); e.addProperty("rng", rng); e.addProperty("n", Math.max(1, it.amount));
+        synchronized (PENDING) { if (PENDING.isEmpty()) firstPending = System.currentTimeMillis(); PENDING.add(e); PRICED.put(e, it); }
+    }
+    private static final Map<JsonObject, AnimationManager.Item> PRICED = new IdentityHashMap<>();
+    private static long lastBeat;
+
+    /** Every tick: sends what has waited 6 seconds (prices have arrived by then), signed with your Minecraft login. */
+    static void tick(Minecraft mc) {
+        refresh(false); loadPending();
+        List<JsonObject> batch;
+        synchronized (PENDING) {
+            boolean beatDue = PENDING.isEmpty() && mc.level != null && !mc.isPaused() && System.currentTimeMillis() - lastBeat > 300_000L;   // a heartbeat every 5 minutes: the server counts your playtime
+            if (beatDue && !posting && System.currentTimeMillis() >= retryAt) { lastBeat = System.currentTimeMillis(); }
+            else if (PENDING.isEmpty() || posting || System.currentTimeMillis() - firstPending < 6000L || System.currentTimeMillis() < retryAt) return;
+            lastBeat = System.currentTimeMillis();
+            batch = new ArrayList<>(PENDING); PENDING.clear();
+            for (JsonObject e : batch) { AnimationManager.Item it = PRICED.remove(e); if (it == null && e.has("v")) continue; double v = it == null || it.price < 0 ? 0 : it.price * Math.max(1, it.amount); e.addProperty("v", Math.round(v)); }
+            savePending(batch);
+        }
+        for (JsonObject e : batch) if (!e.has("c")) { e.addProperty("c", 1); LocalLedger.add(e); }   // counted here too (shown as waiting until the server confirms)
+        savePending(batch);
+        String b = base(); UUID me = Cosmetics.me(); if (b == null || me == null) return;
+        String name = mc.getUser().getName(), token = mc.getUser().getAccessToken();
+        posting = true;
+        CompletableFuture.runAsync(() -> {
+            try {
+                JsonObject o = signed(mc, me, name, token);
+                com.google.gson.JsonArray arr = new com.google.gson.JsonArray(); for (JsonObject e : batch) arr.add(e); o.add("events", arr);
+                var res = Net.HTTP.send(HttpRequest.newBuilder(URI.create(b + "/event")).header("User-Agent", "Stardrops").header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(o.toString())).build(), HttpResponse.BodyHandlers.ofString());
+                if (res.statusCode() != 200) { System.err.println("[Stardrops] ledger: " + res.statusCode() + " " + res.body()); requeue(batch, res.statusCode() == 403 ? "Drops are waiting: the server couldn't confirm it's you (" + res.body() + ")" : "Drops are waiting: the server said " + res.statusCode()); return; }
+                savePending(List.of()); syncNote = "";
+                JsonObject r = JsonParser.parseString(res.body()).getAsJsonObject();
+                Profile before = profile; profile = parse(r); fetchedAt = System.currentTimeMillis(); CosmeticData.changed();
+                if (r.has("unlocked")) for (var u : r.getAsJsonArray("unlocked")) announce(u.getAsString());
+            } catch (Throwable t) { System.err.println("[Stardrops] ledger: could not send drops: " + t); requeue(batch, "Drops are waiting: couldn't reach the server"); }
+            finally { posting = false; }
+        });
+    }
+
+    /** Your Minecraft login proves to Mojang (and so to the server) that a request comes from you. */
+    static JsonObject signed(Minecraft mc, UUID me, String name, String token) throws Exception {
+        byte[] rb = new byte[20]; new java.security.SecureRandom().nextBytes(rb); StringBuilder sid = new StringBuilder(); for (byte x : rb) sid.append(String.format("%02x", x));
+        try { mc.services().sessionService().joinServer(me, token, sid.toString()); } catch (Exception e) { System.err.println("[Stardrops] joinServer failed (the account key is sent instead): " + e); }
+        JsonObject o = new JsonObject(); o.addProperty("name", name); o.addProperty("serverId", sid.toString());
+        o.addProperty("uuid", me.toString()); o.addProperty("key", accountKey(me));                 // used when Mojang won't answer the server
+        return o;
+    }
+    /**
+     * This account's key: a random secret made once and kept in config/stardrops/keys/. The server ties it to your account the
+     * first time it sees it (or whenever Mojang confirms you), and accepts it when Mojang refuses to answer. Keep it private.
+     */
+    static synchronized String accountKey(UUID me) {
+        java.nio.file.Path f = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir().resolve("stardrops").resolve("keys").resolve(me.toString() + ".key");
+        try {
+            if (java.nio.file.Files.exists(f)) { String k = java.nio.file.Files.readString(f).trim(); if (k.matches("[0-9a-f]{64}")) return k; }
+            byte[] rb = new byte[32]; new java.security.SecureRandom().nextBytes(rb); StringBuilder sb = new StringBuilder(); for (byte x : rb) sb.append(String.format("%02x", x));
+            java.nio.file.Files.createDirectories(f.getParent()); java.nio.file.Files.writeString(f, sb.toString());
+            return sb.toString();
+        } catch (Exception e) { return ""; }
+    }
+
+    private static final Set<String> ANNOUNCED = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    /** "Achievement unlocked" in chat and as a notice in the menu. */
+    private static void announce(String id) {
+        if (!ANNOUNCED.add(id)) return;                                                             // once per star (only the server lights stars, so this is always news)
+        Profile p = profile(); if (p == null) return;
+        for (Ach a : p.list()) if (a.id().equals(id)) {
+            Minecraft.getInstance().execute(() -> {
+                var mc = Minecraft.getInstance(); if (mc.player == null) return;
+                StarToast.lit(a.id(), a.name(), a.ch(), a.tier(), a.reward());
+            });
+        }
+    }
+}

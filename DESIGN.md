@@ -1,9 +1,9 @@
-# FancyDrops design requirements
+# Stardrops design requirements
 
 Standing rules from the author (ImTra). Read this before changing the menu, animations or drop settings, and keep it up to date. When a change is made to one page, change every other page and button it affects (for example, if the Mythological Animations page is copied to Slayers, the Slayers buttons must describe the Slayers scenes).
 
 ## Working rules
-- Short UI text. Releases are manual (the author runs the "Release FancyDrops" workflow with the version).
+- Short UI text. Releases are manual (the author runs the "Release Stardrops" workflow with the version).
 - Per update: bump `version=` in `gradle.properties`, add a `## x.y.z` section at the top of `CHANGELOG.md`, commit and push to `main`. The version was restarted at 0.4.1 for the full rework (author request): count up from there, 0.4.2, 0.4.3, 0.4.4, 0.4.5, 0.4.6, 0.4.7, 0.4.8, 0.4.9, 0.4.10, 0.4.11 and so on.
 - Commit as `tra` (`git -c user.name=tra -c user.email=imtraminecraft@gmail.com commit`).
 - Make a mockup first for anything visual and big, and wait for approval before building it.
@@ -156,10 +156,10 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Mythological: one animation shape per creature (Ritual.KINDS / shape()); Animations page keeps a single "Mythological Mobs" group. Treasure uses the digger (Ritual.digger) with a chest for Normal and RNG.
 - Creature icons are `mob_<id>` in IconArt.mob(); they appear on the creature tiles and under Mythological Mobs in the sidebar.
 - Cosmetics has no search box. Name effects are only the Special sets and Beta (Pulse). Hidden (scrolled-out) tiles are not hoverable.
-- Where to edit: icons in IconArt.java, scenes in Ritual.java, timing/cues in AnimationManager.java, item art in ItemIcons.java / SkullSpin.java, defaults in FancyConfig.java.
+- Where to edit: icons in IconArt.java, scenes in Ritual.java, timing/cues in AnimationManager.java, item art in ItemIcons.java / SkullSpin.java, defaults in StardropsConfig.java.
 
 ## 0.4.17
-- Item art lives in config/fancydrops/textures/ (<ID>.png flat, <ID>_head.png skin); user files override downloaded art. Creature icons `mob_<id>` draw the creature skull in 3D (ItemIcons MOB_SKINS).
+- Item art lives in config/stardrops/textures/ (<ID>.png flat, <ID>_head.png skin); user files override downloaded art. Creature icons `mob_<id>` draw the creature skull in 3D (ItemIcons MOB_SKINS).
 
 ## 0.4.18
 - Main (landing) pages must never scroll: build() shrinks tile heights, then hides the intro text, then clips.
@@ -168,18 +168,18 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Animation 100% = Ritual.SMALLER 0.6 (about a third of the screen width). The inhale pillar is short.
 
 ## 0.4.20
-- Icons are overridable at runtime from config/fancydrops/icons/<name>.png (Icons.scanOverrides, hot reload). Add new names to Icons.EXPORT.
+- Icons are overridable at runtime from config/stardrops/icons/<name>.png (Icons.scanOverrides, hot reload). Add new names to Icons.EXPORT.
 
 ## 0.4.21
-- The sidebar squeezes (FancyScreen.sq, 0.7 to 1) instead of scrolling. Emblems: `emblem` (tinted shield + star) and `emblem_special`.
+- The sidebar squeezes (StardropsScreen.sq, 0.7 to 1) instead of scrolling. Emblems: `emblem` (tinted shield + star) and `emblem_special`.
 
 ## 0.4.22
 - Icons have 12 frames (IconArt.FRAMES). The sidebar is not squeezed (sq stays 1); main pages never scroll.
 
 ## 0.4.25
-- "Animation Changes" has Bar, Text, Item and Position Changes. Position rules: Top Center = words below only, Center = above or below, Above Action Bar = words above only (FancyConfig.textAbove()).
+- "Animation Changes" has Bar, Text, Item and Position Changes. Position rules: Top Center = words below only, Center = above or below, Above Action Bar = words above only (StardropsConfig.textAbove()).
 - Chat format limit: 65 letters, placeholders not counted.
-- Source art files stay in src/main/java/dev/fancydrops (the IDE needs package = folder; see ART.md); runtime art in config/fancydrops/art/{icons,heads,items,animations} (DataFiles.art). All heads turn in sync.
+- Source art files stay in src/main/java/dev/stardrops (the IDE needs package = folder; see ART.md); runtime art in config/stardrops/art/{icons,heads,items,animations} (DataFiles.art). All heads turn in sync.
 
 ## Standing requirements added in 0.4.28
 - Page headers show the title only: no line of words under it.
@@ -231,7 +231,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Menu previews must not issue hundreds of fills per frame: the backdrop is a texture (`BackdropTex`).
 
 ## Standing requirements added in 0.4.41
-- Text that does not fit a tile pans (marquee: slide, pause, slide back) rather than being cut or shrunk (`FancyScreen.scrollText`).
+- Text that does not fit a tile pans (marquee: slide, pause, slide back) rather than being cut or shrunk (`StardropsScreen.scrollText`).
 
 ## Standing requirements added in 0.4.45
 - Slayer bosses use heads the mod draws itself (`@HEAD_ZOMBIE`, `@HEAD_BLAZE`) as 3D spinning icons, never a flat item.
@@ -348,7 +348,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - The Mythological mobs stay as 3D heads (author decision, Oct 26).
 
 ## Standing requirements added in 0.7.4
-- The Discord community button opens https://discord.gg/xeBfsVRfkT (`FancyDropsMod.DISCORD`); the README links it too. The #releases channel is fed by a GitHub release webhook.
+- The Discord community button opens https://discord.gg/xeBfsVRfkT (`StardropsMod.DISCORD`); the README links it too. The #releases channel is fed by a GitHub release webhook.
 
 ## Standing requirements added in 0.7.5
 - A slayer drop line is never left in chat when its animation or chat alert is on: names are matched by their words (book names with or without "Enchanted Book" and brackets), and any unreadable "DROP!" line is written to drop-log.txt.
@@ -371,7 +371,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - The chat hover card of a name (`Cosmetics.tip`): header, a long divider, then per cosmetic its kind, name, rarity mark (coloured gradient symbol: a hover cannot animate), set and how to get it.
 - Pets with several drop rarities have one Drop Library entry per rarity ("Epic Slug Pet", "Legendary Slug Pet", "Legendary Rat Pet"), each with its own chance and George price. A chat rarity in front picks the entry.
 
-- Releases have no description text, and the downloaded file is `FancyDrops-<version>.jar` (release.yml no longer reads CHANGELOG.md).
+- Releases have no description text, and the downloaded file is `Stardrops-<version>.jar` (release.yml no longer reads CHANGELOG.md).
 
 - Commits carry no `Co-Authored-By` or `Claude-Session` trailers (author decision, Oct 27). Author them as tra only.
 
@@ -386,10 +386,10 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Tab icons (0.8.0 "vault" set, IconArt home/dropped/animations/sounds/chat/settings/stats): one family with gold trim, a dark outline and one small motion each. `IconArt.render` is synchronized (the icon export runs off the render thread).
 - Shortcuts: Backspace and mouse button 4 run the header back button; Ctrl+F and / focus the search box (only when no text box has focus). The search box hint says so.
 - Settings > Cosmetics shows "On you" and "On other players" as one row each of Icon / Effect / Aura chips (`Chip`).
-- Normal drops pick a random flourish per drop (`Anim.variant`: 0 rings, 1 starburst + fall-in entrance, 2 spiral + spiral-up entrance). RNG and No Drops always use the original. `FancyConfig.normalSize` (50-100, default 80) shrinks Normal and No Drops only; their full-screen flicker is at most alpha 10.
+- Normal drops pick a random flourish per drop (`Anim.variant`: 0 rings, 1 starburst + fall-in entrance, 2 spiral + spiral-up entrance). RNG and No Drops always use the original. `StardropsConfig.normalSize` (50-100, default 80) shrinks Normal and No Drops only; their full-screen flicker is at most alpha 10.
 - Name tags: cosmetics are applied to the render states at END_EXTRACTION (`AuraFx.styleNameTags`): a player's own tag, or floating text within 1.2 blocks above them, gets their name effect and icon. No mixin.
 - Mod colorway everywhere (0.8.1): chat prefix, /fd help and every mod chat line use the menu's gold (`Chat.GRADIENT`, warm white TEXT, violet COMMAND, gold rules `Chat.LINE`). /fd help is framed by gold rules with ▸ bullets.
-- Name hover card: [FancyDrops], the player's name, a gold rule, one line per worn cosmetic (rarity mark, name in its colour, kind, rarity word), and the set + how to get it once at the bottom when everything worn is from one set.
+- Name hover card: [Stardrops], the player's name, a gold rule, one line per worn cosmetic (rarity mark, name in its colour, kind, rarity word), and the set + how to get it once at the bottom when everything worn is from one set.
 - Given cosmetics are opt-in for everyone: once `wornUrl` is in cosmetics.json (the Cloudflare Worker in tools/worn-worker.js), other players only see what the owner turned on, and only items they were given. Each player's mod publishes its pick (Mojang joinServer + hasJoined proves who it is) 2 s after a change and on join; the list is read every 60 s. Without `wornUrl` the old behaviour stays (whole set shown).
 
 ## Standing requirements added in 0.8.1
@@ -417,7 +417,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Aura sparkles have no round halo (a star has none; dots have a faint smooth one).
 - (Nov 4, evening) Cosmetics are their own page again (purple button outside the menu, bottom left; `/fd cosmetics`). **Achievements are a star map** (`Codex.java`, button bottom right): one night sky, one constellation per ledger chapter (The Quill, The Coin, The Horn, The Sword, The Sheaf, The Fish, The Drop), each achievement a star; earned = lit star, and a figure's lines light between two lit stars. Click a constellation to fly in (names, progress rings, "→ reward", the chapter's stats panel on the left); right click / Esc / "All constellations" flies out; arrows and the wheel move between constellations. Sounds: sky_open, sky_close, sky_zoom, sky_star. The old book (Ledger UI, book_* sounds, STATS tab) is gone; Ledger.java only keeps the chapter stats.
 - Auras are submitted with their own fresh PoseStack and only particles within a few blocks of the player (finite positions) are drawn.
-- Star map look (Nov 4 night): a painted deep-sky texture (`NebulaTex`: violet/teal/rose nebula, Milky Way band with dust lanes, 1400 stars) with parallax and a slow drift; twinkling near stars; a warp of streaking stars when it opens and when you fly in/out; shooting stars; telescope vignette; gold star-chart frame with degree ticks and a turning compass rose. Unearned stars are real cool-white stars; earned ones burn in the chapter colour with rays, a halo and sparks running along lit lines; a progress arc and a row of dots per constellation; hovering traces the figure. Stars earned since you last looked ignite (flash + ring) when the sky opens (`FancyConfig.seenAch`). Drawn on its own GUI stratum so the menu's text never shows through.
+- Star map look (Nov 4 night): a painted deep-sky texture (`NebulaTex`: violet/teal/rose nebula, Milky Way band with dust lanes, 1400 stars) with parallax and a slow drift; twinkling near stars; a warp of streaking stars when it opens and when you fly in/out; shooting stars; telescope vignette; gold star-chart frame with degree ticks and a turning compass rose. Unearned stars are real cool-white stars; earned ones burn in the chapter colour with rays, a halo and sparks running along lit lines; a progress arc and a row of dots per constellation; hovering traces the figure. Stars earned since you last looked ignite (flash + ring) when the sky opens (`StardropsConfig.seenAch`). Drawn on its own GUI stratum so the menu's text never shows through.
 - Cosmetic rarities: every ledger reward is rarity **Achievement** (light blue); Beta counts as **Legendary**.
 - Auras use their own render type (the lightning pipeline drawn into the main target). Vanilla's lightning type draws into the weather layer, which some setups compose late: that washed the aura's colour over the sky for a frame.
 
@@ -431,7 +431,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 
 ## Slayer drops restored, dyes shared (author request Nov 4)
 - slayers.json v6: every slayer drop is back (91 items, as in 0.7.8), the six slayer dyes included. The overnight trim was too much.
-- A dye has one setting wherever it is listed: `FancyConfig.drop()` stores any "* Dye" under the "dyes" source, so the slayer page and the Dyes page show and change the same thing (older per-slayer settings move over).
+- A dye has one setting wherever it is listed: `StardropsConfig.drop()` stores any "* Dye" under the "dyes" source, so the slayer page and the Dyes page show and change the same thing (older per-slayer settings move over).
 - A dye heard twice within 20 s (the slayer's RARE DROP line and the "WOW! ... found ... Dye" line) plays once.
 
 ## Slayer scenes, one per boss (author request Nov 4: "redo all the animations")
@@ -470,8 +470,8 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Now Playing has two looks: ISLAND (default; a black capsule like a phone's live activity: round cover with a progress ring, title, waveform in the cover's colour; springs open on song start, play/pause and every 45 s to show cover, artists, the current lyric line, the time bar) and CARD (glass card, equalizer). Visuals > Now Playing > Move HUD opens `HudEditScreen`: drag it (snaps to the middle), scroll to resize, R resets. npX/npY/npScale.
 - Lyrics style "Your surroundings" (default): each line looks around first (8 horizontal rays, one up). Open sky -> written across the sky far ahead (letters light like stars, a shooting star writes it in, it drifts apart). Ceiling + walls -> stuck flat on a wall you can see like a neon sign (flickers on/off), re-placed if you walk 16+ blocks away. Otherwise -> in the air ahead. Sky and air lines ride along with you: they follow at any speed (never more than a block behind). Words pop (bounce, white flash, glow). "On screen" keeps the karaoke block. No lyrics -> "No lyrics for this one" with drifting music notes (the island says so too).
 - Achievements: a galaxy of six groups. The heart, "Every Drop" (the Ledger and Fortune chapters), sits in the middle; round it, one group per Drop Library page (Mythological, Rare Drops, Farming, Fishing, Dyes), each tree growing away from the heart with the page's icon faint behind it. Lanes of light run from the heart to each group and fill with its completion.
-- Drops that can't be sent (no verification, no network) are kept in config/fancydrops/unsent_drops.json and retried every minute; the star map says how many are waiting.
-- Auras log a status line every 30 s ("[FancyDrops] auras: ...") to find why an aura may not show; particles are larger.
+- Drops that can't be sent (no verification, no network) are kept in config/stardrops/unsent_drops.json and retried every minute; the star map says how many are waiting.
+- Auras log a status line every 30 s ("[Stardrops] auras: ...") to find why an aura may not show; particles are larger.
 
 ## Round: walls, vinyl, HUD auras
 - Auras are drawn on the HUD by projecting each AuraSim particle (no particle engine); your own shows in F5.
@@ -482,13 +482,13 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 ## Round: figures, captions
 - Achievements: each group is a figure (Pole Star, Griffin, Sword, Sheaf, Fish, Drop): faint outline + stars on key points, joined by a minimum spanning tree. No chart rings, lanes, faint icons or ledger card. Labels avoid each other.
 - Lyrics: one caption (wraps to 2 rows, shrinks if needed), words fill with the album colour, thin time bar; "On walls" writes it flat on a wall in front (9 fixed rays, once per line), else on screen. Sky/air modes and all flicker effects removed.
-- Flicker the user saw: Sodium Extra had the sky turned off (not FancyDrops).
+- Flicker the user saw: Sodium Extra had the sky turned off (not Stardrops).
 
 ## Round: floating lyrics, new Now Playing, Ambience
 - Now Playing looks: Glass (default), Vinyl, Mini. When paused: stays / hides after 8 s / hides at once.
 - Lyrics: Floating (default, follows you, glides back, comes closer than walls, never clipped, no line under it), On walls, On screen (2-row wrap, time line). Song intro toggle, timing offset.
 - Ambience page: album glow on the screen edges, music notes by the hotbar (both off by default).
-- Music keys: play/pause, next, previous (Options > Controls > FancyDrops: Music; Premium; needs re-link for the new scope).
+- Music keys: play/pause, next, previous (Options > Controls > Stardrops: Music; Premium; needs re-link for the new scope).
 - Drop animations draw on a new stratum (above lyrics); lyrics/ambience fade out during them. Perf: blur/flash/item glow are glows, not disc fills; outlines 4-way; scene upload is one memory copy.
 
 ## Round: screen-held floating lyrics, spinning vinyl, Ambience+
@@ -527,7 +527,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Playtime: minutes played with the mod on (in a world, not paused), kept in config (playMinutes, playDone). 8 milestone stars 1h..500h as chapter "time", merged into Achievements.profile(); constellation "The Hourglass" (Playtime) at (0.6, 0.21). Rare Drops moved to (0.8, 0.77); Recently Lit card removed; key is earned / in progress / reward.
 
 ## Round: tracking, library cleanup, mining, new lyrics, clearer stars, short sounds
-- Tracking: every real drop is counted locally first (LocalLedger, config/fancydrops/ledger_local.json, rules mirror tools/worn-worker.js) and merged with the server's profile (max of each number, a star is lit if either says so). Cosmetics still come only from the server. The server answering 403 "not verified" no longer loses anything.
+- Tracking: every real drop is counted locally first (LocalLedger, config/stardrops/ledger_local.json, rules mirror tools/worn-worker.js) and merged with the server's profile (max of each number, a star is lit if either says so). Cosmetics still come only from the server. The server answering 403 "not verified" no longer loses anything.
 - Library: Crimson Isle is one list (minibosses + Magma Boss); Crimson Isle Mobs, Ender Belt, Ender Necklace, Obsidian Chestplate, The Rift and Events pages removed. Rare Drops = Slayers, Crimson Isle, The End (group "dragon": Ender Dragon pet, AOTD, Dragon Horn/Claw, Summoning Eye), Experimentation Table. Mining (no longer WIP) = Dwarven Mines (group "mobs") and Crystal Hollows (group "nucleus": Crystal Nucleus loot, Bal, Synthetic Heart, Jasper). New icons grp_end, grp_nucleus, grp_mines.
 - New scenes: MINES (a pickaxe strikes a mithril block three times, it bursts), NUCLEUS (five gem crystals lock into the core one beat at a time), END (Summoning Eyes light, a dragon's eye opens, a violet roar), each with its own backdrop. Nucleus loot is read after "CRYSTAL NUCLEUS LOOT BUNDLE"; dragon loot after "DRAGON DOWN!" from "<you> has obtained <item>!".
 - Timings: No Drops / Normal 4 s, RNG 6 s, words stay 2 s after (TEXT_HOLD 2.0); multi-drop hold 0.5 s per extra drop, max 1.5 s.
@@ -537,7 +537,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Constellations: stars ordered easiest first and placed along the figure's outline, joined 1 -> 2 -> 3; lit stars are big with a halo and a slow rotating flare; the next star pulses with its number and a dashed line leads to it; later stars are small grey. Playtime stars announce in chat when earned.
 
 ## Round: achievements opening film, grounded telescope, sky furniture
-- Opening film (FancyConfig.achIntro, default on; click or Esc skips): INTRO 1.9 s before openAt. 0-0.9 s: the stargazer close up ("looking up"), camera at ~3.5x. Then the camera pushes into the telescope's lens (scale up to 70x, cubic) while the lens's light floods the screen. The page then opens out of the lens like an iris (IRIS 0.9 s, brass rim) while the whole sky pulls back from 1.45x to 1x; the warp streaks fly out as before.
+- Opening film (StardropsConfig.achIntro, default on; click or Esc skips): INTRO 1.9 s before openAt. 0-0.9 s: the stargazer close up ("looking up"), camera at ~3.5x. Then the camera pushes into the telescope's lens (scale up to 70x, cubic) while the lens's light floods the screen. The page then opens out of the lens like an iris (IRIS 0.9 s, brass rim) while the whole sky pulls back from 1.45x to 1x; the warp streaks fly out as before.
 - Telescope stands on the ground: ground(x) gives the hill's top; the tripod's three feet, the lantern, the person's feet, the tree and the cat all stand on it.
 - Added: a little tree at the hill's edge, a cat by the lantern (tail swishing), fireflies over the hill, a crescent moon with a breathing halo (top middle), a ringed planet (right), far hills with twinkling town lights along the bottom, a satellite crossing now and then.
 
@@ -582,13 +582,13 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - The pixel scene repaints every frame (reuse window 7 ms in game, 16 ms in previews): painting costs under 1 ms.
 - MINES: a Minecraft-style ore block (8 x 8 texels, a top face); a pickaxe swung from the right lands its point on the block's top corner (wind-up, a fast 0.09 s blow with a smear, a bite, a recoil); texels are knocked out and breaking cracks grow each strike; chips and sparks; it breaks into little cubes.
 - GLACITE (Frozen Corpses): someone random (skin, hair, shirt) walks in with a key (Tungsten / Umber / Skeleton colour), turns it in a lock on the ice on each beat while the corpse's eyes light up; the ice splits in two and falls open; they jump for joy. ShowScene.seed is set per animation.
-- Settings > Drop Data: your counts (drops, RNG, unique, value, best), one line per category, and "All drop data as a text file" (config/fancydrops/drop_data.txt, opened in your editor).
+- Settings > Drop Data: your counts (drops, RNG, unique, value, best), one line per category, and "All drop data as a text file" (config/stardrops/drop_data.txt, opened in your editor).
 - Visuals > Spotify > Setup is a 6-step guide (Open dashboard, Create app, Redirect URI with a Copy button, Web API, paste Client ID, Log in), then "Music Functions": the three music keys and what they're bound to, with Change opening Key Binds.
 
 ## Round: fishing icons and treasure, icon redo, flat textures, achievements 2.0, /fd achievement (Nov 7-8)
 - Fishing sources have their own drawn icons (:src_<id>:), never the dye they carry. New group fish_treasure (Fishing > Treasure): "GREAT/OUTSTANDING CATCH! You found a X." plays; an unlisted treasure still plays (Great = Normal, Outstanding = RNG). Good Catches stay quiet.
 - Redrawn: grp_slayers, grp_mines, grp_crimson (a volcano), mining, grp_corpse, grp_crops, cat_table. Drops Hypixel draws with its own texture carry "flat": true and never show a skull skin.
-- Achievements come from ONE table: tools/achievements_src.py -> tools/make_achievements.py writes src/main/resources/fancydrops/achievements.json and the TABLE block in tools/worn-worker.js. Tiers: Common, Uncommon, Rare, Legendary. RNG = a drop worth 10M coins or more. First-day stars count drops while playtime < 24 h (missed after). Groups keep {drops, RNG, coins}.
+- Achievements come from ONE table: tools/achievements_src.py -> tools/make_achievements.py writes src/main/resources/stardrops/achievements.json and the TABLE block in tools/worn-worker.js. Tiers: Common, Uncommon, Rare, Legendary. RNG = a drop worth 10M coins or more. First-day stars count drops while playtime < 24 h (missed after). Groups keep {drops, RNG, coins}.
 - Constellations: Every Drop, Mythological, Mob Drops, Farming, Fishing, Table & Dyes, Playtime (played time to the second), Mining (The Pickaxe). Stars whose goal moved past your numbers go dark; new stars you already earned light on load.
 - /fd achievement (and /fd achievements) opens the sky straight away.
 
@@ -621,19 +621,19 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Opening (2.6 s): out of black, the last sunset glow low on the horizon fading, bright stars first then faint ones (eyes adjusting), the Milky Way last, a slow tilt up (ground slides more than sky), constellations come into focus and their lines draw themselves star to star.
 - Mountains: dark night silhouettes from ridged noise, a little mist at the foot. No outlines on the stargazer; the lantern lights a warm pool on the grass and the nearby grass, two moths circle it.
 - Tiers at a glance: the lit star itself is in its tier colour. Bronze: small copper diagonal cross; Silver: white long cross; Gold: large yellow eight-point star with a ring and halo.
-- "Ledger since" renamed "Counting since" (the day FancyDrops started counting your drops).
+- "Ledger since" renamed "Counting since" (the day Stardrops started counting your drops).
 - Lyrics: word-timed (enhanced) LRC is used when LRCLIB has it (exact word sync); otherwise the pacing guess. Now Playing's colour wash starts at the very edge (no dark line on the left).
-- Lyrics sources: NetEase Cloud Music first (search by title + first artist, length within 4.5 s; its "yrc" lyrics time every word), then LRCLIB. latest.log says which: "[FancyDrops] lyrics: <song>: ...". The menu note shows "Word-synced lyrics from NetEase" when it worked.
-- Per-song timing: FancyConfig.songOffset (track id -> ms) on top of lyricsOffset. Visuals > Lyrics > This song slider (while a song plays) and two keys, Lyrics earlier / later (±0.1 s, shown above the hotbar), in Controls > FancyDrops: Music.
+- Lyrics sources: NetEase Cloud Music first (search by title + first artist, length within 4.5 s; its "yrc" lyrics time every word), then LRCLIB. latest.log says which: "[Stardrops] lyrics: <song>: ...". The menu note shows "Word-synced lyrics from NetEase" when it worked.
+- Per-song timing: StardropsConfig.songOffset (track id -> ms) on top of lyricsOffset. Visuals > Lyrics > This song slider (while a song plays) and two keys, Lyrics earlier / later (±0.1 s, shown above the hotbar), in Controls > Stardrops: Music.
 - Anti-cheat (server, tools/worn-worker.js): a drop's coins are capped at 1.6x its market price (Hypixel bazaar + moulberry lowestbin, cached 15 min in KV "market"), times its amount (event "n", max 64); items the markets don't know count at most 25M. Daily limits: 1500 drops, 600 per group, 30 RNG. Playtime is counted by the server from the gaps between heartbeats/drops (<= 7 min apart); the game sends an empty /event every 5 min as a heartbeat. First-day stars use the server's playtime. The client's "pt" is no longer sent or trusted.
 - Only server-confirmed stars are lit. Stars counted locally but not confirmed are "waiting" (LocalLedger.WAITING): a breathing ring in the tier colour, "Earned: waiting for the server to confirm it" in the tooltip, "N waiting for the server" in the header, left out of Nearly There. "New star lit" cards only come from the server.
-- ledger_local.json is sealed (HMAC in ledger_local.sig); a hand-edited file is ignored. Files from before the seal are accepted once (FancyConfig.ledgerSigned).
+- ledger_local.json is sealed (HMAC in ledger_local.sig); a hand-edited file is ignored. Files from before the seal are accepted once (StardropsConfig.ledgerSigned).
 - Long opening (Codex.longTimeline, 7 s): the first time the sky opens after each game start. Afternoon sky, the sun sets behind the far mountains (sunset gradient, daySky), night falls and stars come out, a long exposure draws star trails round a pole star (trails), the trails pull back to points while "ACHIEVEMENTS / every drop is a star" rises and fades, then the constellations focus and draw themselves. Every later opening uses the 2.6 s night-falls one. Clicking skips either.
 - /fd star <id>: tab completion lists every achievement (id or name prefix), with name, constellation and tier. It opens with the short opening, flies to the star and blinks it; while in that view only that star responds (others dimmed, constellations not clickable, scroll/arrows off) until you go back (the All constellations button, right-click or Esc).
 - NetEase lyrics removed again (the user found them worse: lines vanished after their sung length and credit lines showed). Lyrics come from LRCLIB only (with its word timing when present, else the pacing guess). Credit lines ("作曲 : …", "Lyrics by: …") are dropped. Per-song timing and the earlier/later keys stay.
 - Minecraft stargazer (Codex.stargazer, mcBox): Steve (skin, brown hair, cyan shirt, blue legs, grey shoes, Minecraft proportions, p = 0.8k) sits with his legs out along the slope on a red carpet, looking up through a copper spyglass with an amethyst lens that follows the constellation under the mouse (every 14 s he lowers it to his lap for 3 s). A ginger tabby cat lies by a Minecraft lantern (iron frame, flame, hook) with moths, a chest beside them. Spruces in the baked land layer step by whole blocks. Colours are darkened for night (lit factor), the flame and the cat's eye stay bright.
 - Now Playing redone: plain dark glass (0x0D0E13) with a fine light edge and a top sheen, no album-colour wash or tinted glows; a black shadow under the cover; grey labels; white equalizer; a white progress bar and knob. The Sung line strip uses the same glass.
-- Beat line (Beat.java): the per-word sync helpers are gone (Pop's gliding underline, Karaoke's bouncing dot, the strip's hairline). Under the current line in all 4 styles: four short bars, one per beat of the bar, the current one lighting and fading (the first beat brighter). Tempo from Deezer's public API (search by title + artist, length within 6 s, track bpm, folded into 70-190); the beat's phase from where the lyric lines start (circular mean). No tempo: the line breathes slowly. latest.log: "[FancyDrops] beat: <song>: <bpm>".
+- Beat line (Beat.java): the per-word sync helpers are gone (Pop's gliding underline, Karaoke's bouncing dot, the strip's hairline). Under the current line in all 4 styles: four short bars, one per beat of the bar, the current one lighting and fading (the first beat brighter). Tempo from Deezer's public API (search by title + artist, length within 6 s, track bpm, folded into 70-190); the beat's phase from where the lyric lines start (circular mean). No tempo: the line breathes slowly. latest.log: "[Stardrops] beat: <song>: <bpm>".
 - Lyrics show whole lines (no word timing). Countdown line under every style: fills from the line's start to the next line, its end lights as the next line nears (Countdown line toggle). Styles: Pop (white words cascade in with a spring), Glow (bold words in the album colour track in, a sweep of light crosses once), Scroll, Sung line. Extras: Countdown line, Sparkles (new line), Glow (light behind), Backdrop (dark shade), Song intro, Timing, This song. Beat.java removed.
 - Achievement page figures are silhouettes (mcBox: only lit >= 1, i.e. the lantern flame, keeps colour). Steve's far arm removed (read as an X).
 - Now Playing vinyl: slides 25 px out (card 226 wide, text from x 84); fine grooves, two fixed highlights, the album art as a spinning label, a spindle, the cover's shadow on it.
@@ -643,7 +643,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
   - Extras renamed: Stardust (sparkles), Nebula glow (album colour blended with violet 0x6A4AD8), Backdrop. Song intro: a ringed planet rises beside the title with a moon circling it.
   - Icons sty_pop / sty_kara / sty_scroll redrawn as star bloom / constellation / drifting lines.
 - Menu, space theme pass 1: Ui palette is the "observatory" look: night-blue panels (PANEL 0x0B0E1C, ROW 0x121630), brass accent 0xE8C26A, starlight text 0xEEF2FF. Inside the panel (spaceBack): the achievements' night sky texture faintly (42%, darkened), 46 twinkling stars, a shooting star every 9 s, brass astrolabe ticks at the corners. Section headers end in a fading star-chart line starting at a small brass star. (The menu can't be rendered in the bench; check in game.)
-- The mod is renamed STARDROPS (display name only: fabric.mod.json name, menu title, chat prefix, guides, keybind category, achievement texts). The mod id, package, config folder and jar name (FancyDrops-0.9.0.jar) stay.
+- The mod is renamed STARDROPS (display name only: fabric.mod.json name, menu title, chat prefix, guides, keybind category, achievement texts). The mod id, package, config folder and jar name (Stardrops-0.9.0.jar) stay.
 - Palette "deep nebula": PANEL 0x0E1030, PANEL2 0x070816, ROW 0x14163E, BORDER 0x2C2A66, ACCENT violet 0x9B7BFF, ACCENT2 nebula pink 0xFF7AD9, TEXT 0xEEF0FF. Title and chat name run violet into pink. The menu backdrop adds pink and violet nebula clouds. The achievements frame and titles are violet (0xA88BFF / 0xE6DCFF); tier colours unchanged.
 - Now Playing (space): a window into space (stars drifting past), a moon circling the cover (violet rim), "NOW PLAYING" in lavender, signal bars violet into pink, and the progress is a pixel rocket flying along a dotted course to a ringed planet with a pink-to-violet exhaust trail. On a song change it blasts off: stars stretch into warp streaks, the rocket fires off the right edge (a pink flash where it left), the new song slides in, and the rocket flies back in from the left. The Sung line strip uses the same glass.
 - Achievement page: the cat sits upright (clear silhouette: haunches, chest, head with two ears, tail round its paws, tip flicks); the chest is gone (it read as a black box).
@@ -659,7 +659,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Now Playing is a voyage (replaces the straight course): every song is its own world (Worlds: ringed violet, cratered moon, banded gas giant, ice, lava, ocean; picked from the track id). The rocket flies an arc (up and over, an "n") from the last song's world on the left to this song's world on the right, dotted ahead, a fading trail behind, and in the last 3 s falls into orbit round it. On a new song the view pans 1.3 s: the world it circles slides left to become the departure, a new world drifts in from the right, and it sets off. Time shows small under the arc ("1:14 / 3:28"). Card is 64 tall (72 with a lyric). No warp streaks. The moon round the cover stays inside the card.
 - Active control is a window onto a launch: off = docked on the pad on the ground under a dusk sky with hills; on (2.6 s) = lift-off with smoke, the camera follows it up so the ground drops away, the sky darkens to space, stars streak past then settle, the violet ringed world rises into view and the rocket swings into orbit ("LAUNCHING" / "ARRIVING" / "IN ORBIT"); off (1.8 s) plays it backwards ("LANDING").
 - Active control is a status light, not a show: reopening the menu shows the current state (docked or in orbit) without replaying; only a real switch animates. Landing (3 s) is its own path: in orbit the rocket turns round to fly engine-first (retro burn), drops out of orbit, swings upright, and descends tail-first on its flame as the ground rises, the burn easing off and landing legs folding out for touchdown. Orbit is a smooth ellipse (one turn ~7 s), passing behind the planet.
-- Commands are /stardrops and /sd (the old /fancydrops and /fd are gone). /sd edit opens the HUD editor for every placeable HUD at once (Now Playing, lyrics, celestial clock; not the drop animation): drag any, scroll over one to resize, R resets the one under the mouse (or all), Esc saves. The celestial clock is now movable and sizeable (cosClockX/Y/Size).
+- Commands are /stardrops and /sd (the old /stardrops and /fd are gone). /sd edit opens the HUD editor for every placeable HUD at once (Now Playing, lyrics, celestial clock; not the drop animation): drag any, scroll over one to resize, R resets the one under the mouse (or all), Esc saves. The celestial clock is now movable and sizeable (cosClockX/Y/Size).
 - Ambience is space themed (same toggles): Nebula (clouds drift along the screen edges in the album's colours with stars caught in them; strength slider), Star equalizer (columns of stars beside the hotbar, the top star brightest), Comets (curve up beside the hotbar, trail light, burst into sparks), Supernova (new song: a flash and a ring of light expanding across the screen). New icons for each.
 - Achievements: every group is a real constellation, credited under its count: Every Drop = Ursa Major (Polaris, the heart, where the pointers aim), Mythological = Orion, Mob Drops = Scorpius, Farming = Virgo, Fishing = Pisces, Table & Dyes = Cassiopeia, Playtime = Cygnus, Mining = Taurus. Achievements take the stars in id order; extras sit halfway along lines, missing ones leave the faintest off.
 - Stargazer scene redone: no carpet (it drew a wavy line), a calm seated silhouette (knees up, body, head that tips a little with the scope), a telescope on a tripod whose tube turns smoothly (time-based easing) to the constellation under the mouse, the arm steadying it; the cat sits right beside the figure; the lantern a little way off.
@@ -669,7 +669,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Background loops seamlessly: the sky texture drifts out and back (cosine) instead of jumping every 4 min; clouds wrap fully off screen on exact periods.
 - Arrow keys no longer flip between constellations (Esc still goes back / closes).
 - Hill scene, cleaner: the figure lies on their back in the grass (Minecraft proportions, along the slope): head by the cat, hands behind the head, one knee up, chest rising and falling. The cat is curled up by their head (its own frame on the hill), head toward the lantern. Petting: one arm comes over to stroke the cat's back. Telescope stands to the right of their feet.
-- Server auth: Mojang's session server refuses Cloudflare workers (403), so stars stayed "waiting". Now every account has a key (config/fancydrops/keys/<uuid>.key) sent with uuid on every request; the worker ties it to the account whenever Mojang confirms, and accepts it alone when Mojang refuses (first key seen for an account is kept). Needs tools/worn-worker.js redeployed.
+- Server auth: Mojang's session server refuses Cloudflare workers (403), so stars stayed "waiting". Now every account has a key (config/stardrops/keys/<uuid>.key) sent with uuid on every request; the worker ties it to the account whenever Mojang confirms, and accepts it alone when Mojang refuses (first key seen for an account is kept). Needs tools/worn-worker.js redeployed.
 - Song intro (4.4 s), a hyperspace arrival: streaks rush in to the title's point, a flash and a shockwave ring in the album's colour; the cover drops in on a glowing frame; the title decodes letter by letter from scrambled glyphs while its spacing tightens (a spark as each letter locks); the artist types out with a blinking cursor; two little star chains draw above and below; then everything jumps to lightspeed to the right with streaks.
 - Hill figure's bent leg is two limbs joined at the knee (hip→knee→foot), not two boxes pivoting from their corners.
 - Song intro bigger (title 2.2× size, cover 36), "Now playing" small over the title's first letter (no spaced-out caps), sits at 31% height so it clears the Now Playing card.
@@ -705,14 +705,15 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Category tiles (Drop Library, Animations, Sounds) show the WIP tag for every category but Mob Drops, and group tiles for every group but Slayers. No counts or other lines under tile names ("4 pages · 9 animations", "30 drops", "Soon™" are gone).
 - Menu tiles (not cosmetics) are space glass: cut corners, faint scanlines and a few twinkling stars, a thin edge and bright corner brackets in the tile's colour, a light beam sweeping across on hover, a glowing base line on the open one; WIP is an amber holo chip with a blinking light.
 - Sizes (author): the "Everyday drops size" setting is removed; every animation type plays at the one Animation size.
-- Text duration: Animations > Text Changes > Layout has "Text stays after the animation" (1-8 s, default 3, FancyConfig.textHold). Every Slayer type uses it, No Drops included ("Nothing dropped" now stays as long as a drop's words).
+- Text duration: Animations > Text Changes > Layout has "Text stays after the animation" (1-8 s, default 3, StardropsConfig.textHold). Every Slayer type uses it, No Drops included ("Nothing dropped" now stays as long as a drop's words).
 - Slayer sounds split again into five moments, three takes each (tools/make_slayer_sounds.py, slr_<family>_a/b/c; the one-piece soundtracks are gone). Open (0.1 s: Rift / Gravity well / Event horizon), Pull (1.15 s, heartbeats on the hole's throb: Heartbeat / Spaghettify / Tidal choir), then by type: No Drops Swallow (Implode / Gulp / Vanish), Wink (Wink / Pop / Blink), Nothing (Minor notes / Falling sine / Static); a drop Spit (Thwup and jets / Ejection / Jet stream), Reveal (Major chord / Glass bells / Starlight), Close (Sigh / Fading chord / Soft bell); RNG Supernova (Supernova / Shockwave / Collapse), Fanfare (Choir / Cosmic fanfare / Glock run), Pulsar (Pulsar groove / Beacon / Quasar). Each slot's dropdown offers its three takes (plus None); the first take is the default. Future animations follow the same pattern: five moments, three takes each.
 - Slayer bosses redrawn closer to their Minecraft mobs (author: "cleaner and more original to the minecraft version, not flat"): Revenant is a zombie (MC head and face) in a diamond chestplate and leggings with red glowing eyes; Tarantula a spider face-on with eight red eyes, mandibles and splayed legs; Sven a white wolf side-on with a red collar; Voidgloom an enderman (8-wide head, magenta eyes with light centres); Inferno a blaze with its rods; Riftstalker a vampire with a red-lined cape and fangs. Each pixel is shaded once like an MC texture (grain, light top/left edges, shadow bottom/right edges, darker toward the feet); glowing eyes stay pure.
 - Slayer bosses redrawn again at Minecraft model proportions, one sprite pixel per model pixel, drawn at exactly one canvas pixel each (crisp, much smaller than the hole): Revenant a classic zombie side-on shambling at the hole with both arms out (red eye, torn cyan shirt, blue trousers, legs mid-stride); Tarantula a spider face-on with an abdomen, eight eyes and four jointed legs each side; Sven a white wolf side-on with a red collar and raised tail; Voidgloom an enderman; Inferno a blaze with rods round and below; Riftstalker a vampire with a high-collared red-lined cape. The hole is a little bigger (rh0 24) and the boss waits just outside the disk (rh0 x 3.7).
-- The jar is named Stardrops-<version>.jar (was FancyDrops-...).
+- The jar is named Stardrops-<version>.jar (was Stardrops-...).
 - Sky flicker report (in-game sky alternating blue/grey every frame, name-tag backgrounds alternating too): Stardrops does not touch the world sky, fog or options (no mixins); same symptom as the earlier Sodium Extra sky setting.
 - Sky flicker (confirmed Stardrops by the author): AuraWorld drew auras with cam.getViewRotationProjectionMatrix() from the HUD. That getter caches the matrix and clears the camera's dirty flag, so the world's own sky/fog pass every other frame used a stale matrix. Auras now build their own view-projection from cam.rotation() and cam.getFov(); never call the camera's matrix getters from the HUD.
 - Drop Library tiles (categories and pages) show no WIP tag (the sidebar keeps its WIP marks; the WIP panel stays under non-Slayer pages). Tiles show their counts again under the name everywhere (Drop Library: pages · sub · drops / "N drops"; Animations: pages · animations / "N animations"; Sounds: sound sets / "N animations · M sounds"). Animations and Sounds tiles keep their WIP tags.
 - Drop rows: columns left to right are Preview, Animation, Chat Alert. The Preview column exists only on pages with an animation (Slayer); other pages have just Animation and Chat Alert (their header matches).
-- Name: every "FancyDrops" the player can see is "Stardrops" (the chat tag on drop alerts is "[Stardrops] | ", hover cards, user agents, thread names, log tags). The mod id, package, config folder (config/fancydrops) and asset paths stay "fancydrops" so settings and saves carry over.
+- Name: every "Stardrops" the player can see is "Stardrops" (the chat tag on drop alerts is "[Stardrops] | ", hover cards, user agents, thread names, log tags). The mod id, package, config folder (config/stardrops) and asset paths stay "stardrops" so settings and saves carry over.
 - Voidgloom Seraph icon: an enderman's head (black, faint mottling, glowing purple eyes, ender particles rising at the sides).
+- Full rename to Stardrops (author: "change everything to Stardrops"; the GitHub repo becomes imtraminecraft/Stardrops): mod id stardrops, package dev.stardrops, StardropsMod / StardropsScreen / StardropsConfig, assets/stardrops (sound, font and texture ids stardrops:*), data in resources/stardrops, keybind keys key.stardrops.*, gradle project stardrops. Settings move once from config/fancydrops.json and config/fancydrops/ to config/stardrops.json and config/stardrops/ (StardropsMod.migrateConfig, before anything reads them). The deployed worker keeps its hostname (fancydrops-worn.imtraminecraft.workers.dev) until it is redeployed under a new one.

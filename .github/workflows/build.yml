@@ -1,6 +1,6 @@
-name: Build FancyDrops
+name: Build Stardrops
 
-# Builds the jar on every push so you can test it. Nothing is published here: releases are made by hand with the "Release FancyDrops" workflow.
+# Builds the jar on every push so you can test it. Nothing is published here: releases are made by hand with the "Release Stardrops" workflow.
 on:
   push:
     branches:
@@ -34,7 +34,7 @@ jobs:
       - name: Keep the jar
         uses: actions/upload-artifact@v5
         with:
-          name: FancyDrops-${{ github.ref_name }}
+          name: Stardrops-${{ github.ref_name }}
           path: |
             build/libs/*.jar
             !build/libs/*-sources.jar

@@ -1,0 +1,406 @@
+package dev.stardrops;
+
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
+
+import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
+
+public class StardropsMod implements ClientModInitializer, ModInitializer {
+    static { migrateConfig(); }
+    /** The mod was called FancyDrops: its settings (config/fancydrops.json) and saved data (config/fancydrops/) move over to the
+     *  Stardrops names once, before anything reads them, so nothing is lost. */
+    static void migrateConfig() {
+        try {
+            java.nio.file.Path cfg = net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir();
+            java.nio.file.Path oldDir = cfg.resolve("fancy" + "drops"), newDir = cfg.resolve("stardrops"), oldJson = cfg.resolve("fancy" + "drops.json"), newJson = cfg.resolve("stardrops.json");
+            if (java.nio.file.Files.isDirectory(oldDir) && !java.nio.file.Files.exists(newDir)) java.nio.file.Files.move(oldDir, newDir);
+            if (java.nio.file.Files.isRegularFile(oldJson) && !java.nio.file.Files.exists(newJson)) java.nio.file.Files.move(oldJson, newJson);
+        } catch (Throwable t) { System.err.println("[Stardrops] could not move the old FancyDrops settings: " + t); }
+    }
+    /** The music keys (play/pause, next, previous): the Spotify page shows what they are bound to. */
+    static final net.minecraft.client.KeyMapping[] MUSIC = new net.minecraft.client.KeyMapping[5];
+
+    private static int tabTick;
+    /** The one version number: gradle.properties -> fabric.mod.json -> here. */
+    public static final String VERSION = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("stardrops")
+            .map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("dev");
+    /** "Dev" or "Main": which build this jar is (set by the build: GitHub Actions on the main branch = Main, everything else = Dev). */
+    public static final String CHANNEL = net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("stardrops")
+            .map(m -> { try { return m.getMetadata().getCustomValue("stardrops:channel").getAsString(); } catch (Throwable t) { return "dev"; } })
+            .map(v -> v.equalsIgnoreCase("main") ? "Main" : "Dev").orElse("Dev");
+    private static volatile boolean openMenu, openEdit;
+    public static volatile boolean reopenMenu;   // set by the Preview buttons: menu closes, reopens when the scene ends
+
+    @Override
+    public void onInitialize() {
+        // Common entrypoint runs while registries are still open; register our custom sound events here.
+        SoundFx.register();
+    }
+
+    @Override
+    public void onInitializeClient() {
+        StardropsConfig.load();
+        Cosmetics.checkIcons();
+        DataFiles.reloadAll();   // slayer drop tables
+
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> registerCommands(dispatcher));
+
+        net.minecraft.client.KeyMapping[] music = MUSIC;          // music keys (unbound until you pick them in Options > Controls)
+        try {
+            var cat = net.minecraft.client.KeyMapping.Category.register(Identifier.fromNamespaceAndPath("stardrops", "music"));
+            String[] ids = {"key.stardrops.playpause", "key.stardrops.next", "key.stardrops.previous", "key.stardrops.lyricsEarlier", "key.stardrops.lyricsLater"};
+            for (int i = 0; i < 5; i++) music[i] = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(new net.minecraft.client.KeyMapping(ids[i], -1, cat));
+        } catch (Throwable t) { System.err.println("[Stardrops] music keys unavailable: " + t); }
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            String[] acts = {"toggle", "next", "previous"};
+            for (int i = 0; i < 3; i++) if (music[i] != null) while (music[i].consumeClick()) Spotify.control(acts[i]);
+            for (int i = 3; i < 5; i++) if (music[i] != null) while (music[i].consumeClick()) Lyrics.nudge(mc, i == 3 ? 100 : -100);   // the words a little earlier / later, for this song
+            if (openMenu) { openMenu = false; mc.setScreenAndShow(new StardropsScreen()); }
+            if (openEdit) { openEdit = false; mc.setScreenAndShow(new HudEditScreen(null, HudEditScreen.ALL)); }   // /sd edit   // 26.2: setScreenAndShow
+            if (reopenMenu && !AnimationManager.isPlaying()) { reopenMenu = false; mc.setScreenAndShow(new StardropsScreen()); }
+            DropListener.tick(mc);
+            AuraWorld.tick(mc);
+            Playtime.tick(mc);
+            Spotify.tick();
+            tabTick++;                                                                        // who wears what changes rarely: look every quarter second, every tick only while a name is moving
+            if ((Cosmetics.tabMoving && Cosmetics.tabOpen(mc)) || tabTick % 20 == 0) Cosmetics.tickTab(mc);   // a second apart unless the tab list is open
+            if (tabTick % 5 == 0) { Cosmetics.tickAura(mc); Achievements.tick(mc); }
+            Cosmetics.tickChat(mc);
+        });
+
+        ClientReceiveMessageEvents.MODIFY_GAME.register((message, overlay) -> overlay ? message : Cosmetics.apply(message));
+
+        Identifier early = Identifier.fromNamespaceAndPath("stardrops", "early");            // our listener goes first: another mod that hides a chat line (SBO's Diana Message Hider) can no longer stop us from seeing it
+        ClientReceiveMessageEvents.ALLOW_GAME.addPhaseOrdering(early, Event.DEFAULT_PHASE);
+        ClientReceiveMessageEvents.ALLOW_GAME.register(early, (message, overlay) -> {
+            if (overlay) return true;
+            return !DropListener.onChat(message);   // the RARE DROP line is replaced by the animation
+        });
+
+        HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath("stardrops", "drop_animation"),
+                (graphics, deltaTracker) -> AnimationManager.render(graphics));
+
+        try {                                                                                  // auras are real particles in the world: hidden by blocks and bodies, always on the player
+            net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_EXTRACTION.register(AuraFx::extract);
+        } catch (Throwable t) { System.err.println("[Stardrops] world auras unavailable: " + t); }
+
+        HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath("stardrops", "lyrics"),
+                (graphics, deltaTracker) -> { AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false));
+                    float away = Math.min(1f, slideOffset(true) / 63f);                                      // a big scene: our own HUD slides up out of the way with the hotbar going down
+                    if (away < 0.99f) { boolean mv = away > 0.01f; if (mv) { Gfx.push(graphics); Gfx.translate(graphics, 0, -away * 90f); }
+                        CosmosHud.render(graphics); AmbienceHud.render(graphics); LyricsHud.hud(graphics); NowPlayingHud.hud(graphics);
+                        if (mv) Gfx.pop(graphics); }
+                    StarToast.render(graphics); });
+
+        HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
+                Identifier.fromNamespaceAndPath("stardrops", "auras"),
+                (graphics, deltaTracker) -> AuraFx.render(graphics));
+
+        try {                                                                                  // moving name effects: refresh the tab list every frame, just before it is drawn
+            HudElementRegistry.attachElementBefore(Identifier.withDefaultNamespace("player_list"), Identifier.fromNamespaceAndPath("stardrops", "tab_fx"),
+                    (graphics, deltaTracker) -> Cosmetics.tickTabFrame(Minecraft.getInstance()));
+        } catch (Throwable t) { System.err.println("[Stardrops] smooth tab effects unavailable: " + t); }
+
+        // While a scene plays, the bottom of the screen slides away: the hearts and bars with the hotbar. When it ends the hearts slide back first, then the hotbar.
+        for (String el : new String[]{"hotbar", "health_bar", "armor_bar", "food_bar", "air_bar", "mount_health", "info_bar", "experience_level", "overlay_message"}) {
+            final boolean hotbar = el.equals("hotbar");
+            final float mult = el.equals("overlay_message") ? 1.7f : 1f;       // the words above the hearts have further to go
+            try {
+                HudElementRegistry.replaceElement(Identifier.withDefaultNamespace(el), original -> (graphics, deltaTracker) -> {
+                    float off = slideOffset(hotbar) * mult;
+                    if (off >= 63f * mult) return;                                                    // fully away: nothing to draw
+                    if (off > 0.05f) { Gfx.push(graphics); Gfx.translate(graphics, 0, off); }
+                    callHud(original, graphics, deltaTracker);
+                    if (off > 0.05f) Gfx.pop(graphics);
+                });
+            } catch (Throwable t) { System.err.println("[Stardrops] could not wrap " + el + ": " + t); }
+        }
+
+        // Warm the price cache when joining Hypixel so the first drop already has a price.
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            var server = Minecraft.getInstance().getCurrentServer();
+            if (server != null && server.ip.toLowerCase().contains("hypixel")) PriceService.warm();
+        });
+    }
+
+    private static java.lang.reflect.Method hudCall;
+    /** Runs a vanilla HUD element through its one method. The method is found on the HudElement interface by shape, so its exact name does not matter. */
+    private static void callHud(HudElement element, Object graphics, Object deltaTracker) {
+        try {
+            if (hudCall == null) for (java.lang.reflect.Method m : HudElement.class.getMethods())
+                if (java.lang.reflect.Modifier.isAbstract(m.getModifiers()) && m.getParameterCount() == 2) { hudCall = m; break; }
+            if (hudCall != null) hudCall.invoke(element, graphics, deltaTracker);
+        } catch (Throwable ignored) { }
+    }
+
+    private static float slideStatus, slideHotbar, velHotbar, velStatus;        // 0 = in place, 1 = slid away
+    private static long slideAt = 0, slideFlip = 0; private static boolean slideAway;
+    /** How far (in GUI pixels) the hotbar, or the hearts and everything else, are pushed down this frame. Both chase their target with a critically damped spring (no hard start or stop at any frame rate); the hotbar always moves first, the rest follows a beat later. */
+    private static float slideOffset(boolean hotbar) {
+        long now = System.nanoTime();
+        if (now != slideAt) {
+            float dt = slideAt == 0 ? 0f : Math.min(0.05f, (now - slideAt) / 1_000_000_000f); slideAt = now;
+            boolean away = AnimationManager.hidesHud();
+            if (away != slideAway) { slideAway = away; slideFlip = now; }
+            float tgt = away ? 1f : 0f, beat = (now - slideFlip) / 1_000_000_000f;
+            float[] h = damp(slideHotbar, velHotbar, tgt, 0.30f, dt);
+            slideHotbar = h[0]; velHotbar = h[1];
+            float[] r = damp(slideStatus, velStatus, beat > 0.16f ? tgt : slideStatus, 0.30f, dt);          // the rest waits a beat after the hotbar sets off
+            slideStatus = r[0]; velStatus = r[1];
+            if (!away && slideHotbar < 0.001f) { slideHotbar = 0f; velHotbar = 0f; }
+            if (!away && slideStatus < 0.001f) { slideStatus = 0f; velStatus = 0f; }
+            if (away && slideHotbar > 0.999f) slideHotbar = 1f;
+            if (away && slideStatus > 0.999f) slideStatus = 1f;
+        }
+        return (hotbar ? slideHotbar : slideStatus) * 64f;
+    }
+
+    private static float[] damp(float cur, float vel, float target, float smooth, float dt) {
+        if (dt <= 0f) return new float[]{cur, vel};
+        float om = 2f / smooth, x = om * dt, e = 1f / (1f + x + 0.48f * x * x + 0.235f * x * x * x);
+        float change = cur - target, temp = (vel + om * change) * dt;
+        vel = (vel - om * temp) * e;
+        return new float[]{target + (change + temp) * e, vel};
+    }
+
+    // ------------------------------------------------------------------ commands
+
+
+    private static void registerCommands(com.mojang.brigadier.CommandDispatcher<FabricClientCommandSource> dispatcher) {
+        dispatcher.register(buildRoot("stardrops"));
+        dispatcher.register(buildRoot("sd"));      // short alias, identical to /stardrops
+    }
+
+    private static LiteralArgumentBuilder<FabricClientCommandSource> buildRoot(String name) {
+        return ClientCommands.literal(name)
+            .executes(ctx -> { openMenu = true; return Command.SINGLE_SUCCESS; })          // opened next tick so the chat screen doesn't close it again
+            .then(ClientCommands.literal("achievement").executes(ctx -> { StardropsScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))      // straight to the achievements sky
+            .then(ClientCommands.literal("star").then(ClientCommands.argument("id", StringArgumentType.word()).suggests((ctx, bd) -> suggestStars(bd)).executes(ctx -> { StardropsScreen.pendingStar = StringArgumentType.getString(ctx, "id"); openMenu = true; return Command.SINGLE_SUCCESS; })))   // a "New star lit" line: the sky, flown to that star
+            .then(ClientCommands.literal("achievements").executes(ctx -> { StardropsScreen.pendingStats = true; openMenu = true; return Command.SINGLE_SUCCESS; }))
+            .then(ClientCommands.literal("help").executes(ctx -> help(ctx.getSource()))
+                .then(ClientCommands.literal("simulate").executes(ctx -> helpSimulate(ctx.getSource()))))
+            .then(ClientCommands.literal("edit").executes(ctx -> { openEdit = true; return Command.SINGLE_SUCCESS; }))   // move every HUD at once
+            .then(ClientCommands.literal("mute").executes(ctx -> {                        // every sound on or off
+                StardropsConfig c = StardropsConfig.get(); c.sound = !c.sound; StardropsConfig.save();
+                say(ctx.getSource(), c.sound ? "Sounds on (" + c.volume + "%)" : "Sounds muted");
+                return Command.SINGLE_SUCCESS;
+            }))
+            .then(ClientCommands.literal("toggle").executes(ctx -> {                      // the master switch
+                StardropsConfig c = StardropsConfig.get(); boolean on = !(c.masterAnimate || c.masterAnnounce); c.setMaster(on, on); StardropsConfig.save();
+                say(ctx.getSource(), "Stardrops " + (on ? "enabled" : "disabled") + " (animations and chat announcements)");
+                return Command.SINGLE_SUCCESS;
+            }))
+            .then(simLiteral(ClientCommands.literal("simulate")))
+            .then(ClientCommands.argument("search", StringArgumentType.greedyString())                // /sd <words>: opens the menu with the search filled in
+                .executes(ctx -> { String q = StringArgumentType.getString(ctx, "search").trim(); if (!q.isEmpty()) StardropsScreen.pendingSearch = q; openMenu = true; return Command.SINGLE_SUCCESS; }));
+    }
+
+    /** /sd simulate <Mythological|Slayer|Farming|Experiments> ...: one literal per category, each with Tab completion. */
+    private static LiteralArgumentBuilder<FabricClientCommandSource> simLiteral(LiteralArgumentBuilder<FabricClientCommandSource> sim) {
+        sim.executes(ctx -> { say(ctx.getSource(), "Use " + SIM_USAGE); return Command.SINGLE_SUCCESS; });
+        for (String mode : new String[]{"Mythological", "Slayer", "Farming", "Experiments", "Fishing", "Crimson", "Mobs", "Nucleus", "Corpse", "Fiesta", "End", "Dyes"}) {
+            sim.then(ClientCommands.literal(mode)
+                .executes(ctx -> { say(ctx.getSource(), "Use " + usage(mode)); return Command.SINGLE_SUCCESS; })
+                .then(ClientCommands.argument("args", StringArgumentType.greedyString())
+                    .suggests((ctx, bd) -> suggestSim(bd, mode))
+                    .executes(ctx -> simulate(ctx.getSource(), StringArgumentType.getString(ctx, "args"), mode))));
+        }
+        return sim;
+    }
+
+    static final String DISCORD = "https://discord.gg/xeBfsVRfkT";
+    static final String GITHUB = "https://github.com/imtraminecraft/Stardrops";
+
+    private static void say(FabricClientCommandSource source, String msg) { source.sendFeedback(Chat.msg(msg)); }
+
+    /** /sd star: every achievement's id, the ones whose id or name starts with what you typed, each with its name, constellation and tier. */
+    private static CompletableFuture<Suggestions> suggestStars(SuggestionsBuilder b) {
+        String rem = b.getRemaining().toLowerCase(Locale.ROOT);
+        for (LocalLedger.Def d : LocalLedger.ACH) {
+            if (!rem.isEmpty() && !d.id().startsWith(rem) && !d.name().toLowerCase(Locale.ROOT).replace(' ', '_').startsWith(rem)) continue;
+            String name = d.secret() ? "???" : d.name();
+            b.suggest(d.id(), Component.literal(name + "  \u00B7  " + Codex.nameOf(d.ch()) + "  \u00B7  " + LocalLedger.TIER[Math.max(0, Math.min(2, d.tier()))]));
+        }
+        return b.buildFuture();
+    }
+    private static CompletableFuture<Suggestions> suggest(SuggestionsBuilder b, String... options) {
+        for (String o : options) if (o.toLowerCase(Locale.ROOT).startsWith(b.getRemaining().toLowerCase(Locale.ROOT))) b.suggest(o);
+        return b.buildFuture();
+    }
+    private static CompletableFuture<Suggestions> suggest(SuggestionsBuilder b, Iterable<String> options) {
+        for (String o : options) if (o.toLowerCase(Locale.ROOT).startsWith(b.getRemaining().toLowerCase(Locale.ROOT))) b.suggest(o);
+        return b.buildFuture();
+    }
+
+    private static int help(FabricClientCommandSource s) {
+        s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
+        s.sendFeedback(waveTitle("Stardrops").copy().append(Chat.color("  \u00B7  Quick guide", Chat.DIM)));
+        helpLine(s, "/sd", "Open the menu");
+        helpLine(s, "/sd <words>", "Open the menu and search for them (for example /sd minos)");
+        helpLine(s, "/sd achievement", "Open the achievements");
+        helpLine(s, "/sd edit", "Move and resize every HUD (Now Playing, lyrics, the celestial clock)");
+        helpLine(s, "/sd mute", "Turn every sound on or off");
+        helpLine(s, "/sd toggle", "Turn the whole mod on or off");
+        helpLine(s, "/sd help simulate", "Category: every /sd simulate command");
+        s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** /sd help simulate: every simulate command. */
+    private static int helpSimulate(FabricClientCommandSource s) {
+        s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
+        s.sendFeedback(waveTitle("Stardrops").copy().append(Chat.color("  \u00B7  Simulate", Chat.DIM)));
+        helpLine(s, "/sd simulate Mythological <Mob|Treasure> <Drop> <mf>", "Play a pretend drop through the real animation");
+        helpLine(s, "/sd simulate Slayer <Boss> <Drop> [Drop 2] <mf>", "The same for a slayer boss: one or two drops (Nothing for no drop)");
+        helpLine(s, "/sd simulate Farming <Rare Crops|Harvest Feast|Harvest Bounty|Pest Drops> <Drop> <overbloom>", "A pretend crop or pest drop");
+        helpLine(s, "/sd simulate Experiments <Drop> [Drop 2]", "A pretend Experimentation Table reward: one or two items");
+        helpLine(s, "/sd simulate Fishing <Sea Creature> <Drop> [Drop 2]", "A pretend sea creature drop");
+        helpLine(s, "/sd simulate Crimson <Boss> <Drop> [Drop 2]", "A pretend Crimson Isle boss drop");
+        helpLine(s, "/sd simulate Mobs <Mob> <Drop> [Drop 2]", "A pretend rare mob drop");
+        helpLine(s, "/sd simulate Dyes <Dye> [Dye 2]", "A pretend dye drop");
+        s.sendFeedback(Component.literal(" "));
+        s.sendFeedback(Chat.color("Example  ", Chat.DIM).append(Chat.color("/sd simulate Mythological Minos Hunter Daedalus Stick 250", Chat.COMMAND)));
+        s.sendFeedback(Chat.color("Tab completes names. Use Nothing as the drop for a ritual that gave nothing. The magic find goes last and defaults to 250.", Chat.DIM));
+        s.sendFeedback(Chat.color("\u2501".repeat(32), Chat.LINE));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static void helpLine(FabricClientCommandSource s, String command, String description) {
+        s.sendFeedback(Chat.color(" \u25B8 ", Chat.GRADIENT[2]).append(Chat.color(command, Chat.COMMAND)));
+        s.sendFeedback(Chat.color("     " + description, Chat.DIM));
+    }
+
+    /** The gold of the menu title. */
+    private static Component waveTitle(String text) {
+        MutableComponent out = Component.empty();
+        for (int i = 0; i < text.length(); i++) {
+            float u = i / (float) Math.max(1, text.length() - 1) * (Chat.GRADIENT.length - 1);
+            int a = Chat.GRADIENT[(int) u], b = Chat.GRADIENT[Math.min(Chat.GRADIENT.length - 1, (int) u + 1)], color = Chat.mix(a, b, u - (int) u);
+            out.append(Component.literal(String.valueOf(text.charAt(i))).withStyle(st -> st.withColor(color).withBold(true)));
+        }
+        return out;
+    }
+
+    private static final String SIM_USAGE = "/sd simulate <Mythological|Slayer|Farming|Experiments|Fishing|Crimson|Mobs|Dyes> ...";
+    private static final String[] MF_TIPS = {"0", "100", "250", "400"}, OB_TIPS = {"0", "25", "100", "250"};
+
+    private static String usage(String mode) {
+        return switch (mode) {
+            case "Slayer" -> "/sd simulate Slayer <Boss> <Drop> [Drop 2] <mf>";
+            case "Farming" -> "/sd simulate Farming <Rare Crops|Harvest Feast|Harvest Bounty|Pest Drops> <Drop> <overbloom>";
+            case "Experiments" -> "/sd simulate Experiments <Drop> [Drop 2]";
+            case "Fishing" -> "/sd simulate Fishing <Sea Creature> <Drop> [Drop 2]";
+            case "Crimson" -> "/sd simulate Crimson <Boss> <Drop> [Drop 2]";
+            case "Mobs" -> "/sd simulate Mobs <Mob> <Drop> [Drop 2]";
+            case "Nucleus" -> "/sd simulate Nucleus <Drop> [Drop 2]";
+            case "Corpse" -> "/sd simulate Corpse <Drop> [Drop 2]";
+            case "Fiesta" -> "/sd simulate Fiesta <Drop>";
+            case "End" -> "/sd simulate End <Drop> [Drop 2]";
+            case "Dyes" -> "/sd simulate Dyes <Dye> [Dye 2]";
+            default -> "/sd simulate Mythological <Mob|Treasure> <Drop> <mf>";
+        };
+    }
+    /** The sources a mode lists by name (a boss, a mob, a farming page); the Table has none, its drops come straight after the word. */
+    private static java.util.List<DropData.Source> libOf(String mode) {
+        return switch (mode) {
+            case "Slayer" -> SlayerData.ALL; case "Farming" -> FarmData.ALL; case "Experiments", "Dyes" -> java.util.List.of();
+            case "Fishing" -> ExtraData.ALL.stream().filter(x -> x.group.startsWith("fish_")).toList();
+            case "Crimson" -> ExtraData.group("crimson"); case "Mobs" -> ExtraData.group("mobs"); case "Nucleus" -> ExtraData.group("nucleus"); case "Corpse" -> ExtraData.group("corpse"); case "Fiesta" -> ExtraData.group("fiesta"); case "End" -> ExtraData.group("dragon");
+            default -> MythData.ALL;
+        };
+    }
+
+    /** The text after a leading source name ("Minos Hunter Hilt of ..." -> "Hilt of ..."), or null when the text doesn't start with one. */
+    private static String afterName(String t, String name) {
+        int n = name.length();
+        return t.regionMatches(true, 0, name, 0, n) && (t.length() == n || Character.isWhitespace(t.charAt(n))) ? t.substring(n).trim() : null;
+    }
+
+    /** /sd simulate <mode> ...: the source (a mob, a boss, a farming page), one drop (two for Slayer and Experiments; Nothing for none), then the magic find or Overbloom. */
+    private static int simulate(FabricClientCommandSource source, String args, String mode) {
+        String t = args.trim(); boolean exp = mode.equals("Experiments"), farm = mode.equals("Farming");
+        String extraCat = switch (mode) { case "Fishing" -> "fishing"; case "Crimson" -> "crimson"; case "Mobs" -> "mobs"; case "Nucleus" -> "nucleus"; case "Corpse" -> "corpse"; case "Fiesta" -> "fiesta"; case "End" -> "dragon"; case "Dyes" -> "dyes"; default -> null; };
+        if (extraCat != null) { DropListener.simulateExtra(extraCat, t, m -> source.sendFeedback(Chat.msg(m))); return Command.SINGLE_SUCCESS; }
+        int mf = farm ? 25 : 250;
+        String[] w = t.split("\\s+");
+        if (!exp && w.length > 1 && w[w.length - 1].matches("\\d{1,5}")) { mf = Math.min(10000, Integer.parseInt(w[w.length - 1])); t = t.substring(0, t.length() - w[w.length - 1].length()).trim(); }
+        java.util.function.Consumer<String> reply = m -> source.sendFeedback(Chat.msg(m));
+        if (exp) { DropListener.simulateExp(t, reply); return Command.SINGLE_SUCCESS; }
+        if (mode.equals("Mythological")) {
+            String rest = afterName(t, "Treasure");
+            if (rest != null) { DropListener.simulateTreasure(rest, mf, reply); return Command.SINGLE_SUCCESS; }
+        }
+        DropData.Source best = null;
+        for (DropData.Source sl : libOf(mode)) if (afterName(t, sl.boss) != null && (best == null || sl.boss.length() > best.boss.length())) best = sl;
+        if (best == null && !farm) {
+            say(source, "Pick a " + (mode.equals("Slayer") ? "boss: " : "mob or Treasure: ") + String.join(", ", libOf(mode).stream().map(sl -> sl.boss).toList()) + (mode.equals("Slayer") ? "" : ", Treasure"));
+            return 0;
+        }
+        switch (mode) {
+            case "Slayer" -> DropListener.simulateSlayer(mf, t, reply);
+            case "Farming" -> DropListener.simulateFarm(mf, t, reply);
+            default -> DropListener.simulateMyth(mf, t, reply);
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** Tab completion: the source, then its drops (and Nothing), then the magic find. */
+    private static CompletableFuture<Suggestions> suggestSim(SuggestionsBuilder builder, String mode) {
+        boolean dyes = mode.equals("Dyes"), exp = mode.equals("Experiments") || dyes, farm = mode.equals("Farming"), slayer = mode.equals("Slayer"), myth = mode.equals("Mythological");
+        boolean extra = dyes || mode.equals("Fishing") || mode.equals("Crimson") || mode.equals("Mobs") || mode.equals("Nucleus") || mode.equals("Corpse") || mode.equals("Fiesta") || mode.equals("End");
+        int maxDrops = slayer || exp || extra ? 2 : 1;
+        java.util.List<DropData.Source> lib = libOf(mode);
+        String rem = builder.getRemaining(); int lead = rem.length() - rem.stripLeading().length(); String t = rem.stripLeading();
+        String owner = "";
+        if (!exp) {
+            java.util.List<String> names = new java.util.ArrayList<>(); for (DropData.Source sl : lib) names.add(sl.boss); if (myth) names.add("Treasure");
+            owner = null; for (String nm : names) { String r = afterName(t, nm); if (r != null && t.length() > nm.length() && (owner == null || nm.length() > owner.length())) owner = nm; }
+            if (owner == null) {
+                SuggestionsBuilder b0 = builder.createOffset(builder.getStart() + lead);
+                for (String nm : names) if (nm.toLowerCase(Locale.ROOT).startsWith(t.toLowerCase(Locale.ROOT))) b0.suggest(nm);
+                return b0.buildFuture();
+            }
+        }
+        java.util.List<String> pool = new java.util.ArrayList<>();
+        if (dyes) { for (DropData.Source sl : ExtraData.group("dyes")) for (DropData.Drop d : sl.drops) pool.add(d.name); }
+        else if (exp) for (DropData.Drop d : ExperimentData.SOURCE.drops) pool.add(d.name);
+        else if (owner.equals("Treasure")) { java.util.Set<String> seen = new java.util.LinkedHashSet<>(); for (int sp = 0; sp < 3; sp++) for (DropData.Drop d : TreasureData.drops(sp)) seen.add(d.name); pool.addAll(seen); }
+        else { for (DropData.Source sl : lib) if (sl.boss.equals(owner)) for (DropData.Drop d : sl.drops) pool.add(d.name); if (!farm && !extra) pool.add("Nothing"); }
+        String after = exp ? t : t.substring(owner.length()).stripLeading();
+        int done = 0;
+        while (done < maxDrops) {                                           // drops that are already typed in full
+            String hit = null;
+            for (String nm : pool) if (after.length() > nm.length() && after.regionMatches(true, 0, nm, 0, nm.length()) && Character.isWhitespace(after.charAt(nm.length())) && (hit == null || nm.length() > hit.length())) hit = nm;
+            if (hit == null) break;
+            after = after.substring(hit.length()).stripLeading(); done++;
+        }
+        SuggestionsBuilder b1 = builder.createOffset(builder.getStart() + rem.length() - after.length());
+        if (done < maxDrops) for (String nm : pool) if (nm.toLowerCase(Locale.ROOT).contains(after.toLowerCase(Locale.ROOT))) b1.suggest(nm);
+        if (!exp && !extra && done >= 1) for (String m : farm ? OB_TIPS : MF_TIPS) if (m.startsWith(after)) b1.suggest(m);
+        return b1.buildFuture();
+    }
+}

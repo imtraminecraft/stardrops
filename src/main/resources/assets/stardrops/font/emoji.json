@@ -1,0 +1,157 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/fancy.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue000"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/sparkle.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue020\ue021\ue022\ue023\ue024\ue025"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/mf.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue030"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/ob.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue031"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_bug.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue100\ue101\ue102\ue103\ue104\ue105"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_code.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue110\ue111\ue112\ue113\ue114\ue115"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_patron.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue120\ue121\ue122\ue123\ue124\ue125"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_betamark.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue130\ue131\ue132\ue133\ue134\ue135"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_minos.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue140\ue141\ue142\ue143\ue144\ue145"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_dice.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue150\ue151\ue152\ue153\ue154\ue155"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_chest.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue160\ue161\ue162\ue163\ue164\ue165"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_anvil.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue170\ue171\ue172\ue173\ue174\ue175"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_disc.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue180\ue181\ue182\ue183\ue184\ue185"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_rod.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue190\ue191\ue192\ue193\ue194\ue195"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_tractor.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue1a0\ue1a1\ue1a2\ue1a3\ue1a4\ue1a5"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_bell.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue1b0\ue1b1\ue1b2\ue1b3\ue1b4\ue1b5"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "stardrops:font/suffix_clock.png",
+      "ascent": 8,
+      "height": 9,
+      "chars": [
+        "\ue1c0\ue1c1\ue1c2\ue1c3\ue1c4\ue1c5"
+      ]
+    }
+  ]
+}

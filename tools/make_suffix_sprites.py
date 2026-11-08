@@ -4,8 +4,8 @@
 import os, re
 from PIL import Image
 root = os.path.join(os.path.dirname(__file__), '..', 'src', 'main')
-res = os.path.join(root, 'resources', 'assets', 'fancydrops', 'textures')
-ids = re.findall(r'new Suffix\("([a-z0-9_]+)"', open(os.path.join(root, 'java', 'dev', 'fancydrops', 'Cosmetics.java')).read())
+res = os.path.join(root, 'resources', 'assets', 'stardrops', 'textures')
+ids = re.findall(r'new Suffix\("([a-z0-9_]+)"', open(os.path.join(root, 'java', 'dev', 'stardrops', 'Cosmetics.java')).read())
 os.makedirs(os.path.join(res, 'gui', 'sprites', 'suffix'), exist_ok=True)
 for i in ids:
     p = os.path.join(res, 'font', f'suffix_{i}.png')

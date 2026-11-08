@@ -1,7 +1,7 @@
-name: Release FancyDrops
+name: Release Stardrops
 
 # Only runs when you press "Run workflow" on the Actions tab. Pick the branch to release from (main = the Main build).
-# Releases have no description; the file is FancyDrops-<version>.jar.
+# Releases have no description; the file is Stardrops-<version>.jar.
 on:
   workflow_dispatch:
     inputs:
@@ -54,17 +54,17 @@ jobs:
           mkdir -p release
           jar_file=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' -print -quit)
           [ -n "$jar_file" ] || { echo "::error::No production JAR found in build/libs"; exit 1; }
-          cp "$jar_file" "release/FancyDrops-${{ inputs.version }}.jar"
+          cp "$jar_file" "release/Stardrops-${{ inputs.version }}.jar"
           ls -lh release
 
       - name: Publish the release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ inputs.version }}-${{ github.ref_name }}
-          name: FancyDrops ${{ inputs.version }} [${{ github.ref_name == 'main' && 'Full' || 'Beta' }}]
+          name: Stardrops ${{ inputs.version }} [${{ github.ref_name == 'main' && 'Full' || 'Beta' }}]
           body: ""
           prerelease: ${{ inputs.prerelease || github.ref_name != 'main' }}
           make_latest: ${{ github.ref_name == 'main' && !inputs.prerelease }}
           files: |
-            release/FancyDrops-${{ inputs.version }}.jar
+            release/Stardrops-${{ inputs.version }}.jar
           fail_on_unmatched_files: false

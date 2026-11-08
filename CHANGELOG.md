@@ -42,10 +42,10 @@
 
 ## 0.7.5
 - Slayer drops are matched by their words, so "(Smite VI)", "Enchanted Book (Smite VI)" and "Bundle (Quantum)" all find their drop and play the animation instead of staying in chat.
-- The drop log (`config/fancydrops/drop-log.txt`) now also says when a "DROP!" line could not be read or was skipped as player chat.
+- The drop log (`config/stardrops/drop-log.txt`) now also says when a "DROP!" line could not be read or was skipped as player chat.
 
 ## 0.7.4
-- The Discord button now opens the new FancyDrops server.
+- The Discord button now opens the new Stardrops server.
 
 ## 0.7.3
 - Slayer boss icons are now all the same flat 2D style. Revenant Horror, Inferno Demonlord and Riftstalker Bloodfiend (which had no icon) have new hand-pixeled figures to match Tarantula, Sven and Voidgloom.
@@ -74,7 +74,7 @@
 
 ## 0.6.2
 - Harvest Bounty: the tractor now fades out before it reaches the edge, so it never stays on screen.
-- Farming icons: pictures saved earlier in config/fancydrops/art/items were overriding the fixed ones. They are now replaced once with the picture from each drop's own wiki page.
+- Farming icons: pictures saved earlier in config/stardrops/art/items were overriding the fixed ones. They are now replaced once with the picture from each drop's own wiki page.
 
 ## 0.6.1
 - Harvest Bounty: the tractor now drives the whole field in one fast pass, and every crop falls the moment its mower passes it. The scythe sweeps are gone from this scene.
@@ -251,7 +251,7 @@
 
 ## 0.4.29
 - Less lag: the 3D heads are now ray-traced on a background thread (96 steps a turn), so a page of spinning heads no longer stalls the game.
-- Animation frames: every scene is written to `config/fancydrops/art/animations` as PNG frames the first time the menu opens. Edit a frame and the mod plays yours.
+- Animation frames: every scene is written to `config/stardrops/art/animations` as PNG frames the first time the menu opens. Edit a frame and the mod plays yours.
 - Search: buttons inside a search result (the category tiles) now open their page and close the search, instead of doing nothing.
 - The back button moved up into the page header.
 - Sounds timeline: block text is coloured, and a lane with no sound picked says "none for this animation".
@@ -279,13 +279,13 @@
 - Chat message limit is 65 letters; the {placeholders} do not count.
 - Griffin pet: the text says "Creatures it can't call are hidden" and the icon is the pet's own head. The community buttons (Discord, Patreon, GitHub) animate.
 - All 3D heads now turn in step.
-- Art gathered in the game folder `config/fancydrops/art/{icons,heads,items,animations}`; `ART.md` lists which source file draws what. Older `icons/` and `textures/` folders are moved there on first run.
+- Art gathered in the game folder `config/stardrops/art/{icons,heads,items,animations}`; `ART.md` lists which source file draws what. Older `icons/` and `textures/` folders are moved there on first run.
 - Removed unused code and files (Tex.java, active_on.png, several dead methods and fields).
 
 ## 0.4.24
 - The menu stays the same size and place on every page. It only moves when a live preview slides in above or below it (the Chat page used to nudge it because it reserved less room for its preview).
 - Hidden intro rows on main pages are removed, so they no longer draw over the tiles.
-- Icon animations have 16 frames (was 12) at 70 ms. Older exports in `config/fancydrops/icons/` are moved to `icons/old/` (named like `dice_12f.png`) and made again, 256 px tall.
+- Icon animations have 16 frames (was 12) at 70 ms. Older exports in `config/stardrops/icons/` are moved to `icons/old/` (named like `dice_12f.png`) and made again, 256 px tall.
 
 ## 0.4.23
 - The Spade setting has a shovel icon (blade in the spade tier colour, dips into the ground and flicks up dirt) instead of a sword.
@@ -293,7 +293,7 @@
 ## 0.4.22
 - The sidebar is back to how it was (it scrolls on its own). Only the main pages must not scroll.
 - Main pages that were too tall now hide the repeated title row first, then make tiles a little shorter (never below a size where their text fits).
-- Icon animations have 12 frames (was 8) at 90 ms each. Old 8-frame exports in `config/fancydrops/icons/` are moved to `icons/old/` and made again with 12 frames (192 px tall).
+- Icon animations have 12 frames (was 8) at 90 ms each. Old 8-frame exports in `config/stardrops/icons/` are moved to `icons/old/` and made again with 12 frames (192 px tall).
 
 ## 0.4.21
 - The sidebar no longer scrolls: when a page's sub pages make it too tall, every row gets a little shorter until it fits (Chat and Stats stay visible).
@@ -301,7 +301,7 @@
 - New set emblems: a clean symmetric shield with a centred star, plus a separate Special emblem with a four-point sparkle.
 
 ## 0.4.20
-- Editable icons: every `:name:` icon is saved once to `config/fancydrops/icons/<name>.png` (16 px wide, 128 tall = the 8 animation frames stacked). Edit and save a file and the game updates it within a second. A 16 x 16 file makes a still icon.
+- Editable icons: every `:name:` icon is saved once to `config/stardrops/icons/<name>.png` (16 px wide, 128 tall = the 8 animation frames stacked). Edit and save a file and the game updates it within a second. A 16 x 16 file makes a still icon.
 
 ## 0.4.19
 - Animations are smaller again: 100% is now 0.6 of the old base size (about 1/3 of the screen width), and the pillar of light stops well below the top of the screen.
@@ -309,11 +309,11 @@
 
 ## 0.4.18
 - Main pages (Animations, Sounds and the other landing pages) never scroll: their tiles shrink a little until everything fits.
-- Every item picture is loaded once when the menu opens, so all of them are in `config/fancydrops/textures/` (before, only the ones you had looked at).
+- Every item picture is loaded once when the menu opens, so all of them are in `config/stardrops/textures/` (before, only the ones you had looked at).
 
 ## 0.4.17
 - Fixed the 3D head blur: the head texture is now 128 x 128 (was 64) so it stays sharp when big.
-- New folder `config/fancydrops/textures/`: every item picture is saved there as `<ITEM_ID>.png` (flat art, any size) and head items as `<ITEM_ID>_head.png` (the skin). Put your own PNG with the same name there to replace it; it loads the next time the item loads.
+- New folder `config/stardrops/textures/`: every item picture is saved there as `<ITEM_ID>.png` (flat art, any size) and head items as `<ITEM_ID>_head.png` (the skin). Put your own PNG with the same name there to replace it; it loads the next time the item loads.
 - The Mythological creature icons are now each creature's own 3D head (Hypixel bestiary skins), with the pixel icon shown until it loads.
 - Head skins with missing base64 padding no longer fail to load.
 
@@ -530,7 +530,7 @@
 - New: a Mining and Fishing preview screen you can click through
 - New: /fd editor opens the Animations and Sounds editors
 - New: slayer boss spawn and cocoon lines are replaced by "{Boss} spawned. (time)" and "{Boss} cocooned. Get ready!"
-- New: Chat page option to also announce RNG drops in public chat, starting with [FancyDrops] |
+- New: Chat page option to also announce RNG drops in public chat, starting with [Stardrops] |
 - New: other players' name cosmetics show over their heads
 - Changed: your own drop message in party, co-op or public chat waits until the animation is over
 - Changed: the Superpairs reward lines are hidden so the items don't show early
@@ -558,14 +558,14 @@
 - Changed: searching for cosmetics makes the Cosmetics button glow, and it is gone from the pages menu
 - Changed: smaller TIP box, new tips about the mod, a new tip every 10 seconds
 - New: Home has an Update tracker that checks GitHub for new releases. The Jump to section is gone
-- Changed: the GitHub button opens the FancyDrops repository
+- Changed: the GitHub button opens the Stardrops repository
 - Fixed: the Animations icon had black spots on the white bar
 
 ## 0.9.0
 - Release: everything from 0.8.52 to 0.8.60 (cosmetics settings, animated suffixes and auras, building site, admin save, SkySoft tab fix, Active lever)
 
 ## 0.8.60
-- Fixed: the animated name effect in SkySoft's Better Tab. It keeps its own cached copy of the tab list, so FancyDrops now tells it to re-read while a name is moving
+- Fixed: the animated name effect in SkySoft's Better Tab. It keeps its own cached copy of the tab list, so Stardrops now tells it to re-read while a name is moving
 
 ## 0.8.59
 - Changed: the Enabled / Animated / Chat Alert / Disabled filter now sits inside the Drop Library pages, under the header, so it no longer covers the Active lever
@@ -635,7 +635,7 @@
 
 ## 0.8.49
 - Pages that are not built yet say "Coming Soon" with a small TM, and show a busy building site: two bulldozers driving with dust, a swinging crane, brick stacks, barriers and sparks
-- Your original FancyDrops picture is back in the menu header and as the mod icon
+- Your original Stardrops picture is back in the menu header and as the mod icon
 
 ## 0.8.48
 - The menu preview now plays exactly like the real animation: same speed, the words stay 2 seconds after the scene, the same fades, then a short rest before it repeats
@@ -643,12 +643,12 @@
 ## 0.8.47
 - New short sound effects for Farming and Pest Drop (Reap, Rustle, Sprout, Breeze, Settle, Vacuum, Squeak). Every sound is now at most 2.6 s, so none run past the animation
 - The Sounds graph draws each sound's real loudness, with no random jitter
-- New Farming and Pest icons, and a new FancyDrops icon
+- New Farming and Pest icons, and a new Stardrops icon
 - Big menu icons float up and down and animate
 - Page subtitles under Drop Library, Animations, Sounds and Stats now match their pages
 - The menu's X no longer shows over the admin panel
 
-# FancyDrops changelog
+# Stardrops changelog
 
 Release notes are written here. The release workflow copies the section for the version you pick into the GitHub release, so what you read here is what players see.
 
@@ -678,8 +678,8 @@ Release notes are written here. The release workflow copies the section for the 
 - Farming animations no longer hide your hotbar and hearts, and they play faster (about 2.6 seconds, no slow-down).
 
 ## 0.8.39
-- The hover card on a player's name now matches the chat: the gradient [FancyDrops] on top, a divider, then one tidy line per cosmetic (name in its colour, rarity beside it).
-- Custom tab list: the list is now refreshed right away every time a name effect moves, and the log says what happened (look for "[FancyDrops] tab:" lines). Not confirmed fixed.
+- The hover card on a player's name now matches the chat: the gradient [Stardrops] on top, a divider, then one tidy line per cosmetic (name in its colour, rarity beside it).
+- Custom tab list: the list is now refreshed right away every time a name effect moves, and the log says what happened (look for "[Stardrops] tab:" lines). Not confirmed fixed.
 
 ## 0.8.38
 - Commands tidied: only the full names show in Tab now (`/fd simulate`, `/fd magicfind`, `/fd cosmetics`; the short forms are gone).
@@ -695,7 +695,7 @@ Release notes are written here. The release workflow copies the section for the 
 ## 0.8.37
 - Much lighter menu: every icon is drawn as one picture from a texture instead of hundreds of tiny rectangles, the skin preview is a single picture, only the tile you point at animates in Cosmetics, and the aura preview draws fewer particles.
 - Icons now move the way the thing they show would: the gear and reload ring turn, the pickaxe and fishing rod swing, wheat sways, the rest get a sweep of light. Nothing bobs up and down any more, and the sidebar and community buttons stay put.
-- Redrawn: Mining, Fishing, Farming, Animations, Work in Progress (a hard hat) and the FancyDrops chest (also the mod icon). The Slayers sword is back to the old one. Every icon is centred on its square.
+- Redrawn: Mining, Fishing, Farming, Animations, Work in Progress (a hard hat) and the Stardrops chest (also the mod icon). The Slayers sword is back to the old one. Every icon is centred on its square.
 - Circles behind icons are gone everywhere. Aura particles no longer have a halo.
 - Fixed: Settings > Menu was blank. The aura preview now finds your real skin (several ways, with log lines if it cannot).
 - /fd cosmetics (also cosmetic, cosm, cm) opens the cosmetics menu.
@@ -748,7 +748,7 @@ Release notes are written here. The release workflow copies the section for the 
 ## 0.8.30
 - The Bug Finder set is new and no longer green: Hazard (a blinking warning triangle), Critical (hot red-orange with a warning stripe and a letter flashing white) and Alarm (red and amber sparks circling you, a ring of light climbing your body, sparks flaring as it passes).
 - Tile backgrounds: every Special set has its own (twinkling stars, warning stripes, an aqua wave, gold embers), Beta tiles have a passing light, Common tiles have none.
-- Less lag on the Cosmetics page: the menu is built once per frame instead of twice, and unlock checks are remembered for a moment. The mod also writes how long each part takes to the log (`[FancyDrops] perf`), so any remaining slowness can be pinned down.
+- Less lag on the Cosmetics page: the menu is built once per frame instead of twice, and unlock checks are remembered for a moment. The mod also writes how long each part takes to the log (`[Stardrops] perf`), so any remaining slowness can be pinned down.
 
 ## 0.8.29
 - Cosmetic tiles all line up the same way now: the icon in one column on the left and the name right after it, so no tile has a big empty gap on one side.
@@ -806,7 +806,7 @@ Release notes are written here. The release workflow copies the section for the 
 
 ## 0.8.19
 - Cosmetics page redone: Special Cosmetics first, then Beta, then Earned (was Everyone's). Suffixes, Name effects and Auras each have their own section, the words under the tiles are gone (hover a tile to see how to get it), and the tiles no longer flash.
-- Hover a player's name or suffix in chat to see a FancyDrops card: which cosmetics they have and how they got each one.
+- Hover a player's name or suffix in chat to see a Stardrops card: which cosmetics they have and how they got each one.
 - Name effects animate in chat now, like in the tab list. Glitch keeps jumping between letters, Royal Gold has a glint running along the name.
 - The Secret cosmetic is now given when you find the hidden button (the test menu no longer overrides it).
 - The Stardust aura is bigger and easier to see.
@@ -845,7 +845,7 @@ Release notes are written here. The release workflow copies the section for the 
 - The chat suffix now uses the same glyph as the tab list (standing still); the odd flickering one is gone, and the built-in resource pack is removed, so there is nothing to install or switch on.
 - A cocooned boss plays its scene faster, because the next boss is already coming. One kill is counted once even when "cocooned" and "quest complete" arrive seconds apart.
 - While searching, the sidebar lists only the sub pages that match.
-- The kill line is now written to the drop log (config/fancydrops/drop-log.txt) to help trace a missing animation.
+- The kill line is now written to the drop log (config/stardrops/drop-log.txt) to help trace a missing animation.
 
 ## 0.8.10
 - The animated chat-suffix resource pack is now built into the mod: installed and turned on automatically (can be switched off in Options > Resource Packs).
@@ -857,7 +857,7 @@ Release notes are written here. The release workflow copies the section for the 
 - A drop line that prints a moment after the kill line is no longer missed. A kill now waits about 1.6 seconds for a drop before the "Nothing :(" scene plays.
 - Drop names are matched loosely (case, spaces and symbols are ignored), so a drop is not lost to a small spelling difference.
 - A rare-drop line the mod does not list stays in chat instead of vanishing.
-- New log for troubleshooting: `config/fancydrops/drop-log.txt` records every drop line heard and what happened to it.
+- New log for troubleshooting: `config/stardrops/drop-log.txt` records every drop line heard and what happened to it.
 
 ### Animations
 - **Animations > Changes** has three editors: Bar Changes, Text Changes and Item Changes. All three now share one wide layout with a big live preview on the left and the controls on the right.
@@ -872,7 +872,7 @@ Release notes are written here. The release workflow copies the section for the 
 ### Cosmetics
 - New **Cosmetics** page with the preview at the top: a chat line and a tab-list mock-up with your suffix.
 - 10 animated suffixes: Sparkle, Crown, Gem, Flame, Lucky Clover (v0.5.0) and Heartbeat, Lightning, Snowflake, Shooting Star, Ghost (v0.8.0).
-- The suffix shows in the SkyBlock tab list, animated. In chat it shows as a still image. The optional **FancyDrops Animated Suffix** resource pack (download below) makes the chat suffix animate too.
+- The suffix shows in the SkyBlock tab list, animated. In chat it shows as a still image. The optional **Stardrops Animated Suffix** resource pack (download below) makes the chat suffix animate too.
 - Open to everyone in the Dev build, whitelisted players only in the Main build.
 
 ### Menu
@@ -893,4 +893,4 @@ Release notes are written here. The release workflow copies the section for the 
 - Releases are no longer created automatically. Pushing only builds the jar (download it from the workflow run). Publish a release by hand with the **Release** workflow.
 
 ### Animated chat suffix pack
-Download `FancyDrops-Animated-Suffix.zip` from this release, put it in your `resourcepacks` folder and switch it on in Options > Resource Packs. If the game calls it incompatible, enable it anyway.
+Download `Stardrops-Animated-Suffix.zip` from this release, put it in your `resourcepacks` folder and switch it on in Options > Resource Packs. If the game calls it incompatible, enable it anyway.

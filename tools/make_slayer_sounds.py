@@ -139,7 +139,7 @@ for name, x in OUT.items():
     e = [float(np.sqrt(np.mean(x[i * hop:(i + 1) * hop] ** 2))) if i * hop < len(x) else 0 for i in range(n)]
     m = max(e) or 1
     ej[name] = {'d': d, 'e': [int(round(v / m * 99)) for v in e]}
-    sj[name] = {'sounds': [{'name': 'fancydrops:' + name, 'stream': len(x) / SR > 2.5}]}
+    sj[name] = {'sounds': [{'name': 'stardrops:' + name, 'stream': len(x) / SR > 2.5}]}
 json.dump(sj, open(os.path.join(RES, 'sounds.json'), 'w'), indent=2)
 json.dump(ej, open(os.path.join(RES, 'envelopes.json'), 'w'), separators=(',', ':'))
 print('wrote', len(OUT), 'sounds:', ' '.join(f'{k}({len(v)/SR:.1f}s)' for k, v in OUT.items()))

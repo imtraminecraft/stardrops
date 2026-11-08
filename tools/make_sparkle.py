@@ -3,7 +3,7 @@
 facets, a bright core, an edge, a drop shadow and a tiny orbiting glint. Run tools/make_suffix_sprites.py afterwards."""
 import os, math
 from PIL import Image
-out = os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'resources', 'assets', 'fancydrops', 'textures', 'font', 'sparkle.png')
+out = os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'resources', 'assets', 'stardrops', 'textures', 'font', 'sparkle.png')
 RAD = [3.6, 4.1, 4.8, 4.3, 3.8, 3.4]
 TOP, LEFT, RIGHT, BOT = (255, 247, 200), (255, 226, 120), (240, 176, 60), (196, 120, 40)
 EDGE, CORE = (150, 84, 30), (255, 255, 255)

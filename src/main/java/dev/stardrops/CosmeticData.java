@@ -1,0 +1,209 @@
+package dev.stardrops;
+
+import java.util.*;
+
+/** Every cosmetic, which line it belongs to, and whether this player has it. */
+final class CosmeticData {
+    private CosmeticData() {}
+
+    enum Line { BETA, RARE, SPECIAL, LEGENDARY, FREE, ACHIEVEMENT }
+    enum Kind { SUFFIX, NAME, AURA }
+    record Def(String id, String name, Line line, Kind kind, String how, int color, String set) {
+        Def(String id, String name, Line line, Kind kind, String how, int color) { this(id, name, line, kind, how, color, null); }
+    }
+    /** A Special set: a suffix, a name effect and an aura that belong together. */
+    record SetDef(String id, String name, String how, int color, String suffix, String fx, String aura, int rarity) {}
+    static final List<SetDef> SETS = List.of(
+        new SetDef("sparkle", "Special", "Only given to special people.", 0xFFB48CFF, "sparkle", "sparklefx", "sparkleaura", 4),
+        new SetDef("bugfinder", "Bug Finder", "Only given to bug finders who reported bugs that could break the whole mod.", 0xFFFF5A36, "bug", "glitch", "glitchaura", 4),
+        new SetDef("contributors", "Contributors", "Only given to the mod contributors.", 0xFF55D8FF, "code", "contribfx", "stardust", 4),
+        new SetDef("patreon", "Patreon", "Only given to Patreon supporters.", 0xFFFFB400, "patron", "royal", "patronaura", 4),
+        new SetDef("beta", "Beta", "Only given to players who downloaded the mod before v1.0.", 0xFF3FD16A, "betamark", "pulse", null, 4));          // Beta is a Special set (its own green and sparkle)
+    static SetDef setById(String id) { for (SetDef d : SETS) if (d.id().equals(id)) return d; return null; }
+
+    private static final String BETA_HOW = "Downloaded the mod before v1.0";
+    static final List<Def> ALL = List.of(
+        // Beta: kept by everyone who had the mod before 1.0
+        new Def("pulse", "Pulse", Line.BETA, Kind.NAME, BETA_HOW, 0xFFFF9AC8, "beta"),
+        // Name Icons: Special (Bug Finder, Contributors, Patreon only), Legendary, Rare, Common. Unlock rules for the last three come later.
+        new Def("bug", "Bug", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFFF5A36, "bugfinder"),
+        new Def("code", "Code", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFF55D8FF, "contributors"),
+        new Def("patron", "Patreon", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFFFB400, "patreon"),
+        new Def("betamark", "Beta", Line.BETA, Kind.SUFFIX, "Downloaded the mod before v1.0", 0xFF3FD16A, "beta"),
+        new Def("dice", "Lucky Dice", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF4F6FB),
+        new Def("chest", "Treasure Chest", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF8A5A2C),
+        new Def("anvil", "Anvil", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF9AA3B5),
+        new Def("disc", "Music Disc", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF22242E),
+        new Def("tractor", "Tractor", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF3AA848),
+        new Def("bell", "Bell", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF2B01E),
+        new Def("clock", "Clock", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF2F4FA),
+        // Name effects earned in the ledger: they keep your own name colour and add light or movement
+        new Def("sweep", "Light Sweep", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFF4F6FB),
+        new Def("ripple", "Ripple", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFB8E8FF),
+        new Def("spark", "Spark", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFFFE680),
+        new Def("neon", "Neon", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFF6AF2FF),
+        // Auras earned in the ledger
+        new Def("bubbleaura", "Bubbles", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFF8FE0FF),
+        new Def("fireflyaura", "Fireflies", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFE8FF70),
+        new Def("coinaura", "Coin Shower", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFFFD24A),
+        new Def("runeaura", "Runes", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFC9A0FF),
+        // Special: handed out by hand, one set at a time (suffix + name effect + aura)
+        new Def("sparkle", "Sparkle", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFB48CFF, "sparkle"),
+        new Def("sparklefx", "Starlight", Line.SPECIAL, Kind.NAME, "Special Set", 0xFFA9BBFF, "sparkle"),
+        new Def("sparkleaura", "Twinkle", Line.SPECIAL, Kind.AURA, "Special Set", 0xFFFFE680, "sparkle"),
+        new Def("glitch", "Critical", Line.SPECIAL, Kind.NAME, "Bug Finder Set", 0xFFFF5A36, "bugfinder"),
+        new Def("glitchaura", "Alarm", Line.SPECIAL, Kind.AURA, "Bug Finder Set", 0xFFFF7A2E, "bugfinder"),
+        new Def("contribfx", "Aqua Flow", Line.SPECIAL, Kind.NAME, "Contributors Set", 0xFF55D8FF, "contributors"),
+        new Def("stardust", "Stardust", Line.SPECIAL, Kind.AURA, "Contributors Set", 0xFF8FD0FF, "contributors"),
+        new Def("royal", "Royal", Line.SPECIAL, Kind.NAME, "Patreon Set", 0xFFFFB400, "patreon"),
+        new Def("patronaura", "Embers", Line.SPECIAL, Kind.AURA, "Patreon Set", 0xFFFF9B2E, "patreon"));
+
+    static Def byId(String id) { for (Def d : ALL) if (d.id().equals(id)) return d; return null; }
+    static List<Def> line(Line l) { List<Def> o = new ArrayList<>(); for (Def d : ALL) if (d.line() == l) o.add(d); return o; }
+
+    // ---- testing aids (the small test menu under the main menu): add or remove single cosmetics on yourself. Never touches the real progress.
+    static boolean editMode;
+    static final Map<String, Boolean> force = new HashMap<>();
+
+    // ---- Special cosmetics: who has which. cosmetics.json lists the players of each one separately.
+    /** The names used in cosmetics.json, and the cosmetic each one gives. */
+    static final Map<String, String> GRANT_KEY = Map.of("sparkle", "sparkle", "patreon", "patreon", "bughunter", "bugfinder", "contributor", "contributors");
+    static volatile Map<String, Set<String>> grants = new HashMap<>();
+    static Set<String> grantsOf(UUID u) { Set<String> s = grants.get(Cosmetics.code(u)); return s == null ? Set.of() : s; }
+
+    // ---- Beta
+    static boolean betaEligible() {
+        return versionLess(StardropsConfig.get().firstVersion, "1.0.0");
+    }
+    static boolean versionLess(String a, String b) {
+        String[] x = (a == null ? "" : a).split("[^0-9]+"), y = b.split("[^0-9]+");
+        for (int i = 0; i < 3; i++) {
+            int p = i < x.length && !x[i].isEmpty() ? Integer.parseInt(x[i]) : 0, q = i < y.length && !y[i].isEmpty() ? Integer.parseInt(y[i]) : 0;
+            if (p != q) return p < q;
+        }
+        return false;
+    }
+
+    private static final Map<String, Boolean> UCACHE = new HashMap<>(); private static long ucacheAt;
+    /** The menu asks this hundreds of times a frame; the answer is remembered for a fifth of a second. */
+    static boolean unlocked(Def d) {
+        if (d == null) return false;
+        long n = System.currentTimeMillis();
+        if (n - ucacheAt > 200) { UCACHE.clear(); ucacheAt = n; }
+        Boolean c = UCACHE.get(d.id()); if (c != null) return c;
+        boolean v = unlockedNow(d); UCACHE.put(d.id(), v); return v;
+    }
+    private static boolean unlockedNow(Def d) {
+        if (d == null) return false;
+        Boolean f = force.get(d.id()); if (f != null) return f;
+        if (Cosmetics.isAdmin() || grantsOf(Cosmetics.me()).contains("c:" + d.id())) return true;           // the owner has everything; single cosmetics can be handed out one by one
+        if (Achievements.hasCosmetic(d.id())) return true;                                                  // earned through an achievement (the server decides, not this computer)
+        StardropsConfig c = StardropsConfig.get();
+        switch (d.line()) {
+            case BETA: return betaEligible();
+            case RARE: case LEGENDARY: return false;                              // unlock rules come later (admins have everything)
+            case SPECIAL: return grantsOf(Cosmetics.me()).contains(d.set());
+            default:
+                if (d.id().equals("newcomer") || d.id().equals("fresh")) return true;
+                return switch (d.id()) {
+                    case "ember" -> c.dropsSeen >= 15;
+                    case "frost" -> c.dropsSeen >= 75;
+                    case "neon" -> c.dropsSeen >= 300;
+                    default -> false;
+                };
+        }
+    }
+    /** What to tell a player who presses a locked cosmetic. */
+    static String lockText(Def d) {
+        Achievements.Ach a = Achievements.unlocking(d.id());
+        if (a != null) return "Achievement: " + a.name() + ". " + a.desc() + " (" + fmtN(a.progress()) + " / " + fmtN(a.goal()) + ")";
+        if (d.line() == Line.ACHIEVEMENT || d.line() == Line.RARE || d.line() == Line.LEGENDARY || d.line() == Line.FREE) return "Earned through an achievement. Open Achievements to see which.";
+        if (d.line() == Line.BETA) return "The beta is over. Only players who downloaded before v1.0 have it.";
+        if (d.line() == Line.SPECIAL) return setById(d.set()).how();
+        return switch (d.id()) {
+            case "ember" -> "Get 15 rare drops.";
+            case "frost" -> "Get 75 rare drops.";
+            case "neon" -> "Get 300 rare drops.";
+            default -> "Find the hidden button.";
+        };
+    }
+    static String fmtN(double v) { return v >= 1e9 ? String.format(java.util.Locale.ROOT, "%.1fB", v / 1e9) : v >= 1e6 ? String.format(java.util.Locale.ROOT, "%.1fM", v / 1e6) : v >= 1e4 ? String.format(java.util.Locale.ROOT, "%.0fk", v / 1e3) : String.valueOf((long) v); }
+    static int rarityOf(Def d) { return d.line() == Line.SPECIAL || d.line() == Line.BETA ? 4 : d.line() == Line.LEGENDARY ? 3 : d.line() == Line.ACHIEVEMENT ? 2 : d.line() == Line.RARE ? 1 : 0; }          // Beta is a Special set
+    static String rarityName(int r) { return r == 4 ? "Special" : r == 3 ? "Legendary" : r == 2 ? "Achievement" : r == 1 ? "Rare" : "Common"; }
+    static List<Def> members(SetDef s) { List<Def> o = new ArrayList<>(); for (Def d : ALL) if (s.id().equals(d.set())) o.add(d); return o; }
+    static int owned(SetDef s) { int n = 0; for (Def d : members(s)) if (unlocked(d)) n++; return n; }
+    static boolean unlockedId(String id) { return unlocked(byId(id)); }
+
+    static String equipped(Kind k) { StardropsConfig c = StardropsConfig.get(); return k == Kind.SUFFIX ? c.suffix : k == Kind.NAME ? c.nameFx : c.aura; }
+    static boolean isEquipped(Def d) { return d.id().equals(equipped(d.kind())); }
+    /** Equip it, or take it off again when it is already on. */
+    static void toggle(Def d) {
+        StardropsConfig c = StardropsConfig.get(); String v = isEquipped(d) ? "" : d.id();
+        switch (d.kind()) { case SUFFIX -> c.suffix = v; case NAME -> c.nameFx = v; default -> c.aura = v; }
+        StardropsConfig.save(); changed();
+    }
+    /** Wear a whole set, or take all three off when you already wear it. */
+    static void toggleSet(SetDef s) {
+        StardropsConfig c = StardropsConfig.get();
+        boolean on = wearingSet(s);
+        c.suffix = on || s.suffix() == null ? "" : s.suffix(); c.nameFx = on ? "" : s.fx(); c.aura = on || s.aura() == null ? "" : s.aura();       // a set replaces what you wore: a set with no aura also turns the old aura off
+        StardropsConfig.save(); changed();
+    }
+    static boolean wearingSet(SetDef s) { StardropsConfig c = StardropsConfig.get(); return (s.suffix() == null ? "" : s.suffix()).equals(c.suffix) && s.fx().equals(c.nameFx) && (s.aura() == null || s.aura().equals(c.aura)); }
+    /** Something you wear changed: chat lines already on screen are redone with the new look. */
+    static void changed() { Cosmetics.historyDirty = true; UCACHE.clear(); Cosmetics.wornChanged(); }
+    static String kindLabel(Kind k) { return k == Kind.SUFFIX ? "Name Icon" : k == Kind.NAME ? "Name effect" : "Aura"; }
+
+    // ---- Admin Panel helpers
+    /** How many players hold each set, and each single cosmetic, according to cosmetics.json. */
+    static Map<String, Integer> counts() {
+        Map<String, Integer> m = new LinkedHashMap<>();
+        Set<String> players = new LinkedHashSet<>(grants.keySet()); players.addAll(Cosmetics.ADMINS);                 // the owner always holds everything
+        for (String p : players) {
+            Set<String> held = heldBy(p);
+            for (SetDef sd : SETS) { List<Def> mem = members(sd); boolean all = !mem.isEmpty(); for (Def d : mem) if (!held.contains(d.id())) all = false; if (all) m.merge(sd.id(), 1, Integer::sum); }
+            for (String id : held) m.merge("c:" + id, 1, Integer::sum);
+        }
+        return m;
+    }
+    /** What a player is given right now, as a list of cosmetic ids (sets expanded). */
+    static Set<String> heldBy(String code) {
+        Set<String> o = new LinkedHashSet<>(); Set<String> g = grants.getOrDefault(code, Set.of());
+        if (Cosmetics.isAdminCode(code)) { for (Def d : ALL) o.add(d.id()); return o; }                              // the owner has everything
+        for (String x : g) {
+            if (x.startsWith("c:")) { if (byId(x.substring(2)) != null) o.add(x.substring(2)); }
+            else { SetDef sd = setById(x); if (sd != null) for (Def d : members(sd)) o.add(d.id()); }
+        }
+        return o;
+    }
+    /** What the Admin Panel shows ticked: exactly what cosmetics.json gives this player (the owner, who can wear everything anyway, starts with everything ticked until something is saved for them). */
+    static Set<String> pickedFor(String code) {
+        Set<String> o = new LinkedHashSet<>(); Set<String> g = grants.getOrDefault(code, Set.of());
+        for (String x : g) {
+            if (x.startsWith("c:")) { if (byId(x.substring(2)) != null) o.add(x.substring(2)); }          // cosmetics that were removed are dropped
+            else { SetDef sd = setById(x); if (sd != null) for (Def d : members(sd)) o.add(d.id()); }
+        }
+        if (Cosmetics.isAdminCode(code) && !remoteRawHas(code)) return heldBy(code);
+        return o;
+    }
+    private static boolean remoteRawHas(String code) { String r = Cosmetics.remoteRaw; return r != null && r.contains(code); }
+    /** cosmetics.json with this player's gifts replaced by the picks: whole Special sets go in their list, anything else under "extra". */
+    static String buildJson(String code, Set<String> picks) {
+        com.google.gson.JsonObject root;
+        try { root = com.google.gson.JsonParser.parseString(Cosmetics.remoteRaw == null ? "{}" : Cosmetics.remoteRaw).getAsJsonObject(); } catch (Throwable t) { root = new com.google.gson.JsonObject(); }
+        com.google.gson.JsonObject special = root.has("special") ? root.getAsJsonObject("special") : new com.google.gson.JsonObject(); root.add("special", special);
+        com.google.gson.JsonObject extra = root.has("extra") ? root.getAsJsonObject("extra") : new com.google.gson.JsonObject();
+        Set<String> left = new LinkedHashSet<>(); for (String id : picks) if (byId(id) != null) left.add(id);
+        for (var e : GRANT_KEY.entrySet()) {
+            com.google.gson.JsonArray old = special.has(e.getKey()) ? special.getAsJsonArray(e.getKey()) : new com.google.gson.JsonArray(), neu = new com.google.gson.JsonArray();
+            for (var x : old) if (!x.getAsString().equalsIgnoreCase(code)) neu.add(x);
+            SetDef sd = setById(e.getValue());
+            if (sd != null) { List<Def> mem = members(sd); boolean all = !mem.isEmpty(); for (Def d : mem) if (!picks.contains(d.id())) all = false; if (all) { neu.add(code); for (Def d : mem) left.remove(d.id()); } }
+            special.add(e.getKey(), neu);
+        }
+        extra.remove(code);
+        if (!left.isEmpty()) { com.google.gson.JsonArray a = new com.google.gson.JsonArray(); for (String id : left) a.add(id); extra.add(code, a); }
+        if (extra.size() > 0) root.add("extra", extra); else root.remove("extra");
+        return new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(root) + "\n";
+    }
+}

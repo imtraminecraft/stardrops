@@ -10,4 +10,4 @@ pluginManagement {
 }
 
 // Should match your modid
-rootProject.name = 'fancydrops'
+rootProject.name = 'stardrops'

@@ -5,7 +5,7 @@ Every icon is drawn pixel by pixel here: a body lit from the top left, a darker 
 import os, sys, json, math
 from PIL import Image
 
-RES = os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'resources', 'assets', 'fancydrops')
+RES = os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'resources', 'assets', 'stardrops')
 F = 6
 
 def hx(s): return ((s >> 16) & 255, (s >> 8) & 255, s & 255)
@@ -208,11 +208,11 @@ def build(name):
 if __name__ == '__main__':
     sheet = sys.argv[sys.argv.index('--sheet') + 1] if '--sheet' in sys.argv else None
     prov = os.path.join(RES, 'font', 'emoji.json'); data = json.load(open(prov))
-    data['providers'] = [p for p in data['providers'] if not p.get('file', '').startswith('fancydrops:font/suffix_')]
+    data['providers'] = [p for p in data['providers'] if not p.get('file', '').startswith('stardrops:font/suffix_')]
     for k, name in enumerate(ORDER):
         build(name).save(os.path.join(RES, 'textures', 'font', f'suffix_{name}.png'))
         base = BASE + 0x10 * k
-        data['providers'].append({'type': 'bitmap', 'file': f'fancydrops:font/suffix_{name}.png', 'ascent': 8, 'height': 9, 'chars': [''.join(chr(base + i) for i in range(6))]})
+        data['providers'].append({'type': 'bitmap', 'file': f'stardrops:font/suffix_{name}.png', 'ascent': 8, 'height': 9, 'chars': [''.join(chr(base + i) for i in range(6))]})
     json.dump(data, open(prov, 'w'), indent=2)
     if sheet:
         S = 8; im = Image.new('RGBA', (6 * 10 * S + 40, len(ORDER) * (10 * S + 6)), (58, 70, 96, 255))

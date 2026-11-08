@@ -17,7 +17,7 @@
 // A player's code is the SHA-256 of their lowercase dashed UUID (Cosmetics.code() in the mod).
 
 const CORS = { "Access-Control-Allow-Origin": "*" };
-const COSMETICS_JSON = "https://raw.githubusercontent.com/imtraminecraft/fancydrops/main/cosmetics.json";
+const COSMETICS_JSON = "https://raw.githubusercontent.com/imtraminecraft/Stardrops/main/cosmetics.json";
 const OWNER = "7ad5d2b31b239f2ed148d1de18f8214967bf7d1a411c838d466e9829ab7c2bf8";    // the mod owner (Cosmetics.OWNER): owns every cosmetic; more admins can be listed as "admins" in cosmetics.json
 
 // ---------------------------------------------------------------- achievements (the only place they are defined)
@@ -179,7 +179,7 @@ export default {
       const t = p.today; if (t.n >= DAY_DROPS || (t.g[grp] || 0) >= DAY_GROUP || (rng && t.rng >= DAY_RNG)) continue;   // the daily limits
       t.n++; t.g[grp] = (t.g[grp] || 0) + 1; if (rng) t.rng++;
       p.drops++; p.recent.push(now); taken++;
-      if ((p.pt || 0) < 1440) { p.fd = (p.fd || 0) + 1; if (rng) p.fdr = (p.fdr || 0) + 1; }       // your first day of playing with FancyDrops (by this server's own playtime)
+      if ((p.pt || 0) < 1440) { p.fd = (p.fd || 0) + 1; if (rng) p.fdr = (p.fdr || 0) + 1; }       // your first day of playing with Stardrops (by this server's own playtime)
       if (rng) p.rng++;
       if (rng && v >= 1_000_000) p.bigRng++;
       if (r >= 3) p.r3++;

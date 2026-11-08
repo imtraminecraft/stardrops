@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "fancydrops",
+  "id": "stardrops",
   "version": "${version}",
   "name": "Stardrops",
   "description": "Cinematic drop animations for Hypixel SkyBlock Mythological Rituals, with live prices, profit tracking and party/co-op announcements. More categories are on the way.",
@@ -10,10 +10,10 @@
   "environment": "client",
   "entrypoints": {
     "main": [
-      "dev.fancydrops.FancyDropsMod"
+      "dev.stardrops.StardropsMod"
     ],
     "client": [
-      "dev.fancydrops.FancyDropsMod"
+      "dev.stardrops.StardropsMod"
     ]
   },
   "depends": {
@@ -22,8 +22,8 @@
     "java": ">=25",
     "fabric-api": "*"
   },
-  "icon": "assets/fancydrops/icon.png",
+  "icon": "assets/stardrops/icon.png",
   "custom": {
-    "fancydrops:channel": "${channel}"
+    "stardrops:channel": "${channel}"
   }
 }

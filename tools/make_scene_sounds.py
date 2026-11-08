@@ -7,7 +7,7 @@ import numpy as np
 from scipy.signal import lfilter, butter
 
 SR = 44100
-RES = os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'resources', 'assets', 'fancydrops')
+RES = os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'resources', 'assets', 'stardrops')
 rng = np.random.default_rng(90)
 N = lambda m: 440 * 2 ** ((m - 69) / 12)
 
@@ -191,7 +191,7 @@ for name, x in OUT.items():
     e = [float(np.sqrt(np.mean(x[i * hop:(i + 1) * hop] ** 2))) if i * hop < len(x) else 0 for i in range(n)]
     m = max(e) or 1
     ej[name] = {'d': d, 'e': [int(round(v / m * 99)) for v in e]}
-    sj[name] = {'sounds': [{'name': 'fancydrops:' + name, 'stream': False}]}
+    sj[name] = {'sounds': [{'name': 'stardrops:' + name, 'stream': False}]}
 json.dump(sj, open(os.path.join(RES, 'sounds.json'), 'w'), indent=2)
 json.dump(ej, open(os.path.join(RES, 'envelopes.json'), 'w'), separators=(',', ':'))
 print('wrote', len(OUT), 'sounds:', ' '.join(OUT))
