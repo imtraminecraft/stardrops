@@ -134,7 +134,7 @@ final class Cosmetics {
     static final String DEFAULT_WORN = "https://fancydrops-worn.imtraminecraft.workers.dev";      // used until cosmetics.json says otherwise (its copy on GitHub can take minutes to update)
     static volatile String wornUrl = DEFAULT_WORN;
     private static volatile Map<String, String[]> WORN = Map.of();                  // player code -> {suffix, name effect, aura}
-    private static volatile long wornAt, publishAt; private static volatile boolean publishing;
+    private static volatile long wornAt, publishAt; private static volatile boolean publishing; private static volatile String lastShared;
     private static void refreshWorn() {
         String u = wornUrl; long now = System.currentTimeMillis();
         if (u == null || now - wornAt < 60_000L) return; wornAt = now;
@@ -162,6 +162,8 @@ final class Cosmetics {
         StardropsConfig c = StardropsConfig.get();
         String sx = CosmeticData.unlockedId(c.suffix) ? c.suffix : "", fx = CosmeticData.unlockedId(c.nameFx) ? c.nameFx : "", au = CosmeticData.unlockedId(c.aura) ? c.aura : "";
         String name = mc.getUser().getName(), token = mc.getUser().getAccessToken(), u = wornUrl;
+        String sig = sx + "|" + fx + "|" + au; if (sig.equals(lastShared)) return;                       // nothing changed since we last told the server: don't send again
+        lastShared = sig;
         publishing = true;
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
@@ -171,7 +173,8 @@ final class Cosmetics {
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString(o.toString())).build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 System.err.println("[Stardrops] shared your cosmetics (" + (sx.isEmpty() ? "-" : sx) + ", " + (fx.isEmpty() ? "-" : fx) + ", " + (au.isEmpty() ? "-" : au) + "): " + res.statusCode() + " " + res.body());
                 wornAt = 0;
-            } catch (Throwable t) { System.err.println("[Stardrops] could not share your cosmetics: " + t); }
+                if (res.statusCode() != 200) lastShared = null;                                         // not saved: try again next time
+            } catch (Throwable t) { lastShared = null; System.err.println("[Stardrops] could not share your cosmetics: " + t); }
             finally { publishing = false; }
         });
     }

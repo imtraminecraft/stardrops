@@ -123,14 +123,14 @@ final class Achievements {
     private static final Map<JsonObject, AnimationManager.Item> PRICED = new IdentityHashMap<>();
     private static long lastBeat;
 
-    /** Every tick: sends what has waited 6 seconds (prices have arrived by then), signed with your Minecraft login. */
+    /** Every tick: sends drops in batches once the first has waited 45 seconds (the server's storage allows few writes a day), signed with your Minecraft login. */
     static void tick(Minecraft mc) {
         refresh(false); loadPending();
         List<JsonObject> batch;
         synchronized (PENDING) {
             boolean beatDue = PENDING.isEmpty() && mc.level != null && !mc.isPaused() && System.currentTimeMillis() - lastBeat > 300_000L;   // a heartbeat every 5 minutes: the server counts your playtime
             if (beatDue && !posting && System.currentTimeMillis() >= retryAt) { lastBeat = System.currentTimeMillis(); }
-            else if (PENDING.isEmpty() || posting || System.currentTimeMillis() - firstPending < 6000L || System.currentTimeMillis() < retryAt) return;
+            else if (PENDING.isEmpty() || posting || System.currentTimeMillis() - firstPending < 45_000L || System.currentTimeMillis() < retryAt) return;
             lastBeat = System.currentTimeMillis();
             batch = new ArrayList<>(PENDING); PENDING.clear();
             for (JsonObject e : batch) { AnimationManager.Item it = PRICED.remove(e); if (it == null && e.has("v")) continue; double v = it == null || it.price < 0 ? 0 : it.price * Math.max(1, it.amount); e.addProperty("v", Math.round(v)); }

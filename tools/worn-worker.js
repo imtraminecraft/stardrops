@@ -54,7 +54,7 @@ const BETA = ["betamark", "pulse"];
 const UNKNOWN_CAP = 25_000_000;                    // an item the markets don't know (untradeable, very rare) counts for at most this much
 async function market(env) {
   let m = await env.WORN.get("market", "json");
-  if (m && Date.now() - m.at < 900_000) return m;
+  if (m && Date.now() - m.at < 1_800_000) return m;                                            // 30 minutes (KV writes are limited)
   const out = { at: Date.now(), bz: {}, bin: {} };
   try { const r = await fetch("https://api.hypixel.net/v2/skyblock/bazaar"); const j = await r.json(); for (const [id, pr] of Object.entries(j.products || {})) { const q = pr.quick_status || {}; const v = Math.max(q.buyPrice || 0, q.sellPrice || 0); if (v > 0) out.bz[id] = v; } } catch {}
   try { const r = await fetch("https://moulberry.codes/lowestbin.json"); const j = await r.json(); for (const [id, v] of Object.entries(j || {})) if (v > 0) out.bin[id] = v; } catch {}
@@ -68,7 +68,7 @@ function fair(m, id, n, v) {
   return Math.min(v, unit * Math.max(1, Math.min(64, n || 1)) * 1.6);
 }
 /** Playtime, counted here: the time since your last heartbeat or drop, if it was recent (the game sends one every 5 minutes). */
-function beat(p, now) { if (p.beat && now - p.beat <= 420_000) p.pt = (p.pt || 0) + (now - p.beat) / 60000; p.beat = now; }
+function beat(p, now) { if (p.beat && now - p.beat <= 2_100_000) p.pt = (p.pt || 0) + (now - p.beat) / 60000; p.beat = now; }   // heartbeats are saved at most every 30 min, so a gap up to 35 min still counts
 const DAY_DROPS = 1500, DAY_RNG = 30, DAY_GROUP = 600;   // more than this in one day is not real play
 
 // ---------------------------------------------------------------- helpers
@@ -95,7 +95,7 @@ async function verify(b, env) {
     if (r.status === 200) {
       const id = (await r.json()).id;
       const code = await codeOf(`${id.slice(0, 8)}-${id.slice(8, 12)}-${id.slice(12, 16)}-${id.slice(16, 20)}-${id.slice(20)}`.toLowerCase());
-      if (kh) await env.WORN.put("key:" + code, kh);                                        // Mojang vouched for them: this is their key now
+      if (kh && (await env.WORN.get("key:" + code)) !== kh) await env.WORN.put("key:" + code, kh);   // Mojang vouched for them: this is their key now (written only when it changes)
       return code;
     }
     verify.why = "mojang " + r.status;
@@ -112,7 +112,7 @@ async function verify(b, env) {
 /** Cosmetics given by hand (cosmetics.json), cached for 5 minutes. */
 async function grantsFor(env, code) {
   let raw = await env.WORN.get("cosmetics_cache", "json");
-  if (!raw || Date.now() - raw.at > 300_000) {
+  if (!raw || Date.now() - raw.at > 1_800_000) {                                                // 30 minutes (KV writes are limited)
     try { const r = await fetch(COSMETICS_JSON); raw = { at: Date.now(), body: await r.json() }; await env.WORN.put("cosmetics_cache", JSON.stringify(raw)); } catch { raw = raw || { at: 0, body: {} }; }
   }
   const out = new Set(BETA), body = raw.body || {};
@@ -137,7 +137,11 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url), path = url.pathname;
 
-    if (path === "/worn" && req.method === "GET") return json((await env.WORN.get("all", "json")) || {}, { "cache-control": "max-age=30" });
+    if (path === "/worn" && req.method === "GET") {                                         // every player asks once a minute: answer from Cloudflare's cache for 30 s
+      const cache = caches.default, hit = await cache.match(req); if (hit) return hit;
+      const res = json((await env.WORN.get("all", "json")) || {}, { "cache-control": "public, max-age=30" });
+      await cache.put(req, res.clone()); return res;
+    }
 
     if (path.startsWith("/profile/") && req.method === "GET") {
       const code = path.slice(9).toLowerCase();
@@ -156,15 +160,19 @@ export default {
       for (const a of ACH) if (p.unlocked[a.id] && a.reward) owned.add(a.reward);
       const ok = (v) => (typeof v === "string" && /^[a-z0-9_]{0,32}$/.test(v) && (v === "" || admin || owned.has(v)) ? v : "");    // only what you own
       const entry = { s: ok(b.suffix), f: ok(b.fx), a: ok(b.aura), t: Date.now() };
-      const all = (await env.WORN.get("all", "json")) || {};
-      if (!entry.s && !entry.f && !entry.a) delete all[code]; else all[code] = entry;
-      await env.WORN.put("all", JSON.stringify(all));
+      const all = (await env.WORN.get("all", "json")) || {}, old = all[code];
+      const same = old ? old.s === entry.s && old.f === entry.f && old.a === entry.a : !entry.s && !entry.f && !entry.a;
+      if (!same) {                                                                            // written only when the pick really changed
+        if (!entry.s && !entry.f && !entry.a) delete all[code]; else all[code] = entry;
+        await env.WORN.put("all", JSON.stringify(all));
+      }
       return json({ ok: true, worn: entry });
     }
 
     // /event: drops you found
     const events = Array.isArray(b.events) ? b.events.slice(0, 40) : [];
     const p = await load(env, code), now = Date.now();
+    if (!events.length && p.saved && now - p.saved < 1_800_000) return json({ ok: true, taken: 0, unlocked: [], ...view(p) });   // a heartbeat alone: saved at most every 30 min
     beat(p, now);
     p.recent = (p.recent || []).filter((t) => now - t < 3_600_000);
     const day = new Date(now).toISOString().slice(0, 10);
@@ -192,6 +200,7 @@ export default {
     }
     const fresh = [];
     for (const a of ACH) if (!p.unlocked[a.id] && stat(p, a.stat) >= a.goal) { p.unlocked[a.id] = now; fresh.push(a.id); }
+    p.saved = now;
     await env.WORN.put("p:" + code, JSON.stringify(p));
     return json({ ok: true, taken, unlocked: fresh, ...view(p) });
   },
