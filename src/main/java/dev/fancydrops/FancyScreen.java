@@ -672,7 +672,7 @@ public class FancyScreen extends Screen {
             g.fill(b[0], b[1] + 2, b[0] + 2, b[1] + b[3] - 2, SLOT_COL[k]);
             for (int sec = 1; sec < (int) secs + 1; sec++) { int gx = tx0 + Math.round(sec / secs * tw); if (gx < tx1) g.fill(gx, b[1] + 1, gx + 1, b[1] + b[3] - 1, 0x16FFFFFF); }        // a faint line for every second, so the blocks can be read against the ruler
             Gfx.push(g); Gfx.translate(g, b[0] + 6, b[1] + Math.max(1, (b[3] - 11) / 2)); Gfx.scale(g, 0.7f); Icons.draw(g, SLOT_ICON[k], 0, 0, hv || any ? now : 2400L); Gfx.pop(g);
-            Gfx.text(g, font, SLOT_NAMES[k], b[0] + 22, b[1] + (b[3] - 8) / 2, any ? 0xFFFFFFFF : Ui.TEXT);
+            Gfx.text(g, font, slotName(key, k), b[0] + 22, b[1] + (b[3] - 8) / 2, any ? 0xFFFFFFFF : Ui.TEXT);
             boolean first = true;
             if (!none) for (float ct : tm[k]) {
                 int bx0 = tx0 + Math.round(ct / secs * tw), bx1 = Math.max(bx0 + 3, Math.min(tx1, tx0 + Math.round((ct + dur) / secs * tw)));
@@ -2644,6 +2644,7 @@ public class FancyScreen extends Screen {
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
         if (gr == null) { groupTiles(cat, "Open one to edit its animations."); return; }
+        if (!gr.id().equals("slayer")) { wipPanel(gr.icon(), gr.name(), "Being remade for Stardrops. Slayer is the first one done."); return; }
         animationEditor(cat, gr, c);
     }
 
@@ -2674,7 +2675,7 @@ public class FancyScreen extends Screen {
     private void groupTiles(Categories.Cat cat, String hint) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb() + " " + hint, cat.color()));
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n]; boolean[] wp = new boolean[n];
-        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); lb[i] = g.name(); sb[i] = g.wip() ? "Soon\u2122" : g.id().equals("slayer") ? "New \u00B7 black hole" : "WIP \u00B7 being remade"; ic[i] = g.icon(); co[i] = g.color(); wp[i] = g.wip(); }
+        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); boolean lock = g.wip() || !g.id().equals("slayer"); lb[i] = g.name(); sb[i] = lock ? "Soon\u2122" : "New \u00B7 black hole"; ic[i] = g.icon(); co[i] = g.color(); wp[i] = lock; }   // being remade for Stardrops: only Slayer is open
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
     }
 
@@ -2689,7 +2690,6 @@ public class FancyScreen extends Screen {
         String key = gr.key(ty);
         FancyConfig.AnimCfg a = c.anim(key);
         rows.add(backRow(cat.name(), "Back to the " + cat.name() + " animations", cat.color(), () -> openPage(curSub(), null, null)));
-        if (!gr.id().equals("slayer")) rows.add(note("WIP: this animation is being remade for Stardrops. Until it's done, every drop here plays the construction scene: a stargate being built by a little welding drone.", 0xFFFFC830));
         rows.add(typePicker(gr, c));
         rows.add(note(gr.id().equals("slayer") ? SLAYER_BLURB[Math.max(0, Math.min(2, AnimationManager.typeIndex(ty.id())))] : ty.blurb(), ty.color()));
         Row pl = row(0, ":play:", "Preview", "Plays it over the game, like a real drop", ty.color());
@@ -2723,6 +2723,19 @@ public class FancyScreen extends Screen {
 
     private static final String[] SLOT_NAMES = {"Beat", "Burst", "Reveal", "Linger", "End"};
     private static final String[] SLOT_SUBS = {"Every beat of the opening", "The moment the animation pivots", "The item appears", "The glow after it", "The animation fades out"};
+    /** Slayer (the black hole) names its sounds after what happens. */
+    private static String slotName(String scene, int k) {
+        if (!AnimationManager.isSlayer(scene)) return SLOT_NAMES[k];
+        int ty = AnimationManager.typeOfKey(scene);
+        return switch (k) { case 0 -> "Gulp"; case 1 -> ty == AnimationManager.RNG ? "Supernova" : ty == AnimationManager.NORMAL ? "Spit" : "Collapse"; case 2 -> "Reveal"; case 3 -> ty == AnimationManager.RNG ? "Pulsar" : "Afterglow"; default -> "Close"; };
+    }
+    private static String slotSub(String scene, int k) {
+        if (!AnimationManager.isSlayer(scene)) return SLOT_SUBS[k];
+        int ty = AnimationManager.typeOfKey(scene);
+        return switch (k) { case 0 -> "Each of the three gulps as the boss is pulled in";
+            case 1 -> ty == AnimationManager.RNG ? "The hole collapses and goes supernova" : ty == AnimationManager.NORMAL ? "The hole spits your drop out" : "The hole swallows everything";
+            case 2 -> "Your drop appears"; case 3 -> ty == AnimationManager.RNG ? "The pulsar sweeping behind your drop" : "The glow after it"; default -> "It all fades away"; };
+    }
 
     private void soundsPage(FancyConfig c) {
         if (searching || landing()) { soundsLanding(c); return; }
@@ -2732,6 +2745,7 @@ public class FancyScreen extends Screen {
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
         if (gr == null) { groupTiles(cat, "Open one to edit its sounds."); return; }
+        if (!gr.id().equals("slayer")) { wipPanel(gr.icon(), gr.name() + " sounds", "Being remade for Stardrops along with its animation."); return; }
         soundEditor(cat, gr, c);
     }
 
@@ -2768,7 +2782,7 @@ public class FancyScreen extends Screen {
         List<String> choices = SoundFx.choices();
         for (int k = 0; k < SoundFx.SLOTS.length; k++) {
             final String slot = SoundFx.SLOTS[k]; final int slotIdx = k;
-            Row sr = row(1, SLOT_ICON[k], SLOT_NAMES[k], SLOT_SUBS[k], SLOT_COL[k]);
+            Row sr = row(1, SLOT_ICON[k], slotName(scene, k), slotSub(scene, k), SLOT_COL[k]);
             sr.ctls.add(new Btn("▶", GREEN, () -> { pulseAt[slotIdx] = System.currentTimeMillis(); SoundFx.Fx fx = SoundFx.byName(SoundFx.chosen(scene, slot)); if (fx != null) SoundFx.preview(fx); }));
             final String ddKey = "dd_" + scene + "_" + slot;
             Dd sdd = new Dd(() -> SoundFx.label(SoundFx.chosen(scene, slot)), ddKey, 128);

@@ -54,6 +54,17 @@ public final class SoundFx {
         reg("rng_reveal", "RNG: cosmic fanfare", SoundEvents.BEACON_ACTIVATE, 0.9f);
         reg("rng_glow", "RNG: deep space", SoundEvents.BEACON_AMBIENT, 0.5f);
         reg("rng_end", "RNG: warp out", SoundEvents.AMETHYST_BLOCK_CHIME, 0.65f);
+        // the Slayer black hole's own set (tools/make_slayer_sounds.py)
+        reg("sl_open", "Black hole: opens", SoundEvents.PORTAL_TRIGGER, 0.7f);
+        reg("sl_gulp", "Black hole: gulp", SoundEvents.AMETHYST_BLOCK_HIT, 0.85f);
+        reg("sl_collapse", "Black hole: collapse", SoundEvents.BEACON_DEACTIVATE, 0.8f);
+        reg("sl_spit", "Black hole: spit", SoundEvents.SHULKER_SHOOT, 0.85f);
+        reg("sl_nova", "Black hole: supernova", SoundEvents.GENERIC_EXPLODE.value(), 0.9f);
+        reg("sl_chime", "Black hole: drop chime", SoundEvents.AMETHYST_BLOCK_CHIME, 0.8f);
+        reg("sl_reveal", "Black hole: RNG reveal", SoundEvents.BEACON_ACTIVATE, 0.85f);
+        reg("sl_glow", "Black hole: afterglow", SoundEvents.BEACON_AMBIENT, 0.55f);
+        reg("sl_pulsar", "Black hole: pulsar", SoundEvents.BEACON_AMBIENT, 0.6f);
+        reg("sl_close", "Black hole: close", SoundEvents.AMETHYST_BLOCK_RESONATE, 0.6f);
         reg("sky_open", "Achievements: open", SoundEvents.AMETHYST_BLOCK_CHIME, 0.7f);              // the achievements sky
         reg("sky_close", "Achievements: close", SoundEvents.AMETHYST_BLOCK_HIT, 0.6f);
         reg("sky_zoom", "Achievements: fly", SoundEvents.PLAYER_ATTACK_SWEEP, 0.6f);
@@ -130,6 +141,10 @@ public final class SoundFx {
             d0.add(new String[]{g + ".normal", "std_beat", "std_burst", "std_reveal", "std_glow", "std_end"});
             d0.add(new String[]{g + ".rng", "rng_beat", "rng_burst", "rng_reveal", "rng_glow", "rng_end"});
         }
+        d0.removeIf(r -> r[0].startsWith("slayer."));                         // Slayer has its own black-hole set
+        d0.add(new String[]{"slayer.nodrops", "sl_gulp", "sl_collapse", NONE, NONE, "sl_close"});
+        d0.add(new String[]{"slayer.normal", "sl_gulp", "sl_spit", "sl_chime", "sl_glow", "sl_close"});
+        d0.add(new String[]{"slayer.rng", "sl_gulp", "sl_nova", "sl_reveal", "sl_pulsar", "sl_close"});
         String[][] d = d0.toArray(new String[0][]);
         for (String[] r : d) for (int i = 0; i < SLOTS.length; i++) DEFAULTS.put(r[0] + "." + SLOTS[i], r[i + 1]);
     }

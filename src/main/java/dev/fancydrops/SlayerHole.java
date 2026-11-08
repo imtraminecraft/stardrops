@@ -21,6 +21,16 @@ import static dev.fancydrops.Ritual.*;
 final class SlayerHole {
     private SlayerHole() {}
 
+    // the patch of deep space behind the scene, in canvas units: Ritual draws it as soft GPU glows before the pixel scene
+    static float BD_X, BD_Y, BD_SPAN, BD_A; static int BD_COL;
+    /** The backdrop on screen (u = gui pixels per canvas unit, ox/oy = the canvas origin on screen). */
+    static void backdrop(net.minecraft.client.gui.GuiGraphicsExtractor g, float u, float ox, float oy) {
+        if (BD_A < 0.02f) return;
+        float x = ox + BD_X * u, y = oy + BD_Y * u, sp = BD_SPAN * u;
+        NebulaTex.glow(g, x, y, sp * 1.6f, sp * 1.05f, Gfx.argb(Math.round(235 * BD_A), VOID));
+        NebulaTex.glow(g, x, y, sp * 1.05f, sp * 0.72f, Gfx.argb(Math.round(150 * BD_A), VOID));
+        NebulaTex.glow(g, x, y, sp * 0.95f, sp * 0.58f, Gfx.argb(Math.round(90 * BD_A), mixc(BD_COL, VOID, 0.7f)));
+    }
     static final String[] NAMES = {"Revenant Horror", "Tarantula Broodfather", "Sven Packmaster", "Voidgloom Seraph", "Inferno Demonlord", "Riftstalker Bloodfiend"};
     private static final int WHITE_ = 0xFFFFFF, VOID = 0x04030C;
 
@@ -67,8 +77,7 @@ final class SlayerHole {
         float stage = bg * sm(t / 0.35f) * (nod ? 1f - sm((p - 0.9f) / 0.4f) : 1f);
         // a patch of deep space round it all (it stays a patch: the rest of the screen is untouched)
         float span = 165 * sz * (1f - 0.85f * swallow);
-        glowE(icx, icy, span * 1.5f, span, VOID, 0.92f * stage); glowE(icx, icy, span, span * 0.7f, VOID, 0.55f * stage);
-        glowE(icx, icy, span * 0.9f, span * 0.55f, mixc(energy, VOID, 0.75f), 0.4f * stage);
+        BD_X = icx; BD_Y = icy; BD_SPAN = span; BD_A = stage; BD_COL = energy;                         // the big soft patch is drawn on the GPU (backdrop), not pixel by pixel here
         lensedStars(t, icx, icy, rh * holeK + 0.01f, span, stage, swallow, energy);
         if (holeK > 0.01f) {
             float r = rh * holeK;

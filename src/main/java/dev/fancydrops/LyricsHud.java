@@ -321,7 +321,7 @@ final class LyricsHud {
         // 1. the jump in: streaks rushing toward the point, then gone
         if (u < 0.75f) {
             float q = u / 0.75f;
-            for (int i = 0; i < 48; i++) {
+            for (int i = 0; i < 32; i++) {
                 double an = Math.PI * 2 * hash(seed + i * 7); float d0 = (0.25f + 0.75f * hash(seed + i * 13)) * W * 0.6f;
                 float d = d0 * (1f - q) * (1f - q), len = 6 + 40 * q * (0.5f + hash(i));
                 float x0 = cx + (float) Math.cos(an) * d, y0 = cy + (float) Math.sin(an) * d * 0.6f, x1 = cx + (float) Math.cos(an) * (d + len), y1 = cy + (float) Math.sin(an) * (d + len) * 0.6f;
@@ -348,34 +348,35 @@ final class LyricsHud {
         NebulaTex.glow(g, cx, cy + 4 * k, (tot / 2f + cs + 40) * open, 26 * k, Gfx.argb(Math.round(200 * fade), 0x05061A));
         NebulaTex.glow(g, cx, cy + 4 * k, (tot / 2f + cs) * 0.8f * open, 14 * k, Gfx.argb(Math.round(120 * fade), 0x05061A));
         float lineW = (tot / 2f + cs * 0.6f) * open;
-        g.fill(Math.round(cx - lineW + oe * W), Math.round(cy + 9 * k), Math.round(cx + lineW + oe * W * 1.3f), Math.round(cy + 9 * k) + 1, Gfx.argb(Math.round(200 * fade), acc));
+        Gfx.push(g); Gfx.translate(g, cx - lineW + oe * W, cy + 9 * k); Gfx.scale(g, Math.max(0.01f, 2 * lineW + oe * W * 0.3f), 1f); g.fill(0, 0, 1, 1, Gfx.argb(Math.round(200 * fade), acc)); Gfx.pop(g);
         NebulaTex.glow(g, cx + oe * W, cy + 9 * k, lineW, 3, Gfx.argb(Math.round(120 * fade), acc));
         // the cover: drops in, a glowing frame round it
         float cd = ease(Math.min(1f, t0 / 0.45f)), cxo = oe * W * 1.1f;
         if (cd > 0.01f) {
-            int cxp = Math.round(coverX + cxo), cyp = Math.round(cy - cs / 2f + 2 - (1f - cd) * 14);
+            float cxp = coverX + cxo, cyp = cy - cs / 2f + 2 - (1f - cd) * 14; int ci = Math.round(cs);       // sub-pixel: it glides, it doesn't step
             NebulaTex.glow(g, cxp + cs / 2f, cyp + cs / 2f, cs, cs, Gfx.argb(Math.round(110 * fade * cd), acc));
-            NowPlayingHud.cover(g, f, cxp, cyp, Math.round(cs), Math.round(255 * fade * cd), AlbumArt.ready, acc);
+            Gfx.push(g); Gfx.translate(g, cxp, cyp);
+            NowPlayingHud.cover(g, f, 0, 0, ci, Math.round(255 * fade * cd), AlbumArt.ready, acc);
             int fr = Gfx.argb(Math.round(220 * fade * cd), lite);
-            g.fill(cxp - 1, cyp - 1, cxp + Math.round(cs) + 1, cyp, fr); g.fill(cxp - 1, cyp + Math.round(cs), cxp + Math.round(cs) + 1, cyp + Math.round(cs) + 1, fr);
-            g.fill(cxp - 1, cyp, cxp, cyp + Math.round(cs), fr); g.fill(cxp + Math.round(cs), cyp, cxp + Math.round(cs) + 1, cyp + Math.round(cs), fr);
+            g.fill(-1, -1, ci + 1, 0, fr); g.fill(-1, ci, ci + 1, ci + 1, fr); g.fill(-1, 0, 0, ci, fr); g.fill(ci, 0, ci + 1, ci, fr);
+            Gfx.pop(g);
         }
         // "NOW PLAYING", spaced, sliding in
         float lab = ease(Math.min(1f, t0 / 0.4f));
         { float lk = 0.8f * size, lx0 = cx - tot / 2f + (1f - lab) * 12 + oe * W * 0.9f;                       // "Now playing", small, over the title's first letter
           Gfx.push(g); Gfx.translate(g, lx0, ty - 11 * size); Gfx.scale(g, lk); Gfx.txt(g, f, "Now playing", 0, 0, Gfx.argb(Math.round(210 * fade * lab), lite), true); Gfx.pop(g); }
         // the title, letter by letter: scrambled glyphs that settle into the real letters, left to right
-        float x = cx - tot / 2f; long tick = (long) (u * 28);
+        float x = cx - tot / 2f; long tick = (long) (u * 16);
         for (int i = 0; i < n; i++) {
             char ch = name.charAt(i); float li = t0 - 0.08f - i * 0.035f;                                   // this letter's own clock
             if (li > 0f) {
                 boolean real = li > 0.32f || ch == ' ';
                 String s = real ? String.valueOf(ch) : String.valueOf(GLYPHS.charAt(Math.floorMod((int) (hash((int) (tick * 31 + i * 17 + seed)) * 1000), GLYPHS.length())));
-                float drop = (1f - ease(Math.min(1f, li / 0.3f))) * -6 * size, la = Math.min(1f, li / 0.12f);
+                float e1 = ease(Math.min(1f, li / 0.38f)), drop = (1f - e1) * -6 * size, la = Math.min(1f, li / 0.18f), ls = 1f + 0.25f * (1f - e1);   // each letter drifts down and settles to size
                 float ox = oe * W * (0.7f + i * 0.04f);                                                          // leaving: each letter shoots off a little after the last
                 int col = real ? Gfx.argb(Math.round(255 * fade * la), 0xFFFFFF) : Gfx.argb(Math.round(220 * fade * la), lite);
                 if (out > 0f) streak(g, x + ox - out * 70 * size, ty + 4 * k, x + ox, ty + 4 * k, Gfx.argb(Math.round(180 * fade), lite));
-                Gfx.push(g); Gfx.translate(g, x + ox, ty + drop); Gfx.scale(g, k); Gfx.txt(g, f, s, 0, 0, col, true); Gfx.pop(g);
+                Gfx.push(g); Gfx.translate(g, x + ox + cw[i] / 2f, ty + drop + 4 * k); Gfx.scale(g, k * ls); Gfx.translate(g, -cw[i] / k / 2f, -4); Gfx.txt(g, f, s, 0, 0, col, true); Gfx.pop(g);
                 if (real && li < 0.45f) NebulaTex.glow(g, x + cw[i] / 2f + ox, ty + 4 * k, 6 * size, 6 * size, Gfx.argb(Math.round(160 * (1f - (li - 0.32f) / 0.13f) * fade), lite));   // a spark as it locks in
             }
             x += cw[i] + gap;

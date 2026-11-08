@@ -170,7 +170,8 @@ public final class AnimationManager {
     private static void cues(String scene, float hold, float prev, float t) {
         boolean big = scene.endsWith("rng"), nod = scene.endsWith("nodrops");
         float[][] tm = cueTimes(scene, hold);
-        for (int k = 0; k < tm[0].length; k++) if (prev < tm[0][k] && t >= tm[0][k]) SoundFx.playSlot(scene, "chop", 0.9f + 0.12f * k, big);
+        if (isSlayer(scene) && prev < 0.1f && t >= 0.1f && FancyConfig.get().customSounds) SoundFx.play(SoundFx.byName("sl_open"), 1f, 1f);   // the black hole opening
+        for (int k = 0; k < tm[0].length; k++) if (prev < tm[0][k] && t >= tm[0][k]) SoundFx.playSlot(scene, "chop", isSlayer(scene) ? 1.0f - 0.08f * k : 0.9f + 0.12f * k, big);
         if (prev < tm[1][0] && t >= tm[1][0]) SoundFx.playSlot(scene, "split", nod ? 0.8f : 1f, big);
         if (tm[2].length > 0 && prev < tm[2][0] && t >= tm[2][0]) SoundFx.playSlot(scene, "reveal", 1f, big);
         if (prev < tm[3][0] && t >= tm[3][0]) SoundFx.playSlot(scene, "linger", nod ? 0.85f : 1f, big);
