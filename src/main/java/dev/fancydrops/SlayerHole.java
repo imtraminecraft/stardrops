@@ -32,7 +32,7 @@ final class SlayerHole {
         NebulaTex.glow(g, x, y, sp * 0.95f, sp * 0.58f, Gfx.argb(Math.round(90 * BD_A), mixc(BD_COL, VOID, 0.7f)));
     }
     /** The heartbeat the soundtrack plays under the pull (1.2 s, gaps 0.62 s shrinking by 0.78 each, at least 0.17): 0..1, a quick swell on each beat. */
-    private static float beat(float t) {
+    static float beat(float t) {
         float tk = 1.2f, gap = 0.62f, b = 0f;
         while (tk < 3.35f) { float u = (t - tk) / 0.28f; if (u > 0 && u < 1) b = Math.max(b, (float) Math.sin(Math.PI * u) * (0.55f + 0.45f * (tk - 1.2f) / 2.2f)); tk += gap; gap = Math.max(0.17f, gap * 0.78f); }
         return b;

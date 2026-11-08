@@ -95,7 +95,7 @@ final class Codex {
         if (k > 0) try { FancyConfig.save(); } catch (Throwable ignored) { }
     }
 
-    private static void sound(String name, float pitch, float gain) { try { SoundFx.Fx fx = SoundFx.byName(name); if (fx == null) fx = SoundFx.byName("std_beat"); if (fx != null) SoundFx.play(fx, pitch, gain); } catch (Throwable ignored) { } }
+    private static void sound(String name, float pitch, float gain) { try { SoundFx.Fx fx = SoundFx.byName(name); if (fx == null) fx = SoundFx.byName("sky_star"); if (fx != null) SoundFx.play(fx, pitch, gain); } catch (Throwable ignored) { } }
     private static float cl(float v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
     private static float ease(float v) { v = cl(v); return v * v * v * (v * (v * 6 - 15) + 10); }
     private static int mix(int a, int b, float f) { return Canvas.mix(a, b, cl(f)); }
@@ -264,9 +264,9 @@ final class Codex {
             float u = 0.12f + 0.13f * i, x = ax + (bx - ax) * u + nx * sh * 0.015f * (i % 2 == 0 ? 1 : -1), y = ay + (by - ay) * u + ny * sh * 0.015f * (i % 2 == 0 ? 1 : -1);
             NebulaTex.glow(g, x, y, sw * 0.05f, sh * 0.025f, argb(0.22f * alpha, 0x05060F));
         }
-        // star layers at three depths drifting slowly sideways (the far ones slowest): the sky has depth
+        // star layers at three depths (held still: one-pixel stars sliding a fraction of a pixel a frame read as flicker)
         for (int L = 0; L < 3; L++) {
-            long per = L == 0 ? 900_000L : L == 1 ? 520_000L : 300_000L; float sh0 = (now % per) / (float) per;
+            float sh0 = 0f;
             int n = L == 0 ? 60 : L == 1 ? 34 : 16;
             for (int i = 0; i < n; i++) {
                 float u = (rnd(i * 13 + L * 101) + sh0) % 1f, x = sx0 + sw * u, y = sy0 + sh * rnd(i * 7 + L * 211) * 0.92f;
@@ -655,6 +655,7 @@ final class Codex {
      *  atmosphere on the lit limb. light = the direction the light comes from (radians, 0 = from the right). ring: a tilted ring. */
     private static void planet(GuiGraphicsExtractor g, float cx, float cy, float r, int day, int night, int rim, float light, float bands, float a, boolean ring) {
         if (a < 0.02f || r < 1f) return;
+        cx = Math.round(cx); cy = Math.round(cy);                                      // a whole-pixel centre: a drifting sphere keeps its outline instead of shimmering
         float lx = (float) Math.cos(light), ly = (float) Math.sin(light);
         glow(cx + lx * r * 0.4f, cy + ly * r * 0.4f, r * 3.2f, day, 0.12f * a);
         if (ring) ringBand(g, cx, cy, r, rim, a, false);

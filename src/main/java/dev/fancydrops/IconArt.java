@@ -128,12 +128,21 @@ final class IconArt {
                 for (int i = 0; i < 3; i++) { float on = Math.max(0f, (float) Math.sin(f * TAU - i * 1.2f)); int x = 5 + i * 3; px(x, 8, mix(0xC8B4FF, 0xFFFFFF, on)); if (on > 0.6f) { pxa(x - 1, 8, 0xFFFFFF, on - 0.4f); pxa(x + 1, 8, 0xFFFFFF, on - 0.4f); pxa(x, 7, 0xFFFFFF, on - 0.4f); pxa(x, 9, 0xFFFFFF, on - 0.4f); } }
                 outline();
             }
-            case "settings" -> {                                                                                 // Settings: a cog cut from a ringed planet, turning slowly
-                float rot = f * TAU / 8f;
-                for (int i = 0; i < 8; i++) { float an = rot + i * TAU / 8f; ball(8 + (float) Math.cos(an) * 5.6f, 8 + (float) Math.sin(an) * 5.6f, 1.5f, 0x7672AE); }
-                ball(8, 8, 5.2f, 0x9B7BFF); ball(7.4f, 7.4f, 4.2f, 0xB8A0FF); ball(8, 8, 2.2f, 0x1A1848);
-                for (int x = 1; x < 16; x++) { int y = Math.round(8 + (x - 8) * -0.35f); if (x < 5 || x > 11) pxa(x, y, 0xFF7AD9, 0.9f); }   // its ring
-                px(6, 5, 0xFFFFFF);
+            case "settings" -> {                                                                                 // Settings: a clean eight-tooth gear, turning slowly, a little star in its hub
+                float rot = 0f;                                                                      // held still: a turning 16px gear only jitters
+                for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) {
+                    int hit = 0; float lit = 0;
+                    for (int sy = 0; sy < 4; sy++) for (int sx = 0; sx < 4; sx++) {
+                        float dx = x + (sx + 0.5f) / 4f - 8f, dy = y + (sy + 0.5f) / 4f - 8f, r = (float) Math.sqrt(dx * dx + dy * dy);
+                        float an = (float) Math.atan2(dy, dx) - rot, ph = ((an / TAU * 8f) % 1f + 1f) % 1f;
+                        float tooth = Math.abs(ph - 0.5f) < 0.2f ? 7.3f : 5.4f;
+                        if (r < tooth && r > 2.3f) { hit++; lit += (-dx - dy) / 11f; }
+                    }
+                    if (hit == 0) continue;
+                    float l = lit / hit; int col = mix(0x8A90B8, l > 0 ? 0xE6E8FF : 0x4A4E7A, Math.min(1f, Math.abs(l) * 1.4f));
+                    pxa(x, y, col, hit / 16f);
+                }
+                glint(8, 8, 1, 0xFFE38A, 0.55f + 0.45f * t);
                 outline();
             }
             case "collection" -> {                                                                                 // the Collection: a star atlas, the cover lifting, light and a constellation spilling out

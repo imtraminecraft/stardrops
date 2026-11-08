@@ -43,17 +43,6 @@ public final class SoundFx {
 
     static {
         // Stardrops space pack (tools/make_space_sounds.py; was tools/make_scene_sounds.py): every Normal and No Drops scene shares one soft, short set; only RNG gets the big cinematic set
-        reg("std_beat", "Laser zap", SoundEvents.AMETHYST_BLOCK_HIT, 0.7f);
-        reg("std_burst", "Plasma pop", SoundEvents.AMETHYST_BLOCK_BREAK, 0.75f);
-        reg("std_reveal", "Star chime", SoundEvents.AMETHYST_BLOCK_CHIME, 0.75f);
-        reg("std_glow", "Space hum", SoundEvents.AMETHYST_BLOCK_RESONATE, 0.4f);
-        reg("std_end", "Warp away", SoundEvents.AMETHYST_BLOCK_CHIME, 0.55f);
-        reg("std_fizzle", "Power down", SoundEvents.AMETHYST_BLOCK_RESONATE, 0.6f);
-        reg("rng_beat", "RNG: heavy laser", SoundEvents.AMETHYST_BLOCK_HIT, 0.85f);
-        reg("rng_burst", "RNG: supernova", SoundEvents.AMETHYST_BLOCK_BREAK, 0.9f);
-        reg("rng_reveal", "RNG: cosmic fanfare", SoundEvents.BEACON_ACTIVATE, 0.9f);
-        reg("rng_glow", "RNG: deep space", SoundEvents.BEACON_AMBIENT, 0.5f);
-        reg("rng_end", "RNG: warp out", SoundEvents.AMETHYST_BLOCK_CHIME, 0.65f);
         // Slayer: one soundtrack per animation, scored to it (tools/make_slayer_score.py)
         reg("slr_nothing", "Black hole: nothing dropped", SoundEvents.BEACON_DEACTIVATE, 0.85f);
         reg("slr_drop", "Black hole: a drop", SoundEvents.BEACON_ACTIVATE, 0.85f);
@@ -130,9 +119,9 @@ public final class SoundFx {
         String[] grp = {"myth", "treasure", "slayer", "crops", "feast", "bounty", "pests", "exp", "fish_water", "fish_lava", "fish_spooky", "fish_winter", "fish_treasure", "crimson", "dragon", "mobs", "nucleus", "corpse", "fiesta", "dyes"};
         java.util.List<String[]> d0 = new java.util.ArrayList<>();               // one quiet set for every Normal and No Drops scene, the cinematic set for RNG
         for (String g : grp) {
-            if (g.equals("myth") || g.equals("treasure") || g.equals("slayer")) d0.add(new String[]{g + ".nodrops", "std_beat", "std_fizzle", NONE, NONE, NONE});
-            d0.add(new String[]{g + ".normal", "std_beat", "std_burst", "std_reveal", "std_glow", "std_end"});
-            d0.add(new String[]{g + ".rng", "rng_beat", "rng_burst", "rng_reveal", "rng_glow", "rng_end"});
+            if (g.equals("myth") || g.equals("treasure")) d0.add(new String[]{g + ".nodrops", NONE, NONE, NONE, NONE, NONE});     // being remade: their new sounds come with their new animations
+            d0.add(new String[]{g + ".normal", NONE, NONE, NONE, NONE, NONE});
+            d0.add(new String[]{g + ".rng", NONE, NONE, NONE, NONE, NONE});
         }
         d0.removeIf(r -> r[0].startsWith("slayer."));                         // Slayer has its own black-hole set
         d0.add(new String[]{"slayer.nodrops", NONE, "slr_nothing", NONE, NONE, NONE});            // its soundtrack sits in the one slot it uses
@@ -154,7 +143,7 @@ public final class SoundFx {
     public static Iterable<String> names() { return ALL.keySet(); }
     public static Fx byName(String n) { return n == null ? null : ALL.get(n.toLowerCase(Locale.ROOT)); }
     /** The little fanfare of an unlocked achievement. */
-    public static void achievement() { Fx f = byName("std_reveal"); if (f == null) f = byName("mc_chime"); if (f != null) play(f, 1.2f, 0.8f); }
+    public static void achievement() { Fx f = byName("sky_star"); if (f == null) f = byName("mc_chime"); if (f != null) play(f, 1.2f, 0.8f); }
 
     /** Every choice for a slot, "none" first: the mod's own sounds, or Minecraft's while Custom sounds is off. */
     public static List<String> choices() {

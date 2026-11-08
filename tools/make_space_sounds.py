@@ -25,49 +25,8 @@ def twinkles(d, n=10, lo=2600, hi=7000, gain=.16):
     return b
 def warp(d, f0, f1, gain=.6): t = T(d); return sweep_noise(d, f0, f1, .25) * np.sin(np.pi * np.clip(t / d, 0, 1)) ** 1.3 * gain
 
-# ---- the soft set (Normal and No Drops)
-S('std_beat', add(zap(1800, 260, .16, 'saw', 4500) * .7, blip(2400, .04) * .25), .3)
-def std_burst():
-    b = mix(1.0); at(b, impact(140, 45, .7, .6, .6) * .7, 0); at(b, hp(noise(.25), 1500) * dec(T(.25), 14) * .35, 0)
-    at(b, fm(N(88), .8, ratio=1.5, index=2, k=4) * .25, .02); return b
-S('std_burst', std_burst(), .3)
-def std_reveal():
-    b = mix(1.6)
-    for i, m in enumerate([76, 83, 88]): at(b, fm(N(m), 1.0, ratio=3.01, index=1.2, k=3.2) * (.45 - .08 * i), i * .07)
-    return echo(b, .16, .4, 3)
-S('std_reveal', std_reveal(), .35)
-S('std_glow', add(drone(N(52), 1.8, .3), twinkles(1.8, 6, gain=.1)), .3)
-def std_end(): b = mix(1.0); at(b, warp(.8, 2600, 260, .55), 0); at(b, zap(900, 180, .3, 'tri') * .3, .15); return b
-S('std_end', std_end(), .25)
-def std_fizzle():
-    d = 1.1; t = T(d); x = lp(osc(420, d, 'saw', glide=50), 900) * dec(t, 2.2) * .5
-    b = mix(d); at(b, x, 0); at(b, crackle(.8, 40, .25), .1); return b
-S('std_fizzle', std_fizzle(), .25)
 
-# ---- the RNG set: big, cinematic
-def rng_beat():
-    b = mix(.9); at(b, zap(2600, 120, .35, 'saw', 6000) * .7, 0); at(b, thump(90, 40, .5, 7) * .8, 0); at(b, riser(.25, 800, 5000) * .25, 0); return b
-S('rng_beat', rng_beat(), .3)
-def rng_burst():
-    b = mix(2.6)
-    at(b, riser(.35, 300, 6000) * .5, 0)                                                # the charge
-    at(b, impact(70, 22, 2.0, 1.0, 1.4) * 1.0, .32)                                     # the supernova
-    at(b, lp(noise(1.6), 1800) * dec(T(1.6), 2.4) * .45, .32)
-    at(b, fm(N(64), 1.8, ratio=1.41, index=3, k=1.8) * .25, .34)                        # a metallic ring through it
-    at(b, twinkles(1.6, 14, gain=.12), .5); return b
-S('rng_burst', rng_burst(), .35)
-def rng_reveal():
-    b = mix(3.0)
-    at(b, supersaw([60, 67, 71, 74, 79], 2.6, det=.014, cut=3000, a=.05) * .55, 0)       # a cosmic chord (C maj9)
-    at(b, choir([72, 76, 79], 2.4, .2) * .35, .05)
-    for i, m in enumerate([79, 83, 86, 91, 95, 98]): at(b, glock(N(m), 1.2) * (.3 - .03 * i), .12 + i * .07)
-    at(b, twinkles(2.6, 16, gain=.12), .2); return b
-S('rng_reveal', rng_reveal(), .4)
-S('rng_glow', add(drone(N(43), 3.0, .35) * 1.3, twinkles(3.0, 12, gain=.1)), .35)
-def rng_end():
-    b = mix(2.0); at(b, riser(.4, 500, 6000) * .4, 0); at(b, warp(1.2, 5000, 180, .7), .35)
-    at(b, fm(N(79), 1.4, ratio=2.01, index=.8, k=2.5) * .25, .4); at(b, fm(N(72), 1.4, ratio=2.01, index=.8, k=2.5) * .2, .5); return b
-S('rng_end', rng_end(), .35)
+# (the std_* / rng_* sets were removed in 0.9.0: every animation and its sounds are being remade, Slayer first: tools/make_slayer_score.py)
 
 # ---- the achievements sky
 def sky_open():

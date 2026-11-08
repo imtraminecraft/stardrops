@@ -1522,58 +1522,6 @@ public class FancyScreen extends Screen {
         if (updCheck != null && mx >= updCheck[0] && mx < updCheck[0] + updCheck[2] && my >= updCheck[1] && my < updCheck[1] + updCheck[3]) { if (!UpdateCheck.busy()) UpdateCheck.check(true); return true; }
         return false;
     }
-    /** The "Coming Soon" board: it hangs on two chains from the top tape, its bulbs chase round the frame and one letter flickers while a builder hammers on top and another welds from a plank underneath. */
-    /** The page's own icon and name on a small sign hanging from the top tape at the right, like the Coming Soon board. */
-    private void nameBoard(GuiGraphicsExtractor g, Row r, float sec) {
-        String t = r.title == null ? "" : r.title.replaceAll(" (drops|animations|sounds|messages)$", ""); int tw = Gfx.w(font, t), bw = tw + 46, bh = 26;
-        int sway = Math.round((float) Math.sin(sec * 1.7f) * 1.2f);
-        int bx = r.x + r.w - bw - 22 + sway, by = r.y + 40;
-        for (int cx : new int[]{bx + 8, bx + bw - 9}) { g.fill(cx, r.y + 9, cx + 1, by, 0xFF8A8A92); for (int y = r.y + 11; y < by; y += 4) g.fill(cx - 1, y, cx + 2, y + 1, 0xFF6A6A72); }
-        g.fill(bx - 1, by - 1, bx + bw + 1, by + bh + 1, 0xFF0A0805); g.fill(bx, by, bx + bw, by + bh, 0xFF1A1508); g.fill(bx + 2, by + 2, bx + bw - 2, by + bh - 2, 0xFF120E06);
-        rout(g, bx, by, bw, bh, 0xFFC9A044); rout(g, bx + 2, by + 2, bw - 4, bh - 4, 0xFF8A6A28);
-        for (int[] rv : new int[][]{{1, 1}, {bw - 2, 1}, {1, bh - 2}, {bw - 2, bh - 2}}) g.fill(bx + rv[0], by + rv[1], bx + rv[0] + 1, by + rv[1] + 1, 0xFFFFE9A8);
-        if (r.iconId != null) ItemIcons.draw(g, r.iconId, r.icon, bx + 17, by + bh / 2, 0.9f);
-        else if (Icons.has(r.icon)) Icons.draw(g, r.icon, bx + 7, by + (bh - 16) / 2, System.currentTimeMillis());
-        Gfx.text(g, font, t, bx + 30, by + (bh - 8) / 2, 0xFFFFD678);
-    }
-
-    private void comingSoon(GuiGraphicsExtractor g, Row r, int mid, float sec) {
-        String wt = "Coming Soon", tm = "TM"; int tmw = Math.round(Gfx.w(font, tm) * 0.6f) + 1, wtw = Gfx.w(font, wt) + tmw, pw = wtw + 34, ph = 22, hx = mid - pw / 2, hy = r.y + 64;
-        float gl = 0.75f + 0.25f * (float) Math.sin(sec * 3f);
-        for (int cx : new int[]{hx + 8, hx + pw - 9}) { g.fill(cx, r.y + 9, cx + 1, hy, 0xFF8A8A92); for (int y = r.y + 11; y < hy; y += 4) g.fill(cx - 1, y, cx + 2, y + 1, 0xFF6A6A72); }
-        // the board: a dark plate in a double gold frame with rivets
-        g.fill(hx - 1, hy - 1, hx + pw + 1, hy + ph + 1, 0xFF0A0805); g.fill(hx, hy, hx + pw, hy + ph, 0xFF1A1508); g.fill(hx + 2, hy + 2, hx + pw - 2, hy + ph - 2, 0xFF120E06);
-        int fc = Gfx.argb(Math.round(255 * (0.55f + 0.35f * gl)), 0xFFC857); rout(g, hx, hy, pw, ph, fc); rout(g, hx + 2, hy + 2, pw - 4, ph - 4, fc);
-        for (int[] rv : new int[][]{{1, 1}, {pw - 2, 1}, {1, ph - 2}, {pw - 2, ph - 2}}) g.fill(hx + rv[0], hy + rv[1], hx + rv[0] + 1, hy + rv[1] + 1, 0xFFFFE9A8);
-        int k = 0;                                                                                       // marquee bulbs: a bright pair runs round the frame
-        java.util.List<int[]> per = new java.util.ArrayList<>();
-        for (int x = hx + 4; x < hx + pw - 3; x += 5) per.add(new int[]{x, hy - 2});
-        for (int y = hy + 3; y < hy + ph - 1; y += 5) per.add(new int[]{hx + pw + 1, y});
-        for (int x = hx + pw - 4; x > hx + 3; x -= 5) per.add(new int[]{x, hy + ph + 1});
-        for (int y = hy + ph - 3; y > hy + 1; y -= 5) per.add(new int[]{hx - 2, y});
-        for (int[] b : per) { float q = ((k++ - sec * 14f) % 7f + 7f) % 7f; boolean on = q < 2.2f; if (on) g.fill(b[0] - 1, b[1] - 1, b[0] + 3, b[1] + 3, 0x2EFFDC78); g.fill(b[0], b[1], b[0] + 2, b[1] + 2, on ? 0xFFFFF2B8 : 0xFF6A5420); }
-        // the words: a soft glow behind, a flicker on one letter, a shine sweeping across
-        int tx = hx + (pw - wtw) / 2, ty = hy + (ph - 8) / 2, tc = Gfx.argb(Math.round(255 * (0.88f + 0.12f * gl)), 0xFFD678), gc = Gfx.argb(Math.round(40 * gl), 0xFFBE46);
-        for (int[] o : new int[][]{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}) Gfx.text(g, font, wt, tx + o[0], ty + o[1], gc);
-        Gfx.text(g, font, wt, tx, ty, tc);
-        Gfx.push(g); Gfx.translate(g, tx + Gfx.w(font, wt) + 1, ty - 1); Gfx.scale(g, 0.6f); Gfx.text(g, font, tm, 0, 0, tc); Gfx.pop(g);
-        g.enableScissor(hx + 3, hy + 3, hx + pw - 3, hy + ph - 3);
-        int sh = Math.round((sec * 40f) % 160f - 30f); for (int row = 0; row < ph - 6; row++) g.fill(hx + sh - row / 2, hy + 3 + row, hx + sh - row / 2 + 6, hy + 4 + row, 0x38FFF0C8);
-        g.disableScissor();
-        // a builder on top hammers beside a tin of paint
-        Site.worker(g, hx + 14, hy - 1, 1, 0xF2B01A, 0xF06A1A, 0f, false, ((int) (sec * 9f)) % 2 == 0);
-        { boolean hm = ((int) (sec * 9f)) % 2 == 0; Site.R(g, hx + 18, hy - 1 - (hm ? 14 : 9), 1, 5, 0x7A5A30); Site.R(g, hx + 17, hy - 1 - (hm ? 16 : 11), 4, 2, 0x9A9AA2); }
-        int tn = hx + pw - 20; g.fill(tn, hy - 6, tn + 5, hy, 0xFF5A7A9A); g.fill(tn, hy - 6, tn + 5, hy - 5, 0xFF7A9ABA); g.fill(tn - 1, hy - 7, tn + 6, hy - 6, 0xFF3A5A7A);
-        // a welder on a plank hung under the board, torch up at the frame
-        int py = hy + ph + 16, wxp = mid - 4;
-        for (int cx : new int[]{hx + 14, hx + pw - 15}) { g.fill(cx, hy + ph + 1, cx + 1, py, 0xFF8A8A92); }
-        g.fill(hx + 8, py, hx + pw - 8, py + 2, 0xFF7A5A30);
-        Site.worker(g, wxp, py, 1, 0x888890, 0x707078, 0f, false, true);
-        if (Math.sin(sec * 10f) > -0.3) {
-            int fx = wxp + 8, fy = hy + ph + 3; g.fill(fx - 6, fy - 4, fx + 7, fy + 5, 0x28BEE1FF); g.fill(fx - 1, fy - 1, fx + 2, fy + 2, 0xFFFFFFFF);
-            for (int q = 0; q < 8; q++) { double an = ((int) (sec * 14f) + q * 5) * 1.3; int rr = 2 + (q * 3 + (int) (sec * 14f)) % 7; int sx2 = fx + (int) (Math.cos(an) * rr), sy2 = fy + 1 + (int) (Math.abs(Math.sin(an)) * rr); g.fill(sx2, sy2, sx2 + 1, sy2 + 1, q % 2 == 0 ? 0xFFFFE08A : 0xFFFFFFFF); }
-        }
-    }
 
     private void tabIcon(GuiGraphicsExtractor g, Tab t, int x, int y, long now, boolean lively) {
         switch (t) {
@@ -2282,7 +2230,7 @@ public class FancyScreen extends Screen {
         l = new ArrayList<>();
         switch (t) {
             case HOME -> l.add(new SubPage("Resources", ":res_heart:", 0xFFFF6B8A, false));
-            case DROPS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), c.wip())); }
+            case DROPS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // WIP tag = its animation is being remade; the page still opens
             case ANIMATIONS, SOUNDS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // being remade: only Mob Drops is open
             case CHAT -> { l.add(new SubPage("Message & Channel", ":format:", 0xFFFFC857, false)); l.add(new SubPage("Chat Enabled", ":bell:", 0xFF7BE05A, false)); }
             case VISUALS -> { l.add(new SubPage("Music", ":note:", 0xFF1ED760, false)); l.add(new SubPage("Cosmos", ":cosmos:", 0xFF9B7BFF, false)); }
@@ -2559,7 +2507,7 @@ public class FancyScreen extends Screen {
         if (cat.wip()) { wipPanel(cat.icon(), cat.name() + " drops", cat.blurb()); return; }
         // three levels: the category hub (Mythological Mobs / Treasure), a group page (the creatures), and one source page (a creature or the burrow)
         for (Categories.Group gr : cat.groups()) {
-            srcList.add(new String[]{gr.id(), gr.name(), gr.icon(), String.valueOf(gr.color())}); if (gr.wip()) srcWip.add(gr.id());
+            srcList.add(new String[]{gr.id(), gr.name(), gr.icon(), String.valueOf(gr.color())}); if (gr.wip() || !gr.id().equals("slayer")) srcWip.add(gr.id());
             boolean inGrp = dropSrc != null && (dropSrc.equals(gr.id()) || dropSrc.startsWith(gr.id() + "/"));          // a group's creatures show only once you are inside that group
             if (Categories.hasSubs(gr) && inGrp) for (DropData.Source s : cat.sources(gr.id())) srcList.add(new String[]{gr.id() + "/" + s.id, srcName(s), srcIcon(s), String.valueOf(s.color()), "sub"});          // the creatures sit under Mythological Mobs
         }
@@ -2589,6 +2537,13 @@ public class FancyScreen extends Screen {
             lb[i] = g.name(); sb[i] = g.wip() ? "Soon\u2122" : t + " drops"; co[i] = g.color(); ic[i] = g.icon(); wp[i] = g.wip();
         }
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
+        boolean anyLive = false; for (Categories.Group g : cat.groups()) anyLive |= g.id().equals("slayer");
+        if (!anyLive) animWip(cat.name());
+    }
+    /** Under a drop page whose animation is being remade: the station at work. Drops still pick their animation and chat alert now; the picks carry over. */
+    private void animWip(String name) {
+        rows.add(section("Animation"));
+        Row w = row(0, ":wip:", name, "New animation in the works. Your picks carry over.", Ui.DIM); w.kind = PANEL; w.h = 170; w.noSearch = true; rows.add(w);
     }
 
     /** Mythological Mobs: the pet that decides who can spawn, then the creatures. */
@@ -2603,6 +2558,7 @@ public class FancyScreen extends Screen {
         int n = srcs.size(); String[] lb = new String[n], sb = new String[n], mi = new String[n]; int[] co = new int[n];
         for (int i = 0; i < n; i++) { lb[i] = srcName(srcs.get(i)); sb[i] = srcs.get(i).drops.size() + " drops"; co[i] = grp.id().equals("myth") ? PET_COL[Math.max(0, Math.min(5, srcs.get(i).minPet))] : srcs.get(i).color(); mi[i] = srcIcon(srcs.get(i)); }
         rows.add(picker("", "", lb, sb, mi, co, null, 3, () -> -1, i -> openPage(curSub(), grp.id() + "/" + srcs.get(i).id, lb[i])));
+        if (!grp.id().equals("slayer")) animWip(grp.name());
     }
 
     private void dropsSource(Categories.Cat cat, Categories.Group grp, DropData.Source s, FancyConfig c, boolean single) {
@@ -2618,6 +2574,7 @@ public class FancyScreen extends Screen {
         rows.add(mr);
         for (DropData.Drop d : s.drops) rows.add(dropRow(s, d, c));
         if (s == TreasureData.SOURCE) rows.add(note("The chance is per burrow you dig. Creature burrows are the other 75%.", Ui.DIM));
+        if (!grp.id().equals("slayer")) animWip(nm);
     }
 
     /** One drop: its animation, a Preview button and its chat alert. */
@@ -2643,7 +2600,7 @@ public class FancyScreen extends Screen {
         if (searching || landing()) { animationsLanding(c); return; }
         Categories.Cat cat = curCat();
         if (locked(cat)) { wipPanel(cat.icon(), cat.name() + " animations", cat.blurb()); return; }
-        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip()) srcWip.add(gr0.id()); }
+        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip() || !gr0.id().equals("slayer")) srcWip.add(gr0.id()); }
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
         if (gr == null) { groupTiles(cat, "Open one to edit its animations."); return; }
@@ -2684,9 +2641,9 @@ public class FancyScreen extends Screen {
 
     /** The Animation Editor of one group: pick the type, then its length and size (and the bars and blur of RNG). */
     private static final String[] SLAYER_BLURB = {
-        "Nothing dropped: a black hole in the boss's colour pulls the boss apart pixel by pixel, then swallows the whole scene and winks out. (5.5 s)",
-        "A drop: the black hole eats the boss in three gulps, then fires its jets and spits your drop out of its heart. The words stay 3 s after. (6 s)",
-        "RNG: the black hole eats the boss, collapses and goes supernova. A pulsar sweeps its beams behind your drop; the bars close in and your HUD slides away until it ends. (7 s)"};
+        "Nothing dropped: a black hole in the boss's colour tears the boss apart pixel by pixel while the camera creeps in and jolts on every heartbeat, then dives into the hole as it swallows the scene. (5.5 s)",
+        "A drop: the camera drifts in as the boss is pulled apart, punches in on the last gulp, and the hole fires its jets and spits your drop out of its heart. The words stay 3 s after. (6 s)",
+        "RNG: the boss is eaten, the hole collapses and goes supernova; the camera is blown back and shakes while a pulsar sweeps behind your drop. The bars close in and your HUD slides away until it ends. (7 s)"};
     private void animationEditor(Categories.Cat cat, Categories.Group gr, FancyConfig c) {
         int ti = Math.max(0, Math.min(gr.types().size() - 1, edType));
         Categories.Type ty = gr.types().get(ti);
@@ -2734,7 +2691,7 @@ public class FancyScreen extends Screen {
         if (searching || landing()) { soundsLanding(c); return; }
         Categories.Cat cat = curCat();
         if (locked(cat)) { wipPanel(cat.icon(), cat.name() + " sounds", cat.blurb()); return; }
-        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip()) srcWip.add(gr0.id()); }
+        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip() || !gr0.id().equals("slayer")) srcWip.add(gr0.id()); }
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
         if (gr == null) { groupTiles(cat, "Open one to edit its sounds."); return; }
@@ -3222,7 +3179,6 @@ public class FancyScreen extends Screen {
     }
     private boolean dirty = true; private long lastSig, lastBuild;
     @Override public void extractRenderState(GuiGraphicsExtractor g, int mx0, int my0, float delta) {
-        AnimFrames.tick();                                                                      // the first time the menu opens, the animation frames are written to config/fancydrops/art/animations
         Gfx.uiFont = 0;                                             // the menu font setting is gone: one font
         if (codexPend != -2 && width > 0) { Codex.open(achBtn(), codexPend); codexPend = -2; }
         if (codexStar != null && width > 0) { Codex.openAt(achBtn(), codexStar); codexStar = null; }
@@ -3306,6 +3262,13 @@ public class FancyScreen extends Screen {
             }
         }
         Gfx.text(g, font, "v" + FancyDropsMod.VERSION + "  \u00B7  " + FancyDropsMod.CHANNEL, px + 40, py + 22, Ui.DIM);
+        if (Spotify.linked()) {                                                                 // linked to Spotify: a small green chip after the version, its dot breathing while music plays
+            String vs = "v" + FancyDropsMod.VERSION + "  \u00B7  " + FancyDropsMod.CHANNEL, sl = "Spotify Linked"; int lx = px + 40 + Gfx.w(font, vs) + 8, lw2 = Gfx.w(font, sl) + 16;
+            pill(g, lx, py + 20, lw2, 12, Canvas.mix(Ui.PANEL2, 0xFF1ED760, 0.16f)); rout(g, lx, py + 20, lw2, 12, 0x661ED760);
+            float br = Spotify.playing && !STILL ? 0.5f + 0.5f * (float) Math.sin(now / 260.0) : 1f;
+            g.fill(lx + 4, py + 24, lx + 8, py + 28, Gfx.argb(Math.round(140 + 115 * br), 0x1ED760));
+            Gfx.text(g, font, sl, lx + 11, py + 22, 0xFF8AF0B0);
+        }
         }
         if (!cosWin()) {
         if (!query.isBlank()) drawSearchSide(g, mx, my, now);
@@ -3453,9 +3416,7 @@ public class FancyScreen extends Screen {
                 int bob = r.kind == HERO && !STILL ? Math.round((float) Math.sin(sec * 2.6f) * 2.5f) : 0;       // a menu page's big icon floats up and down
                 int cyi = r.y + 32 + bob;
                 if (r.kind == HERO) { int shw = 10 - Math.abs(bob) * 2; g.fill(mid - shw, r.y + 49, mid + shw, r.y + 51, 0x30000000); }   // its shadow breathes with it
-                if (r.kind == PANEL) {
-                    tape(g, r.x + 3, r.y + 3, r.w - 6, STILL ? 0 : (int) ((nw / 60L) % 16)); tape(g, r.x + 3, r.y + r.h - 9, r.w - 6, STILL ? 0 : 16 - (int) ((nw / 60L) % 16));
-                } else for (int i = 0; i < 5; i++) {                                    // sparkles orbiting the icon
+                if (r.kind != PANEL) for (int i = 0; i < 5; i++) {                                    // sparkles orbiting the icon
                     double an = sec * 1.3 + i * Math.PI * 2 / 5; int sx2 = mid + (int) (Math.cos(an) * 30), sy2 = cyi + (int) (Math.sin(an) * 12);
                     int al = 120 + (int) (120 * Math.sin(sec * 5 + i)); g.fill(sx2, sy2, sx2 + 2, sy2 + 2, Gfx.argb(Math.max(0, Math.min(255, al)), i % 2 == 0 ? 0xFFC857 : 0x9DB2CC));
                 }
@@ -3470,9 +3431,8 @@ public class FancyScreen extends Screen {
                     Gfx.text(g, font, bp[0], bx + 7, by + 4, 0xFFFFC857); Gfx.text(g, font, bp[1], bx + 12 + nw0, by + 4, Ui.SUB);
                 }
                 if (r.kind == HERO) { int wy = r.y + 70; for (String ln : wrap(r.sub, cw - 60)) { Gfx.textCentered(g, font, ln, mid, wy, Ui.SUB); wy += 11; } continue; }          // the words under the title
-                SpaceSite.draw(g, r.x, r.y, r.w, r.h, sec);                              // a space station under construction
-                comingSoon(g, r, mid, sec);
-                nameBoard(g, r, sec);
+                SpaceSite.draw(g, font, r.x, r.y, r.w, r.h, STILL ? 6f : sec, r.title == null ? "" : r.title.replaceAll(" (drops|animations|sounds|messages)$", ""), r.sub);   // an orbital construction yard, the page's name as a hologram
+                tape(g, r.x + 3, r.y + 3, r.w - 6, STILL ? 0 : (int) ((nw / 60L) % 16)); tape(g, r.x + 3, r.y + r.h - 9, r.w - 6, STILL ? 0 : 16 - (int) ((nw / 60L) % 16));
                 continue;
             }
             if (r.kind == TEXT) {                                                   // plain text: a heading and its paragraph, no card

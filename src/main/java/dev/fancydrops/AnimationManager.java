@@ -77,6 +77,7 @@ public final class AnimationManager {
     public static void play(Anim a) {
         if (a == null) return;
         if (a.type == RNG) CosmosHud.meteor();                                   // Visuals > Cosmos: a meteor burns across the moment an RNG drop lands
+        if (!isSlayer(a.group)) { for (Item i : a.items()) DropListener.announceNow(i); return; }     // Stardrops: only Slayer has its new animation so far; the others send just their chat alert until theirs are done
         if (a.item != null) {
             Anim last = QUEUE.peekLast();
             if (last != null && canStack(last, a)) { stack(last, a, false); return; }
@@ -159,7 +160,6 @@ public final class AnimationManager {
     static float[][] cueTimes(String scene, float hold) {
         int ty = typeOfKey(scene); float S = sceneLen(scene, ty), O = opening(scene, ty), A = animLen(scene, ty); boolean tre = scene.startsWith("treasure"), nod = scene.endsWith("nodrops");
         float[] beats = tre ? new float[]{0.215f * O, 0.505f * O, 0.795f * O} : new float[]{0.34f * O, 0.58f * O, 0.80f * O};
-        if (scene.startsWith("exp.")) beats = BookScene.flipStarts(scene.endsWith("rng"), O);
         if (isSlayer(scene)) return new float[][]{new float[0], {0.02f}, new float[0], new float[0], new float[0]};   // Slayer: one soundtrack from the start
         return new float[][]{beats, {O}, nod ? new float[0] : new float[]{O + 0.25f}, {O + 1.0f}, {A - 0.5f + hold}};
     }
