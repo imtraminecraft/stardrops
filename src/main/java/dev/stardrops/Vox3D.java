@@ -46,6 +46,8 @@ final class Vox3D {
     static Matrix4f M = new Matrix4f(); static final ArrayDeque<Matrix4f> STACK = new ArrayDeque<>();
     static boolean mobMode; static int rimCol;
     static int pass; static boolean dyn;                         // pass 1: build the still scenery once; pass 2: only what moves (dyn)
+    static float fovNow = 30f;
+    static float shiftX, shiftY;                                 // the NDC shift that pins the drop's spot; the sky is drawn against it so it stays centred
     static float tint; static int tintCol;                      // a flash over everything drawn (hits: white / red)
     static final float FOV = 30f;
     static float dbgDist; static Vector3f dbgTarget;                 // bench close-ups only
@@ -212,13 +214,13 @@ final class Vox3D {
     }
     /** A view-space disc at depth d filling the window, soft at the edge; colour by height (top..bottom). */
     static void sky(Mesh m, float aspect, float d, int top, int mid, int low, float a) {
-        float hh = d * (float) Math.tan(Math.toRadians(FOV / 2)), hw = hh * aspect; int seg = 56, rings = 12;
+        float hh = d * (float) Math.tan(Math.toRadians(fovNow / 2)), hw = hh * aspect; int seg = 56, rings = 12;
         for (int r = 0; r < rings; r++) for (int k = 0; k < seg; k++) {
             float r0 = r / (float) rings, r1 = (r + 1) / (float) rings; double t0 = k * Math.PI * 2 / seg, t1 = (k + 1) * Math.PI * 2 / seg;
             float[][] pt = {{r0, (float) t0}, {r0, (float) t1}, {r1, (float) t1}, {r1, (float) t0}}; float[] xs = new float[8]; int[] cs = new int[4];
             for (int q = 0; q < 4; q++) {
-                float rr = pt[q][0], x = (float) Math.cos(pt[q][1]) * hw * rr, y = (float) Math.sin(pt[q][1]) * hh * rr, yy = y / hh;
-                float al = a * (1f - sm((rr - 0.6f) / 0.4f));
+                float rr = pt[q][0], x = (float) Math.cos(pt[q][1]) * hw * rr - shiftX * hw, y = (float) Math.sin(pt[q][1]) * hh * rr - shiftY * hh, yy = (y + shiftY * hh) / hh;
+                float al = a * (1f - sm((rr - 0.72f) / 0.27f));
                 int col = yy > 0 ? mixc(mid, top, yy) : mixc(mid, low, -yy);
                 xs[q * 2] = x; xs[q * 2 + 1] = y; cs[q] = argb(al, col);
             }
@@ -228,7 +230,7 @@ final class Vox3D {
 
     // ------------------------------------------------------------------ the frame
     static Frame build(float t, float A, int boss, int type, int energy, float aspect, float craterY, boolean z01) {
-        F = new Frame(); tint = 0f; M = new Matrix4f(); STACK.clear();
+        F = new Frame(); tint = 0f; M = new Matrix4f(); STACK.clear(); fovNow = FOV;
         float[] hits = SlayerScene.HITS[type]; float last = hits[hits.length - 1], O = AnimationManager.SL_PIVOT, p = t - O;
 
         // ---- the camera: a gentle push in, a lean before RNG's big one, a kick on every hit
@@ -247,7 +249,8 @@ final class Vox3D {
         right.set(view.m00(), view.m10(), view.m20()); up.set(view.m01(), view.m11(), view.m21());
         Matrix4f persp = new Matrix4f().setPerspective((float) Math.toRadians(FOV), aspect, 1000f, 0.05f, z01);         // reversed depth, like the game's
         Vector4f cr = new Matrix4f(persp).mul(view).transform(new Vector4f(FRONT.x, FRONT.y, FRONT.z, 1f));
-        Matrix4f proj = new Matrix4f().translation(-cr.x / cr.w, craterY - cr.y / cr.w, 0f).mul(persp);       // the crater sits under the item
+        shiftX = -cr.x / cr.w; shiftY = craterY - cr.y / cr.w;
+        Matrix4f proj = new Matrix4f().translation(shiftX, shiftY, 0f).mul(persp);       // the crater sits under the item
         projView = new Matrix4f(proj).mul(view); F.proj = proj; F.view = view;
 
         float dim = type == 2 ? sm((t - 2.95f) / 0.3f) * (1f - sm((t - last) / 0.25f)) : 0f;           // RNG: the sky holds its breath
@@ -280,8 +283,8 @@ final class Vox3D {
 
     /** A world point at a fixed place in the window: (sx, sy) in -1..1 of the window, d deep. */
     static Vector3f onSky(float sx, float sy, float d, float aspect) {
-        float hh = d * (float) Math.tan(Math.toRadians(FOV / 2)), hw = hh * aspect;
-        return new Matrix4f(F.view).invert().transformPosition(new Vector3f(sx * hw, sy * hh, -d));
+        float hh = d * (float) Math.tan(Math.toRadians(fovNow / 2)), hw = hh * aspect;
+        return new Matrix4f(F.view).invert().transformPosition(new Vector3f((sx - shiftX) * hw, (sy - shiftY) * hh, -d));
     }
     static void stars(float t, float dim, float aspect) {
         for (int i = 0; i < 90; i++) {

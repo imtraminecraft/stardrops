@@ -2682,9 +2682,9 @@ public class StardropsScreen extends Screen {
 
     /** The Animation Editor of one group: pick the type, then its length and size (and the bars and blur of RNG). */
     private static final String[] SLAYER_BLURB = {
-        "Nothing dropped: the boss climbs out of its spawn (the Revenant from its grave) and walks toward you, then one meteor strikes it and it crumbles to ash; \"Nothing dropped\" stays as long as any drop's words.",
-        "A drop: the boss rises and walks toward you, a barrage of meteors pounds it until the last one shatters it, and your drop rises out of the crater in a beam. The words stay after it for as long as Text Changes says.",
-        "RNG: the boss rises and walks toward you, and a meteor shower climbs through the rarity colours like a gacha roll. The sky holds its breath, the golden one lands, and your drop rises in a pillar of gold while the bars close in."};
+        "Nothing dropped: a little night scene for the slayer (the Revenant's grave, the Tarantula's cocoon, Sven's cairn, Voidgloom's portal, Inferno's magma core, Riftstalker's chained coffin). One strike, it opens, and there is only dust; \"Nothing dropped\" stays as long as any drop's words.",
+        "A drop: the tool strikes on every beat, the last strike breaks it open and your drop rises out in a beam of its colour. The words stay after it for as long as Text Changes says.",
+        "RNG: the strikes spark through the rarity colours like a gacha roll, the sky holds its breath, the last strike is gold, and your drop rises in a pillar of gold while the bars close in."};
     private void animationEditor(Categories.Cat cat, Categories.Group gr, StardropsConfig c) {
         int ti = Math.max(0, Math.min(gr.types().size() - 1, edType));
         Categories.Type ty = gr.types().get(ti);
@@ -2727,15 +2727,15 @@ public class StardropsScreen extends Screen {
     private static final String[] SLOT_SUBS = {"Every beat of the opening", "The moment the animation pivots", "The item appears", "The glow after it", "The animation fades out"};
     /** What each Slayer slot plays: the five moments of the meteor scene. */
     private static final Map<String, String[]> SL_SLOT = Map.ofEntries(
-        Map.entry("rise", new String[]{"Rise", "The boss climbs out of its spawn"}),
-        Map.entry("approach", new String[]{"Approach", "It walks toward you"}),
-        Map.entry("strike", new String[]{"Strike", "One meteor falls and hits"}),
-        Map.entry("dust", new String[]{"Dust", "The boss crumbles to ash"}),
+        Map.entry("rise", new String[]{"Arrive", "The tool comes into the scene"}),
+        Map.entry("approach", new String[]{"Wind up", "The tool rises for the first strike"}),
+        Map.entry("strike", new String[]{"Strike", "One strike"}),
+        Map.entry("dust", new String[]{"Dust", "It opens on nothing"}),
         Map.entry("none", new String[]{"Nothing", "Under \"Nothing dropped\""}),
-        Map.entry("barrage", new String[]{"Barrage", "Meteors rain down, the last one shatters it"}),
+        Map.entry("barrage", new String[]{"Strikes", "Strike after strike, the last one breaks it open"}),
         Map.entry("reveal", new String[]{"Reveal", "Your drop rises in a beam"}),
         Map.entry("close", new String[]{"Close", "The scene fades away"}),
-        Map.entry("shower", new String[]{"Shower", "A climbing meteor shower, a held breath, the big one"}),
+        Map.entry("shower", new String[]{"Gacha strikes", "Strikes climbing the rarities, a held breath, the gold one"}),
         Map.entry("jackpot", new String[]{"Jackpot", "Your drop appears in a golden pillar"}),
         Map.entry("glow", new String[]{"Glow", "The glow around your drop"}));
     private static String slotName(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_NAMES[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[0]; }

@@ -2,9 +2,8 @@
 
 ## 0.9.0
 - **Stardrops:** FancyDrops is now Stardrops, space themed from top to bottom. Your settings and saved data move over on first launch.
-- **Slayer in 3D:** the meteor scene is drawn with real Minecraft models, the real mob, a floating island of real blocks and deep space behind it (stars, nebulae, a ringed planet, distant islands, haze), in a soft-edged window that never covers the screen.
-- **Slayer meteors:** the boss climbs out of its spawn (the Revenant from its grave) and walks toward you on a floating island. Nothing dropped: one meteor strikes and it crumbles. A drop: a barrage of meteors shatters it and your drop rises in a beam. RNG: a meteor shower climbs through the rarity colours, the sky holds its breath, and a golden meteor brings a pillar of gold.
-- **Slayer sounds:** five moments per animation (rise, approach, the strikes, the reveal, after), three sounds to choose from for each. Picks from the old set move to the same take of the new one.
+- **Slayer cutscenes:** a little 3D night scene for each slayer, Butcher-style: a shovel digs the Revenant's grave until the coffin opens, a sword slashes the Tarantula's cocoon, a pickaxe breaks Sven's cairn, eyes of ender open Voidgloom's portal, a blaze rod cracks Inferno's magma core, a mallet breaks the chains on Riftstalker's coffin. Every strike lands on the beat; RNG strikes climb the rarity colours and end in gold.
+- **Slayer sounds:** five moments per animation (arrive, wind up, the strikes, the reveal, after), three sounds to choose from for each. Picks from the old set move to the same take of the new one.
 - **Text duration:** set how long the drop text stays (Animations > Text Changes > Layout).
 - **Other categories:** their new animations are in the works. Drops there send their chat alert, and the Drop Library shows a WIP panel.
 - **Menu:** space glass tiles, a Spotify Linked chip, new space icons, `/sd` and `/stardrops` commands, and `/sd edit` to move every HUD.
