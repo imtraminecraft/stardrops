@@ -1669,7 +1669,7 @@ public class FancyScreen extends Screen {
     private float eSpin, eGlow; private boolean eBob, eGlints; private float eItem, eHue, eSat, eVal = 1f, eAll, eTitle, eSub, eSubDelay;
     private int eBarOp, eTFont, eBarCurve, fxGrp; private boolean eBarSoft; private boolean eBarPil, eBarLine, eSpinRev, eBold, eOutl; private float eBobAmp;
     private boolean eShowOdds, eShowPrice, eShowSrc, eShowMf;
-    private Slider slBarCurve, slBarOp, slBob, slSpin, slGlow, slItem, slBar, slAll, slTitle, slSub, slDelay, eSl; private boolean hexSync;
+    private Slider slBarCurve, slBarOp, slBob, slSpin, slGlow, slItem, slBar, slAll, slTitle, slSub, slDelay, slHold, eSl; private float eHold; private boolean hexSync;
     private static final int[] PRESETS = {0xFF0B0E2A, 0xFF2A0B1C, 0xFF0B2418, 0xFF1A202C, 0xFF000000, 0xFF5A0F1B, 0xFF14206B, 0xFF0B3A3F, 0xFF2B1450, 0xFF4A3208, 0xFF5A1F3D, 0xFF2F3A4C};
     private static final String[] FX_NAMES = {"Slam in", "Light sweep", "Wave", "Rainbow", "Drop in", "Pulse", "Glitch", "Neon glow", "Bounce in", "Typewriter", "Float", "Shake", "Fire", "Frost", "Twinkle", "Fade away", "Fly up", "Shrink", "Scatter", "Slide in", "Flip in", "Swing", "Gold", "Slide out", "Melt"};
     private static final String[] FX_DESC = {"Letters start huge, then snap into place.", "A bright band runs along the words.", "Letters bob up and down like a wave.", "Colours flow along the letters.",
@@ -1770,7 +1770,7 @@ public class FancyScreen extends Screen {
         int grp = previewH(ePrevW()) + (editor == 1 ? 26 : 0);
         return top + Math.max(0, (eHt() - 38 - 30 - grp) / 2);
     }
-    private int[] eSliderBox(int i) { return editor == 3 ? new int[]{eRx(), eY() + 53 + i * 27, eRw(), 14} : editor == 2 ? new int[]{eX() + 10, eY() + 38 + previewH(ePrevW()) + 34 + i * 29, ePrevW(), 14} : new int[]{eRx(), eY() + 70 + i * 34, eRw(), 14}; }
+    private int[] eSliderBox(int i) { return editor == 3 ? new int[]{eRx(), eY() + 53 + i * 27, eRw(), 14} : editor == 2 ? new int[]{eRx(), eY() + 166 + i * 29, eRw(), 14} : new int[]{eRx(), eY() + 70 + i * 34, eRw(), 14}; }
     private int[] eTogBox(int i) { int w = (eRw() - 4) / 2; return new int[]{eRx() + (i % 2) * (w + 4), eY() + 112 + (i / 2) * 19, w, 16}; }
     // every Changes menu has the same right-hand side: page tabs on top, the controls of that page below
     private int ePage;
@@ -1810,7 +1810,7 @@ public class FancyScreen extends Screen {
         eBarPx = c.barPx; eCustom = c.barCustom; eColor = c.barColor; ePos0 = c.animPos; eTextPos0 = c.textPos;
         for (int i = 0; i < FX_N; i++) eFx[i] = c.fx(i);
         for (int gi = 0; gi < FX_ORDER.length; gi++) { int lim = gi == 2 ? 2 : 1, on = 0; for (int k : FX_ORDER[gi]) if (c.fx(k)) { if (++on > lim) c.setFx(k, false); } }      // 1 entrance, 1 motion, 2 colour, 1 exit
-        eAll = c.textScale; eTitle = c.titleScale; eSub = c.subScale; eSubDelay = c.subDelay;
+        eAll = c.textScale; eTitle = c.titleScale; eSub = c.subScale; eSubDelay = c.subDelay; eHold = c.textHold;
         eShowOdds = c.showOdds; eShowPrice = c.showPrice; eShowSrc = c.showPriceSource; eShowMf = c.showMagicFind; eItem = c.itemScale; eSpin = c.itemSpin; eGlow = c.itemGlow; eBob = c.itemBob; eGlints = c.itemGlints;
         int col = c.barCustom ? c.barColor : 0xFF0B0E2A;
         float[] hsv = rgbToHsv(col); eHue = hsv[0]; eSat = hsv[1]; eVal = Math.max(0.05f, hsv[2]);
@@ -1826,6 +1826,7 @@ public class FancyScreen extends Screen {
         slTitle = new Slider(0.5, 1.5, 0.05, () -> c.titleScale, v -> c.titleScale = (float) v, () -> Math.round(c.titleScale * 100) + "%").typed(100);
         slSub = new Slider(0.5, 1.5, 0.05, () -> c.subScale, v -> c.subScale = (float) v, () -> Math.round(c.subScale * 100) + "%").typed(100);
         slDelay = new Slider(0, 3, 0.05, () -> c.subDelay, v -> c.subDelay = (float) v, () -> String.format(java.util.Locale.ROOT, "%.2f s", c.subDelay)).typed(1);
+        slHold = new Slider(1, 8, 0.5, () -> c.textHold, v -> c.textHold = (float) v, () -> String.format(java.util.Locale.ROOT, "%.1f s", c.textHold)).typed(1);
         sliderSeq = sv;
     }
     private void closeEditor(boolean save) {
@@ -1836,7 +1837,7 @@ public class FancyScreen extends Screen {
             c.setBarPx(eBarPx); c.barCustom = eCustom; c.barColor = eColor; c.animPos = ePos0; c.textPos = eTextPos0;
             for (int i = 0; i < FX_N; i++) c.setFx(i, eFx[i]);
             c.barOpacity = eBarOp; c.barPillars = eBarPil; c.barLine = eBarLine; c.barCurve = eBarCurve; c.barSoft = eBarSoft; c.itemBobAmp = eBobAmp; c.itemSpinRev = eSpinRev; c.textBold = eBold; c.textOutline = eOutl; c.textFont = eTFont;
-            c.textScale = eAll; c.titleScale = eTitle; c.subScale = eSub; c.subDelay = eSubDelay;
+            c.textScale = eAll; c.titleScale = eTitle; c.subScale = eSub; c.subDelay = eSubDelay; c.textHold = eHold;
             c.showOdds = eShowOdds; c.showPrice = eShowPrice; c.showPriceSource = eShowSrc; c.showMagicFind = eShowMf; c.itemScale = eItem; c.itemSpin = eSpin; c.itemGlow = eGlow; c.itemBob = eBob; c.itemGlints = eGlints;
         }
         editor = 0; eDrag = 0; eSl = null; editWarn = false; hexField.setFocused(false); hexField.setVisible(false);
@@ -1881,7 +1882,7 @@ public class FancyScreen extends Screen {
             c.barCustom = true; c.barColor = hsvToRgb(eHue, eSat, eVal);
         }
     }
-    private Slider[] eSliders() { return editor == 4 ? new Slider[0] : editor == 1 ? new Slider[]{slBar, slBarOp, slBarCurve} : editor == 3 ? (FancyConfig.get().itemBob ? new Slider[]{slItem, slSpin, slGlow, slBob} : new Slider[]{slItem, slSpin, slGlow}) : new Slider[]{slAll, slTitle, slSub, slDelay}; }
+    private Slider[] eSliders() { return editor == 4 ? new Slider[0] : editor == 1 ? new Slider[]{slBar, slBarOp, slBarCurve} : editor == 3 ? (FancyConfig.get().itemBob ? new Slider[]{slItem, slSpin, slGlow, slBob} : new Slider[]{slItem, slSpin, slGlow}) : new Slider[]{slHold}; }
     private void editorClick(double mx, double my, int button) {
         FancyConfig c = FancyConfig.get();
         if (button != 0) return;
@@ -1907,7 +1908,7 @@ public class FancyScreen extends Screen {
         }
         Slider[] ss = eSliders();
         for (int i = 0; i < ss.length; i++) {
-            if (editor != 2 && ePage != 0) break;
+            if (editor == 2 ? ePage != 1 : ePage != 0) break;
             int[] b = eSliderBox(i);
             if (mx >= b[0] && mx < b[0] + b[2] && my >= b[1] - 3 && my < b[1] + b[3] + 3) {
                 ss[i].x0 = b[0]; ss[i].x1 = b[0] + b[2];
@@ -2029,6 +2030,9 @@ public class FancyScreen extends Screen {
                     g.text(font, lab, b[0] + 9, b[1] + 4, tcol, false);
                 }
             }
+            int[] hb = eSliderBox(0);                                                                       // how long the words stay after the animation
+            Gfx.text(g, font, "Text stays after the animation", hb[0], hb[1] - 11, Ui.SUB);
+            slHold.x0 = hb[0]; slHold.x1 = hb[0] + hb[2]; slHold.draw(g, hb[1], hb[3], in(mx, my, new int[]{hb[0], hb[1] - 2, hb[2], 18}));
         } else if (editor == 2) {
             Gfx.text(g, font, "Font of the drop words", eRx(), eY() + 54 + 0, Ui.SUB);
             for (int i = 0; i < Fonts.NAMES.length; i++) {
@@ -2663,8 +2667,6 @@ public class FancyScreen extends Screen {
         rows.add(picker("Animation Changes", "The look every animation shares", lb, sb, new String[]{":bars:", ":text:", ":size:", ":dock_top:"}, new int[]{0xFF6C86FF, 0xFFFF72C6, 0xFFFFC857, 0xFF56D8FF}, null, 2, () -> -1, i -> openEditor(i + 1)));
         Row sz = row(0, ":size:", "Animation size", "How big every animation is", Ui.ACCENT);
         sz.ctls.add(new Slider(0.5, 1.5, 0.05, () -> c.animScale, v -> c.animScale = (float) v, () -> Math.round(50 + 50 * c.animScale) + "%").live()); rows.add(sz);
-        Row ns = row(0, ":normal:", "Everyday drops size", "Normal and No Drops play this much smaller, so they stay out of the way. RNG stays full size", Ui.ACCENT);
-        ns.ctls.add(new Slider(50, 100, 5, () -> c.normalSize, v -> c.normalSize = (int) Math.round(v), () -> c.normalSize + "%").typed(1)); rows.add(ns);
     }
 
     /** The tiles of a category's animation groups ("Mythological Mobs", "Treasure"): each opens its editor. */
@@ -2677,9 +2679,9 @@ public class FancyScreen extends Screen {
 
     /** The Animation Editor of one group: pick the type, then its length and size (and the bars and blur of RNG). */
     private static final String[] SLAYER_BLURB = {
-        "Nothing dropped: a black hole in the boss's colour tears the boss apart pixel by pixel while the camera creeps in and jolts on every heartbeat, then dives into the hole as it swallows the scene. (5.5 s)",
-        "A drop: the camera drifts in as the boss is pulled apart, punches in on the last gulp, and the hole fires its jets and spits your drop out of its heart. The words stay 3 s after. (6 s)",
-        "RNG: the boss is eaten, the hole collapses and goes supernova; the camera is blown back and shakes while a pulsar sweeps behind your drop. The bars close in and your HUD slides away until it ends. (7 s)"};
+        "Nothing dropped: a black hole in the boss's colour tears the boss apart pixel by pixel while the camera creeps in and jolts on every heartbeat, then dives into the hole as it swallows the scene; \"Nothing dropped\" stays as long as any drop's words.",
+        "A drop: the camera drifts in as the boss is pulled apart, punches in on the last gulp, and the hole fires its jets and spits your drop out of its heart. The words stay after it for as long as Text Changes says.",
+        "RNG: the boss is eaten, the hole collapses and goes supernova; the camera is blown back and shakes while a pulsar sweeps behind your drop. The bars close in and your HUD slides away until it ends."};
     private void animationEditor(Categories.Cat cat, Categories.Group gr, FancyConfig c) {
         int ti = Math.max(0, Math.min(gr.types().size() - 1, edType));
         Categories.Type ty = gr.types().get(ti);
@@ -2704,7 +2706,8 @@ public class FancyScreen extends Screen {
     /** How long an animation lasts: "4 s", or "4 s + 2.5 s text". */
     private static String lenText(String key) {
         int ty = AnimationManager.typeOfKey(key); float a = AnimationManager.animLen(key, ty);
-        return ty == AnimationManager.NO_DROPS ? String.format(Locale.ROOT, "%.0f s", a) : String.format(Locale.ROOT, "%.0f s + %.0f s text", a, AnimationManager.textHold(key, ty));
+        float th = AnimationManager.textHold(key, ty); String fa = a == Math.round(a) ? String.format(Locale.ROOT, "%.0f", a) : String.format(Locale.ROOT, "%.1f", a), ft = th == Math.round(th) ? String.format(Locale.ROOT, "%.0f", th) : String.format(Locale.ROOT, "%.1f", th);
+        return th <= 0f ? fa + " s" : fa + " s + " + ft + " s text";
     }
 
     /** The three types of a group (No Drops, Normal, RNG) as tiles. */
@@ -2720,8 +2723,20 @@ public class FancyScreen extends Screen {
     private static final String[] SLOT_NAMES = {"Beat", "Burst", "Reveal", "Linger", "End"};
     private static final String[] SLOT_SUBS = {"Every beat of the opening", "The moment the animation pivots", "The item appears", "The glow after it", "The animation fades out"};
     /** Slayer has one soundtrack scored to the whole animation; the other slots are not used. */
-    private static String slotName(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_NAMES[k] : k == 1 ? "Soundtrack" : "\u2014"; }
-    private static String slotSub(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_SUBS[k] : "One piece of music scored to the whole animation, from the hole opening to the end"; }
+    private static final Map<String, String[]> SL_SLOT = Map.ofEntries(
+        Map.entry("open", new String[]{"Open", "The black hole tears open"}),
+        Map.entry("pull", new String[]{"Pull", "The boss is pulled apart, heartbeats on every throb"}),
+        Map.entry("swallow", new String[]{"Swallow", "The hole swallows the scene"}),
+        Map.entry("wink", new String[]{"Wink", "The hole winks out"}),
+        Map.entry("none", new String[]{"Nothing", "Under \"Nothing dropped\""}),
+        Map.entry("spit", new String[]{"Spit", "The jets fire and spit your drop out"}),
+        Map.entry("reveal", new String[]{"Reveal", "Your drop appears"}),
+        Map.entry("close", new String[]{"Close", "The hole shrinks away"}),
+        Map.entry("nova", new String[]{"Supernova", "The hole collapses and explodes"}),
+        Map.entry("fanfare", new String[]{"Fanfare", "Your drop appears in the blast"}),
+        Map.entry("pulsar", new String[]{"Pulsar", "The pulsar sweeps behind your drop"}));
+    private static String slotName(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_NAMES[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[0]; }
+    private static String slotSub(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_SUBS[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[1] + "  \u00B7  3 takes"; }
 
     private void soundsPage(FancyConfig c) {
         if (searching || landing()) { soundsLanding(c); return; }
@@ -2765,9 +2780,8 @@ public class FancyScreen extends Screen {
         Row head = row(0, ty.icon(), gr.name() + "  ·  " + ty.name(), "Plays only the sounds, at the times they happen in the animation", ty.color());
         head.ctls.add(new Btn("▶ Play", GREEN, () -> AnimationManager.playSoundsOnly(scene))); rows.add(head);
         rows.add(section("Sounds"));
-        List<String> choices = SoundFx.choices();
         for (int k = 0; k < SoundFx.SLOTS.length; k++) {
-            if (AnimationManager.isSlayer(scene) && k != 1) continue;                                   // Slayer: only its soundtrack
+            final List<String> choices = SoundFx.slotChoices(scene, SoundFx.SLOTS[k]);
             final String slot = SoundFx.SLOTS[k]; final int slotIdx = k;
             Row sr = row(1, SLOT_ICON[k], slotName(scene, k), slotSub(scene, k), SLOT_COL[k]);
             sr.ctls.add(new Btn("▶", GREEN, () -> { pulseAt[slotIdx] = System.currentTimeMillis(); SoundFx.Fx fx = SoundFx.byName(SoundFx.chosen(scene, slot)); if (fx != null) SoundFx.preview(fx); }));

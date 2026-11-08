@@ -52,7 +52,6 @@ public class FancyConfig {
     }
     // Bar changes
     public int barPx = 15;               // bar height in pixels of the 96-pixel-tall scene (5..15)
-    public int normalSize = 80;          // Normal and No Drops animations play at this % of the Animation size (50..100), so everyday drops stay out of the way; RNG stays full size
     public float animScale = 1f;         // how big every animation is: 0.5 .. 1.5 (shown as 75% .. 125%; 1.0 is the standard 100%)
     public int barOpacity = 90;          // how solid the bars are (%)
     public boolean barPillars = false;    // the side pillars
@@ -66,6 +65,7 @@ public class FancyConfig {
     // Text changes
     public float textScale = 1f;         // size of the text (name, price, odds)
     public float titleScale = 1f, subScale = 1f;
+    public float textHold = 3f;          // seconds the drop's words stay after the animation ends (Animations > Text Changes > Layout)
     public float subDelay = 0.35f;       // seconds between the title and the sub title coming in
     public boolean textBold = false, textOutline = true;
     public boolean showPrice = true, showPriceSource = true, showOdds = true, showMagicFind = true;
@@ -186,8 +186,8 @@ public class FancyConfig {
         if (c.ver < 9) { c.ver = 9; c.itemScale = Math.min(1.1f, c.itemScale * 1.5f); save(); }          // Item size: the old 50% is the new 75%, capped at 110%
         if (c.ver < 8) { c.ver = 8; c.animScale = 1f; c.animPos = 1; save(); }          // the pixel cutscenes (Nov 7): size and place start fresh
         c.textScale = clamp(c.textScale, 0f, 1.1f); c.itemScale = clamp(c.itemScale, 0.5f, 1.1f);
-        c.titleScale = clamp(c.titleScale, 0.5f, 1.5f); c.subScale = clamp(c.subScale, 0.5f, 1.5f); c.subDelay = clamp(c.subDelay, 0f, 3f);
-        c.animScale = clamp(c.animScale, 0.5f, 1.5f); c.normalSize = Math.max(50, Math.min(100, c.normalSize)); c.itemSpin = clamp(c.itemSpin, 0f, 2f); c.itemGlow = clamp(c.itemGlow, 0f, 1.5f);
+        c.titleScale = clamp(c.titleScale, 0.5f, 1.5f); c.subScale = clamp(c.subScale, 0.5f, 1.5f); c.subDelay = clamp(c.subDelay, 0f, 3f); c.textHold = clamp(c.textHold, 1f, 8f);
+        c.animScale = clamp(c.animScale, 0.5f, 1.5f); c.itemSpin = clamp(c.itemSpin, 0f, 2f); c.itemGlow = clamp(c.itemGlow, 0f, 1.5f);
         c.barPx = Math.max(5, Math.min(15, c.barPx));
         c.lyricsStyle = Math.max(0, Math.min(3, c.lyricsStyle)); c.npLine = c.npLine == 2 ? 2 : 1; c.npBg = c.npBg == 0 ? 60 : Math.max(20, Math.min(70, c.npBg)); c.cosClockSize = c.cosClockSize == 0 ? 100 : Math.max(60, Math.min(160, c.cosClockSize)); c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
         c.mythPet = Math.max(0, Math.min(5, c.mythPet)); c.mythSpade = Math.max(0, Math.min(2, c.mythSpade));

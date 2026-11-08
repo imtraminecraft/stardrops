@@ -33,6 +33,27 @@ public final class SoundFx {
     public static final String[] SLOTS = {"chop", "split", "reveal", "linger", "end"};
 
     private static final Map<String, Fx> ALL = new LinkedHashMap<>();
+    /** The Slayer sound families (one per moment) and the names of their three takes. */
+    static final String[] SL_FAM = {"open", "pull", "swallow", "wink", "none", "spit", "reveal", "close", "nova", "fanfare", "pulsar"};
+    private static final String[][] SL_TAKES = {
+        {"Rift", "Gravity well", "Event horizon"}, {"Heartbeat", "Spaghettify", "Tidal choir"}, {"Implode", "Gulp", "Vanish"},
+        {"Wink", "Pop", "Blink"}, {"Minor notes", "Falling sine", "Static"}, {"Thwup and jets", "Ejection", "Jet stream"},
+        {"Major chord", "Glass bells", "Starlight"}, {"Sigh", "Fading chord", "Soft bell"}, {"Supernova", "Shockwave", "Collapse"},
+        {"Choir", "Cosmic fanfare", "Glock run"}, {"Pulsar groove", "Beacon", "Quasar"}};
+    private static final SoundEvent[] SL_VAN = {SoundEvents.BEACON_ACTIVATE, SoundEvents.BEACON_AMBIENT, SoundEvents.BEACON_DEACTIVATE, SoundEvents.AMETHYST_BLOCK_HIT,
+        SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.FIREWORK_ROCKET_LAUNCH, SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.AMETHYST_BLOCK_RESONATE,
+        SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.BEACON_POWER_SELECT, SoundEvents.BEACON_AMBIENT};
+    /** Which family each of the five slots of a Slayer animation plays: No Drops, a drop, RNG. */
+    private static final String[][] SL_SLOTS = {{"open", "pull", "swallow", "wink", "none"}, {"open", "pull", "spit", "reveal", "close"}, {"open", "pull", "nova", "fanfare", "pulsar"}};
+    static String slayerFamily(String scene, int slot) { return SL_SLOTS[scene.endsWith("nodrops") ? 0 : scene.endsWith("rng") ? 2 : 1][slot]; }
+    /** The sounds offered for one slot: for a Slayer slot in the Stardrops set, its three takes; otherwise every sound of the set. */
+    public static List<String> slotChoices(String scene, String slot) {
+        int k = java.util.Arrays.asList(SLOTS).indexOf(slot);
+        if (!scene.startsWith("slayer") || !FancyConfig.get().customSounds || k < 0) return choices();
+        List<String> l = new ArrayList<>(); l.add(NONE); String f = slayerFamily(scene, k);
+        for (char v : "abc".toCharArray()) l.add("slr_" + f + "_" + v);
+        return l;
+    }
     private static Fx reg(String name, String label, SoundEvent vanilla, float vol) { Fx f = new Fx(name, label, vanilla, vol, true); ALL.put(name, f); return f; }
     /** A plain Minecraft sound by its id ("block.note_block.chime"): only offered while Custom sounds is off. */
     private static Fx mc(String name, String label, String id, float vol) {
@@ -43,10 +64,9 @@ public final class SoundFx {
 
     static {
         // Stardrops space pack (tools/make_space_sounds.py; was tools/make_scene_sounds.py): every Normal and No Drops scene shares one soft, short set; only RNG gets the big cinematic set
-        // Slayer: one soundtrack per animation, scored to it (tools/make_slayer_score.py)
-        reg("slr_nothing", "Black hole: nothing dropped", SoundEvents.BEACON_DEACTIVATE, 0.85f);
-        reg("slr_drop", "Black hole: a drop", SoundEvents.BEACON_ACTIVATE, 0.85f);
-        reg("slr_rng", "Black hole: RNG", SoundEvents.BEACON_POWER_SELECT, 0.9f);
+        // Slayer: five moments, three takes of each (tools/make_slayer_sounds.py)
+        for (int f = 0; f < SL_FAM.length; f++) for (int v = 0; v < 3; v++)
+            reg("slr_" + SL_FAM[f] + "_" + "abc".charAt(v), SL_TAKES[f][v], SL_VAN[f], 0.85f);
         reg("sky_open", "Achievements: open", SoundEvents.AMETHYST_BLOCK_CHIME, 0.7f);              // the achievements sky
         reg("sky_close", "Achievements: close", SoundEvents.AMETHYST_BLOCK_HIT, 0.6f);
         reg("sky_zoom", "Achievements: fly", SoundEvents.PLAYER_ATTACK_SWEEP, 0.6f);
@@ -124,9 +144,11 @@ public final class SoundFx {
             d0.add(new String[]{g + ".rng", NONE, NONE, NONE, NONE, NONE});
         }
         d0.removeIf(r -> r[0].startsWith("slayer."));                         // Slayer has its own black-hole set
-        d0.add(new String[]{"slayer.nodrops", NONE, "slr_nothing", NONE, NONE, NONE});            // its soundtrack sits in the one slot it uses
-        d0.add(new String[]{"slayer.normal", NONE, "slr_drop", NONE, NONE, NONE});
-        d0.add(new String[]{"slayer.rng", NONE, "slr_rng", NONE, NONE, NONE});
+        for (String ty : new String[]{"nodrops", "normal", "rng"}) {                               // the first take of each moment
+            String[] r = new String[6]; r[0] = "slayer." + ty;
+            for (int k = 0; k < 5; k++) r[k + 1] = "slr_" + slayerFamily(r[0], k) + "_a";
+            d0.add(r);
+        }
         String[][] d = d0.toArray(new String[0][]);
         for (String[] r : d) for (int i = 0; i < SLOTS.length; i++) DEFAULTS.put(r[0] + "." + SLOTS[i], r[i + 1]);
     }

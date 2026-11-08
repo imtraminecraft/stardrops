@@ -138,7 +138,7 @@ public final class AnimationManager {
     static final float SL_PIVOT = 3.4f;
     static float animLen(String g, int type) { return isSlayer(g) ? (type == RNG ? 7f : type == NORMAL ? 6f : 5.5f) : animLen(type); }
     static float opening(String g, int type) { return isSlayer(g) ? SL_PIVOT : opening(type); }
-    static float textHold(String g, int type) { return isSlayer(g) ? (type == NO_DROPS ? 0f : 3f) : textHold(type); }
+    static float textHold(String g, int type) { return isSlayer(g) ? FancyConfig.get().textHold : textHold(type); }      // the words (No Drops too) stay as long as Text Changes says
     static float sceneLen(String g, int type) { return animLen(g, type) + textHold(g, type); }
     static float sceneLen(String key) { return sceneLen(key, typeOfKey(key)); }
 
@@ -160,7 +160,12 @@ public final class AnimationManager {
     static float[][] cueTimes(String scene, float hold) {
         int ty = typeOfKey(scene); float S = sceneLen(scene, ty), O = opening(scene, ty), A = animLen(scene, ty); boolean tre = scene.startsWith("treasure"), nod = scene.endsWith("nodrops");
         float[] beats = tre ? new float[]{0.215f * O, 0.505f * O, 0.795f * O} : new float[]{0.34f * O, 0.58f * O, 0.80f * O};
-        if (isSlayer(scene)) return new float[][]{new float[0], {0.02f}, new float[0], new float[0], new float[0]};   // Slayer: one soundtrack from the start
+        if (isSlayer(scene)) {                                                                       // Slayer: open, the pull (its heartbeats ride the hole's throb), then the turn and after
+            float P = SL_PIVOT, Al = animLen(scene, ty);
+            if (nod) return new float[][]{{0.1f}, {1.15f}, {P + 0.1f}, {P + 1.05f}, {P + 1.3f}};
+            if (ty == RNG) return new float[][]{{0.1f}, {1.15f}, {P - 0.05f}, {P + 0.55f}, {P + 0.9f}};
+            return new float[][]{{0.1f}, {1.15f}, {P}, {P + 0.3f}, {Al - 0.7f + hold}};
+        }
         return new float[][]{beats, {O}, nod ? new float[0] : new float[]{O + 0.25f}, {O + 1.0f}, {A - 0.5f + hold}};
     }
 

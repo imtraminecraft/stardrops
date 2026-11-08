@@ -275,7 +275,7 @@ final class Ritual {
         int type = a.type;
         boolean rng = type == AnimationManager.RNG, nod = type == AnimationManager.NO_DROPS;
         float hd = a.hold(), S = a.secs() + hd, O = AnimationManager.opening(a.group, type), p = t - O;
-        float csz = Math.max(0.5f, Math.min(1.5f, c.animScale)) * (rng ? 1f : Math.max(0.5f, Math.min(1f, c.normalSize / 100f))), sz = SMALLER * csz, szc = sz * K, ssz = szc * SCENE_K, isc = Math.max(0.4f, c.itemScale);          // Normal and No Drops can play smaller, so they stay out of the way
+        float csz = Math.max(0.5f, Math.min(1.5f, c.animScale)) , sz = SMALLER * csz, szc = sz * K, ssz = szc * SCENE_K, isc = Math.max(0.4f, c.itemScale);          // Normal and No Drops can play smaller, so they stay out of the way
         int rc = it != null ? (it.color() & 0xFFFFFF) : GREY;
         if (!tre && !rng && !nod) rc = mixc(rc, WHITE, 0.15f);
         boolean barsOn = (rng && cfg.bars) || TextFx.barsOnly, blurOn = rng && cfg.blur && !TextFx.barsOnly && !TextFx.itemOnly;
