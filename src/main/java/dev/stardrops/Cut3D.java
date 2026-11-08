@@ -8,15 +8,15 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 /**
- * Slayer cutscenes, Butcher-style: a close little night scene per slayer where a tool strikes a themed object on every beat
+ * Slayer cutscenes, Butcher-style: a close little night scene per slayer where a meteor strikes a themed object on every beat
  * (SlayerScene.HITS, so the sounds land with it) until it breaks open and the drop rises out of it. Drawn with Vox3D's chunky
  * outlined boxes; the ground is soft and fades into the dark at the window's edge, no floating island.
- *   Revenant: a shovel digs the grave in front of a mossy R.I.P. headstone; the coffin under it flips open.
- *   Tarantula: a sword slashes a silk cocoon hanging in a web; it splits in two.
- *   Sven: a pickaxe breaks a cairn of stones under the trees, wolf eyes glowing in the dark.
- *   Voidgloom: eyes of ender fly into a ring of portal frames; the portal opens.
- *   Inferno: a blaze rod hammers a magma core between two fire pillars; it erupts.
- *   Riftstalker: a mallet breaks the chains round a standing coffin; its door bursts open.
+ *   Revenant: meteors blast the grave in front of a mossy R.I.P. headstone away; the coffin under it flips open.
+ *   Tarantula: meteors hit a silk cocoon hanging in a web; it splits in two.
+ *   Sven: meteors knock a cairn of stones apart under the trees, wolf eyes glowing in the dark.
+ *   Voidgloom: each meteor lights an eye in a ring of portal frames; the portal opens.
+ *   Inferno: meteors crack a magma core between two fire pillars; it erupts.
+ *   Riftstalker: meteors break the chains round a standing coffin; its door bursts open.
  * No drops: the same beats, one strike, and it opens on nothing (a puff of dust). RNG: the strikes spark through the rarities, the sky
  * holds its breath, the last strike is gold and the drop rises in a gold pillar.
  */
@@ -33,19 +33,6 @@ final class Cut3D {
     static int done(float t) { int k = 0; for (float h : hits) if (t >= h) k++; return k; }
     /** Seconds since the latest strike (big if none). */
     static float since(float t) { float s = 99f; for (float h : hits) if (t >= h) s = Math.min(s, t - h); return s; }
-    /**
-     * The tool's swing at t: 0 raised, 1 at the moment of impact. Winds up after the approach, snaps down onto each strike, springs back.
-     */
-    static float swing(float t) {
-        float next = -1f, prev = -1f;
-        for (float h : hits) { if (h >= t && next < 0) next = h; if (h < t) prev = h; }
-        float down = 0.09f, back = 0.16f;
-        if (next >= 0 && next - t < down) return sm(1f - (next - t) / down) * sm(1f - (next - t) / down);
-        if (prev >= 0 && t - prev < back) return 1f - eo((t - prev) / back) * 0.85f;
-        return prev >= 0 ? 0.15f * (1f - sm((t - prev - back) / 0.3f)) : 0f;
-    }
-    /** The tool's presence: 0 before it arrives (at RISE), 1 from the approach; it leaves after the last strike. */
-    static float toolIn(float t) { return eo((t - SlayerScene.RISE) / 0.6f) * (1f - sm((t - last - 0.15f) / 0.45f)); }
     static int sparkCol(int i, int energy) { return type == 2 ? SlayerScene.TIER[Math.min(i, SlayerScene.TIER.length - 1)] : type == 0 ? 0xC8C8D0 : mixc(energy, 0xFFFFFF, 0.3f); }
 
     static Frame build(float t, float A, int bossIn, int typeIn, int energy, float aspect, float pinY, boolean z01) {
@@ -171,39 +158,37 @@ final class Cut3D {
         glow(F.add, x, y0 + 0.2f, z, 1.4f, type == 2 ? 0xFFD24A : energy, 0.35f * beam);
     }
 
-    // ------------------------------------------------------------------ tools (model pixels, grip at the origin, pointing down -y)
-    static final Skin WOOD = (f, u, v, w, h) -> mul((u + v) % 3 == 0 ? 0x6A4A2A : 0x8A6438, 0.9f + rnd(u * 7 + v * 13 + f) * 0.2f);
-    static final Skin IRON = (f, u, v, w, h) -> v == h - 1 || u == 0 ? 0xF0F4F8 : mul(0xB8C0C8, 0.88f + rnd(u * 5 + v * 9 + f) * 0.2f);
-    static void shovel() {
-        box(-0.6f, -15f, -0.6f, 0.6f, 0f, 0.6f, WOOD, 1f, 0.35f);
-        box(-1.6f, -1f, -0.7f, 1.6f, 0.4f, 0.7f, WOOD, 1f, 0.35f);
-        box(-2.5f, -21f, -0.5f, 2.5f, -14.5f, 0.5f, IRON, 1f, 0.35f);
-    }
-    static void sword() {
-        box(-0.7f, -3.5f, -0.7f, 0.7f, 1f, 0.7f, WOOD, 1f, 0.35f);
-        box(-3f, -4.5f, -0.8f, 3f, -3.5f, 0.8f, (f, u, v, w, h) -> 0x3A2E40, 1f, 0.35f);
-        box(-1f, -17f, -0.4f, 1f, -4.5f, 0.4f, (f, u, v, w, h) -> u == 0 ? 0xF4FFFF : mul(0x9AE8E8, 0.9f + rnd(u * 5 + v * 7) * 0.15f), 1f, 0.35f);
-    }
-    static void pickaxe() {
-        box(-0.6f, -15f, -0.6f, 0.6f, 0f, 0.6f, WOOD, 1f, 0.35f);
-        box(-6f, -17f, -0.7f, 6f, -14.5f, 0.7f, IRON, 1f, 0.35f);
-        box(-7f, -17.5f, -0.5f, -5.5f, -15.5f, 0.5f, IRON, 1f, 0.35f); box(5.5f, -17.5f, -0.5f, 7f, -15.5f, 0.5f, IRON, 1f, 0.35f);
-    }
-    static void rod() { box(-0.9f, -18f, -0.9f, 0.9f, 0f, 0.9f, (f, u, v, w, h) -> v % 3 == 0 ? 0xFFE07A : mul(0xF0A020, 0.88f + rnd(u + v * 5) * 0.2f), 1f, 0.35f); }
-    static void mallet() {
-        box(-0.6f, -14f, -0.6f, 0.6f, 0f, 0.6f, WOOD, 1f, 0.35f);
-        box(-3.5f, -18f, -2f, 3.5f, -13.5f, 2f, (f, u, v, w, h) -> mul(0x5A3A22, 0.85f + rnd(u * 7 + v + f) * 0.25f), 1f, 0.35f);
-    }
-    /**
-     * A tool swinging onto a target: grip at (gx, gy, gz), it turns about its own z by lerp(up, down, swing); coming in from above
-     * when it arrives, leaving up and out after the last strike.
-     */
-    static void wield(float t, Runnable tool, float gx, float gy, float gz, float yawY, float upA, float downA, float scale) {
-        float in = toolIn(t); if (in < 0.01f) return;
-        float sw = swing(t), wind = sm((t - SlayerScene.WALK) / 0.5f) * (1f - sm((t - hits[0] + 0.35f) / 0.15f));
-        float ang = lerp(upA, downA, sw) - 0.25f * wind;
-        float off = (1f - in) * 3f;
-        push(); M.translate(gx + off * 0.6f, gy + off, gz).rotateY(yawY).rotateZ(ang).scale(scale / 16f); tool.run(); pop();
+    // ------------------------------------------------------------------ meteors: one falls onto the target on every beat
+    /** Each strike is a meteor: a burning outlined rock with a long trail, falling from the upper right onto target(i) and landing on hits[i]. */
+    static void meteors(float t, java.util.function.IntFunction<Vector3f> target, float spread, int energy) {
+        for (int i = 0; i < n; i++) {
+            boolean big = type == 0 || i == n - 1; float h = hits[i], fl = SlayerScene.flight(type, i), t0 = h - fl;
+            if (t < t0) continue;
+            Vector3f a = target.apply(i); if (!big) a.add((rnd(i * 31 + 3) - 0.5f) * spread, 0f, (rnd(i * 17 + 5) - 0.5f) * spread);
+            float k = big ? (type == 2 ? 1.4f : 1.15f) : 0.8f;
+            Vector3f s0 = new Vector3f(a.x + (3.2f + 1.2f * rnd(i * 7 + 1)) * k, a.y + (7.5f + 2f * rnd(i * 5)) * k, a.z - (2.2f + 1.2f * rnd(i * 3)) * k);
+            int col = type == 2 ? (big ? 0xFFD24A : SlayerScene.TIER[Math.min(i, SlayerScene.TIER.length - 1)]) : big ? 0xFFB040 : 0xFF8A30;
+            if (t < h) {
+                float u = (t - t0) / fl;
+                for (int q = 16; q >= 1; q--) {
+                    float uu = u - q * 0.035f; if (uu < 0) continue; float e = uu * uu * (0.55f + 0.45f * uu);
+                    float px = lerp(s0.x, a.x, e), py = lerp(s0.y, a.y, e), pz = lerp(s0.z, a.z, e), f = 1f - q / 17f;
+                    int tc = type == 2 && big ? Vox3D.rainbow(q / 17f + u) : mixc(col, 0xFF3A10, 1f - f);
+                    glow(F.add, px, py, pz, (0.18f + 0.5f * f) * k, tc, 0.75f * f); if (q % 2 == 0) glow(F.add, px, py, pz, 0.08f * k, 0xFFF4D0, 0.8f * f);
+                }
+                float e = u * u * (0.55f + 0.45f * u), px = lerp(s0.x, a.x, e), py = lerp(s0.y, a.y, e), pz = lerp(s0.z, a.z, e);
+                glow(F.add, px, py, pz, 1.1f * k, col, 0.45f);
+                float vis = sm(edge(px, py, pz) * 1.8f);
+                if (vis > 0.05f) { push(); M.translate(px, py, pz).rotateXYZ(t * 7f + i, t * 5f, i); float r = 0.2f * k * vis; box(-r, -r, -r, r, r, r, type == 2 && big ? Vox3D.GOLD_ROCK : Vox3D.ROCK, 24f, 0.025f); pop(); }
+                for (int q = 0; q < 5; q++) { float v = ((u * 3f + q / 5f) % 1f); glow(F.add, px + v * 0.6f * k + (rnd(i * 11 + q) - 0.5f) * 0.3f, py + v * 1.4f * k, pz - v * 0.4f, 0.05f, q % 2 == 0 ? 0xFFE07A : col, (1f - v)); }
+                glow(F.add, a.x, Math.max(0.03f, a.y - 0.05f), a.z, 0.9f * k * u, col, 0.3f * u);
+            } else {
+                float d = t - h; if (d > 1.2f) continue;
+                float rw = d / 0.5f; if (rw < 1f) ring(F.add, a.x, 0.03f, a.z, (0.25f + 2.2f * eo(rw)) * k, 0.16f * k, mixc(col, 0xFFFFFF, 0.4f), 0.85f * (1f - rw));
+                float fl2 = Math.max(0f, 1f - d / 0.22f); if (fl2 > 0) glow(F.add, a.x, a.y + 0.2f, a.z, 2.2f * k, col, 0.45f * fl2);
+                for (int q = 0; q < 4; q++) { float u = ((d * 0.7f + q / 4f) % 1f); glow(F.veil, a.x + (rnd(i * 5 + q) - 0.5f) * 0.5f, a.y + 0.2f + u * 1.6f, a.z, 0.25f + u * 0.4f, 0x6A6A76, (1f - u) * 0.28f * (1f - d / 1.2f)); }
+            }
+        }
     }
 
     // ------------------------------------------------------------------ the six scenes
@@ -233,8 +218,8 @@ final class Cut3D {
         if (dug > 0.99f || open > 0.001f) { push(); M.translate(0.45f, 0.14f, 0.35f).rotateZ(open).translate(-0.45f, 0, 0); box(-0.45f, 0f, -0.85f, 0.45f, 0.08f, 0.85f, coffin, 12f, 0.02f); pop(); }
         if (type > 0 && p > -0.1f) glow(F.add, 0, 0.3f, 0.35f, 1.4f, energy, 0.45f * sm((p + 0.1f) / 0.3f));
         // the shovel digs at the near end of the grave
-        wield(t, Cut3D::shovel, 0.5f, 1.6f, 0.9f, -0.5f, 0.75f, 0.05f, 1.15f);
-        burst(t, new Vector3f(0.3f, 0.2f, 0.75f), 1f, new int[]{0x6A4A2C, 0x4E3620, 0x7A5A34}, energy, 1f);
+        meteors(t, i -> new Vector3f(0.05f, 0.25f, 0.35f), 0.35f, energy);
+        burst(t, new Vector3f(0.05f, 0.25f, 0.35f), 1f, new int[]{0x6A4A2C, 0x4E3620, 0x7A5A34}, energy, 1f);
     }
 
     static void tarantula(float t, float p, int energy, Theme th) {
@@ -260,12 +245,7 @@ final class Cut3D {
         }
         if (type > 0 && p > -0.1f) glow(F.add, 0, 1.55f, 0, 1.2f, energy, 0.5f * sm((p + 0.1f) / 0.3f));
         // the sword slashes across it
-        wield(t, Cut3D::sword, 0.95f, 1.9f, 0.5f, -0.3f, 1.2f, -0.6f, 1.2f);
-        for (int i = 0; i < n; i++) {                                                               // the slash: a bright arc
-            float d = t - hits[i]; if (d < -0.05f || d > 0.2f) continue; float a = 1f - Math.abs(d + 0.0f) / 0.2f;
-            int col = sparkCol(i, energy);
-            for (int q = 0; q < 10; q++) { float u = q / 9f, an = -0.9f + u * 1.8f; glow(F.add, (float) Math.sin(an) * 1.0f, 1.55f + (float) Math.cos(an) * 0.35f - 0.2f, 0.45f, 0.18f, q % 2 == 0 ? 0xFFFFFF : col, a * 0.8f); }
-        }
+        meteors(t, i -> new Vector3f(0f, 1.5f, 0f), 0.15f, energy);
         burst(t, new Vector3f(0.1f, 1.55f, 0.4f), 1f, new int[]{0xECECF2, 0xC8C8D0, 0x3A2E28}, energy, 0.8f);
     }
 
@@ -290,8 +270,8 @@ final class Cut3D {
         }
         push(); M.translate(-0.8f, 0.06f, 0.6f).rotateY(0.6f); box(-0.35f, -0.04f, -0.04f, 0.35f, 0.04f, 0.04f, flat(0xE8E4D0), 8f, 0.015f); box(-0.4f, -0.07f, -0.07f, -0.3f, 0.07f, 0.07f, flat(0xE8E4D0), 8f, 0.015f); box(0.3f, -0.07f, -0.07f, 0.4f, 0.07f, 0.07f, flat(0xE8E4D0), 8f, 0.015f); pop();
         if (type > 0 && p > -0.1f) glow(F.add, 0, 0.9f, 0, 1.3f, energy, 0.5f * sm((p + 0.1f) / 0.3f));
-        wield(t, Cut3D::pickaxe, 0.95f, 2.2f, 0.5f, -0.4f, 1.0f, 0.15f, 1.2f);
         int top = Math.max(0, left - 1); float hy = st[top][1] + st[top][4];
+        meteors(t, i -> { int lft = Math.max(0, st.length - (int) Math.ceil((i + 1) * st.length / (float) n)); int tp = Math.min(st.length - 1, lft); return new Vector3f(st[tp][0], st[tp][1] + st[tp][4] * 0.5f, st[tp][2]); }, 0.05f, energy);
         burst(t, new Vector3f(0.2f, hy, 0.3f), 1f, new int[]{0x7A7A82, 0x5A5A62, 0xE8E4D0}, energy, 1f);
     }
 
@@ -310,10 +290,7 @@ final class Cut3D {
             int hitI = i < 7 ? i : n - 1; if (type == 0 && i > 0) continue;
             float landT = hits[Math.min(hitI, n - 1)]; if (i >= 7 && k < n) continue; if (i < 7 && i >= n - 1 && type != 0 && i > 0 && i >= n - 1) landT = last;
             if (i < filled || (t > landT - 0.35f && t < landT)) {
-                float u = cl((t - (landT - 0.35f)) / 0.35f); float ex = lerp(fx * 2.2f + 1f, fx, eo(u)), ey = lerp(3.5f, 0.42f, u * u), ez = lerp(fz * 2.2f + 1.5f, fz, eo(u));
-                if (t >= landT) { ex = fx; ey = 0.42f; ez = fz; }
-                push(); M.translate(ex, ey, ez).rotateY(t * 3 + i); box(-0.11f, -0.07f, -0.11f, 0.11f, 0.07f, 0.11f, eyeS, 18f, 0.015f); pop();
-                if (t < landT) glow(F.add, ex, ey, ez, 0.3f, 0x7AE8C8, 0.6f);
+                if (t >= landT) { push(); M.translate(fx, 0.42f, fz).rotateY(t * 3 + i); box(-0.11f, -0.07f, -0.11f, 0.11f, 0.07f, 0.11f, eyeS, 18f, 0.015f); pop(); }
             }
         }
         // the portal: dark until it opens, then a starry void
@@ -324,6 +301,7 @@ final class Cut3D {
             for (int i = 0; i < 24; i++) { float an = i * 2.4f + t * 0.8f, r = 0.8f * (float) Math.sqrt(rnd(i * 7)); glow(F.add, (float) Math.cos(an) * r, 0.03f, (float) Math.sin(an) * r, 0.05f, i % 3 == 0 ? 0xE070FF : 0xC8FFF0, open); }
         }
         if (type > 0 && p > -0.1f) glow(F.add, 0, 0.4f, 0, 1.3f, energy, 0.5f * sm((p + 0.1f) / 0.3f));
+        meteors(t, i -> { double an = Math.min(i, 7) * Math.PI / 4 + Math.PI / 8; return i == n - 1 && type > 0 ? new Vector3f(0f, 0.1f, 0f) : new Vector3f((float) Math.cos(an) * 1.15f, 0.42f, (float) Math.sin(an) * 1.15f); }, 0f, energy);
         for (int i = 0; i < n; i++) { float d = t - hits[i]; if (d >= 0 && d < 0.3f) { float an = (float) (Math.min(i, 7) * Math.PI / 4 + Math.PI / 8); glow(F.add, (float) Math.cos(an) * 1.15f, 0.45f, (float) Math.sin(an) * 1.15f, 0.9f, sparkCol(i, energy), 0.7f * (1f - d / 0.3f)); } }
     }
 
@@ -344,7 +322,7 @@ final class Cut3D {
             float k = 0.12f; box(-k, -k, -k, k, k, k, flat(i % 2 == 0 ? 0x3A1A14 : 0xFF8A20), 2f, 0.015f); pop();
         }
         if (type > 0 && p > -0.1f) glow(F.add, 0, 1.2f, 0, 1.6f, energy, 0.5f * sm((p + 0.1f) / 0.3f));
-        wield(t, Cut3D::rod, 0.9f, 2.4f, 0.45f, -0.4f, 1.1f, 0.25f, 1.2f);
+        meteors(t, i -> new Vector3f(0f, 1.25f, 0f), 0.1f, energy);
         burst(t, new Vector3f(0.25f, 1.45f, 0.3f), 1f, new int[]{0xFF8A20, 0x3A1A14, 0xFFD060}, energy, 1f);
     }
 
@@ -372,8 +350,8 @@ final class Cut3D {
             pop();
         }
         if (type > 0 && p > -0.1f) glow(F.add, 0, 1.0f, 0.1f, 1.3f, energy, 0.45f * sm((p + 0.1f) / 0.3f));
-        wield(t, Cut3D::mallet, 0.85f, 2.0f, 0.7f, -0.35f, 1.0f, 0.1f, 1.15f);
         int nextChain = Math.min(2, k * 3 / Math.max(1, n));
+        meteors(t, i -> new Vector3f(0.1f, cy[Math.min(2, i * 3 / Math.max(1, n))], 0.2f), 0.2f, energy);
         burst(t, new Vector3f(0.4f, cy[Math.min(2, nextChain)], 0.25f), 1f, new int[]{0x8A8A96, 0x2A1418, 0xC01828}, energy, 0.9f);
     }
 }
