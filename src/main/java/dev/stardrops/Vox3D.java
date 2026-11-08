@@ -44,8 +44,10 @@ final class Vox3D {
     // ------------------------------------------------------------------ per frame state
     static Frame F; static Matrix4f projView; static final Vector3f eye = new Vector3f(), right = new Vector3f(), up = new Vector3f();
     static Matrix4f M = new Matrix4f(); static final ArrayDeque<Matrix4f> STACK = new ArrayDeque<>();
+    static boolean mobMode; static int rimCol;
     static float tint; static int tintCol;                      // a flash over everything drawn (hits: white / red)
     static final float FOV = 30f;
+    static float dbgDist; static Vector3f dbgTarget;                 // bench close-ups only
     static final Vector3f FRONT = new Vector3f(0f, 0f, 1.25f), SPAWN = new Vector3f(0.4f, 0f, -1.1f);
     static final Vector3f LIGHT = new Vector3f(-0.45f, 0.8f, 0.55f).normalize();
 
@@ -84,9 +86,25 @@ final class Vox3D {
             int w = Math.max(1, Math.round(ul * px)), h = Math.max(1, Math.round(vl * px));
             Vector3f n = M.transformDirection(new Vector3f(NRM[f][0], NRM[f][1], NRM[f][2])).normalize();
             float s = 0.36f + 0.5f * Math.max(0f, n.dot(LIGHT)) + 0.06f * Math.max(0f, n.y);                // moonlight: soft, a little blue
+            float rim = 0f, pxw = 0f;
+            if (mobMode) {                                                                          // the boss: a rim of its energy where it turns away from us
+                Vector3f fc = M.transformPosition(new Vector3f(ox + (ux + vx) / 2, oy + (uy + vy) / 2, oz + (uz + vz) / 2));
+                Vector3f vd = new Vector3f(eye).sub(fc).normalize(); float nd = Math.abs(n.dot(vd));
+                rim = (float) Math.pow(1f - nd, 1.6f) * 0.55f * (0.35f + Math.max(0f, -n.dot(LIGHT)));
+                pxw = M.transformDirection(new Vector3f(ux, uy, uz)).length() / w;
+            }
             for (int u = 0; u < w; u++) for (int v = 0; v < h; v++) {
-                int col = skin.at(f, u, v, w, h); if ((col >>> 24) == 0x01) continue;              // 0x01xxxxxx: a hole
-                col = mixc(mul(col & 0xFFFFFF, s), 0x1E2A50, 0.12f); if (tint > 0) col = mixc(col, tintCol, tint);
+                int col = skin.at(f, u, v, w, h); int tag = col >>> 24; if (tag == 0x01) continue;  // 0x01xxxxxx: a hole
+                if (tag == 0x02) {                                                                  // 0x02xxxxxx: glows (eyes, embers)
+                    col &= 0xFFFFFF;
+                    if (pxw > 0) { float cu = (u + 0.5f) / w, cv = (v + 0.5f) / h; Vector3f gp = M.transformPosition(new Vector3f(ox + ux * cu + vx * cv, oy + uy * cu + vy * cv, oz + uz * cu + vz * cv)).add(new Vector3f(n).mul(0.02f)); glow(F.add, gp.x, gp.y, gp.z, pxw * 2.6f, col, 0.55f); }
+                } else {
+                    float ss = s;
+                    if (mobMode && f != 2 && f != 3) ss *= 0.74f + 0.26f * (v + 0.5f) / h + (v == h - 1 ? 0.06f : 0f);   // darker toward the bottom of each part, a lit top edge
+                    col = mixc(mul(col & 0xFFFFFF, ss), 0x1E2A50, 0.12f);
+                    if (rim > 0) col = mixc(col, rimCol, rim);
+                }
+                if (tint > 0) col = mixc(col, tintCol, tint);
                 float a0 = u / (float) w, a1 = (u + 1) / (float) w, b0 = v / (float) h, b1 = (v + 1) / (float) h;
                 quad(F.opq, ox + ux * a0 + vx * b0, oy + uy * a0 + vy * b0, oz + uz * a0 + vz * b0,
                         ox + ux * a1 + vx * b0, oy + uy * a1 + vy * b0, oz + uz * a1 + vz * b0,
@@ -205,6 +223,7 @@ final class Vox3D {
         float yaw = (float) Math.toRadians(16 + 5 * Math.sin(t * 0.4) + 8 * (1f - eo(t / 1.2f)));
         float pitch = (float) Math.toRadians(27 + 2 * Math.sin(t * 0.3));
         Vector3f target = new Vector3f(0.2f, 0.85f, 0f);
+        if (dbgDist > 0) { dist = dbgDist; target = dbgTarget; }
         eye.set(target.x + (float) (Math.sin(yaw) * Math.cos(pitch)) * dist, target.y + (float) Math.sin(pitch) * dist, target.z + (float) (Math.cos(yaw) * Math.cos(pitch)) * dist);
         float jx = (rnd((int) (t * 60)) - 0.5f) * 0.22f * sh, jy = (rnd((int) (t * 60) + 31) - 0.5f) * 0.22f * sh;
         Matrix4f view = new Matrix4f().lookAt(eye.x + jx, eye.y + jy, eye.z, target.x + jx * 0.5f, target.y + jy * 0.5f, target.z, 0, 1, 0);
@@ -458,20 +477,32 @@ final class Vox3D {
         float walk = walking ? (float) Math.sin(t * 9f) : 0f;
         push(); M.translate(x, y - sink * 1.6f, z - kb).rotateY(yawNow);
         if (fall > 0) M.rotateX(-fall * 1.45f);
-        float sc = new float[]{1.25f, 1.6f, 1.9f, 1.05f, 1.3f, 1.25f}[boss] / 16f; M.scale(sc);
-        burstD = shatter ? since : -1f; partNo = 0;
+        float sc = MOB_K[boss] / 16f; M.scale(sc);
+        burstD = shatter ? since : -1f; partNo = 0; mobMode = true; rimCol = mixc(energy, 0xFFFFFF, 0.25f);
         switch (boss) {
-            case 0 -> humanoid(t, walk, true, ZOMBIE_HEAD, ZOMBIE_BODY, ZOMBIE_ARM, ZOMBIE_LEG, false);
+            case 0 -> revenant(t, walk);
             case 1 -> spider(t, walk);
             case 2 -> wolf(t, walk);
             case 3 -> enderman(t, walk);
             case 4 -> blaze(t);
             default -> humanoid(t, walk, false, VAMP_HEAD, VAMP_BODY, VAMP_ARM, VAMP_LEG, true);
         }
-        pop(); burstD = -1f; tint = 0f; crumble = 0f;
+        pop(); burstD = -1f; tint = 0f; crumble = 0f; mobMode = false;
+        if (!shatter) aura(t, x, y - sink * 1.6f, z, MOB_K[boss], energy, boss);
         if (shatter && since < 0.5f) glow(F.add, x, 1f, z, 3f * (1f + since), energy, 0.7f * (1f - since / 0.5f));
         if (type == 0 && since > 0.3f) ash(since, x, z);
-        if (!shatter) glow(F.add, x, 0.04f, z, 1.1f, energy, 0.18f);
+    }
+    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f};
+    /** The boss's presence: a shadow under it, dark smoke at its feet, wisps of its energy spiralling up round it. */
+    static void aura(float t, float x, float y, float z, float k, int energy, int boss) {
+        disc(F.veil, x, 0.014f, z, 0.95f * k, 0x050508, 0.5f);
+        for (int i = 0; i < 7; i++) { float u = ((t * 0.5f + i / 7f) % 1f), an = i * 0.9f + t * 0.7f; glow(F.veil, x + (float) Math.cos(an) * 0.7f * k, y + 0.15f + u * 0.6f, z + (float) Math.sin(an) * 0.5f * k, 0.45f * k * (0.6f + u), 0x0A0A12, 0.3f * (1f - u)); }
+        for (int i = 0; i < 16; i++) {
+            float u = ((t * 0.55f + i / 16f) % 1f), an = i * 2.4f + t * 2.2f + u * 3f, r = (0.55f + 0.25f * (float) Math.sin(i + t)) * k * (1f - u * 0.4f);
+            glow(F.add, x + (float) Math.cos(an) * r, y + u * 2.3f * k, z + (float) Math.sin(an) * r, 0.1f + 0.08f * (1f - u), i % 3 == 0 ? 0xFFFFFF : energy, 0.95f * (1f - u) * sm(u * 5f));
+        }
+        Vector3f back = new Vector3f(x, y + 1.2f * k, z).sub(eye).normalize().mul(0.9f).add(x, y + 1.2f * k, z);   // a backlight just behind it: its silhouette glows
+        glow(F.add, back.x, back.y, back.z, 2.2f * k, energy, 0.28f);
     }
     static void ash(float since, float x, float z) {
         for (int i = 0; i < 22; i++) {
@@ -481,42 +512,82 @@ final class Vox3D {
     }
 
     // ---- skins (model pixels)
-    static final String ZFACE = "GGGGGGGG" + "GGGGGGGG" + "GGGGGGGG" + "GEEGGEEG" + "GGGddGGG" + "GGGGGGGG" + "GGddddGG" + "GGGGGGGG";
-    static final Skin ZOMBIE_HEAD = (f, u, v, w, h) -> {
+    // the Revenant: a rotting zombie in diamond armour, sockets with burning red eyes, a torn grin
+    static final String RFACE = "DDgDGDgD" + "GgGGgGDG" + "GGgGGgGG" + "GKRGGRKG" + "gGGNNGGg" + "GgGGGGgG" + "GKWKWKWG" + "GGKKKKGG";
+    static int rot(float n) { return n < 0.18f ? 0x3A5A2C : n < 0.3f ? 0x5E5A36 : n < 0.38f ? 0x2E4A24 : 0x4E7A3C; }
+    static final Skin REV_HEAD = (f, u, v, w, h) -> {
         int row = h - 1 - v; float n = rnd(f * 31 + u * 7 + v * 13 + 1);
-        if (f == 4 && w == 8 && h == 8) { char ch = ZFACE.charAt(row * 8 + u); if (ch == 'E') return 0x1A2416; if (ch == 'd') return 0x3E5E30; }
-        if (f == 2 || row < 2) return mul(0x3E6E2E, 0.85f + n * 0.3f);
-        return mul(0x5E8E48, 0.85f + n * 0.3f);
+        if (f == 4 && w == 8 && h == 8) {
+            switch (RFACE.charAt(row * 8 + u)) {
+                case 'R': return 0x02FF3A2A;
+                case 'K': return 0x141C10;
+                case 'N': return 0x2A3A20;
+                case 'W': return 0xC8C8A8;
+                case 'D': return 0x2E4A24;
+                case 'g': return 0x3E6230;
+                default: return mul(0x4E7A3C, 0.92f + n * 0.16f);
+            }
+        }
+        return mul(rot(n), 0.9f + n * 0.2f);
     };
-    static final Skin ZOMBIE_BODY = (f, u, v, w, h) -> { float n = rnd(f * 17 + u * 5 + v * 11 + 2); boolean edge = u == 0 || u == w - 1 || v == h - 1; return mul(edge ? 0x2EA8A8 : 0x5AE0DA, 0.86f + n * 0.26f); };
-    static final Skin ZOMBIE_ARM = (f, u, v, w, h) -> { float n = rnd(f * 19 + u * 3 + v * 7 + 3); return v < 5 ? mul(0x5E8E48, 0.85f + n * 0.3f) : mul(0x5AE0DA, 0.86f + n * 0.26f); };
-    static final Skin ZOMBIE_LEG = (f, u, v, w, h) -> { float n = rnd(f * 23 + u * 9 + v * 5 + 4); return v < 3 ? mul(0x2A2A52, 0.9f + n * 0.2f) : mul(v > 8 ? 0x5AE0DA : 0x46B8B4, 0.86f + n * 0.26f); };
+    static int diamond(int f, int u, int v, int w, int h, int seed) {
+        float n = rnd(seed + f * 17 + u * 5 + v * 11);
+        if (v == h - 1 || (f == 2)) return mul(0xA8FFF6, 0.92f + n * 0.1f);                        // the lit top edge
+        if (u == 0 || u == w - 1 || v == 0) return 0x1E8A8C;                                        // dark rims
+        if (f == 4 && u > 1 && u < w - 2 && v > 2 && v < h - 3 && (u + v) % 4 == 0) return 0xE8FFFC;  // a sparkle on the plate
+        return mul(v > h / 2 ? 0x5AE6E0 : 0x3EC4C2, 0.9f + n * 0.18f);
+    }
+    static final Skin REV_CHEST = (f, u, v, w, h) -> diamond(f, u, v, w, h, 2);
+    static final Skin REV_PAD = (f, u, v, w, h) -> diamond(f, u, v, w, h, 9);
+    static final Skin REV_ARM = (f, u, v, w, h) -> { float n = rnd(f * 19 + u * 3 + v * 7 + 3); if (v < 2) return 0x1E2A16; if (v < 4 && (u + f) % 3 == 0) return 0xD8D4C0; return mul(rot(n), 0.9f + n * 0.2f); };
+    static final Skin REV_LEG = (f, u, v, w, h) -> v < 2 ? mul(0x262638, 0.9f + rnd(u * 9 + v * 5 + f) * 0.2f) : diamond(f, u, v, w, h, 4);
+
     static final String VFACE = "HHHHHHHH" + "HHHHHHHH" + "SSSSSSSS" + "SRRSSRRS" + "SSSSSSSS" + "SSSSSSSS" + "SSFSSFSS" + "SSSSSSSS";
     static final Skin VAMP_HEAD = (f, u, v, w, h) -> {
         int row = h - 1 - v;
-        if (f == 4 && w == 8 && h == 8) { char ch = VFACE.charAt(row * 8 + u); return switch (ch) { case 'H' -> 0x1A1418; case 'R' -> 0xE02030; case 'F' -> 0xF8F8F8; default -> 0xE0D0C8; }; }
+        if (f == 4 && w == 8 && h == 8) { char ch = VFACE.charAt(row * 8 + u); return switch (ch) { case 'H' -> 0x1A1418; case 'R' -> 0x02FF2030; case 'F' -> 0xF8F8F8; default -> 0xE0D0C8; }; }
         return row < 3 || f == 2 || f == 5 ? 0x1A1418 : 0xE0D0C8;
     };
     static final Skin VAMP_BODY = (f, u, v, w, h) -> f == 4 && u >= 3 && u <= 4 && v > 4 ? 0xE8E8E8 : f == 4 && (u == 3 || u == 4) ? 0xA01020 : mul(0x24162A, 0.9f + rnd(u * 7 + v) * 0.2f);
     static final Skin VAMP_ARM = (f, u, v, w, h) -> v < 2 ? 0xE0D0C8 : mul(0x24162A, 0.9f + rnd(u * 5 + v * 3) * 0.2f);
     static final Skin VAMP_LEG = (f, u, v, w, h) -> v < 2 ? 0x0E0A0E : mul(0x1E1420, 0.9f + rnd(u * 3 + v * 9) * 0.2f);
 
-    /** A Minecraft humanoid, feet at the origin, facing +z, in model pixels. Zombie arms reach forward. */
+    /** The Revenant: hunched forward, diamond shoulder pads, arms reaching for you. */
+    static void revenant(float t, float walk) {
+        for (int sd = -1; sd <= 1; sd += 2) { push(); M.translate(sd * 2.1f, 12f, 0f).rotateX(walk * 0.7f * sd); part(-2.3f, -12f, -2.3f, 2.3f, 0.3f, 2.3f, REV_LEG); pop(); }
+        push(); M.translate(0, 12f, 0).rotateX(0.22f + 0.03f * (float) Math.sin(t * 2.2f));                     // the hunch, breathing
+        part(-4.6f, -0.4f, -2.6f, 4.6f, 12.6f, 2.6f, REV_CHEST);
+        for (int sd = -1; sd <= 1; sd += 2) {
+            push(); M.translate(sd * 6.4f, 10.5f, 0f).rotateX(-1.35f + 0.16f * (float) Math.sin(t * 4.5f + sd)).rotateZ(sd * 0.08f);
+            part(-2f, -11f, -2f, 2f, 1f, 2f, REV_ARM);
+            part(-2.8f, -2.5f, -2.8f, 2.8f, 2.4f, 2.8f, REV_PAD); pop();
+        }
+        push(); M.translate(0, 12.6f, 0.4f).rotateX(-0.28f).rotateY(0.18f * (float) Math.sin(t * 1.3f)).rotateZ(0.08f * (float) Math.sin(t * 0.9f)); part(-4f, 0f, -4f, 4f, 8f, 4f, REV_HEAD); pop();
+        pop();
+    }
+    /** A Minecraft humanoid, feet at the origin, facing +z, in model pixels. */
     static void humanoid(float t, float walk, boolean reach, Skin head, Skin body, Skin arm, Skin leg, boolean cape) {
         for (int s = -1; s <= 1; s += 2) { push(); M.translate(s * 2f, 12f, 0f).rotateX(walk * 0.7f * s); part(-2f, -12f, -2f, 2f, 0f, 2f, leg); pop(); }
         part(-4f, 12f, -2f, 4f, 24f, 2f, body);
-        if (cape) { push(); M.translate(0, 24f, -2.2f).rotateX(0.18f + 0.06f * (float) Math.sin(t * 4)); part(-5f, -18f, -1f, 5f, 0f, 0f, (f, u, v, w, h) -> mul(0xA01020, 0.85f + rnd(u * 3 + v) * 0.3f)); pop(); }
+        if (cape) { push(); M.translate(0, 24f, -2.2f).rotateX(0.22f + 0.1f * (float) Math.sin(t * 4) + walk * 0.1f); part(-5f, -19f, -1f, 5f, 0f, 0f, (f, u, v, w, h) -> v < 2 ? 0x5A0810 : mul(f == 4 ? 0x3A0A14 : 0xB01020, 0.85f + rnd(u * 3 + v) * 0.3f)); pop(); }
         for (int s = -1; s <= 1; s += 2) {
             push(); M.translate(s * 6f, 22f, 0f);
             if (reach) M.rotateX(-1.45f + 0.12f * (float) Math.sin(t * 5 + s)); else M.rotateX(-walk * 0.6f * s);
             part(-2f, -10f, -2f, 2f, 2f, 2f, arm); pop();
         }
         push(); M.translate(0, 24f, 0).rotateY(0.15f * (float) Math.sin(t * 1.3f)); part(-4f, 0f, -4f, 4f, 8f, 4f, head); pop();
+        if (cape) { push(); M.translate(0, 23f, 0); part(-4.5f, 0f, -2.5f, 4.5f, 2.5f, 2.5f, (f, u, v, w, h) -> mul(0x8A0A18, 0.85f + rnd(u * 7 + v) * 0.3f)); pop(); }   // the high collar
     }
     static void spider(float t, float walk) {
-        Skin dark = (f, u, v, w, h) -> mul(0x3A2E28, 0.8f + rnd(f * 7 + u * 13 + v * 5) * 0.35f);
-        Skin headS = (f, u, v, w, h) -> { if (f == 4 && h == 8 && w == 8 && (v == 4 || v == 5) && (u == 1 || u == 2 || u == 5 || u == 6)) return 0xE02020; if (f == 4 && v == 6 && (u == 3 || u == 4)) return 0xE02020; return mul(0x2E2420, 0.8f + rnd(u * 7 + v * 3 + f) * 0.3f); };
-        part(-5f, 4f, -15f, 5f, 12f, -3f, dark);
+        Skin dark = (f, u, v, w, h) -> (v == 0 || u == 0) && w > 8 ? 0x5A1A1A : mul(0x241E22, 0.8f + rnd(f * 7 + u * 13 + v * 5) * 0.35f);
+        Skin headS = (f, u, v, w, h) -> { if (f == 4 && h == 8 && w == 8 && (v == 4 || v == 5) && (u == 1 || u == 2 || u == 5 || u == 6)) return 0x02FF2A2A; if (f == 4 && v == 6 && (u == 3 || u == 4)) return 0x02FF2A2A; return mul(0x2E2420, 0.8f + rnd(u * 7 + v * 3 + f) * 0.3f); };
+        Skin belly = (f, u, v, w, h) -> {                                                            // Broodfather black, a glowing red mark on its back
+            float n = rnd(f * 7 + u * 13 + v * 5 + 3);
+            if (f == 2 && ((u == w / 2 || u == w / 2 - 1) && v > 2 && v < h - 2 || (v == h / 2 && u > 2 && u < w - 3))) return 0x02E01818;
+            if (f == 5 && (u == w / 2 || u == w / 2 - 1) && v > 1 && v < h - 1) return 0x02C01010;
+            return mul(n < 0.15f ? 0x3A1414 : 0x1C181C, 0.8f + n * 0.4f);
+        };
+        part(-5f, 4f, -15f, 5f, 12f, -3f, belly);
         part(-3f, 5f, -3f, 3f, 11f, 3f, dark);
         part(-4f, 4f, 3f, 4f, 12f, 11f, headS);
         for (int s = -1; s <= 1; s += 2) for (int k = 0; k < 4; k++) {
@@ -527,7 +598,7 @@ final class Vox3D {
     }
     static void wolf(float t, float walk) {
         Skin fur = (f, u, v, w, h) -> mul(0xE6E6EA, 0.82f + rnd(f * 11 + u * 7 + v * 3) * 0.28f);
-        Skin headS = (f, u, v, w, h) -> { if (f == 4 && w == 6 && h == 6 && v == 3 && (u == 1 || u == 4)) return 0xE02020; return mul(0xE6E6EA, 0.82f + rnd(f * 13 + u * 5 + v * 9) * 0.28f); };
+        Skin headS = (f, u, v, w, h) -> { if (f == 4 && w == 6 && h == 6 && v == 3 && (u == 1 || u == 4)) return 0x02FF3030; return mul(0xE6E6EA, 0.82f + rnd(f * 13 + u * 5 + v * 9) * 0.28f); };
         for (int[] lg : new int[][]{{-2, -5}, {2, -5}, {-2, 5}, {2, 5}}) { push(); M.translate(lg[0] * 0.75f, 8f, lg[1]).rotateX(walk * 0.7f * (lg[0] > 0 == lg[1] > 0 ? 1 : -1)); part(-1f, -8f, -1f, 1f, 0f, 1f, fur); pop(); }
         part(-3f, 8f, -7f, 3f, 14f, 4f, fur);
         part(-4f, 8f, 1f, 4f, 15f, 7f, fur);
@@ -536,7 +607,7 @@ final class Vox3D {
     }
     static void enderman(float t, float walk) {
         Skin black = (f, u, v, w, h) -> mul(0x161418, 0.8f + rnd(f * 11 + u * 7 + v * 3) * 0.4f);
-        Skin headS = (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8 && v == 3) return (u <= 2 || u >= 5) ? (u == 1 || u == 6 ? 0xE070FF : 0xC040E0) : 0x161418; return mul(0x161418, 0.8f + rnd(u * 7 + v * 3 + f) * 0.4f); };
+        Skin headS = (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8 && v == 3) return (u <= 2 || u >= 5) ? (u == 1 || u == 6 ? 0x02F090FF : 0x02C040E0) : 0x161418; return mul(0x161418, 0.8f + rnd(u * 7 + v * 3 + f) * 0.4f); };
         for (int s = -1; s <= 1; s += 2) { push(); M.translate(s * 2f, 30f, 0f).rotateX(walk * 0.4f * s); part(-1f, -30f, -1f, 1f, 0f, 1f, black); pop(); }
         part(-4f, 30f, -2f, 4f, 42f, 2f, black);
         for (int s = -1; s <= 1; s += 2) { push(); M.translate(s * 5f, 41f, 0f).rotateX(-walk * 0.3f * s).rotateZ(s * 0.06f); part(-1f, -29f, -1f, 1f, 1f, 1f, black); pop(); }
@@ -544,7 +615,7 @@ final class Vox3D {
         for (int i = 0; i < 6; i++) { float u = ((t * 0.8f + i / 6f) % 1f); Vector3f p = M.transformPosition(new Vector3f((rnd(i * 5) - 0.5f) * 14f, u * 46f, (rnd(i * 9) - 0.5f) * 10f)); glow(F.add, p.x, p.y, p.z, 0.08f, 0xD060FF, 1f - u); }
     }
     static void blaze(float t) {
-        Skin yel = (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8 && v == 4 && (u == 1 || u == 2 || u == 5 || u == 6)) return 0x2A1A0A; return mul(0xF2C230, 0.8f + rnd(f * 11 + u * 7 + v * 3) * 0.35f); };
+        Skin yel = (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8 && v == 4 && (u == 1 || u == 2 || u == 5 || u == 6)) return 0x02FFF0B0; return mul(0xF2C230, 0.8f + rnd(f * 11 + u * 7 + v * 3) * 0.35f); };
         Skin rod = (f, u, v, w, h) -> mul(0xF0A020, 0.85f + rnd(u * 5 + v * 9 + f) * 0.3f);
         part(-4f, 16f, -4f, 4f, 24f, 4f, yel);
         for (int ringI = 0; ringI < 3; ringI++) for (int k = 0; k < 4; k++) {
