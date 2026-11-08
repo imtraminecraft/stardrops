@@ -61,34 +61,46 @@ final class SpaceSite {
         }
     }
 
+    interface Fill { void f(int x0, int y0, int x1, int y1, int col); }
+    private static Canvas planetC; private static int planetR = -1;
+    /** The ringed planet: painted once into a picture (a thousand fills a frame before) and drawn as one texture; only its glow is live. */
     private static void planet(GuiGraphicsExtractor g, float cx, float cy, float r, float T) {
+        int R = Math.round(r), pw = R * 5 + 6, ph = R * 3 + 6;
+        NebulaTex.glow(g, cx, cy, r * 1.9f, r * 1.9f, Gfx.argb(44, 0xFF9A5A));
+        if (planetC == null || planetR != R) {
+            Canvas c = new Canvas(pw, ph); float ox = pw / 2f, oy = ph / 2f;
+            paintPlanet((x0, y0, x1, y1, col) -> c.rect(x0, y0, x1, y1, col), ox, oy, R);
+            planetC = c; planetR = R;
+        }
+        NebulaTex.layer(g, "site_planet", planetC, Math.round(cx - pw / 2f), Math.round(cy - ph / 2f), pw, ph, 0xFFFFFFFF);
+    }
+    private static void paintPlanet(Fill g, float cx, float cy, float r) {
         float tilt = -0.32f, rx = r * 2.1f, ry = r * 0.55f;
         ringHalf(g, cx, cy, rx, ry, tilt, false);
-        NebulaTex.glow(g, cx, cy, r * 1.9f, r * 1.9f, Gfx.argb(44, 0xFF9A5A));
         int R = Math.round(r);
         for (int dy = -R; dy <= R; dy++) {
             float hw = (float) Math.sqrt(Math.max(0, r * r - dy * dy)); if (hw < 0.5f) continue;
             int x0 = Math.round(cx - hw), x1 = Math.round(cx + hw), yy = Math.round(cy) + dy;
             float band = 0.5f + 0.5f * (float) Math.sin(dy * 0.55f + 1.3f) * (float) Math.cos(dy * 0.17f);
             int base = Canvas.mix(0xFFC2603A, 0xFFF0B070, band);
-            for (int xx = x0; xx < x1; xx += 2) {                                             // lit from the upper left: darker to the lower right
+            for (int xx = x0; xx < x1; xx++) {                                              // lit from the upper left: darker to the lower right
                 float lx = (xx - cx) / r, ly = dy / r, lit = Math.max(0f, Math.min(1f, 0.85f - (lx * 0.6f + ly * 0.5f + 0.25f)));
-                g.fill(xx, yy, Math.min(x1, xx + 2), yy + 1, Canvas.mix(0xFF2A1020, base, 0.25f + 0.75f * lit));
+                g.f(xx, yy, xx + 1, yy + 1, Canvas.mix(0xFF2A1020, base, 0.25f + 0.75f * lit));
             }
         }
         ringHalf(g, cx, cy, rx, ry, tilt, true);
-        g.fill(Math.round(cx - r * 0.45f), Math.round(cy - r * 0.55f), Math.round(cx - r * 0.45f) + 2, Math.round(cy - r * 0.55f) + 1, 0x70FFFFFF);
+        g.f(Math.round(cx - r * 0.45f), Math.round(cy - r * 0.55f), Math.round(cx - r * 0.45f) + 2, Math.round(cy - r * 0.55f) + 1, 0x70FFFFFF);
     }
     /** One half of the planet's rings (the back half behind the ball, the front half over it). */
-    private static void ringHalf(GuiGraphicsExtractor g, float cx, float cy, float rx, float ry, float tilt, boolean front) {
+    private static void ringHalf(Fill g, float cx, float cy, float rx, float ry, float tilt, boolean front) {
         float c = (float) Math.cos(tilt), s = (float) Math.sin(tilt);
         for (int band = 0; band < 3; band++) {
             float k = 0.78f + band * 0.11f; int col = band == 1 ? 0xD8C49A : 0xA88A66; int a = band == 1 ? 200 : 130;
-            for (int i = 0; i < 120; i++) {
-                float an = i * 6.2832f / 120; boolean fr = Math.sin(an) > 0; if (fr != front) continue;
+            for (int i = 0; i < 160; i++) {
+                float an = i * 6.2832f / 160; boolean fr = Math.sin(an) > 0; if (fr != front) continue;
                 float ex = (float) Math.cos(an) * rx * k, ey = (float) Math.sin(an) * ry * k;
                 int px = Math.round(cx + ex * c - ey * s), py = Math.round(cy + ex * s + ey * c);
-                g.fill(px, py, px + 2, py + 1, Gfx.argb(a, col));
+                g.f(px, py, px + 2, py + 1, Gfx.argb(a, col));
             }
         }
     }
@@ -166,8 +178,8 @@ final class SpaceSite {
     /** Half of the spinning habitat ring (seen nearly edge on): a solid band, six pods with lit windows sliding round it. */
     private static void ring(GuiGraphicsExtractor g, float cx, float cy, float rx, float ry, float spin, int n, float k, boolean front) {
         int th = Math.max(2, Math.round(3 * k));
-        for (int i = 0; i < 140; i++) {
-            float an = i * 6.2832f / 140; float c = (float) Math.cos(an); if ((c >= 0) != front) continue;
+        for (int i = 0; i < 90; i++) {
+            float an = i * 6.2832f / 90; float c = (float) Math.cos(an); if ((c >= 0) != front) continue;
             int px = Math.round(cx + c * rx), py = Math.round(cy + (float) Math.sin(an) * ry);
             int col = front ? Canvas.mix(0xFF6A7290, 0xFFE0E6F4, 0.3f + 0.7f * c) : Canvas.mix(0xFF1E2238, 0xFF4A526C, 1f + c);
             g.fill(px - th / 2, py - 1, px - th / 2 + th, py + 1, col);
@@ -338,7 +350,7 @@ final class SpaceSite {
         for (int dy = -R; dy <= R; dy++) { float u = (dy + 0.5f) / ry, hw = rx * (float) Math.sqrt(Math.max(0, 1 - u * u)); if (hw < 0.3f) continue; g.fill(Math.round(cx - hw), Math.round(cy) + dy, Math.round(cx + hw), Math.round(cy) + dy + 1, col); }
     }
     private static void ring(GuiGraphicsExtractor g, float cx, float cy, float r, int col) {
-        int n = Math.max(12, Math.round(r * 6f)); int lx = Integer.MIN_VALUE, ly = 0;
+        int n = Math.max(10, Math.round(r * 3.5f)); int lx = Integer.MIN_VALUE, ly = 0;
         for (int i = 0; i < n; i++) { float an = i * 6.2832f / n; int px = Math.round(cx + (float) Math.cos(an) * r), py = Math.round(cy + (float) Math.sin(an) * r); if (px == lx && py == ly) continue; g.fill(px, py, px + 1, py + 1, col); lx = px; ly = py; }
     }
     private static float rnd(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }
