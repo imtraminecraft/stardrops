@@ -53,7 +53,7 @@ public final class AnimationManager {
         Anim(String group, int type, Item item) { this.group = group; this.type = type; this.item = type == NO_DROPS ? null : item; }
         String key() { return group + "." + TYPE_IDS[type]; }
         FancyConfig.AnimCfg cfg() { return FancyConfig.get().anim(key()); }
-        float secs() { return sceneLen(type); }
+        float secs() { return sceneLen(group, type); }
         /** Extra seconds the finish is held so the words of several drops can be read (0.5 s per extra drop, at most 1.5). */
         float hold() { int n = count(); return n <= 1 ? 0f : Math.min(1.5f, (n - 1) * 0.5f); }
         /** The whole length: the scene plus the hold. */
@@ -94,14 +94,15 @@ public final class AnimationManager {
     }
     /** True while the playing scene has not shown its items yet (there is still time to add more). */
     private static boolean beforeItems(Anim c) {
-        float t = (clock() - c.start) / 1000f * pace(c), O = opening(c.type);
+        float t = (clock() - c.start) / 1000f * pace(c), O = opening(c.group, c.type);
         return t < O - 0.35f;
     }
     public static boolean isPlaying() { return cur != null || !QUEUE.isEmpty(); }
     /** True while the hotbar and hearts should slide away (a scene with cinematic bars). */
     public static boolean hidesHud() {
         if (cur == null || cur.type != RNG || !cur.cfg().bars) return false;
-        float t = (clock() - cur.start) / 1000f * pace(cur), S = cur.secs(), O = opening(cur.type);
+        float t = (clock() - cur.start) / 1000f * pace(cur), S = cur.secs(), O = opening(cur.group, cur.type);
+        if (isSlayer(cur.group)) return t >= O - 0.5f && t < animLen(cur.group, cur.type) + cur.hold();      // slayer: hidden from just before the supernova until the animation ends
         return t >= O - 0.8f && t < S + cur.hold() - 0.05f;                                           // only while the cinematic bars are on screen (they slide in at O - 0.8 s, out at the end)
     }
 
@@ -130,6 +131,17 @@ public final class AnimationManager {
     /** When the drop appears: the opening takes all but the last 1.4 s of the animation (the finish). */
     static float opening(int type) { return animLen(type) - 1.4f; }
 
+    // ---- Slayer (Stardrops): its own timeline. The black hole forms, the boss is pulled in (three gulps), and at 3.4 s it is gone:
+    // No Drops 5.5 s (the hole swallows the scene, "nothing dropped"), a drop 6 s, RNG 7 s (the supernova); the words stay 3 s after.
+    static boolean isSlayer(String groupOrKey) { return groupOrKey != null && groupOrKey.startsWith("slayer"); }
+    static final float SL_PIVOT = 3.4f;
+    static final float[] SL_GULPS = {1.75f, 2.35f, 2.95f};
+    static float animLen(String g, int type) { return isSlayer(g) ? (type == RNG ? 7f : type == NORMAL ? 6f : 5.5f) : animLen(type); }
+    static float opening(String g, int type) { return isSlayer(g) ? SL_PIVOT : opening(type); }
+    static float textHold(String g, int type) { return isSlayer(g) ? (type == NO_DROPS ? 0f : 3f) : textHold(type); }
+    static float sceneLen(String g, int type) { return animLen(g, type) + textHold(g, type); }
+    static float sceneLen(String key) { return sceneLen(key, typeOfKey(key)); }
+
     /** Called every frame from the HUD. */
     public static void render(GuiGraphicsExtractor g) {
         long now = clock();
@@ -146,9 +158,10 @@ public final class AnimationManager {
     /** The moments (seconds) each sound slot (chop, split, reveal, linger, end) plays in a scene of this length. */
     static float[][] cueTimes(String scene) { return cueTimes(scene, 0f); }
     static float[][] cueTimes(String scene, float hold) {
-        int ty = typeOfKey(scene); float S = sceneLen(ty), O = opening(ty), A = animLen(ty); boolean tre = scene.startsWith("treasure"), nod = scene.endsWith("nodrops");
+        int ty = typeOfKey(scene); float S = sceneLen(scene, ty), O = opening(scene, ty), A = animLen(scene, ty); boolean tre = scene.startsWith("treasure"), nod = scene.endsWith("nodrops");
         float[] beats = tre ? new float[]{0.215f * O, 0.505f * O, 0.795f * O} : new float[]{0.34f * O, 0.58f * O, 0.80f * O};
-        if (scene.startsWith("exp.")) beats = BookScene.flipStarts(scene.endsWith("rng"), O);        // the sound plays as the page lifts, not when it lands
+        if (scene.startsWith("exp.")) beats = BookScene.flipStarts(scene.endsWith("rng"), O);
+        if (isSlayer(scene)) beats = SL_GULPS.clone();        // the sound plays as the page lifts, not when it lands
         return new float[][]{beats, {O}, nod ? new float[0] : new float[]{O + 0.25f}, {O + 1.0f}, {A - 0.5f + hold}};
     }
 
@@ -173,7 +186,7 @@ public final class AnimationManager {
         if (!sndOn) return;
         float t = (clock() - sndT0) / 1000f;
         cues(sndKey, 0f, sndLast, t); sndLast = t;
-        if (t > sceneLen(typeOfKey(sndKey)) + 0.4f) sndOn = false;
+        if (t > sceneLen(sndKey) + 0.4f) sndOn = false;
     }
     /** Seconds into the playback of this scene (a sounds-only playback or the real animation), or -1 when nothing of it is playing. */
     public static float playingT(String key) {
@@ -235,12 +248,12 @@ public final class AnimationManager {
         String group = key.substring(0, key.indexOf('.')), tid = key.substring(key.indexOf('.') + 1);
         int type = NORMAL; for (int i = 0; i < TYPE_IDS.length; i++) if (TYPE_IDS[i].equals(tid)) type = i;
         Anim a = new Anim(group, type, TextFx.itemOnly ? sampleHead() : sampleFor(group, type));
-        a.kind = (int) (((clock() - (key.equals(previewKey) ? previewT0 : clock())) / 1000L) / Math.max(1, (long) (sceneLen(type) + 1f))) % Ritual.KINDS.length;      // the preview cycles through all twelve creatures
+        a.kind = (int) (((clock() - (key.equals(previewKey) ? previewT0 : clock())) / 1000L) / Math.max(1, (long) (sceneLen(group, type) + 1f))) % Ritual.KINDS.length;      // the preview cycles through all twelve creatures
         long now = clock();
         if (!key.equals(previewKey)) { previewKey = key; previewT0 = now; }
         float secs = a.secs();
         float t = syncSec >= 0 ? syncSec : ((now - previewT0) / 1000f) % (secs + 1f);
-        float pivot = opening(type);
+        float pivot = opening(group, type);
         if (TextFx.freezeT >= 0) t = pivot + TextFx.freezeT;                       // held that many seconds after the drop appears
         else if (TextFx.itemOnly || TextFx.barsOnly) t = Math.min(pivot + 1.6f, secs - 0.05f);                                // the Item editor shows the scene held, with the item living on its own clock
         else if (TextFx.textOnly) t = Math.min(pivot + 1.6f, secs - 0.05f);                                // the Text editor draws the words alone (they loop on the text clock)

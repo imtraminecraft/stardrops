@@ -534,16 +534,16 @@ final class Ritual {
     static void paint(float t, boolean tre, int type, float S, float sz, float isc, int rc, float icy, int blade, boolean itemBob, float bobAmp) {
         boolean rng = type == AnimationManager.RNG, nod = type == AnimationManager.NO_DROPS;
         SlayerScenery.rngBorder = rng; SlayerScenery.borderT = t;
-        float O = AnimationManager.opening(type), p = t - O, icx = CW / 2f, gy = icy + 22 * sz, rx = 50 * sz, ry = 13 * sz;
+        String grp = slayerMode ? "slayer" : ""; float O = AnimationManager.opening(grp, type), p = t - O, icx = CW / 2f, gy = icy + 22 * sz, rx = 50 * sz, ry = 13 * sz;
         int energy = tre ? GOLD : slayerMode ? SL_ENERGY[Math.floorMod(kind - 12, 6)] : farmMode ? FarmScene.ENERGY[farmKind] : expMode ? 0xB56BFF : showMotif == ShowScene.DYE ? showTint : showMotif >= 0 ? ShowScene.energy(showMotif) : CYAN;
         float bg = 1f - sm((p - 0.5f) / 0.9f);                                             // the background fades while the words show
-        float fxEnd = AnimationManager.animLen(type) + hold;                                     // the finish ends with the animation; the words stay on after it
+        float fxEnd = AnimationManager.animLen(grp, type) + hold;                                     // the finish ends with the animation; the words stay on after it
         float itemA = TextFx.itemOnly ? 1f : sm(p / 0.22f) * (1f - sm((t - (fxEnd - 0.6f)) / 0.6f));
         float tb = TextFx.itemOnly ? (System.currentTimeMillis() % 100000L) / 1000f : t;                // the item keeps bobbing while the Item editor holds the scene
         cv.clear();
         if (SpaceScenes.ON) {   // Stardrops: slayers play the space bounty hunt, every other group the space WIP gate (the old scenes stay in the code for now)
             float cyS = itemY(t, p, gy, icy, sz, itemBob, bobAmp);
-            if (slayerMode) SpaceScenes.slayer(t, O, p, icx, gy, icy, sz, isc, Math.floorMod(kind - 12, 6), energy, rc, rng, nod, itemA, bg, itemOffs, cyS);
+            if (slayerMode) SlayerHole.paint(t, AnimationManager.animLen("slayer", type), Math.floorMod(kind - 12, 6), energy, rc, rng, nod, icx, icy, sz, isc, itemA, itemOffs, cyS, bg);
             else SpaceScenes.wip(t, O, p, icx, gy, icy, sz, isc, rc, rng, nod, itemA, bg, itemOffs, cyS);
             return;
         }
@@ -834,7 +834,7 @@ final class Ritual {
     static float sizeOf(int n) { return n <= 1 ? 1f : n == 2 ? 0.85f : n == 3 ? 0.76f : Math.max(0.5f, 2.6f / n); }
     static void end() { hold = 0f; slayerMode = false; farmMode = false; expMode = false; showMotif = -1; itemOffs = new float[]{0f}; }
     /** The colour of each boss: zombie, spider, wolf, enderman, blaze, vampire. */
-    private static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030};
+    static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030};
     static boolean isSlayer(Anim a) { return a.group.equals("slayer"); }
     static int slTheme(Anim a) { return Math.floorMod(a.kind >= 0 ? a.kind : a.item != null && a.item.source != null ? SlayerData.theme(a.item.source.id) : 0, 6); }
 
@@ -979,7 +979,7 @@ final class Ritual {
         if (sl) kind = 12 + slTheme(a);
         int type = a.type;
         boolean rng = type == AnimationManager.RNG, nod = type == AnimationManager.NO_DROPS;
-        float hd = a.hold(), S = a.secs() + hd, O = AnimationManager.opening(type), p = t - O;
+        float hd = a.hold(), S = a.secs() + hd, O = AnimationManager.opening(a.group, type), p = t - O;
         float csz = Math.max(0.5f, Math.min(1.5f, c.animScale)) * (rng ? 1f : Math.max(0.5f, Math.min(1f, c.normalSize / 100f))), sz = SMALLER * csz, szc = sz * K, ssz = szc * SCENE_K, isc = Math.max(0.4f, c.itemScale);          // Normal and No Drops can play smaller, so they stay out of the way
         int rc = it != null ? (it.color() & 0xFFFFFF) : GREY;
         if (!tre && !rng && !nod) rc = mixc(rc, WHITE, 0.15f);
@@ -995,7 +995,8 @@ final class Ritual {
         float itemA = TextFx.itemOnly ? 1f : sm(p / 0.22f) * (1f - sm((t - (S - 1.0f)) / 0.9f));
         float tb = TextFx.itemOnly ? (System.currentTimeMillis() % 100000L) / 1000f : t;                // the item keeps bobbing while the Item editor holds the scene
         float textT = t - (O + 0.45f), textOut = sm((t - (S - 0.6f)) / 0.5f);               // the words leave after the item
-        float barSlide = TextFx.barsOnly ? 1f : Math.min(sm((t - (O - 0.8f)) / 0.6f), 1f - sm((t - (S - 0.5f)) / 0.45f));
+        float barEnd = sl ? AnimationManager.animLen(a.group, type) + hd : S;                                // slayer: the bars open again when the animation ends
+        float barSlide = TextFx.barsOnly ? 1f : Math.min(sm((t - (O - (sl ? 0.5f : 0.8f))) / 0.6f), 1f - sm((t - (barEnd - 0.5f)) / 0.45f));
         float shake = rng && p > 0 && p < 0.5f ? (1f - p / 0.5f) * 3f : 0f;
         int sx = Math.round((rnd((int) (t * 60)) - 0.5f) * 2f * shake * u), sy = Math.round((rnd((int) (t * 60) + 77) - 0.5f) * 2f * shake * u);
 
@@ -1075,8 +1076,22 @@ final class Ritual {
             }
         }
 
+        // ---- slayer, nothing dropped: the words where the hole was, once it has winked out
+        if (sl && nod && !sceneOff) {
+            float na = sm((t - (O + 1.25f)) / 0.4f) * (1f - sm((t - (S - 0.6f)) / 0.5f));
+            if (na > 0.01f) {
+                int boss = slTheme(a), en = SL_ENERGY[boss];
+                float sc = Math.max(1f, Math.min(W, H) / 270f) * 1.1f;
+                String l1 = "Nothing dropped", l2 = SlayerHole.NAMES[boss];
+                int y0 = Math.round(icy * u - 6 * sc);
+                Gfx.push(g); Gfx.translate(g, W / 2f - font.width(l1) * sc / 2f, y0 + (1f - na) * 4); Gfx.scale(g, sc); Gfx.txt(g, font, l1, 0, 0, Gfx.argb(Math.round(240 * na), 0xFFFFFF), true); Gfx.pop(g);
+                float s2 = sc * 0.65f;
+                Gfx.push(g); Gfx.translate(g, W / 2f - font.width(l2) * s2 / 2f, y0 + 12 * sc); Gfx.scale(g, s2); Gfx.txt(g, font, l2, 0, 0, Gfx.argb(Math.round(200 * na), mixc(en, WHITE, 0.35f)), true); Gfx.pop(g);
+            }
+        }
+
         // ---- the words: below the animation (top and center), above it (bottom); never over the bars
-        if (!TextFx.itemOnly && !TextFx.barsOnly && (textT > 0f || TextFx.textOnly)) {
+        if (!TextFx.itemOnly && !TextFx.barsOnly && !(sl && nod && !TextFx.textOnly) && (textT > 0f || TextFx.textOnly)) {   // (a slayer with nothing has its own words)
             float sc = c.textK() * Math.max(0.55f, Math.min(W, H) / 540f) * (0.8f + 0.2f * csz); if (TextFx.textOnly) sc = c.textK() * Math.max(1.3f, Math.min(2.6f, W / 150f));          // the Text editor shows the words big enough to read
             float th = textH(a, it, sc, c);
             float top = c.textAbove() ? (icy - hi - 14 * szc) * u - th : (icy + hi + 26 * szc) * u;

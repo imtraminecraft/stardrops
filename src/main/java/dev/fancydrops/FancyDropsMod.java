@@ -98,7 +98,12 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("fancydrops", "lyrics"),
-                (graphics, deltaTracker) -> { AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false)); CosmosHud.render(graphics); AmbienceHud.render(graphics); LyricsHud.hud(graphics); NowPlayingHud.hud(graphics); StarToast.render(graphics); });
+                (graphics, deltaTracker) -> { AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false));
+                    float away = Math.min(1f, slideOffset(true) / 63f);                                      // a big scene: our own HUD slides up out of the way with the hotbar going down
+                    if (away < 0.99f) { boolean mv = away > 0.01f; if (mv) { Gfx.push(graphics); Gfx.translate(graphics, 0, -away * 90f); }
+                        CosmosHud.render(graphics); AmbienceHud.render(graphics); LyricsHud.hud(graphics); NowPlayingHud.hud(graphics);
+                        if (mv) Gfx.pop(graphics); }
+                    StarToast.render(graphics); });
 
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("fancydrops", "auras"),

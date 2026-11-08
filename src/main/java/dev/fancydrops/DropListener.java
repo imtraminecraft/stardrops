@@ -223,7 +223,7 @@ public final class DropListener {
         boolean rng = false; for (Plan p : anim) if (p.type() == AnimationManager.RNG) rng = true;          // two drops play the bigger of their two animations
         Anim an = new Anim(group, rng ? AnimationManager.RNG : AnimationManager.NORMAL, anim.get(0).it());
         an.kind = kind; an.helios = helios;
-        if (group.equals("slayer") && takeCocoon()) an.speed = 1.8f;                 // a cocooned boss: the scene plays faster
+        if (group.equals("slayer") && takeCocoon()) an.speed = AnimationManager.animLen(group, an.type) / 3.5f;      // a cocooned boss: the animation plays in about 3.5 s                 // a cocooned boss: the scene plays faster
         for (int k = 1; k < anim.size(); k++) an.add(anim.get(k).it());
         AnimationManager.play(an);
         return true;
@@ -269,7 +269,7 @@ public final class DropListener {
         FancyConfig c = FancyConfig.get();
         if (killDrops || bossSrc == null || !c.masterAnimate || !c.source(bossSrc.id).enabled) return;
         Anim a = new Anim("slayer", AnimationManager.NO_DROPS, null); a.kind = SlayerData.theme(bossSrc.id);
-        if (takeCocoon()) a.speed = 1.8f;
+        if (takeCocoon()) a.speed = AnimationManager.animLen(a.group, a.type) / 3.5f;
         AnimationManager.play(a);
     }
     /** The boss a drop belongs to: the one that spawned when it also drops this item (Paragon Shard, dyes), else the first that lists it. */

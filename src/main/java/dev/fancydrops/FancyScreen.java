@@ -651,7 +651,7 @@ public class FancyScreen extends Screen {
         chipScene = Math.max(0, java.util.Arrays.asList(SoundFx.SCENES).indexOf(key));
         pill(g, x, y, w, h, Ui.PANEL2);
         FancyConfig c = FancyConfig.get();
-        float secs = AnimationManager.sceneLen(AnimationManager.typeOfKey(key));
+        float secs = AnimationManager.sceneLen(key);
         float[][] tm = AnimationManager.cueTimes(key);
         float pt = AnimationManager.playingT(key);
         int rulerH = 13, lw = 68, lh = (h - rulerH - 6) / 5, tx0 = x + 4 + lw, tx1 = x + w - 8, tw = Math.max(10, tx1 - tx0);
@@ -2674,19 +2674,24 @@ public class FancyScreen extends Screen {
     private void groupTiles(Categories.Cat cat, String hint) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb() + " " + hint, cat.color()));
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n]; boolean[] wp = new boolean[n];
-        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); lb[i] = g.name(); sb[i] = g.wip() ? "Soon\u2122" : g.types().size() + " types"; ic[i] = g.icon(); co[i] = g.color(); wp[i] = g.wip(); }
+        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); lb[i] = g.name(); sb[i] = g.wip() ? "Soon\u2122" : g.id().equals("slayer") ? "New \u00B7 black hole" : "WIP \u00B7 being remade"; ic[i] = g.icon(); co[i] = g.color(); wp[i] = g.wip(); }
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
     }
 
     /** The Animation Editor of one group: pick the type, then its length and size (and the bars and blur of RNG). */
+    private static final String[] SLAYER_BLURB = {
+        "Nothing dropped: a black hole in the boss's colour pulls the boss apart pixel by pixel, then swallows the whole scene and winks out. (5.5 s)",
+        "A drop: the black hole eats the boss in three gulps, then fires its jets and spits your drop out of its heart. The words stay 3 s after. (6 s)",
+        "RNG: the black hole eats the boss, collapses and goes supernova. A pulsar sweeps its beams behind your drop; the bars close in and your HUD slides away until it ends. (7 s)"};
     private void animationEditor(Categories.Cat cat, Categories.Group gr, FancyConfig c) {
         int ti = Math.max(0, Math.min(gr.types().size() - 1, edType));
         Categories.Type ty = gr.types().get(ti);
         String key = gr.key(ty);
         FancyConfig.AnimCfg a = c.anim(key);
         rows.add(backRow(cat.name(), "Back to the " + cat.name() + " animations", cat.color(), () -> openPage(curSub(), null, null)));
+        if (!gr.id().equals("slayer")) rows.add(note("WIP: this animation is being remade for Stardrops. Until it's done, every drop here plays the construction scene: a stargate being built by a little welding drone.", 0xFFFFC830));
         rows.add(typePicker(gr, c));
-        rows.add(note(ty.blurb(), ty.color()));
+        rows.add(note(gr.id().equals("slayer") ? SLAYER_BLURB[Math.max(0, Math.min(2, AnimationManager.typeIndex(ty.id())))] : ty.blurb(), ty.color()));
         Row pl = row(0, ":play:", "Preview", "Plays it over the game, like a real drop", ty.color());
         pl.ctls.add(new Btn("▶ Play", GREEN, () -> play(() -> DropListener.playSample(gr.id(), AnimationManager.typeIndex(ty.id()), false))));
         if (!ty.id().equals("nodrops")) pl.ctls.add(new Btn("▶ 3 items", GREEN, () -> play(() -> DropListener.playSampleMany(gr.id(), AnimationManager.typeIndex(ty.id()), 3)))); rows.add(pl);
@@ -2702,8 +2707,8 @@ public class FancyScreen extends Screen {
 
     /** How long an animation lasts: "4 s", or "4 s + 2.5 s text". */
     private static String lenText(String key) {
-        int ty = AnimationManager.typeOfKey(key); float a = AnimationManager.animLen(ty);
-        return ty == AnimationManager.NO_DROPS ? String.format(Locale.ROOT, "%.0f s", a) : String.format(Locale.ROOT, "%.0f s + %.0f s text", a, AnimationManager.textHold(ty));
+        int ty = AnimationManager.typeOfKey(key); float a = AnimationManager.animLen(key, ty);
+        return ty == AnimationManager.NO_DROPS ? String.format(Locale.ROOT, "%.0f s", a) : String.format(Locale.ROOT, "%.0f s + %.0f s text", a, AnimationManager.textHold(key, ty));
     }
 
     /** The three types of a group (No Drops, Normal, RNG) as tiles. */
