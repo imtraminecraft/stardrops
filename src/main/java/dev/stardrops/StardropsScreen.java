@@ -2682,7 +2682,7 @@ public class StardropsScreen extends Screen {
 
     /** The Animation Editor of one group: pick the type, then its length and size (and the bars and blur of RNG). */
     private static final String[] SLAYER_BLURB = {
-        "Nothing dropped: out in space, the boss stands on its own tiny planet. It is drawn in stars, walks while its planet turns, one falling star strikes it and it crumbles to grey stardust; the lone star flickers out. \"Nothing dropped\" stays as long as any drop's words.",
+        "Nothing dropped: on the curve of a giant planet under the stars, the boss rises out of its spawn (the Revenant from its grave) and roars at you. One falling star strikes it and it crumbles to grey stardust; the lone star flickers out. \"Nothing dropped\" stays as long as any drop's words.",
         "A drop: falling stars strike the boss on every beat, the last one shatters it, its stardust gathers into your drop, and the strikes join into a constellation round it. The words stay after it for as long as Text Changes says.",
         "RNG: the falling stars climb through the rarity colours like a gacha roll, the sky holds its breath, the last star is gold; your drop appears in a gold constellation with rays and confetti while the bars close in."};
     private void animationEditor(Categories.Cat cat, Categories.Group gr, StardropsConfig c) {
@@ -2727,8 +2727,8 @@ public class StardropsScreen extends Screen {
     private static final String[] SLOT_SUBS = {"Every beat of the opening", "The moment the animation pivots", "The item appears", "The glow after it", "The animation fades out"};
     /** What each Slayer slot plays: the five moments of the meteor scene. */
     private static final Map<String, String[]> SL_SLOT = Map.ofEntries(
-        Map.entry("rise", new String[]{"Arrive", "The boss is drawn in stars"}),
-        Map.entry("approach", new String[]{"Walk", "It walks while its little planet turns"}),
+        Map.entry("rise", new String[]{"Rise", "The boss rises out of its spawn"}),
+        Map.entry("approach", new String[]{"Roar", "It roars at you"}),
         Map.entry("strike", new String[]{"Strike", "One falling star"}),
         Map.entry("dust", new String[]{"Dust", "It crumbles to grey stardust"}),
         Map.entry("none", new String[]{"Nothing", "Under \"Nothing dropped\""}),

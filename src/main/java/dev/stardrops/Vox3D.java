@@ -61,7 +61,7 @@ final class Vox3D {
     static float edge(float x, float y, float z) {
         Vector4f v = projView.transform(new Vector4f(x, y, z, 1f)); if (v.w <= 0.01f) return 0f;
         float nx = v.x / v.w, ny = v.y / v.w, r = (float) Math.sqrt(nx * nx * 0.9f + ny * ny);
-        return 1f - sm((r - 0.62f) / 0.36f);
+        return 1f - sm((r - 0.72f) / 0.27f);
     }
 
     // ------------------------------------------------------------------ boxes
