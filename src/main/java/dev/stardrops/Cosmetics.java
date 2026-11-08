@@ -46,7 +46,7 @@ final class Cosmetics {
     private static final Map<UUID, Component> TAB_SET = new HashMap<>();       // the name we put in the tab list for each player (compared by identity: if it changed, the server rewrote it)
     private static final Map<UUID, String> TAB_ID = new HashMap<>();
     /** What the owners picked, read from cosmetics.json in the GitHub repo so everybody with the mod sees the same thing. */
-    private static final String REMOTE_URL = "https://raw.githubusercontent.com/imtraminecraft/Stardrops/main/cosmetics.json";
+    private static final String REMOTE_URL = "https://raw.githubusercontent.com/imtraminecraft/stardrops/main/cosmetics.json";
     private static final Map<String, Set<String>> BUILTIN = Map.of(OWNER, Set.of("sparkle"));          // the owner has the Special Set
     private static long remoteAt, remoteOkAt;
     static volatile String remoteRaw;                                   // the cosmetics.json text as last fetched (the Admin Panel edits a copy of it)
@@ -65,7 +65,7 @@ final class Cosmetics {
             String msg;
             try {
                 var http = Net.HTTP;
-                String api = "https://api.github.com/repos/imtraminecraft/Stardrops/contents/cosmetics.json";
+                String api = "https://api.github.com/repos/imtraminecraft/stardrops/contents/cosmetics.json";
                 var get = http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(api + "?ref=main")).header("User-Agent", "Stardrops").header("Accept", "application/vnd.github+json").header("Authorization", "Bearer " + token).GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 String sha = null;
                 if (get.statusCode() == 200) sha = com.google.gson.JsonParser.parseString(get.body()).getAsJsonObject().get("sha").getAsString();

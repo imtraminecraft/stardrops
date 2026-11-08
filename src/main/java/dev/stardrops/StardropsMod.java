@@ -233,7 +233,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
     }
 
     static final String DISCORD = "https://discord.gg/xeBfsVRfkT";
-    static final String GITHUB = "https://github.com/imtraminecraft/Stardrops";
+    static final String GITHUB = "https://github.com/imtraminecraft/stardrops";
 
     private static void say(FabricClientCommandSource source, String msg) { source.sendFeedback(Chat.msg(msg)); }
 

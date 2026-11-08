@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 /** Asks GitHub whether the mod has a newer release. One quiet request, in the background, at most once in a while (or when you press Check). */
 final class UpdateCheck {
-    static final String REPO = "imtraminecraft/Stardrops";
+    static final String REPO = "imtraminecraft/stardrops";
     static final String PAGE = "https://github.com/" + REPO + "/releases";
     /** 0 = not asked yet, 1 = asking, 2 = done, 3 = could not ask. */
     static volatile int state = 0;

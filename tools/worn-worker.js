@@ -17,7 +17,7 @@
 // A player's code is the SHA-256 of their lowercase dashed UUID (Cosmetics.code() in the mod).
 
 const CORS = { "Access-Control-Allow-Origin": "*" };
-const COSMETICS_JSON = "https://raw.githubusercontent.com/imtraminecraft/Stardrops/main/cosmetics.json";
+const COSMETICS_JSON = "https://raw.githubusercontent.com/imtraminecraft/stardrops/main/cosmetics.json";
 const OWNER = "7ad5d2b31b239f2ed148d1de18f8214967bf7d1a411c838d466e9829ab7c2bf8";    // the mod owner (Cosmetics.OWNER): owns every cosmetic; more admins can be listed as "admins" in cosmetics.json
 
 // ---------------------------------------------------------------- achievements (the only place they are defined)

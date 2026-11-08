@@ -59,7 +59,7 @@ final class Lyrics {
     }
     private static String firstArtist(String a) { int c = a.indexOf(','); return c < 0 ? a : a.substring(0, c); }
     private static JsonElement get(String url) throws Exception {
-        HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "Stardrops (github.com/imtraminecraft/Stardrops)").GET().build(), HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "Stardrops (github.com/imtraminecraft/stardrops)").GET().build(), HttpResponse.BodyHandlers.ofString());
         return r.statusCode() == 200 ? JsonParser.parseString(r.body()) : null;
     }
     /** Nudges the words of the song playing now earlier (+) or later (-), remembered for that song, and says so above the hotbar. */
