@@ -37,7 +37,7 @@ final class Spotify {
     private static volatile String access = ""; private static volatile long expires;
     private static volatile boolean busy, polling;
     private static volatile long lastPoll, lastGood, pollStart;
-    private static final java.util.concurrent.ExecutorService WORKER = java.util.concurrent.Executors.newSingleThreadExecutor(r -> { Thread t = new Thread(r, "FancyDrops Spotify"); t.setDaemon(true); t.setPriority(Thread.MIN_PRIORITY); return t; });
+    private static final java.util.concurrent.ExecutorService WORKER = java.util.concurrent.Executors.newSingleThreadExecutor(r -> { Thread t = new Thread(r, "Stardrops Spotify"); t.setDaemon(true); t.setPriority(Thread.MIN_PRIORITY); return t; });
 
     static boolean linked() { return !FancyConfig.get().spotifyRefresh.isBlank(); }
     /** Where the song is now, in ms (moves on between polls while it plays). */
@@ -106,7 +106,7 @@ final class Spotify {
         try { keep(post("grant_type=refresh_token&refresh_token=" + enc(c.spotifyRefresh) + "&client_id=" + enc(c.spotifyClient.trim()))); return true; }
         catch (IllegalStateException e) {                                                          // Spotify refused the saved login (revoked, or replaced by a newer one): it can't come back, link again
             status = "Spotify ended the login (" + e.getMessage() + "). Press Link in Visuals > Spotify."; c.spotifyRefresh = ""; FancyConfig.save(); access = ""; track = null; playing = false;
-            System.err.println("[FancyDrops] spotify: " + status); return false;
+            System.err.println("[Stardrops] spotify: " + status); return false;
         }
         catch (Throwable e) { status = "Couldn't refresh the login: " + e; return false; }
     }
@@ -114,7 +114,7 @@ final class Spotify {
     // ------------------------------------------------------------------ what is playing (asked every 3 s from a worker thread, only while lyrics are on)
     private static String logged = "";
     static void tick() {
-        if (!status.equals(logged)) { logged = status; System.err.println("[FancyDrops] spotify: " + status); }      // every change of state goes to latest.log, so a fault can be traced
+        if (!status.equals(logged)) { logged = status; System.err.println("[Stardrops] spotify: " + status); }      // every change of state goes to latest.log, so a fault can be traced
         FancyConfig c = FancyConfig.get();
         if (!(c.lyricsOn || c.npOn) || !linked() || busy) return;
         long now = System.currentTimeMillis();
@@ -157,7 +157,7 @@ final class Spotify {
         } catch (Throwable e) { status = "Couldn't reach Spotify: " + e; }
     }
 
-    // ------------------------------------------------------------------ controls (keys in Options > Controls > FancyDrops: Music; Spotify Premium only)
+    // ------------------------------------------------------------------ controls (keys in Options > Controls > Stardrops: Music; Spotify Premium only)
     /** "toggle", "next" or "previous": sent from a worker thread; the next poll comes right after so the HUD catches up. */
     static void control(String what) {
         if (!linked()) { status = "Link Spotify first (Visuals > Spotify)."; return; }

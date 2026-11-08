@@ -53,7 +53,7 @@ final class AuraFx {
                     }
                     break;
                 }
-                System.err.println("[FancyDrops] aura camera: " + (camObj != null && camPos != null && camX != null && camY != null ? "found" : "not found, using the player view"));
+                System.err.println("[Stardrops] aura camera: " + (camObj != null && camPos != null && camX != null && camY != null ? "found" : "not found, using the player view"));
             }
             if (camObj != null && camPos != null && camX != null && camY != null) {
                 Object v = camPos.get(camObj);
@@ -80,7 +80,7 @@ final class AuraFx {
     /** End of the game's extraction step: style the name tags about to be drawn. */
     static void extract(net.fabricmc.fabric.api.client.rendering.v1.level.LevelExtractionContext ctx) {
         try { styleNameTags(ctx.levelState()); }
-        catch (Throwable t) { if (!warned) { warned = true; System.err.println("[FancyDrops] name tags failed: " + t); } }
+        catch (Throwable t) { if (!warned) { warned = true; System.err.println("[Stardrops] name tags failed: " + t); } }
     }
 
     /** Every name tag about to be drawn this frame: a player's own tag, or the floating text a server (Hypixel) hangs over them, gets that player's name effect and icon.

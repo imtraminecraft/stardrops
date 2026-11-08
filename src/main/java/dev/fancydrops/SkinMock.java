@@ -26,7 +26,7 @@ final class SkinMock {
             started = true; skin = standIn(); gen = 1;
             java.util.concurrent.CompletableFuture.runAsync(() -> {
                 for (int attempt = 0; attempt < 4; attempt++) {                                      // the session server can say "slow down": try again a little later
-                    try { if (fetch()) return; } catch (Throwable t) { System.out.println("[FancyDrops] skin fetch failed (" + attempt + "): " + t); }
+                    try { if (fetch()) return; } catch (Throwable t) { System.out.println("[Stardrops] skin fetch failed (" + attempt + "): " + t); }
                     try { Thread.sleep(8000L * (attempt + 1)); } catch (InterruptedException e) { return; }
                 }
             });
@@ -39,14 +39,14 @@ final class SkinMock {
                     int[][] old = cache;                                                    // keep showing the old pictures until the new ones are ready
                     int failed = 0;
                     for (int a = 0; a < N; a++) {
-                        try { c[a] = render(sk, a * (float) (Math.PI * 2 / N)); } catch (Throwable t) { failed++; if (failed == 1) System.out.println("[FancyDrops] skin preview: turn " + a + " failed: " + t); }
+                        try { c[a] = render(sk, a * (float) (Math.PI * 2 / N)); } catch (Throwable t) { failed++; if (failed == 1) System.out.println("[Stardrops] skin preview: turn " + a + " failed: " + t); }
                     }
                     for (int a = 0; a < N; a++) if (c[a] == null) c[a] = old[a];
                     cache = c;
                     cacheGen = g0;
                     int n = 0; for (int[] r : c) if (r != null && r.length > 0) n++;
-                    System.out.println("[FancyDrops] skin preview built: " + n + "/" + N + " turns, " + failed + " failed");
-                } catch (Throwable t) { System.out.println("[FancyDrops] skin preview error: " + t); cacheGen = g0; } finally { building = false; }
+                    System.out.println("[Stardrops] skin preview built: " + n + "/" + N + " turns, " + failed + " failed");
+                } catch (Throwable t) { System.out.println("[Stardrops] skin preview error: " + t); cacheGen = g0; } finally { building = false; }
             });
         }
     }
@@ -88,26 +88,26 @@ final class SkinMock {
     private static boolean fetch() throws Exception {
         var http = java.net.http.HttpClient.newHttpClient();
         String url = null, val = localTextures();
-        if (val != null) { try { url = com.google.gson.JsonParser.parseString(new String(java.util.Base64.getDecoder().decode(val))).getAsJsonObject().getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString(); } catch (Throwable t) { System.out.println("[FancyDrops] skin: profile data unreadable: " + t); } }
+        if (val != null) { try { url = com.google.gson.JsonParser.parseString(new String(java.util.Base64.getDecoder().decode(val))).getAsJsonObject().getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString(); } catch (Throwable t) { System.out.println("[Stardrops] skin: profile data unreadable: " + t); } }
         if (url == null) url = gameSkinUrl();
         if (url == null) {
             UUID id = null; var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player != null) id = mc.player.getUUID();
             if (id == null) id = Cosmetics.me(); if (id == null) id = mc.getUser().getProfileId();
-            if (id == null) { System.out.println("[FancyDrops] skin: no player id yet"); return false; }
-            var rq = java.net.http.HttpRequest.newBuilder(java.net.URI.create("https://sessionserver.mojang.com/session/minecraft/profile/" + id.toString().replace("-", ""))).header("User-Agent", "FancyDrops").GET().build();
+            if (id == null) { System.out.println("[Stardrops] skin: no player id yet"); return false; }
+            var rq = java.net.http.HttpRequest.newBuilder(java.net.URI.create("https://sessionserver.mojang.com/session/minecraft/profile/" + id.toString().replace("-", ""))).header("User-Agent", "Stardrops").GET().build();
             var rs = http.send(rq, java.net.http.HttpResponse.BodyHandlers.ofString());
-            if (rs.statusCode() != 200) { System.out.println("[FancyDrops] skin: session server said " + rs.statusCode()); return false; }
+            if (rs.statusCode() != 200) { System.out.println("[Stardrops] skin: session server said " + rs.statusCode()); return false; }
             val = com.google.gson.JsonParser.parseString(rs.body()).getAsJsonObject().getAsJsonArray("properties").get(0).getAsJsonObject().get("value").getAsString();
             url = com.google.gson.JsonParser.parseString(new String(java.util.Base64.getDecoder().decode(val))).getAsJsonObject().getAsJsonObject("textures").getAsJsonObject("SKIN").get("url").getAsString();
         }
-        System.out.println("[FancyDrops] skin: reading " + url);
-        byte[] png = http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url)).header("User-Agent", "FancyDrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofByteArray()).body();
+        System.out.println("[Stardrops] skin: reading " + url);
+        byte[] png = http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(url)).header("User-Agent", "Stardrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofByteArray()).body();
         var img = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(png));
         int[] o = new int[64 * 64];
         for (int y = 0; y < Math.min(64, img.getHeight()); y++) for (int x = 0; x < 64; x++) o[y * 64 + x] = img.getRGB(x, y);
         if (img.getHeight() == 32) for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) { o[(48 + y) * 64 + 16 + x] = o[(16 + y) * 64 + x]; o[(48 + y) * 64 + 32 + x] = o[(16 + y) * 64 + 40 + x]; }
-        skin = o; gen++; System.out.println("[FancyDrops] skin loaded");
+        skin = o; gen++; System.out.println("[Stardrops] skin loaded");
         return true;
     }
 
@@ -216,7 +216,7 @@ final class SkinMock {
                 }
             }
             stex.upload(); texGen = gen0;
-        } catch (Throwable t) { texFailed = true; System.out.println("[FancyDrops] skin texture: " + t); }
+        } catch (Throwable t) { texFailed = true; System.out.println("[Stardrops] skin texture: " + t); }
     }
     static void draw(GuiGraphicsExtractor g, int cx, int feetY, float yaw) {
         ensure();

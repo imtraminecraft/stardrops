@@ -579,7 +579,7 @@ public final class DropListener {
         if (c.alsoAll && !c.channel.equals("ALL") && it.rngPick) OUT.add("ac " + adv(m));      // RNG drops also go to public chat, below the other one
     }
 
-    static final String ADV = "[FancyDrops] | ";
+    static final String ADV = "[Stardrops] | ";
     /** Public chat carries the mod's name in front, cut to Hypixel's 256 characters. */
     static String adv(String m) { String t = ADV + m; return t.length() > 250 ? t.substring(0, 250) : t; }
 

@@ -441,16 +441,16 @@ final class IconArt {
                 for (int q = 0; q < 2; q++) { float v = (f + q * 0.5f) % 1f; pxa(3 + q * 2, Math.round(7 - v * 6), 0xC77DFF, 1f - v); }   // a rune rising off the left page
                 outline();
             }
-            case "boss_voidgloom", "voidgloom" -> {                                          // Voidgloom Seraph: a winged void angel, a cracked halo, eyes burning pink
-                for (int k = 0; k < 2; k++) { int side = k == 0 ? -1 : 1; float fl = sn(f) * 0.8f;
-                    tri(8, 7, 8 + side * 7, 3 + fl, 8 + side * 6, 11 + fl, 0x2A1240); tri(8, 8, 8 + side * 5, 6 + fl, 8 + side * 4, 12 + fl, 0x4A1E6A); }   // wings, beating slowly
-                bev(6, 5, 4, 10, 0x140A20); rect(7, 5, 2, 10, 0x22102E);                       // the body, a tall dark figure
-                bev(5, 2, 6, 5, 0x0E0616);                                                    // the head
-                int eye = mix(0xC81E8A, 0xFF7AD8, t); px(6, 4, eye); px(9, 4, eye); px(7, 4, dark(eye, 0.4f)); px(8, 4, dark(eye, 0.4f));
-                for (int q = 0; q < 6; q++) { double an = Math.PI * (0.15 + 0.7 * q / 5.0); if (q == 3) continue; px(8 + (int) Math.round(Math.cos(an) * 3.5) - 0, (int) Math.round(1 - Math.sin(an) * 1.2), 0xF2D8FF); }   // the halo, a gap where it's cracked
-                for (int q = 0; q < 3; q++) { float v = (f + q / 3f) % 1f; pxa(4 + q * 4, 15 - Math.round(v * 5), 0xB45AFF, 1f - v); }   // void motes rising
+            case "boss_voidgloom", "voidgloom" -> {                                          // Voidgloom Seraph: an enderman's head, its purple eyes glowing, ender particles drifting round it
+                bev(2, 2, 12, 12, 0x161020);
+                int[] spot = {3, 5, 9, 4, 6, 10, 11, 8, 4, 11, 8, 3};                                 // the faint mottling of the enderman's skin
+                for (int q = 0; q < spot.length; q += 2) px(spot[q], spot[q + 1], 0x241A30);
+                int eye = mix(0xC040FF, 0xF0A0FF, t);
+                rect(3, 7, 4, 2, 0xE070FF); rect(9, 7, 4, 2, 0xE070FF); px(4, 7, eye); px(5, 7, eye); px(10, 7, eye); px(11, 7, eye);
+                px(4, 8, 0xB040E0); px(11, 8, 0xB040E0);
+                for (int q = 0; q < 4; q++) { float v = (f + q / 4f) % 1f; pxa(q % 2 == 0 ? 1 : 14, 13 - Math.round(v * 11), 0xC86AFF, 1f - v); }   // ender particles rising at the sides
                 outline();
-                glow(7.5f, 4, 3, 0xFF4FC8, 0.15f + 0.15f * t);
+                glow(4.5f, 7.5f, 2.5f, 0xE070FF, 0.2f + 0.15f * t); glow(10.5f, 7.5f, 2.5f, 0xE070FF, 0.2f + 0.15f * t);
             }
             case "move" -> {                                                                                 // Position: a little astronaut drifting, a crosshair round them
                 for (int i = 2; i < 14; i++) { if (i > 5 && i < 10) continue; pxa(i, 8, 0x7672AE, 0.8f); pxa(8, i, 0x7672AE, 0.8f); }

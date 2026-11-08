@@ -54,7 +54,7 @@ final class AuraWorld {
                 s.sim().step(p.getX(), p.getY(), p.getZ(), Math.min(100, cf.cosAmount) / 100f, cf.cosSpeed / 100f, cf.cosCalm, cf.cosSize / 100f);
             }
             SIMS.keySet().retainAll(seen);
-        } catch (Throwable t) { if (!warned) { warned = true; System.err.println("[FancyDrops] aura tick failed: " + t); } }
+        } catch (Throwable t) { if (!warned) { warned = true; System.err.println("[Stardrops] aura tick failed: " + t); } }
     }
 
     static String spriteName(AuraSim.Part p) { return p.sprite == AuraSim.RUNE ? "aura_rune" + (p.rune & 3) : AuraSim.SPRITE[p.sprite]; }
@@ -100,6 +100,6 @@ final class AuraWorld {
             Integer[] order = new Integer[draw.size()]; for (int i = 0; i < order.length; i++) order[i] = i;
             Arrays.sort(order, (a, b) -> Float.compare(draw.get(b)[4], draw.get(a)[4]));           // far ones first
             for (int i : order) { float[] d = draw.get(i); AuraFx.drawPart(g, d[0], d[1], Math.min(48f, d[2]), who.get(i), d[3]); }
-        } catch (Throwable t) { if (!warned) { warned = true; System.err.println("[FancyDrops] aura draw failed: " + t); } }
+        } catch (Throwable t) { if (!warned) { warned = true; System.err.println("[Stardrops] aura draw failed: " + t); } }
     }
 }

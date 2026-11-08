@@ -28,9 +28,9 @@ public class FancyConfig {
     public boolean masterAnimate = true;     // master: play any animation at all (the Active button)
     public boolean masterAnnounce = true;    // master: send any chat alert at all
     public String channel = "PARTY";         // PARTY | COOP | ALL | OFF
-    public boolean alsoAll = false;          // RNG drops are also announced in public chat, with "[FancyDrops] | " in front
+    public boolean alsoAll = false;          // RNG drops are also announced in public chat, with "[Stardrops] | " in front
     public boolean sound = true;
-    public int volume = 100;                 // 0..100 %, master volume of every FancyDrops sound
+    public int volume = 100;                 // 0..100 %, master volume of every Stardrops sound
     public boolean customSounds = true;      // the mod's own sound effects (off = Minecraft's sounds instead)
     public Map<String, String> sounds = new LinkedHashMap<>();      // "<scene>.<slot>" -> sound name, see SoundFx
     public Map<String, String> mcSounds = new LinkedHashMap<>();    // the same slots for the Minecraft sound set

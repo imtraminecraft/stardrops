@@ -39,7 +39,7 @@ final class UpdateCheck {
         Thread t = new Thread(() -> {
             try {
                 HttpResponse<String> res = HTTP.send(HttpRequest.newBuilder(URI.create("https://api.github.com/repos/" + REPO + "/releases?per_page=8"))
-                        .timeout(Duration.ofSeconds(10)).header("User-Agent", "FancyDrops").header("Accept", "application/vnd.github+json").GET().build(), HttpResponse.BodyHandlers.ofString());
+                        .timeout(Duration.ofSeconds(10)).header("User-Agent", "Stardrops").header("Accept", "application/vnd.github+json").GET().build(), HttpResponse.BodyHandlers.ofString());
                 if (res.statusCode() == 404) { latest = ""; latestName = ""; error = ""; state = 2; checkedAt = System.currentTimeMillis(); return; }          // no releases (or no public repo) yet
                 if (res.statusCode() != 200) throw new IllegalStateException("GitHub said " + res.statusCode());
                 JsonArray a = JsonParser.parseString(res.body()).getAsJsonArray();
@@ -58,7 +58,7 @@ final class UpdateCheck {
                 error = ""; state = 2;
             } catch (Throwable e) { error = e.getMessage() == null ? "No connection" : e.getMessage(); state = 3; }
             checkedAt = System.currentTimeMillis();
-        }, "FancyDrops-update");
+        }, "Stardrops-update");
         t.setDaemon(true); t.start();
     }
 

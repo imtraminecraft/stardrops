@@ -3634,7 +3634,7 @@ public class FancyScreen extends Screen {
         if (tab == Tab.COSMETICS) {                                              // how long each part takes, written to the log every 3 seconds (for finding what is slow)
             perfN++;
             if (now - perfAt >= 3000) {
-                if (perfN > 0 && perfAt > 0) System.err.println(String.format("[FancyDrops] perf (cosmetics, ms per frame): build %.2f, window+rows %.2f, side panels %.2f, frames %d", perf[0] / 1e6 / perfN, perf[1] / 1e6 / perfN, perf[2] / 1e6 / perfN, perfN));
+                if (perfN > 0 && perfAt > 0) System.err.println(String.format("[Stardrops] perf (cosmetics, ms per frame): build %.2f, window+rows %.2f, side panels %.2f, frames %d", perf[0] / 1e6 / perfN, perf[1] / 1e6 / perfN, perf[2] / 1e6 / perfN, perfN));
                 perfAt = now; perfN = 0; perf[0] = perf[1] = perf[2] = 0;
             }
         }

@@ -45,10 +45,10 @@ public final class ItemIcons {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     /** Pictures already saved on disk load on their own two threads, so they never wait behind a download; downloads run six at a time. */
     private static final ExecutorService POOL = Executors.newFixedThreadPool(6, r -> {
-        Thread t = new Thread(r, "FancyDrops-Icons"); t.setDaemon(true); return t;
+        Thread t = new Thread(r, "Stardrops-Icons"); t.setDaemon(true); return t;
     });
     private static final ExecutorService FAST = Executors.newFixedThreadPool(2, r -> {
-        Thread t = new Thread(r, "FancyDrops-IconCache"); t.setDaemon(true); return t;
+        Thread t = new Thread(r, "Stardrops-IconCache"); t.setDaemon(true); return t;
     });
     private static final Pattern VALUE = Pattern.compile("Value:\"([A-Za-z0-9+/=]+)\"");
     private static final String REPO = "https://raw.githubusercontent.com/NotEnoughUpdates/NotEnoughUpdates-REPO/master/items/";
@@ -519,7 +519,7 @@ public final class ItemIcons {
 
     private static int[] downloadWikiPixels(String imageUrl) throws Exception {
         HttpResponse<byte[]> r = HTTP.send(HttpRequest.newBuilder(URI.create(imageUrl)).timeout(Duration.ofSeconds(20))
-                .header("User-Agent", "FancyDrops/1.0.1 (SkyBlock item icon lookup)").GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+                .header("User-Agent", "Stardrops/1.0.1 (SkyBlock item icon lookup)").GET().build(), HttpResponse.BodyHandlers.ofByteArray());
         if (r.statusCode() != 200) throw new java.io.IOException("Wiki image HTTP " + r.statusCode());
         var img = ImageIO.read(new ByteArrayInputStream(r.body()));
         if (img == null) throw new java.io.IOException("Unsupported Wiki image");
@@ -546,7 +546,7 @@ public final class ItemIcons {
 
     private static String httpString(String url) throws Exception {
         HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20))
-                .header("User-Agent", "FancyDrops/1.0.1").GET().build(), HttpResponse.BodyHandlers.ofString());
+                .header("User-Agent", "Stardrops/1.0.1").GET().build(), HttpResponse.BodyHandlers.ofString());
         if (r.statusCode() != 200) throw new java.io.IOException("HTTP " + r.statusCode());
         return r.body();
     }
@@ -566,7 +566,7 @@ public final class ItemIcons {
         }
         url = url.replace("http://", "https://");
         HttpResponse<byte[]> r = HTTP.send(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(20))
-                .header("User-Agent", "FancyDrops").GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+                .header("User-Agent", "Stardrops").GET().build(), HttpResponse.BodyHandlers.ofByteArray());
         if (r.statusCode() != 200) throw new java.io.IOException("HTTP " + r.statusCode());
         return facesOf(ImageIO.read(new ByteArrayInputStream(r.body())));
     }

@@ -83,8 +83,8 @@ final class Achievements {
         fetching = true; fetchedAt = now;
         CompletableFuture.runAsync(() -> {
             try {
-                var res = Net.HTTP.send(HttpRequest.newBuilder(URI.create(b + "/profile/" + Cosmetics.code(me))).header("User-Agent", "FancyDrops").GET().build(), HttpResponse.BodyHandlers.ofString());
-                if (res.statusCode() != 200) { status = res.statusCode() == 404 ? "The ledger is being updated. Back soon." : "The ledger server answered " + res.statusCode() + "."; System.err.println("[FancyDrops] ledger: GET /profile answered " + res.statusCode() + " (the worker needs tools/worn-worker.js deployed)"); failedAt = System.currentTimeMillis(); return; }
+                var res = Net.HTTP.send(HttpRequest.newBuilder(URI.create(b + "/profile/" + Cosmetics.code(me))).header("User-Agent", "Stardrops").GET().build(), HttpResponse.BodyHandlers.ofString());
+                if (res.statusCode() != 200) { status = res.statusCode() == 404 ? "The ledger is being updated. Back soon." : "The ledger server answered " + res.statusCode() + "."; System.err.println("[Stardrops] ledger: GET /profile answered " + res.statusCode() + " (the worker needs tools/worn-worker.js deployed)"); failedAt = System.currentTimeMillis(); return; }
                 profile = parse(JsonParser.parseString(res.body()).getAsJsonObject()); status = ""; CosmeticData.changed();
             } catch (Throwable t) { status = "Can't reach the ledger right now."; failedAt = System.currentTimeMillis(); }
             finally { fetching = false; }
@@ -145,14 +145,14 @@ final class Achievements {
             try {
                 JsonObject o = signed(mc, me, name, token);
                 com.google.gson.JsonArray arr = new com.google.gson.JsonArray(); for (JsonObject e : batch) arr.add(e); o.add("events", arr);
-                var res = Net.HTTP.send(HttpRequest.newBuilder(URI.create(b + "/event")).header("User-Agent", "FancyDrops").header("Content-Type", "application/json")
+                var res = Net.HTTP.send(HttpRequest.newBuilder(URI.create(b + "/event")).header("User-Agent", "Stardrops").header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(o.toString())).build(), HttpResponse.BodyHandlers.ofString());
-                if (res.statusCode() != 200) { System.err.println("[FancyDrops] ledger: " + res.statusCode() + " " + res.body()); requeue(batch, res.statusCode() == 403 ? "Drops are waiting: the server couldn't confirm it's you (" + res.body() + ")" : "Drops are waiting: the server said " + res.statusCode()); return; }
+                if (res.statusCode() != 200) { System.err.println("[Stardrops] ledger: " + res.statusCode() + " " + res.body()); requeue(batch, res.statusCode() == 403 ? "Drops are waiting: the server couldn't confirm it's you (" + res.body() + ")" : "Drops are waiting: the server said " + res.statusCode()); return; }
                 savePending(List.of()); syncNote = "";
                 JsonObject r = JsonParser.parseString(res.body()).getAsJsonObject();
                 Profile before = profile; profile = parse(r); fetchedAt = System.currentTimeMillis(); CosmeticData.changed();
                 if (r.has("unlocked")) for (var u : r.getAsJsonArray("unlocked")) announce(u.getAsString());
-            } catch (Throwable t) { System.err.println("[FancyDrops] ledger: could not send drops: " + t); requeue(batch, "Drops are waiting: couldn't reach the server"); }
+            } catch (Throwable t) { System.err.println("[Stardrops] ledger: could not send drops: " + t); requeue(batch, "Drops are waiting: couldn't reach the server"); }
             finally { posting = false; }
         });
     }
@@ -160,7 +160,7 @@ final class Achievements {
     /** Your Minecraft login proves to Mojang (and so to the server) that a request comes from you. */
     static JsonObject signed(Minecraft mc, UUID me, String name, String token) throws Exception {
         byte[] rb = new byte[20]; new java.security.SecureRandom().nextBytes(rb); StringBuilder sid = new StringBuilder(); for (byte x : rb) sid.append(String.format("%02x", x));
-        try { mc.services().sessionService().joinServer(me, token, sid.toString()); } catch (Exception e) { System.err.println("[FancyDrops] joinServer failed (the account key is sent instead): " + e); }
+        try { mc.services().sessionService().joinServer(me, token, sid.toString()); } catch (Exception e) { System.err.println("[Stardrops] joinServer failed (the account key is sent instead): " + e); }
         JsonObject o = new JsonObject(); o.addProperty("name", name); o.addProperty("serverId", sid.toString());
         o.addProperty("uuid", me.toString()); o.addProperty("key", accountKey(me));                 // used when Mojang won't answer the server
         return o;

@@ -39,12 +39,12 @@ final class LocalLedger {
             for (var e : o.getAsJsonArray("list")) { JsonObject a = e.getAsJsonObject();
                 ACH.add(new Def(a.get("id").getAsString(), a.get("ch").getAsString(), a.get("tier").getAsInt(), a.get("name").getAsString(), a.get("desc").getAsString(), a.get("icon").getAsString(),
                     a.get("goal").getAsDouble(), a.get("stat").getAsString(), a.get("reward").getAsString(), a.get("secret").getAsBoolean(), a.get("first").getAsBoolean())); }
-        } catch (Throwable t) { System.err.println("[FancyDrops] achievements table: " + t); }
+        } catch (Throwable t) { System.err.println("[Stardrops] achievements table: " + t); }
     }
     static Def def(String id) { for (Def d : ACH) if (d.id.equals(id)) return d; return null; }
-    /** Minutes played with FancyDrops on (Playtime). */
+    /** Minutes played with Stardrops on (Playtime). */
     static double minutes() { return FancyConfig.get().playMinutes; }
-    /** Still your first day of playing with FancyDrops (the first 24 hours of playtime)? */
+    /** Still your first day of playing with Stardrops (the first 24 hours of playtime)? */
     static boolean firstDay() { return minutes() < 1440; }
     /** How far along an achievement is right now: Playtime stars count the seconds as they pass, the rest come from the profile. */
     static double live(Achievements.Ach a) {
@@ -82,7 +82,7 @@ final class LocalLedger {
                 if (Files.exists(sigFile())) ok = sign(text).equals(Files.readString(sigFile()).trim());
                 else ok = !FancyConfig.get().ledgerSigned;                                          // (files from before the check: accepted once, then signed)
                 if (ok) { P q = new com.google.gson.Gson().fromJson(text, P.class); if (q != null) p = q; }
-                else System.out.println("[FancyDrops] ledger_local.json was edited by hand: it is ignored (your real progress is on the server).");
+                else System.out.println("[Stardrops] ledger_local.json was edited by hand: it is ignored (your real progress is on the server).");
             }
         } catch (Throwable ignored) { }
         if (p.g == null) p.g = new HashMap<>(); if (p.unlocked == null) p.unlocked = new HashMap<>();

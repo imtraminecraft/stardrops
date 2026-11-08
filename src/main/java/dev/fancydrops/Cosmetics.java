@@ -66,7 +66,7 @@ final class Cosmetics {
             try {
                 var http = Net.HTTP;
                 String api = "https://api.github.com/repos/imtraminecraft/fancydrops/contents/cosmetics.json";
-                var get = http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(api + "?ref=main")).header("User-Agent", "FancyDrops").header("Accept", "application/vnd.github+json").header("Authorization", "Bearer " + token).GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+                var get = http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(api + "?ref=main")).header("User-Agent", "Stardrops").header("Accept", "application/vnd.github+json").header("Authorization", "Bearer " + token).GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 String sha = null;
                 if (get.statusCode() == 200) sha = com.google.gson.JsonParser.parseString(get.body()).getAsJsonObject().get("sha").getAsString();
                 else if (get.statusCode() != 404) throw new RuntimeException(get.statusCode() == 401 || get.statusCode() == 403 ? "GitHub refused the token." : "GitHub error " + get.statusCode());
@@ -74,7 +74,7 @@ final class Cosmetics {
                 body.addProperty("message", "cosmetics: update"); body.addProperty("branch", "main");
                 body.addProperty("content", java.util.Base64.getEncoder().encodeToString(json.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
                 if (sha != null) body.addProperty("sha", sha);
-                var put = http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(api)).header("User-Agent", "FancyDrops").header("Accept", "application/vnd.github+json").header("Authorization", "Bearer " + token).PUT(java.net.http.HttpRequest.BodyPublishers.ofString(body.toString())).build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+                var put = http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(api)).header("User-Agent", "Stardrops").header("Accept", "application/vnd.github+json").header("Authorization", "Bearer " + token).PUT(java.net.http.HttpRequest.BodyPublishers.ofString(body.toString())).build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 if (put.statusCode() == 200 || put.statusCode() == 201) { applyRaw(json); msg = "Saved cosmetics.json to GitHub."; }
                 else msg = put.statusCode() == 401 || put.statusCode() == 403 || put.statusCode() == 404 ? "Save refused: check the token's access to the repo." : "Save failed (" + put.statusCode() + ").";
             } catch (Throwable t) { msg = t.getMessage() != null && t.getMessage().startsWith("GitHub") ? t.getMessage() : "Could not reach GitHub."; }
@@ -105,7 +105,7 @@ final class Cosmetics {
         remoteAt = now;
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(REMOTE_URL)).header("User-Agent", "FancyDrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(REMOTE_URL)).header("User-Agent", "Stardrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
                 if (res.statusCode() != 200) return;
                 Map<String, Set<String>> m = new HashMap<>();
                 for (var e : BUILTIN.entrySet()) m.put(e.getKey(), new HashSet<>(e.getValue()));
@@ -140,8 +140,8 @@ final class Cosmetics {
         if (u == null || now - wornAt < 60_000L) return; wornAt = now;
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
-                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "FancyDrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
-                if (res.statusCode() != 200) { System.err.println("[FancyDrops] worn list: " + res.statusCode()); return; }
+                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "Stardrops").GET().build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (res.statusCode() != 200) { System.err.println("[Stardrops] worn list: " + res.statusCode()); return; }
                 Map<String, String[]> m = new HashMap<>();
                 for (var e : com.google.gson.JsonParser.parseString(res.body()).getAsJsonObject().entrySet()) {
                     var o = e.getValue().getAsJsonObject();
@@ -167,11 +167,11 @@ final class Cosmetics {
             try {
                 com.google.gson.JsonObject o = Achievements.signed(mc, me, name, token);           // proves (to Mojang, or by your account key) that this pick comes from you
                 o.addProperty("suffix", sx); o.addProperty("fx", fx); o.addProperty("aura", au);
-                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "FancyDrops").header("Content-Type", "application/json")
+                var res = Net.HTTP.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create(u + "/worn")).header("User-Agent", "Stardrops").header("Content-Type", "application/json")
                         .POST(java.net.http.HttpRequest.BodyPublishers.ofString(o.toString())).build(), java.net.http.HttpResponse.BodyHandlers.ofString());
-                System.err.println("[FancyDrops] shared your cosmetics (" + (sx.isEmpty() ? "-" : sx) + ", " + (fx.isEmpty() ? "-" : fx) + ", " + (au.isEmpty() ? "-" : au) + "): " + res.statusCode() + " " + res.body());
+                System.err.println("[Stardrops] shared your cosmetics (" + (sx.isEmpty() ? "-" : sx) + ", " + (fx.isEmpty() ? "-" : fx) + ", " + (au.isEmpty() ? "-" : au) + "): " + res.statusCode() + " " + res.body());
                 wornAt = 0;
-            } catch (Throwable t) { System.err.println("[FancyDrops] could not share your cosmetics: " + t); }
+            } catch (Throwable t) { System.err.println("[Stardrops] could not share your cosmetics: " + t); }
             finally { publishing = false; }
         });
     }
@@ -221,10 +221,10 @@ final class Cosmetics {
         for (Suffix s : SUFFIXES) try {                                                   // the chat/tab sprite must show what the strip shows; tools/make_suffix_sprites.py rebuilds the sprites
             String n = "sparkle".equals(s.id()) ? "sparkle" : "suffix_" + s.id();
             try (java.io.InputStream a = Cosmetics.class.getResourceAsStream("/assets/fancydrops/textures/font/" + n + ".png"); java.io.InputStream b = Cosmetics.class.getResourceAsStream("/assets/fancydrops/textures/gui/sprites/suffix/" + s.id() + ".png")) {
-                if (a == null || b == null) { System.err.println("[FancyDrops] suffix " + s.id() + ": strip or chat sprite missing"); continue; }
+                if (a == null || b == null) { System.err.println("[Stardrops] suffix " + s.id() + ": strip or chat sprite missing"); continue; }
                 java.awt.image.BufferedImage sa = javax.imageio.ImageIO.read(a), sb = javax.imageio.ImageIO.read(b); boolean same = sb.getHeight() == 60;
                 for (int f = 0; f < 6 && same; f++) for (int y = 0; y < 10 && same; y++) for (int x = 0; x < 10; x++) if (sa.getRGB(f * 10 + x, y) != sb.getRGB(x, f * 10 + y)) { same = false; break; }
-                if (!same) System.err.println("[FancyDrops] suffix " + s.id() + ": the chat sprite differs from its strip. Run tools/make_suffix_sprites.py");
+                if (!same) System.err.println("[Stardrops] suffix " + s.id() + ": the chat sprite differs from its strip. Run tools/make_suffix_sprites.py");
             }
         } catch (Throwable ignored) { }
     }
@@ -237,7 +237,7 @@ final class Cosmetics {
             String path = "/assets/fancydrops/textures/font/" + ("sparkle".equals(k) ? "sparkle" : "suffix_" + k) + ".png";
             try (java.io.InputStream in = Cosmetics.class.getResourceAsStream(path)) {
                 if (in != null) { java.awt.image.BufferedImage im = javax.imageio.ImageIO.read(in); for (int f = 0; f < 6; f++) for (int y = 0; y < 10; y++) for (int x = 0; x < 10; x++) fr[f][y * 10 + x] = im.getRGB(f * 10 + x, y); }
-            } catch (Throwable t) { System.err.println("[FancyDrops] suffix strip " + k + " unreadable: " + t); }
+            } catch (Throwable t) { System.err.println("[Stardrops] suffix strip " + k + " unreadable: " + t); }
             return fr;
         });
     }
@@ -287,7 +287,7 @@ final class Cosmetics {
         return message;
     }
 
-    /** The same text with the letters from..to dressed in a name effect (fx may be null) and, when look is given, carrying the FancyDrops hover card. */
+    /** The same text with the letters from..to dressed in a name effect (fx may be null) and, when look is given, carrying the Stardrops hover card. */
     private static Component restyle(Component msg, int from, int to, String fx, boolean live, long t, Look look, String player) {
         List<Seg> segs = new ArrayList<>();
         msg.visit((style, text) -> { segs.add(new Seg(text, style)); return Optional.empty(); }, Style.EMPTY);
@@ -317,11 +317,11 @@ final class Cosmetics {
         return out;
     }
 
-    // ---- the hover card: "FancyDrops" on top, then which cosmetics the player has and how they got each one
+    // ---- the hover card: "Stardrops" on top, then which cosmetics the player has and how they got each one
     /** The hover card on a name: a clean card in the menu's gold. Header, a gold rule, then one line per cosmetic (kind, name, rarity), and the set it comes from once at the bottom. */
     private static Component tip(Look l, String player, String marker, HoverEvent orig) {
         MutableComponent t = Component.empty().withStyle(Style.EMPTY.withInsertion(marker));            // the marker tells the chat which letters carry an effect
-        t.append(Chat.prefix());                                                                          // the same [FancyDrops] as in chat
+        t.append(Chat.prefix());                                                                          // the same [Stardrops] as in chat
         t.append(Component.literal("\n" + player).withStyle(Style.EMPTY.withColor(Chat.TEXT).withBold(true)));
         t.append(Component.literal("\n" + "\u2501".repeat(18)).withStyle(Style.EMPTY.withColor(Chat.LINE)));
         List<CosmeticData.Def> worn = new ArrayList<>();
@@ -364,7 +364,7 @@ final class Cosmetics {
     private static Object chatObj; private static java.lang.reflect.Field linesF, msgsF; private static Class<?> lineCls, msgCls;
     private static java.lang.reflect.RecordComponent[] lineRc, msgRc; private static java.lang.reflect.Constructor<?> lineCtor, msgCtor; private static int lineSeq = -1, msgContent = -1;
     private static java.lang.reflect.Method refreshM; private static boolean chatReady, logged;
-    private static void log(String m) { if (!logged) System.err.println("[FancyDrops] chat: " + m); }
+    private static void log(String m) { if (!logged) System.err.println("[Stardrops] chat: " + m); }
 
     private static String[] fxMark(Style s) {
         if (s.getHoverEvent() instanceof HoverEvent.ShowText st) {
@@ -463,9 +463,9 @@ final class Cosmetics {
                 for (int k = 0; k < args.length; k++) args[k] = k == lineSeq ? new FxSeq(cs) : lineRc[k].getAccessor().invoke(ln);
                 list.set(i, lineCtor.newInstance(args)); wrapped = true;
             }
-            if (!logged && wrapped) { logged = true; System.err.println("[FancyDrops] chat: animated names active"); }
+            if (!logged && wrapped) { logged = true; System.err.println("[Stardrops] chat: animated names active"); }
             if (chatFail && msgsF != null && refreshM != null && System.currentTimeMillis() - lastLive > 120) { lastLive = System.currentTimeMillis(); rebuildHistory(true); }      // fallback: redo the lines ten times a second
-        } catch (Throwable t) { chatFail = true; System.err.println("[FancyDrops] animated chat names unavailable: " + t); }
+        } catch (Throwable t) { chatFail = true; System.err.println("[Stardrops] animated chat names unavailable: " + t); }
     }
 
     /** Redoes every remembered chat message with the current look (live = with the moving name colours), then lets the chat re-wrap them. */
@@ -543,7 +543,7 @@ final class Cosmetics {
                 var res = net.minecraft.network.chat.ComponentSerialization.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json);
                 Component c = res.result().orElse(null);
                 if (c != null) return c;
-            } catch (Throwable t) { System.err.println("[FancyDrops] animated chat suffix unavailable: " + t); }
+            } catch (Throwable t) { System.err.println("[Stardrops] animated chat suffix unavailable: " + t); }
             return glyph(s.frames()[0]);
         });
     }
@@ -613,25 +613,25 @@ final class Cosmetics {
                 try {                                                                                        // so the log names whichever tab mod is installed
                     StringBuilder mods = new StringBuilder();
                     for (var m : net.fabricmc.loader.api.FabricLoader.getInstance().getAllMods()) { String mid = m.getMetadata().getId(); if (mid.toLowerCase().matches(".*(sky|tab|hud).*")) mods.append(mid).append(' '); }
-                    System.err.println("[FancyDrops] tab-related mods: " + mods);
+                    System.err.println("[Stardrops] tab-related mods: " + mods);
                 } catch (Throwable ignored) { }
                 try {
                     Class<?> t = Class.forName("com.skysoft.data.hypixel.TabListApi");
                     ssInst = t.getField("INSTANCE").get(null);
                     for (var m : t.getDeclaredMethods()) if (m.getName().startsWith("markDirty") && m.getParameterCount() == 0) { m.setAccessible(true); ssDirty = m; break; }
-                    System.err.println("[FancyDrops] SkySoft tab found: " + (ssDirty != null ? ssDirty.getName() : "no hook"));
+                    System.err.println("[Stardrops] SkySoft tab found: " + (ssDirty != null ? ssDirty.getName() : "no hook"));
                 } catch (Throwable ignored) { }
                 try {
                     Class<?> c = Class.forName("de.hysky.skyblocker.skyblock.tabhud.util.PlayerListManager");
                     try { sbkFlag = c.getDeclaredField("shouldUpdateNextTick"); sbkFlag.setAccessible(true); } catch (Throwable ignored) { }
                     try { sbkUpd = c.getDeclaredMethod("updateListNow"); sbkUpd.setAccessible(true); } catch (Throwable ignored) { }
-                    System.err.println("[FancyDrops] custom tab list found (Skyblocker): " + (sbkFlag != null ? "flag" : sbkUpd != null ? "method" : "no hook"));
+                    System.err.println("[Stardrops] custom tab list found (Skyblocker): " + (sbkFlag != null ? "flag" : sbkUpd != null ? "method" : "no hook"));
                 } catch (Throwable ignored) { }
             }
             if (ssDirty != null) { ssDirty.invoke(ssInst); ssNudges++; }                                   // SkySoft's Better Tab keeps its own copy of the list: mark it stale so it reads the new names
             if (sbkUpd != null) { sbkUpd.invoke(null); sbkNudges++; }                                       // copy the list right now (the flag only copies on the next tick, after the server's own rewrite)
             else if (sbkFlag != null) { sbkFlag.setBoolean(null, true); sbkNudges++; }
-        } catch (Throwable t) { if (sbkErr++ < 3) System.err.println("[FancyDrops] tab nudge failed: " + t); }
+        } catch (Throwable t) { if (sbkErr++ < 3) System.err.println("[Stardrops] tab nudge failed: " + t); }
     }
 
     private static String nameOf(Minecraft mc, UUID id) {

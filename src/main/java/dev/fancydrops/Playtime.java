@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Playtime: how long you've played with FancyDrops on (counted while you're in a world and the game isn't paused), kept in your config.
+ * Playtime: how long you've played with Stardrops on (counted while you're in a world and the game isn't paused), kept in your config.
  * It feeds the Playtime constellation (The Hourglass): its stars are the "pt" rows of the achievements table.
  */
 final class Playtime {

@@ -52,14 +52,14 @@ final class Lyrics {
                 }
             } catch (Throwable ignored) { }
             synchronized (CACHE) { CACHE.put(t.id(), got); }
-            System.out.println("[FancyDrops] lyrics: " + t.name() + ": " + (got.isEmpty() ? "none" : src.isEmpty() ? "LRCLIB, " + got.size() + " lines" : src));
+            System.out.println("[Stardrops] lyrics: " + t.name() + ": " + (got.isEmpty() ? "none" : src.isEmpty() ? "LRCLIB, " + got.size() + " lines" : src));
             if (forTrack.equals(t.id())) { lines = got; status = got.isEmpty() ? "No synced lyrics for this song." : src; }
-        }, "FancyDrops lyrics");
+        }, "Stardrops lyrics");
         th.setDaemon(true); th.start();
     }
     private static String firstArtist(String a) { int c = a.indexOf(','); return c < 0 ? a : a.substring(0, c); }
     private static JsonElement get(String url) throws Exception {
-        HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "FancyDrops (github.com/imtraminecraft/fancydrops)").GET().build(), HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "Stardrops (github.com/imtraminecraft/fancydrops)").GET().build(), HttpResponse.BodyHandlers.ofString());
         return r.statusCode() == 200 ? JsonParser.parseString(r.body()) : null;
     }
     /** Nudges the words of the song playing now earlier (+) or later (-), remembered for that song, and says so above the hotbar. */

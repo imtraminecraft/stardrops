@@ -17,7 +17,7 @@ final class Chat {
 
     static MutableComponent color(String s, int rgb) { return Component.literal(s).withStyle(st -> st.withColor(rgb)); }
 
-    /** [FancyDrops] with the name in the menu's gold.  */
+    /** [Stardrops] with the name in the menu's gold.  */
     static MutableComponent prefix() {
         MutableComponent out = Component.empty().append(color("[", BRACKET));
         String name = "Stardrops";

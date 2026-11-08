@@ -69,7 +69,7 @@ public final class PriceService {
             if (!bins.isEmpty() || !feed.isEmpty() || !bazaarBuy.isEmpty()) { lastRefresh = System.currentTimeMillis(); loadedKey = key(); }
             status = st.toString();
             attempted = true; loading = false;
-        }, "FancyDrops-Prices");
+        }, "Stardrops-Prices");
         t.setDaemon(true);
         t.start();
     }
@@ -148,7 +148,7 @@ public final class PriceService {
 
     private static String get(String url) throws Exception {
         HttpRequest r = HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(30))
-                .header("User-Agent", "FancyDrops/0.3").GET().build();
+                .header("User-Agent", "Stardrops/0.3").GET().build();
         HttpResponse<String> resp = HTTP.send(r, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) throw new IOException("HTTP " + resp.statusCode());
         return resp.body();

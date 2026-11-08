@@ -61,7 +61,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
             var cat = net.minecraft.client.KeyMapping.Category.register(Identifier.fromNamespaceAndPath("fancydrops", "music"));
             String[] ids = {"key.fancydrops.playpause", "key.fancydrops.next", "key.fancydrops.previous", "key.fancydrops.lyricsEarlier", "key.fancydrops.lyricsLater"};
             for (int i = 0; i < 5; i++) music[i] = net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(new net.minecraft.client.KeyMapping(ids[i], -1, cat));
-        } catch (Throwable t) { System.err.println("[FancyDrops] music keys unavailable: " + t); }
+        } catch (Throwable t) { System.err.println("[Stardrops] music keys unavailable: " + t); }
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
             String[] acts = {"toggle", "next", "previous"};
             for (int i = 0; i < 3; i++) if (music[i] != null) while (music[i].consumeClick()) Spotify.control(acts[i]);
@@ -94,7 +94,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
 
         try {                                                                                  // auras are real particles in the world: hidden by blocks and bodies, always on the player
             net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_EXTRACTION.register(AuraFx::extract);
-        } catch (Throwable t) { System.err.println("[FancyDrops] world auras unavailable: " + t); }
+        } catch (Throwable t) { System.err.println("[Stardrops] world auras unavailable: " + t); }
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("fancydrops", "lyrics"),
@@ -112,7 +112,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
         try {                                                                                  // moving name effects: refresh the tab list every frame, just before it is drawn
             HudElementRegistry.attachElementBefore(Identifier.withDefaultNamespace("player_list"), Identifier.fromNamespaceAndPath("fancydrops", "tab_fx"),
                     (graphics, deltaTracker) -> Cosmetics.tickTabFrame(Minecraft.getInstance()));
-        } catch (Throwable t) { System.err.println("[FancyDrops] smooth tab effects unavailable: " + t); }
+        } catch (Throwable t) { System.err.println("[Stardrops] smooth tab effects unavailable: " + t); }
 
         // While a scene plays, the bottom of the screen slides away: the hearts and bars with the hotbar. When it ends the hearts slide back first, then the hotbar.
         for (String el : new String[]{"hotbar", "health_bar", "armor_bar", "food_bar", "air_bar", "mount_health", "info_bar", "experience_level", "overlay_message"}) {
@@ -126,7 +126,7 @@ public class FancyDropsMod implements ClientModInitializer, ModInitializer {
                     callHud(original, graphics, deltaTracker);
                     if (off > 0.05f) Gfx.pop(graphics);
                 });
-            } catch (Throwable t) { System.err.println("[FancyDrops] could not wrap " + el + ": " + t); }
+            } catch (Throwable t) { System.err.println("[Stardrops] could not wrap " + el + ": " + t); }
         }
 
         // Warm the price cache when joining Hypixel so the first drop already has a price.

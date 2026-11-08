@@ -1,4 +1,4 @@
-// FancyDrops server: a Cloudflare Worker with one KV namespace bound as WORN.
+// Stardrops server: a Cloudflare Worker with one KV namespace bound as WORN.
 //
 // Everything a player earns (drops counted, achievements, the cosmetics they unlock) lives HERE, not in the
 // player's own files, so editing a file on your computer cannot give you anything.
@@ -91,7 +91,7 @@ async function verify(b, env) {
   if (!/^[A-Za-z0-9_]{1,16}$/.test(name) || !/^[0-9a-f]{8,64}$/.test(serverId)) { verify.why = "bad request"; return null; }
   const keyOk = /^[0-9a-f]{64}$/.test(key), kh = keyOk ? await codeOf("key|" + key) : null;
   for (let i = 0; i < 3; i++) {
-    const r = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=${encodeURIComponent(name)}&serverId=${serverId}`, { headers: { "user-agent": "FancyDrops-worker" } });
+    const r = await fetch(`https://sessionserver.mojang.com/session/minecraft/hasJoined?username=${encodeURIComponent(name)}&serverId=${serverId}`, { headers: { "user-agent": "Stardrops-worker" } });
     if (r.status === 200) {
       const id = (await r.json()).id;
       const code = await codeOf(`${id.slice(0, 8)}-${id.slice(8, 12)}-${id.slice(12, 16)}-${id.slice(16, 20)}-${id.slice(20)}`.toLowerCase());
@@ -145,7 +145,7 @@ export default {
       return json(view(await load(env, code)), { "cache-control": "max-age=15" });
     }
 
-    if (req.method !== "POST" || (path !== "/worn" && path !== "/event")) return new Response("FancyDrops", { status: 404 });
+    if (req.method !== "POST" || (path !== "/worn" && path !== "/event")) return new Response("Stardrops", { status: 404 });
     let b;
     try { b = await req.json(); } catch { return new Response("bad json", { status: 400 }); }
     const code = await verify(b, env);
