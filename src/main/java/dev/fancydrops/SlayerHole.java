@@ -31,6 +31,12 @@ final class SlayerHole {
         NebulaTex.glow(g, x, y, sp * 1.05f, sp * 0.72f, Gfx.argb(Math.round(150 * BD_A), VOID));
         NebulaTex.glow(g, x, y, sp * 0.95f, sp * 0.58f, Gfx.argb(Math.round(90 * BD_A), mixc(BD_COL, VOID, 0.7f)));
     }
+    /** The heartbeat the soundtrack plays under the pull (1.2 s, gaps 0.62 s shrinking by 0.78 each, at least 0.17): 0..1, a quick swell on each beat. */
+    private static float beat(float t) {
+        float tk = 1.2f, gap = 0.62f, b = 0f;
+        while (tk < 3.35f) { float u = (t - tk) / 0.28f; if (u > 0 && u < 1) b = Math.max(b, (float) Math.sin(Math.PI * u) * (0.55f + 0.45f * (tk - 1.2f) / 2.2f)); tk += gap; gap = Math.max(0.17f, gap * 0.78f); }
+        return b;
+    }
     static final String[] NAMES = {"Revenant Horror", "Tarantula Broodfather", "Sven Packmaster", "Voidgloom Seraph", "Inferno Demonlord", "Riftstalker Bloodfiend"};
     private static final int WHITE_ = 0xFFFFFF, VOID = 0x04030C;
 
@@ -68,7 +74,7 @@ final class SlayerHole {
         int hot = mixc(energy, WHITE_, 0.55f);
         // the hole: opens, holds through the meal, then (by type) spits, collapses or swallows everything
         float open = eob((t - 0.1f) / 0.7f);
-        float gulp = 0f; for (float g0 : AnimationManager.SL_GULPS) { float u = (t - g0) / 0.35f; if (u > 0 && u < 1) gulp = Math.max(gulp, (float) Math.sin(Math.PI * u)); }
+        float gulp = beat(t);                                                                       // the hole throbs on the soundtrack's heartbeat, faster and faster
         float rh0 = 21 * sz, rh = rh0 * open * (1f + 0.12f * gulp);
         float swallow = nod ? sm((p - 0.15f) / 0.95f) : 0f;                                      // no drops: the hole eats the scene
         float spit = !nod && !rng ? sm((p - 0.3f) / 1.4f) : 0f;                                    // a drop: the hole shrinks away after spitting
@@ -163,8 +169,7 @@ final class SlayerHole {
         float px = (w > 14 ? 4.4f : 5.0f) * sz * (h > 24 ? 0.8f : 1f), bw = w * px, bh = h * px;
         float mx = hx + rh0 * 3.4f + bw * 0.5f + 4 * sz, my = hy;                                      // its centre, to the right of the hole
         float beam = cl((t - 0.45f) / 0.6f);                                                         // beamed in, top to bottom
-        float suck = 0f; for (int k = 0; k < 3; k++) suck += sm((t - AnimationManager.SL_GULPS[k] + 0.25f) / 0.55f) / 3f;   // three gulps
-        suck = cl(suck * 1.05f + sm((t - 1.3f) / 2.1f) * 0.15f);
+        float su = cl((t - 1.15f) / 2.25f), suck = su * su * (3 - 2 * su) * (0.7f + 0.3f * su);              // one long pull, speeding up
         float lean = sm((t - 1.1f) / 0.6f);
         float dmin = Float.MAX_VALUE, dmax = 0;
         for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) { if (g[y].charAt(x) == '.') continue; float X = mx + (x - w / 2f + 0.5f) * px, Y = my + (y - h / 2f + 0.5f) * px; float d = (float) Math.hypot(X - hx, Y - hy); dmin = Math.min(dmin, d); dmax = Math.max(dmax, d); }
@@ -177,7 +182,7 @@ final class SlayerHole {
                 // leaning: everything is drawn a little toward the hole, the near side more (tidal stretch)
                 float d0 = (float) Math.hypot(X - hx, Y - hy), ord = (d0 - dmin) / Math.max(1f, dmax - dmin);
                 X -= lean * (1f - ord) * 6 * sz; Y += lean * (Y - hy) * -0.08f;
-                float q = cl((suck * 1.7f - ord * 0.7f) / 1.0f); q = q * q * (3 - 2 * q);
+                float q = cl(suck * 1.15f - ord * 0.15f); q = q * q * (3 - 2 * q);
                 int col = pal(boss, ch);
                 float al = a * rowIn;
                 if (q <= 0.001f) {
@@ -188,12 +193,13 @@ final class SlayerHole {
                 }
                 // torn off: spiralling in, stretched along its path, heating up, swallowed at the horizon
                 float ang0 = (float) Math.atan2(Y - hy, X - hx), r0 = (float) Math.hypot(X - hx, Y - hy);
-                float rr = rh0 * 0.9f + (r0 - rh0 * 0.9f) * (float) Math.pow(1f - q, 1.4f), ang = ang0 + q * q * 3.6f;
-                if (rr < rh0 * 1.0f && q > 0.85f) continue;
+                // it never quite crosses: it slows as it nears the horizon, smears round it, reddens and fades (time dilation)
+                float rr = rh0 * 1.06f + (r0 - rh0 * 1.06f) * (float) Math.pow(1f - q, 1.5f), ang = ang0 + q * 3.2f * (1f - 0.45f * q);
+                float red = cl((q - 0.72f) / 0.28f); al *= 1f - red; if (al < 0.02f) continue;
                 float sx = hx + (float) Math.cos(ang) * rr, sy = hy + (float) Math.sin(ang) * rr * (1f - 0.7f * q);
                 float pa = ang - 0.35f * q, pr = rr * (1f + 0.25f * q);
                 float tx = hx + (float) Math.cos(pa) * pr, ty = hy + (float) Math.sin(pa) * pr * (1f - 0.7f * q);
-                int c2 = mixc(col, hot, 0.85f * q);
+                int c2 = mixc(mixc(col, hot, 0.85f * Math.min(q, 0.6f) / 0.6f), 0x5A0010, red);
                 stroke(tx, ty, sx, sy, Math.max(0.4f, px * 0.45f * (1f - q * 0.5f)), c2, al * (0.6f + 0.4f * q));
                 dot(sx, sy, mixc(c2, WHITE_, q * 0.5f), al);
             }

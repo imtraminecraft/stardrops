@@ -2282,7 +2282,8 @@ public class FancyScreen extends Screen {
         l = new ArrayList<>();
         switch (t) {
             case HOME -> l.add(new SubPage("Resources", ":res_heart:", 0xFFFF6B8A, false));
-            case DROPS, ANIMATIONS, SOUNDS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), c.wip())); }
+            case DROPS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), c.wip())); }
+            case ANIMATIONS, SOUNDS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // being remade: only Mob Drops is open
             case CHAT -> { l.add(new SubPage("Message & Channel", ":format:", 0xFFFFC857, false)); l.add(new SubPage("Chat Enabled", ":bell:", 0xFF7BE05A, false)); }
             case VISUALS -> { l.add(new SubPage("Music", ":note:", 0xFF1ED760, false)); l.add(new SubPage("Cosmos", ":cosmos:", 0xFF9B7BFF, false)); }
             case GENERAL -> {
@@ -2636,10 +2637,12 @@ public class FancyScreen extends Screen {
 
     private static final String[] POS_NAMES = {"Top Center", "Center", "Above Action Bar"};
 
+    /** Animations and Sounds are being remade for Stardrops: only Mob Drops (Slayers first) is open, the rest show the WIP page. */
+    private static boolean locked(Categories.Cat c) { return c.wip() || !c.id().equals("bosses"); }
     private void animationsPage(FancyConfig c) {
         if (searching || landing()) { animationsLanding(c); return; }
         Categories.Cat cat = curCat();
-        if (cat.wip()) { wipPanel(cat.icon(), cat.name() + " animations", cat.blurb()); return; }
+        if (locked(cat)) { wipPanel(cat.icon(), cat.name() + " animations", cat.blurb()); return; }
         for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip()) srcWip.add(gr0.id()); }
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
@@ -2723,24 +2726,14 @@ public class FancyScreen extends Screen {
 
     private static final String[] SLOT_NAMES = {"Beat", "Burst", "Reveal", "Linger", "End"};
     private static final String[] SLOT_SUBS = {"Every beat of the opening", "The moment the animation pivots", "The item appears", "The glow after it", "The animation fades out"};
-    /** Slayer (the black hole) names its sounds after what happens. */
-    private static String slotName(String scene, int k) {
-        if (!AnimationManager.isSlayer(scene)) return SLOT_NAMES[k];
-        int ty = AnimationManager.typeOfKey(scene);
-        return switch (k) { case 0 -> "Gulp"; case 1 -> ty == AnimationManager.RNG ? "Supernova" : ty == AnimationManager.NORMAL ? "Spit" : "Collapse"; case 2 -> "Reveal"; case 3 -> ty == AnimationManager.RNG ? "Pulsar" : "Afterglow"; default -> "Close"; };
-    }
-    private static String slotSub(String scene, int k) {
-        if (!AnimationManager.isSlayer(scene)) return SLOT_SUBS[k];
-        int ty = AnimationManager.typeOfKey(scene);
-        return switch (k) { case 0 -> "Each of the three gulps as the boss is pulled in";
-            case 1 -> ty == AnimationManager.RNG ? "The hole collapses and goes supernova" : ty == AnimationManager.NORMAL ? "The hole spits your drop out" : "The hole swallows everything";
-            case 2 -> "Your drop appears"; case 3 -> ty == AnimationManager.RNG ? "The pulsar sweeping behind your drop" : "The glow after it"; default -> "It all fades away"; };
-    }
+    /** Slayer has one soundtrack scored to the whole animation; the other slots are not used. */
+    private static String slotName(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_NAMES[k] : k == 1 ? "Soundtrack" : "\u2014"; }
+    private static String slotSub(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_SUBS[k] : "One piece of music scored to the whole animation, from the hole opening to the end"; }
 
     private void soundsPage(FancyConfig c) {
         if (searching || landing()) { soundsLanding(c); return; }
         Categories.Cat cat = curCat();
-        if (cat.wip()) { wipPanel(cat.icon(), cat.name() + " sounds", cat.blurb()); return; }
+        if (locked(cat)) { wipPanel(cat.icon(), cat.name() + " sounds", cat.blurb()); return; }
         for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip()) srcWip.add(gr0.id()); }
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
@@ -2781,6 +2774,7 @@ public class FancyScreen extends Screen {
         rows.add(section("Sounds"));
         List<String> choices = SoundFx.choices();
         for (int k = 0; k < SoundFx.SLOTS.length; k++) {
+            if (AnimationManager.isSlayer(scene) && k != 1) continue;                                   // Slayer: only its soundtrack
             final String slot = SoundFx.SLOTS[k]; final int slotIdx = k;
             Row sr = row(1, SLOT_ICON[k], slotName(scene, k), slotSub(scene, k), SLOT_COL[k]);
             sr.ctls.add(new Btn("▶", GREEN, () -> { pulseAt[slotIdx] = System.currentTimeMillis(); SoundFx.Fx fx = SoundFx.byName(SoundFx.chosen(scene, slot)); if (fx != null) SoundFx.preview(fx); }));
@@ -3454,7 +3448,7 @@ public class FancyScreen extends Screen {
             if (r.kind == CHATPREV) { drawChatPrev(g, r); continue; }
             if (r.kind == COSPREV) { drawCosPreview(g, r); continue; }
             if (r.kind == PANEL || r.kind == HERO) {                                // a centred banner (HERO: just icon, title, words) or a construction site for a page that is not built yet
-                pill(g, r.x, r.y, r.w, r.h, r.kind == PANEL ? 0xFF16130B : Ui.ROW);
+                pill(g, r.x, r.y, r.w, r.h, r.kind == PANEL ? 0xFF06071A : Ui.ROW);
                 int mid = r.x + r.w / 2; long nw = System.currentTimeMillis(); float sec = (nw % 3600000L) / 1000f;
                 int bob = r.kind == HERO && !STILL ? Math.round((float) Math.sin(sec * 2.6f) * 2.5f) : 0;       // a menu page's big icon floats up and down
                 int cyi = r.y + 32 + bob;
@@ -3476,7 +3470,7 @@ public class FancyScreen extends Screen {
                     Gfx.text(g, font, bp[0], bx + 7, by + 4, 0xFFFFC857); Gfx.text(g, font, bp[1], bx + 12 + nw0, by + 4, Ui.SUB);
                 }
                 if (r.kind == HERO) { int wy = r.y + 70; for (String ln : wrap(r.sub, cw - 60)) { Gfx.textCentered(g, font, ln, mid, wy, Ui.SUB); wy += 11; } continue; }          // the words under the title
-                Site.draw(g, r.x, r.y, r.w, r.h, sec);
+                SpaceSite.draw(g, r.x, r.y, r.w, r.h, sec);                              // a space station under construction
                 comingSoon(g, r, mid, sec);
                 nameBoard(g, r, sec);
                 continue;

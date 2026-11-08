@@ -119,83 +119,27 @@
       }
     ]
   },
-  "sl_open": {
+  "slr_nothing": {
     "sounds": [
       {
-        "name": "fancydrops:sl_open",
-        "stream": false
+        "name": "fancydrops:slr_nothing",
+        "stream": true
       }
     ]
   },
-  "sl_gulp": {
+  "slr_drop": {
     "sounds": [
       {
-        "name": "fancydrops:sl_gulp",
-        "stream": false
+        "name": "fancydrops:slr_drop",
+        "stream": true
       }
     ]
   },
-  "sl_collapse": {
+  "slr_rng": {
     "sounds": [
       {
-        "name": "fancydrops:sl_collapse",
-        "stream": false
-      }
-    ]
-  },
-  "sl_spit": {
-    "sounds": [
-      {
-        "name": "fancydrops:sl_spit",
-        "stream": false
-      }
-    ]
-  },
-  "sl_nova": {
-    "sounds": [
-      {
-        "name": "fancydrops:sl_nova",
-        "stream": false
-      }
-    ]
-  },
-  "sl_chime": {
-    "sounds": [
-      {
-        "name": "fancydrops:sl_chime",
-        "stream": false
-      }
-    ]
-  },
-  "sl_reveal": {
-    "sounds": [
-      {
-        "name": "fancydrops:sl_reveal",
-        "stream": false
-      }
-    ]
-  },
-  "sl_glow": {
-    "sounds": [
-      {
-        "name": "fancydrops:sl_glow",
-        "stream": false
-      }
-    ]
-  },
-  "sl_pulsar": {
-    "sounds": [
-      {
-        "name": "fancydrops:sl_pulsar",
-        "stream": false
-      }
-    ]
-  },
-  "sl_close": {
-    "sounds": [
-      {
-        "name": "fancydrops:sl_close",
-        "stream": false
+        "name": "fancydrops:slr_rng",
+        "stream": true
       }
     ]
   }

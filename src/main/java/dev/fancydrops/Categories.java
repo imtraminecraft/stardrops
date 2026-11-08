@@ -81,14 +81,14 @@ final class Categories {
     static boolean hasSubs(Group g) { return g.id().equals("myth") || g.id().equals("slayer") || ExtraData.group(g.id()).size() > 1; }
 
     static final List<Cat> ALL = List.of(
-        new Cat("mythological", "Mythological", ":mytho:", 0xFF55D8FF, false, "Mythological Ritual is an event that occurs with the Mythological Ritual perk.", List.of(
-            new Group("myth", "Mythological Mobs", ":mytho:", 0xFF55D8FF, "What plays when a ritual creature dies.", MYTH_TYPES),
-            new Group("treasure", "Treasure", ":treasure:", 0xFFFFD25A, "What plays when a burrow holds treasure.", MYTH_TYPES))),
         new Cat("bosses", "Mob Drops", ":raredrops:", 0xFFFF5A5A, false, "Slayers, the Crimson Isle, the End and the creatures of the Mines.", List.of(
             new Group("slayer", "Slayers", ":grp_slayers:", 0xFFFF5A5A, "What plays when a slayer boss drops something.", SLAYER_TYPES),
             new Group("crimson", "Crimson Isle", ":grp_crimson:", 0xFFFF6A3A, "The Crimson Isle's minibosses and the Magma Boss.", SHOW_TYPES),
             new Group("dragon", "The End", ":grp_end:", 0xFFC77DFF, "Ender Dragons: the Ender Dragon pet, the Aspect of the Dragons and the dragons' rare loot.", SHOW_TYPES),
             new Group("mobs", "Mines", ":grp_mines:", 0xFF7FE8D8, "Rare drops of the Dwarven Mines' and the Crystal Hollows' creatures.", SHOW_TYPES))),
+        new Cat("mythological", "Mythological", ":mytho:", 0xFF55D8FF, false, "Mythological Ritual is an event that occurs with the Mythological Ritual perk.", List.of(
+            new Group("myth", "Mythological Mobs", ":mytho:", 0xFF55D8FF, "What plays when a ritual creature dies.", MYTH_TYPES),
+            new Group("treasure", "Treasure", ":treasure:", 0xFFFFD25A, "What plays when a burrow holds treasure.", MYTH_TYPES))),
         new Cat("mining", "Mining", ":mining:", 0xFF55D8FF, false, "The Crystal Nucleus, Frozen Corpses and the Mining Fiesta.", List.of(
             new Group("nucleus", "Crystal Nucleus", ":grp_nucleus:", 0xFF9AE6FF, "What plays when the Nucleus loot bundle holds something rare.", MINE_TYPES),
             new Group("corpse", "Frozen Corpses", ":grp_corpse:", 0xFF8FD8FF, "What plays when a Frozen Corpse in a Glacite Mineshaft holds something rare.", CORPSE_TYPES),

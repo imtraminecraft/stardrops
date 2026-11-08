@@ -135,7 +135,6 @@ public final class AnimationManager {
     // No Drops 5.5 s (the hole swallows the scene, "nothing dropped"), a drop 6 s, RNG 7 s (the supernova); the words stay 3 s after.
     static boolean isSlayer(String groupOrKey) { return groupOrKey != null && groupOrKey.startsWith("slayer"); }
     static final float SL_PIVOT = 3.4f;
-    static final float[] SL_GULPS = {1.75f, 2.35f, 2.95f};
     static float animLen(String g, int type) { return isSlayer(g) ? (type == RNG ? 7f : type == NORMAL ? 6f : 5.5f) : animLen(type); }
     static float opening(String g, int type) { return isSlayer(g) ? SL_PIVOT : opening(type); }
     static float textHold(String g, int type) { return isSlayer(g) ? (type == NO_DROPS ? 0f : 3f) : textHold(type); }
@@ -161,7 +160,7 @@ public final class AnimationManager {
         int ty = typeOfKey(scene); float S = sceneLen(scene, ty), O = opening(scene, ty), A = animLen(scene, ty); boolean tre = scene.startsWith("treasure"), nod = scene.endsWith("nodrops");
         float[] beats = tre ? new float[]{0.215f * O, 0.505f * O, 0.795f * O} : new float[]{0.34f * O, 0.58f * O, 0.80f * O};
         if (scene.startsWith("exp.")) beats = BookScene.flipStarts(scene.endsWith("rng"), O);
-        if (isSlayer(scene)) beats = SL_GULPS.clone();        // the sound plays as the page lifts, not when it lands
+        if (isSlayer(scene)) return new float[][]{new float[0], {0.02f}, new float[0], new float[0], new float[0]};   // Slayer: one soundtrack from the start
         return new float[][]{beats, {O}, nod ? new float[0] : new float[]{O + 0.25f}, {O + 1.0f}, {A - 0.5f + hold}};
     }
 
@@ -170,12 +169,11 @@ public final class AnimationManager {
     private static void cues(String scene, float hold, float prev, float t) {
         boolean big = scene.endsWith("rng"), nod = scene.endsWith("nodrops");
         float[][] tm = cueTimes(scene, hold);
-        if (isSlayer(scene) && prev < 0.1f && t >= 0.1f && FancyConfig.get().customSounds) SoundFx.play(SoundFx.byName("sl_open"), 1f, 1f);   // the black hole opening
-        for (int k = 0; k < tm[0].length; k++) if (prev < tm[0][k] && t >= tm[0][k]) SoundFx.playSlot(scene, "chop", isSlayer(scene) ? 1.0f - 0.08f * k : 0.9f + 0.12f * k, big);
-        if (prev < tm[1][0] && t >= tm[1][0]) SoundFx.playSlot(scene, "split", nod ? 0.8f : 1f, big);
+        for (int k = 0; k < tm[0].length; k++) if (prev < tm[0][k] && t >= tm[0][k]) SoundFx.playSlot(scene, "chop", 0.9f + 0.12f * k, big);
+        if (prev < tm[1][0] && t >= tm[1][0]) SoundFx.playSlot(scene, "split", nod && !isSlayer(scene) ? 0.8f : 1f, big);
         if (tm[2].length > 0 && prev < tm[2][0] && t >= tm[2][0]) SoundFx.playSlot(scene, "reveal", 1f, big);
-        if (prev < tm[3][0] && t >= tm[3][0]) SoundFx.playSlot(scene, "linger", nod ? 0.85f : 1f, big);
-        if (prev < tm[4][0] && t >= tm[4][0]) SoundFx.playSlot(scene, "end", 1f, big);
+        if (tm[3].length > 0 && prev < tm[3][0] && t >= tm[3][0]) SoundFx.playSlot(scene, "linger", nod ? 0.85f : 1f, big);
+        if (tm[4].length > 0 && prev < tm[4][0] && t >= tm[4][0]) SoundFx.playSlot(scene, "end", 1f, big);
     }
 
     // ---- the Play button of the Sounds page: just the sounds, in time, no picture
