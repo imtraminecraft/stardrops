@@ -44,7 +44,7 @@ final class Vox3D {
     // ------------------------------------------------------------------ per frame state
     static Frame F; static Matrix4f projView; static final Vector3f eye = new Vector3f(), right = new Vector3f(), up = new Vector3f();
     static Matrix4f M = new Matrix4f(); static final ArrayDeque<Matrix4f> STACK = new ArrayDeque<>();
-    static boolean mobMode; static int rimCol;
+    static boolean mobMode; static int rimCol; static float clipY = -99f;
     static int pass; static boolean dyn;                         // pass 1: build the still scenery once; pass 2: only what moves (dyn)
     static float fovNow = 30f;
     static float shiftX, shiftY;                                 // the NDC shift that pins the drop's spot; the sky is drawn against it so it stays centred
@@ -302,11 +302,13 @@ final class Vox3D {
         }
     }
     /** A pixel moon high on the left of the window. */
-    static void moon(Theme th, float aspect) {
-        float d = 60f; Vector3f c = onSky(-0.58f, 0.5f, d, aspect); int n = 10; float R = 2.2f;
+    static void moon(Theme th, float aspect) { moonAt(th, aspect, -0.58f, 0.5f, 2.2f, 0f); }
+    /** The pixel moon at (sx, sy) of the window, radius R; phase 0..1 picks where its craters sit. */
+    static void moonAt(Theme th, float aspect, float sx, float sy, float R, float phase) {
+        float d = 60f; Vector3f c = onSky(sx, sy, d, aspect); int n = 10; int cs = (int) (phase * 97);
         for (int u = 0; u < n; u++) for (int v = 0; v < n; v++) {
             float fx = (u + 0.5f) / n * 2 - 1, fy = (v + 0.5f) / n * 2 - 1; if (fx * fx + fy * fy > 1.05f) continue;
-            boolean crater = (u == 3 && v == 6) || (u == 6 && v == 3) || (u == 6 && v == 4) || (u == 2 && v == 3) || (u == 7 && v == 6);
+            boolean crater = cs == 0 ? (u == 3 && v == 6) || (u == 6 && v == 3) || (u == 6 && v == 4) || (u == 2 && v == 3) || (u == 7 && v == 6) : rnd(cs * 131 + u * 17 + v * 7) < 0.13f;
             int ca = 0xFF000000 | (crater ? mul(th.moon(), 0.8f) : mul(th.moon(), 0.92f + 0.08f * fy));
             float a0 = (fx - 1f / n) * R, a1 = (fx + 1f / n) * R, b0 = (fy - 1f / n) * R, b1 = (fy + 1f / n) * R;
             wquad(F.veil, c.x + right.x * a0 + up.x * b0, c.y + right.y * a0 + up.y * b0, c.z + right.z * a0 + up.z * b0, ca,
@@ -488,6 +490,10 @@ final class Vox3D {
             box(x0, y0, z0, x1, y1, z1, s, 1f, 0.6f); pop();
             return;
         }
+        if (clipY > -50f) {                                                                         // still under the ground while it rises: not drawn (the ground fades at the window's edge)
+            float top = -1e9f; for (int k = 0; k < 8; k++) top = Math.max(top, M.transformPosition(new Vector3f((k & 1) == 0 ? x0 : x1, (k & 2) == 0 ? y0 : y1, (k & 4) == 0 ? z0 : z1)).y);
+            if (top < clipY) return;
+        }
         Skin g = crumble <= 0 ? s : (f, u, v, w, h) -> mixc(s.at(f, u, v, w, h), 0x6A6A70, crumble);
         box(x0, y0, z0, x1, y1, z1, g, 1f, 0.6f);
     }
@@ -619,22 +625,54 @@ final class Vox3D {
         push(); M.translate(0, 24f, 0).rotateY(0.15f * (float) Math.sin(t * 1.3f)); part(-4f, 0f, -4f, 4f, 8f, 4f, head); pop();
         if (cape) { push(); M.translate(0, 23f, 0); part(-4.5f, 0f, -2.5f, 4.5f, 2.5f, 2.5f, (f, u, v, w, h) -> mul(0x8A0A18, 0.85f + rnd(u * 7 + v) * 0.3f)); pop(); }   // the high collar
     }
-    static void spider(float t, float walk) {
-        Skin dark = (f, u, v, w, h) -> (v == 0 || u == 0) && w > 8 ? 0x5A1A1A : mul(0x241E22, 0.8f + rnd(f * 7 + u * 13 + v * 5) * 0.35f);
-        Skin headS = (f, u, v, w, h) -> { if (f == 4 && h == 8 && w == 8 && (v == 4 || v == 5) && (u == 1 || u == 2 || u == 5 || u == 6)) return 0x02FF2A2A; if (f == 4 && v == 6 && (u == 3 || u == 4)) return 0x02FF2A2A; return mul(0x2E2420, 0.8f + rnd(u * 7 + v * 3 + f) * 0.3f); };
-        Skin belly = (f, u, v, w, h) -> {                                                            // Broodfather black, a glowing red mark on its back
-            float n = rnd(f * 7 + u * 13 + v * 5 + 3);
-            if (f == 2 && ((u == w / 2 || u == w / 2 - 1) && v > 2 && v < h - 2 || (v == h / 2 && u > 2 && u < w - 3))) return 0x02E01818;
-            if (f == 5 && (u == w / 2 || u == w / 2 - 1) && v > 1 && v < h - 1) return 0x02C01010;
-            return mul(n < 0.15f ? 0x3A1414 : 0x1C181C, 0.8f + n * 0.4f);
+    /** A part laid along a line, from a to b (model pixels), th thick: limbs that bend. */
+    static void limb(float ax, float ay, float az, float bx, float by, float bz, float th, Skin s) {
+        float dx = bx - ax, dy = by - ay, dz = bz - az, hz = (float) Math.sqrt(dx * dx + dz * dz), len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        push(); M.translate(ax, ay, az).rotateY((float) Math.atan2(-dz, dx)).rotateZ((float) Math.atan2(dy, hz)); part(-th * 0.5f, -th, -th, len + th * 0.5f, th, th, s); pop();
+    }
+    /** Tarantula Broodfather: a hairy tarantula, black-brown with red-orange knees, eight red eyes, fangs, a big abdomen with a glowing red hourglass; eight jointed legs arched round it. */
+    static void spider(float t, float idle) {
+        Skin hair = (f, u, v, w, h) -> { float n = rnd(f * 7 + u * 13 + v * 5 + 11); return n < 0.1f ? 0x6A564A : n < 0.22f ? 0x3E302A : mul(0x241C1C, 0.85f + n * 0.3f); };
+        Skin head = (f, u, v, w, h) -> {
+            if (f == 4) {                                                                           // the face: eight eyes, two big ones in the middle
+                if (v == h - 2 && (u == w / 2 - 1 || u == w / 2)) return 0x02FF2A2A;
+                if (v == h - 3 && (u == w / 2 - 2 || u == w / 2 + 1)) return 0xE01A1A;
+                if (v == h - 1 && (u == 1 || u == w - 2 || u == w / 2 - 2 || u == w / 2 + 1)) return 0xB01414;
+            }
+            if (f == 2 && (u == w / 2 || u == w / 2 - 1) && v > 1) return 0x5A3A2A;                   // a pale stripe down its back
+            return hair.at(f, u, v, w, h);
         };
-        part(-5f, 4f, -15f, 5f, 12f, -3f, belly);
-        part(-3f, 5f, -3f, 3f, 11f, 3f, dark);
-        part(-4f, 4f, 3f, 4f, 12f, 11f, headS);
+        Skin abdomen = (f, u, v, w, h) -> {
+            float n = rnd(f * 7 + u * 13 + v * 5 + 3);
+            if (f == 2) {                                                                           // the red hourglass, glowing
+                float du = Math.abs(u - (w - 1) / 2f), dv = Math.abs(v - (h - 1) / 2f);
+                if (dv >= 0.5f && dv <= h / 2f - 2f && du <= 0.5f + dv * 0.55f) return dv < 1f ? 0x02E81C1C : 0xD82020;
+                if ((v == 1 || v == h - 2) && u > 2 && u < w - 3 && u % 2 == 0) return 0x7A3A22;          // chevrons
+            }
+            if (f == 5 && (u == w / 2 || u == w / 2 - 1) && v > 1 && v < h - 2) return 0xB01818;
+            return n < 0.12f ? 0x6A564A : n < 0.25f ? 0x3A2A26 : mul(0x1E1818, 0.85f + n * 0.3f);
+        };
+        Skin leg = (f, u, v, w, h) -> { int a = f == 5 ? w - 1 - u : u; float n = rnd(f * 3 + u * 17 + v * 7);
+            if (f != 0 && f != 1 && a >= w - 3) return n < 0.3f ? 0xE0602A : 0xC8461E;                    // red-orange knees
+            return n < 0.15f ? 0x5A4A40 : mul(0x221A1A, 0.85f + n * 0.3f); };
+        Skin fang = (f, u, v, w, h) -> v == 0 ? 0x02C02020 : 0x140E10;
+        float breathe = 0.4f * (float) Math.sin(t * 2.6f);
+        push(); M.translate(0f, 9f, -4f).rotateX(-0.3f); part(-6f, -3f + breathe * 0.5f, -13f, 6f, 7f + breathe, 0f, abdomen); pop();   // abdomen, behind, tipped up to show its mark
+        part(-4f, 6f, -5f, 4f, 11f, 5f, hair);                                                        // cephalothorax
+        part(-3f, 6.5f, 4f, 3f, 11.5f, 9f, head);                                                      // head with its eyes
+        for (int s = -1; s <= 1; s += 2) {
+            limb(s * 1.5f, 7f, 8.5f, s * 2.2f, 5f, 12f, 1f, hair);                                       // pedipalps
+            push(); M.translate(s * 1.2f, 6.6f, 9f).rotateX(0.25f + 0.12f * (float) Math.sin(t * 5f + s)); part(-0.6f, -3f, -0.6f, 0.6f, 0f, 0.6f, fang); pop();
+        }
         for (int s = -1; s <= 1; s += 2) for (int k = 0; k < 4; k++) {
-            float yaw = (k - 1.5f) * 0.42f * s + (s > 0 ? 0 : (float) Math.PI), lift = 0.5f + 0.18f * walk * ((k % 2 == 0) ? 1 : -1);
-            push(); M.translate(s * 3f, 8f, -1f + k * 1.2f).rotateY(yaw).rotateZ(-lift);
-            part(0f, -1f, -1f, 15f, 1f, 1f, dark); pop();
+            float hz = 4f - k * 2.6f, ang = (float) Math.toRadians(55 - k * 32);                          // front legs reach forward, back legs back
+            float dx = s * (float) Math.cos(ang), dz = (float) Math.sin(ang);
+            float tw = idle * 2f * ((k + (s > 0 ? 0 : 1)) % 2 == 0 ? 1 : -1);
+            float hipX = s * 3.5f, hipY = 9f, kneeR = 8f + (k == 0 || k == 3 ? 1.5f : 0f), footR = kneeR + 7f;
+            float kx = hipX + dx * kneeR, ky = 14.5f + tw, kz = hz + dz * kneeR;
+            float fx = hipX + dx * footR, fz = hz + dz * footR;
+            limb(hipX, hipY, hz, kx, ky, kz, 0.8f, leg);
+            limb(kx, ky, kz, fx, 0.5f, fz, 0.6f, hair);
         }
     }
     static void wolf(float t, float walk) {

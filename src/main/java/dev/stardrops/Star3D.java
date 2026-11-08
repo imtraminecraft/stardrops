@@ -28,7 +28,7 @@ final class Star3D {
     static int starCol(int i, int energy) { return type == 2 ? (i == n - 1 ? 0xFFD24A : SlayerScene.TIER[Math.min(i, SlayerScene.TIER.length - 1)]) : type == 0 ? 0xDDE6FF : i == n - 1 ? mixc(energy, 0xFFFFFF, 0.3f) : 0xFFE9A0; }
 
     static Frame build(float t, float A, int bossIn, int typeIn, int energy, float aspect, float pinY, boolean z01) {
-        boss = bossIn; type = typeIn; hits = SlayerScene.HITS[type]; n = hits.length; last = hits[n - 1];
+        boss = bossIn; type = typeIn; reseed(t); hits = SlayerScene.HITS[type]; n = hits.length; last = hits[n - 1];
         F = new Frame(); tint = 0f; M = new Matrix4f(); STACK.clear(); mobMode = false; pass = 0; dyn = false; fovNow = FOV;
         float O = AnimationManager.SL_PIVOT, p = t - O;
 
@@ -91,27 +91,61 @@ final class Star3D {
         for (int i = 0; i < 6; i++) { Vector3f q = onSky((rnd(i * 17 + 5) - 0.5f) * 1.6f, 0.35f + rnd(i * 23 + 1) * 0.6f, 70f, aspect); glow(F.sky, q.x, q.y, q.z, 9f + rnd(i * 41) * 10f, neb[i % neb.length], (0.04f + rnd(i * 9) * 0.035f) * (1f - 0.6f * dim)); }
         Vector3f lowGlow = onSky(0f, -0.05f, 75f, aspect);                                           // the last of the dusk, low behind the horizon
         glow(F.sky, lowGlow.x, lowGlow.y, lowGlow.z, 34f, mixc(th.skyLow(), 0xFF8A6A, 0.25f), 0.16f * (1f - 0.7f * dim));
-        Vox3D.moon(th, aspect);                                                                     // a pixel moon, top left, with its glow
-        pixelPlanet(t, aspect, dim);
+        skyBodies(aspect, dim, th);                                                                 // a pixel moon and planets, different every time
         float per = 1.9f; int k = (int) (t / per); float u = (t - k * per) / 0.5f;                   // a shooting star now and then
         if (u < 1f) { Vector3f a = onSky(-0.2f + rnd(k * 7) * 0.6f, 0.82f - rnd(k * 3) * 0.15f, 70f, aspect), b = onSky(0.3f + rnd(k * 7) * 0.5f, 0.55f - rnd(k * 3) * 0.15f, 70f, aspect);
             for (int i = 0; i < 12; i++) { float uu = u - i * 0.03f; if (uu < 0) break; glow(F.sky, lerp(a.x, b.x, uu), lerp(a.y, b.y, uu), lerp(a.z, b.z, uu), 0.35f - i * 0.022f, 0xDDE6FF, (1f - i / 12f) * (1f - u)); } }
     }
+    // ---- this run's sky: chosen afresh every time the animation starts (or with -Dstardrops.seed for the bench)
+    static int runSeed; static float lastT = 1e9f; static int lastBoss = -1, lastType = -1;
+    static void reseed(float t) {
+        if (t < lastT - 0.05f || boss != lastBoss || type != lastType) {
+            String fixed = System.getProperty("stardrops.seed");
+            runSeed = fixed != null ? Integer.parseInt(fixed) : new java.util.Random().nextInt(1 << 20);
+        }
+        lastT = t; lastBoss = boss; lastType = type;
+    }
+    static float sr(int k) { return rnd(runSeed * 7919 + k * 104729 + 17); }
+    static int hsv(float h, float s, float v) {
+        h = ((h % 1f) + 1f) % 1f * 6f; int i = (int) h; float f = h - i, p = v * (1 - s), q = v * (1 - s * f), u = v * (1 - s * (1 - f));
+        float r, g, b; switch (i) { case 0 -> { r = v; g = u; b = p; } case 1 -> { r = q; g = v; b = p; } case 2 -> { r = p; g = v; b = u; } case 3 -> { r = p; g = q; b = v; } case 4 -> { r = u; g = p; b = v; } default -> { r = v; g = p; b = q; } }
+        return Math.round(r * 255) << 16 | Math.round(g * 255) << 8 | Math.round(b * 255);
+    }
+    /** The moon and the planets: which side each hangs on, how big, their colours, rings and bands are all rolled per run. */
+    static void skyBodies(float aspect, float dim, Theme th) {
+        float side = sr(1) < 0.5f ? 1f : -1f;
+        float mx = -side * (0.45f + 0.18f * sr(2)), my = 0.42f + 0.14f * sr(3);
+        Vox3D.moonAt(th, aspect, mx, my, 1.6f + 1.0f * sr(4), sr(5));
+        float px = side * (0.36f + 0.24f * sr(6)), py = 0.22f + 0.26f * sr(7), R = 2.2f + 1.7f * sr(8);
+        float hue = sr(9), hue2 = hue + (sr(10) - 0.5f) * 0.25f;
+        int ca = hsv(hue, 0.3f + 0.35f * sr(11), 0.85f + 0.12f * sr(12)), cb = hsv(hue2, 0.55f + 0.35f * sr(13), 0.45f + 0.2f * sr(14));
+        pixelPlanet(aspect, dim, px, py, R, 15, ca, cb, sr(15) < 0.7f, (sr(16) - 0.5f) * 1.1f, 5f + 7f * sr(17), (sr(18) - 0.5f) * 1.2f, sr(19) < 0.25f, runSeed);
+        int extra = (int) (sr(20) * 3f);                                                            // up to two small far ones
+        float[][] taken = {{mx, my, 0.22f}, {px, py, R * 0.06f + 0.12f}};
+        for (int e = 0, tries = 0; e < extra && tries < 12; tries++) {
+            float ex = (sr(30 + tries * 3) - 0.5f) * 1.5f, ey = 0.3f + 0.55f * sr(31 + tries * 3), er = 0.5f + 0.8f * sr(32 + tries * 3); boolean ok = true;
+            for (float[] q : taken) if (Math.hypot(ex - q[0], (ey - q[1]) * 1.4f) < q[2] + 0.16f) ok = false;
+            if (!ok) continue;
+            float h = sr(40 + e);
+            pixelPlanet(aspect, dim, ex, ey, er, Math.max(5, Math.round(er * 2f / 0.42f)) | 1, hsv(h, 0.35f, 0.8f), hsv(h + 0.06f, 0.6f, 0.45f), sr(44 + e) < 0.3f, (sr(46 + e) - 0.5f), 6f + 5f * sr(48 + e), 0.3f, sr(50 + e) < 0.4f, runSeed + e * 31);
+            taken = java.util.Arrays.copyOf(taken, taken.length + 1); taken[taken.length - 1] = new float[]{ex, ey, er * 0.06f + 0.1f}; e++;
+        }
+    }
     /** Our own touch: a ringed planet hanging over the horizon, top right, in big pixels; banded, lit from the moon's side, its ring in front. */
-    static void pixelPlanet(float t, float aspect, float dim) {
-        Vector3f c = onSky(0.5f, 0.36f, 70f, aspect); float R = 3.1f; int N = 15; float px = R * 2f / N;
-        int ca = PLANET_A[boss], cb = PLANET_B[boss]; float tilt = -0.32f, cs = (float) Math.cos(tilt), sn = (float) Math.sin(tilt);
+    static void pixelPlanet(float aspect, float dim, float sx, float sy, float R, int N, int ca, int cb, boolean hasRing, float tilt, float bandF, float bandAng, boolean spotty, int seed) {
+        Vector3f c = onSky(sx, sy, 70f, aspect); float px = R * 2f / N; float cs = (float) Math.cos(tilt), sn = (float) Math.sin(tilt), ba = (float) Math.cos(bandAng), bb = (float) Math.sin(bandAng);
         glow(F.sky, c.x, c.y, c.z, R * 2.6f, ca, 0.1f * (1f - 0.6f * dim));
-        int W = Math.round(N * 1.95f), H = N; int[] row = new int[2 * W + 1];
+        int W = hasRing ? Math.round(N * 1.95f) : N / 2 + 1, H = N / 2 + 1; int[] row = new int[2 * W + 1];
         for (int v = -H; v <= H; v++) {
             for (int u = -W; u <= W; u++) {
                 float x = (u + 0.0f) / (N / 2f), y = (v + 0.0f) / (N / 2f), d2 = x * x + y * y;          // -1..1 inside the planet
                 float rx = x * cs - y * sn, ry = (x * sn + y * cs) / 0.26f, rr = (float) Math.sqrt(rx * rx + ry * ry);
-                boolean ring = rr > 1.32f && rr < 1.85f && !(rr > 1.55f && rr < 1.62f), front = ry < 0f, inP = d2 <= 1.0f;
+                boolean ring = hasRing && rr > 1.32f && rr < 1.85f && !(rr > 1.55f && rr < 1.62f), front = ry < 0f, inP = d2 <= 1.0f;
                 int col = -1;
                 if (inP && !(ring && front)) {
                     float lit = Math.max(0f, -0.62f * x + 0.42f * y + 0.66f * (float) Math.sqrt(Math.max(0f, 1f - d2)));
-                    float band = (float) Math.sin((y * 0.94f + x * 0.34f) * 7.5f + 0.6f) * 0.5f + 0.5f, nz = rnd(u * 31 + v * 17 + 7);
+                    float band = (float) Math.sin((y * ba + x * bb) * bandF + seed % 7) * 0.5f + 0.5f, nz = rnd(u * 31 + v * 17 + seed);
+                    if (spotty) band = vnoise(x * 2.2f + seed % 13, y * 2.2f + seed % 5) < 0.42f ? 1f : 0.15f;
                     int base = mixc(ca, cb, band * 0.75f + (nz < 0.15f ? 0.2f : 0f));
                     col = mixc(0x0C0A1A, base, Math.min(1f, 0.12f + lit * 1.05f));
                     if (d2 > 0.82f && lit > 0.3f) col = mixc(col, 0xFFFFFF, 0.12f);                       // a lit rim
@@ -365,13 +399,42 @@ final class Star3D {
                 for (float[] g : new float[][]{{1.7f, -0.6f, -0.3f}, {-1.4f, -2.8f, 0.3f}}) { push(); M.translate(g[0], surf(g[0], g[1]), g[1]).rotateY(g[2]); box(-0.3f, 0f, -0.09f, 0.3f, 0.62f, 0.09f, stone, 10f, 0.025f); pop(); }
                 burstUp(t, rise, new int[]{0x6A4A2C, 0x4E3620, 0x7A5A34});
             }
-            case 1 -> {                                                                           // a burrow, webs strung between rocks
-                Skin rock = noisy(0x6E6A72, 0.18f, 41);
-                for (float[] r : new float[][]{{-1.9f, -1.5f, 0.8f}, {2.0f, -1.3f, 0.6f}}) { push(); M.translate(r[0], surf(r[0], r[1]), r[1]); box(-r[2] * 0.6f, 0f, -r[2] * 0.6f, r[2] * 0.6f, r[2] * 1.4f, r[2] * 0.6f, rock, 6f, 0.03f); pop(); }
-                disc(F.veil, 0, 0.03f, 0, 1.1f, 0x0A0808, 0.85f);
-                int c = argb(0.45f, 0xE8ECF8);
-                for (float[] w : new float[][]{{-1.9f, 1.3f, -1.5f, 1.0f}, {2.0f, 1.0f, -1.3f, 0.8f}}) for (int k = 0; k < 8; k++) { double an = k * Math.PI / 4; float ex = w[0] + (float) Math.cos(an) * w[3], ey = w[1] + (float) Math.sin(an) * w[3]; wquad(F.veil, w[0], w[1], w[2], c, ex, ey, w[2], c, ex + 0.025f, ey + 0.025f, w[2], c, w[0] + 0.025f, w[1] + 0.025f, w[2], c); }
-                burstUp(t, rise, new int[]{0x6E6A66, 0x46423E, 0xE8ECF8});
+            case 1 -> {                                                                           // the Broodfather's den: dead trees in webs, egg sacs, bones, a silk-lined burrow
+                Skin bark = (f, u, v, w, hh) -> { float nz = rnd(f * 31 + u * 7 + v * 13 + 3); return f == 2 || f == 3 ? 0x4A3A30 : mul(u % 3 == 0 ? 0x2A221E : 0x3A2E28, 0.85f + nz * 0.3f); };
+                Skin moss = (f, u, v, w, hh) -> { float nz = rnd(f * 17 + u * 11 + v * 5 + 9); return f == 2 && nz < 0.6f ? mul(0x4A5A34, 0.8f + nz * 0.4f) : nz < 0.2f ? 0x4A4E40 : mul(0x5E5C60, 0.85f + nz * 0.3f); };
+                Skin silk = (f, u, v, w, hh) -> { float nz = rnd(f * 13 + u * 7 + v * 3 + 1); return mul(nz < 0.2f ? 0xC8C0B0 : 0xE8E4DA, 0.88f + nz * 0.2f); };
+                Skin bone = (f, u, v, w, hh) -> mul(0xD8D0B8, 0.85f + rnd(f * 5 + u * 3 + v * 11) * 0.2f);
+                Skin skull = (f, u, v, w, hh) -> f == 4 && ((v == 2 && (u == 1 || u == 3)) || (v == 0 && u == 2)) ? 0x1A1414 : bone.at(f, u, v, w, hh);
+                int web = argb(0.5f, 0xE8ECF8);
+                float[][] trees = {{-2.0f, -1.7f, 2.3f, 0.25f}, {2.1f, -1.9f, 2.0f, -0.35f}};
+                for (int ti = 0; ti < 2; ti++) {
+                    float[] tr = trees[ti]; float gx = tr[0], gz = tr[1], gy = surf(gx, gz), h = tr[2], sd = gx < 0 ? 1f : -1f;
+                    push(); M.translate(gx, gy, gz).rotateY(tr[3]);
+                    box(-0.17f, 0f, -0.17f, 0.17f, h, 0.17f, bark, 10f, 0.025f);
+                    float[][] br = {{0.55f * h, sd, 0.75f, 0.85f}, {0.8f * h, -sd, 0.6f, 0.65f}, {0.95f * h, sd, 0.35f, 0.5f}};
+                    for (float[] b : br) { push(); M.translate(0f, b[0], 0f).rotateZ(-b[1] * b[2]); box(-0.07f, 0f, -0.07f, 0.07f, b[3], 0.07f, bark, 10f, 0.02f); pop(); }
+                    pop();
+                    // a proper web from the trunk out to the lower branch, sagging
+                    float wx = gx + sd * 0.15f, wy = gy + 0.55f * h + 0.05f, wz = gz + 0.2f, R = 0.95f;
+                    float[] ex = new float[9], ey = new float[9];
+                    for (int k = 0; k <= 8; k++) { double an = (sd > 0 ? -0.3 : Math.PI + 0.3) + (sd > 0 ? 1 : -1) * k * (Math.PI * 0.9 / 8); float rr = R * (0.8f + 0.25f * rnd(k * 7 + ti)); ex[k] = (float) Math.cos(an) * rr; ey[k] = (float) Math.sin(an) * rr; }
+                    for (int k = 0; k <= 8; k++) threadLine(wx, wy, wz, wx + ex[k], wy + ey[k], wz, web);
+                    for (int ring = 1; ring <= 4; ring++) for (int k = 0; k < 8; k++) { float f = ring / 4.4f, sag = 0.04f * ring; threadLine(wx + ex[k] * f, wy + ey[k] * f - sag, wz, wx + ex[k + 1] * f, wy + ey[k + 1] * f - sag, wz, web); }
+                    // egg sacs hanging from the top branch on threads, swaying
+                    for (int e = 0; e < 2; e++) {
+                        float hx = gx + sd * (0.35f + 0.25f * e), hy = gy + 0.85f * h + 0.1f, len = 0.5f + 0.35f * e, sw = 0.12f * (float) Math.sin(t * 1.7f + e * 2 + ti);
+                        float ox = hx + sw, oy = hy - len; threadLine(hx, hy, gz, ox, oy, gz, argb(0.6f, 0xE8ECF8));
+                        push(); M.translate(ox, oy - 0.16f, gz).rotateZ(sw); box(-0.11f, -0.16f, -0.11f, 0.11f, 0.16f, 0.11f, silk, 14f, 0.02f); pop();
+                        glow(F.add, ox, oy - 0.16f, gz + 0.12f, 0.25f, 0xC8FF9A, 0.12f + 0.06f * (float) Math.sin(t * 3 + e));
+                    }
+                }
+                for (float[] r : new float[][]{{-1.2f, -0.9f, 0.32f}, {1.35f, -0.6f, 0.26f}, {-2.6f, -0.4f, 0.4f}}) { push(); M.translate(r[0], surf(r[0], r[1]), r[1]).rotateY(r[0]); box(-r[2], 0f, -r[2] * 0.8f, r[2], r[2] * 1.1f, r[2] * 0.8f, moss, 14f, 0.025f); pop(); }
+                push(); M.translate(0.95f, surf(0.95f, 0.9f), 0.9f).rotateY(-0.5f); box(-0.12f, 0f, -0.12f, 0.12f, 0.2f, 0.12f, skull, 20f, 0.015f); pop();
+                for (float[] b : new float[][]{{-0.9f, 1.0f, 0.6f}, {0.5f, 1.3f, -0.4f}, {1.3f, 0.4f, 1.2f}}) { push(); M.translate(b[0], surf(b[0], b[1]) + 0.04f, b[1]).rotateY(b[2]); box(-0.25f, 0f, -0.035f, 0.25f, 0.07f, 0.035f, bone, 20f, 0.012f); box(-0.3f, 0f, -0.06f, -0.22f, 0.09f, 0.06f, bone, 20f, 0.012f); box(0.22f, 0f, -0.06f, 0.3f, 0.09f, 0.06f, bone, 20f, 0.012f); pop(); }
+                disc(F.veil, 0, 0.03f, 0, 1.15f, 0x060404, 0.9f);                                    // the burrow, lined with silk
+                ring(F.veil, 0, 0.04f, 0, 1.05f, 0.08f, 0xE8E4DA, 0.55f);
+                for (int k = 0; k < 10; k++) { double an = k * Math.PI * 2 / 10 + 0.2; float r0 = 1.0f, r1 = 1.6f + 0.5f * rnd(k * 3); threadLine((float) Math.cos(an) * r0, 0.04f, (float) Math.sin(an) * r0, (float) Math.cos(an) * r1, surf((float) Math.cos(an) * r1, (float) Math.sin(an) * r1) + 0.03f, (float) Math.sin(an) * r1, argb(0.4f, 0xE8ECF8)); }
+                
             }
             case 2 -> {                                                                           // trees and a rocky den
                 Vox3D.tree(-2.1f, -1.9f, 1.8f, 11); Vox3D.tree(2.2f, -2.3f, 2.0f, 23);
@@ -401,6 +464,11 @@ final class Star3D {
             }
         }
     }
+    /** A thin silk thread between two world points, turned to face the camera. */
+    static void threadLine(float ax, float ay, float az, float bx, float by, float bz, int c) {
+        float dx = bx - ax, dy = by - ay, dz = bz - az; Vector3f side = new Vector3f(dx, dy, dz).cross(eye.x - ax, eye.y - ay, eye.z - az); float l = side.length(); if (l < 1e-5f) return; side.mul(0.012f / l);
+        wquad(F.veil, ax + side.x, ay + side.y, az + side.z, c, bx + side.x, by + side.y, bz + side.z, c, bx - side.x, by - side.y, bz - side.z, c, ax - side.x, ay - side.y, az - side.z, c);
+    }
     /** Ground thrown up as the boss breaks through it. */
     static void burstUp(float t, float rise, int[] cols) {
         if (rise <= 0 || rise > 1.4f) return;
@@ -421,16 +489,18 @@ final class Star3D {
         switch (boss) {
             case 3 -> { show = ar > 0.6f || ((int) (t * 24)) % 3 != 0; if (ar < 0.6f) for (int i = 0; i < 10; i++) glow(F.add, (rnd(i * 3 + (int) (t * 20)) - 0.5f) * 1.2f, rnd(i * 7 + (int) (t * 20)) * 2.6f, (rnd(i * 5) - 0.5f) * 1.2f, 0.12f, 0xC060FF, 1f - ar); }
             case 5 -> y = lerp(-0.6f, 0f, sm(ar));
+            case 1 -> { float d = cl(ar * 1.15f); y = 5.5f * (1f - eo(d)) - 0.12f * (float) Math.sin(Math.PI * cl((ar - 0.87f) / 0.25f));      // it drops down on its thread
+                float th = 1f - sm((ar - 1.0f) / 0.5f); if (th > 0.01f) threadLine(0f, y + 1.1f, -0.3f, 0f, y + 12f, -0.3f, argb(0.7f * th, 0xE8ECF8)); }
             case 4 -> y = lerp(-2.8f, 0.3f, sm(ar)) + 0.15f * (float) Math.sin(t * 3f);
             default -> y = lerp(-2.8f, 0f, sm(ar)) + 0.08f * (float) Math.sin(Math.PI * cl(ar));
         }
         float hitT = 99f, kb = 0f; for (float hh : hits) { float d = t - hh; if (d >= 0) { hitT = Math.min(hitT, d); kb += 0.12f * (d < 0.07f ? sm(d / 0.07f) : (float) Math.exp(-(d - 0.07f) * 7f)); } }
         float face = (float) Math.atan2(eye.x, eye.z);
         if (show) {
-            push(); M.translate(0, y, -kb).rotateY(face).rotateX(-0.22f * roarK);                // it rears back as it roars
+            push(); M.translate(0, y, -kb).rotateY(face + (boss == 1 ? 0.55f : 0f)).rotateX(-0.22f * roarK);                // it rears back as it roars
             float sc = MOB_K_STAR[boss] / 16f * (1f + 0.05f * roarK); M.scale(sc);
             tint = hitT < 0.09f && !gone ? 0.22f * (1f - hitT / 0.09f) : 0f; tintCol = 0xFFE0C0;
-            burstD = gone ? since : -1f; partNo = 0; mobMode = true; rimCol = mixc(energy, 0xFFFFFF, 0.3f);
+            clipY = gone ? -99f : -0.15f;             burstD = gone ? since : -1f; partNo = 0; mobMode = true; rimCol = mixc(energy, 0xFFFFFF, 0.3f);
             crumble = type == 0 && gone ? Math.min(1f, since / 0.5f) : 0f;
             float idle = 0.25f * (float) Math.sin(t * 2.2f) * (1f - roarK);
             switch (boss) {
@@ -441,7 +511,7 @@ final class Star3D {
                 case 4 -> blaze(t);
                 default -> humanoid(t, idle, false, VAMP_HEAD, VAMP_BODY, VAMP_ARM, VAMP_LEG, true);
             }
-            pop(); burstD = -1f; tint = 0f; crumble = 0f; mobMode = false;
+            pop(); burstD = -1f; tint = 0f; crumble = 0f; mobMode = false; clipY = -99f;
         }
         if (roarK > 0.01f) { float u = cl((t - SlayerScene.WALK - 0.15f) / 0.6f); ring(F.add, 0, 0.05f, 0, 0.5f + 4f * eo(u), 0.25f, energy, 0.7f * (1f - u)); }   // the roar's shockwave
         if (!gone && ar > 0.5f) { disc(F.veil, 0, 0.03f, 0, 0.8f * MOB_K_STAR[boss], 0x050508, 0.45f); for (int i = 0; i < 12; i++) { float u = ((t * 0.5f + i / 12f) % 1f), an = i * 2.4f + t * 2f + u * 3f, r = 0.6f * (1f - u * 0.4f); glow(F.add, (float) Math.cos(an) * r, u * 2.4f, (float) Math.sin(an) * r, 0.07f, i % 3 == 0 ? 0xFFFFFF : energy, 0.8f * (1f - u) * sm(u * 5f)); } }
@@ -451,7 +521,7 @@ final class Star3D {
             glow(F.add, (float) Math.cos(an) * r, yy, (float) Math.sin(an) * r * 0.7f, 0.06f, type == 0 ? 0x9A9AA8 : i % 3 == 0 ? 0xFFFFFF : energy, (1f - u) * 0.9f);
         }
     }
-    static final float[] MOB_K_STAR = {1.4f, 1.6f, 1.85f, 0.85f, 1.4f, 1.35f};
+    static final float[] MOB_K_STAR = {1.4f, 1.5f, 1.85f, 0.85f, 1.4f, 1.35f};
     static void line(float x0, float y0, float x1, float y1, float z, int rgb, float a) {
         float dx = x1 - x0, dy = y1 - y0, l = (float) Math.sqrt(dx * dx + dy * dy); if (l < 1e-4f) return; float w = 0.025f, nx = -dy / l * w, ny = dx / l * w;
         int c = argb(a, rgb);
