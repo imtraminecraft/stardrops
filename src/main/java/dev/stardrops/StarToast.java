@@ -29,11 +29,12 @@ final class StarToast {
         Minecraft mc = Minecraft.getInstance(); if (mc.player == null || !SEEN.add(id)) return;          // once per star, whoever lit it first
         int col = Codex.colourOf(ch); String group = Codex.nameOf(ch); int t = Math.max(0, Math.min(2, tier));
         var hover = Component.literal("Click to see this star").withStyle(s -> s.withColor(0xFFE9B8));
-        var msg = Chat.prefix().append(" ").append(Chat.color("New star lit: ", Chat.TEXT))
+        int tc = LocalLedger.TIER_COL[t] & 0xFFFFFF;                                                     // bronze, silver or gold
+        var msg = Chat.prefix().append(" ").append(Chat.color("\u2605 ", tc)).append(Chat.color("New star lit: ", Chat.TEXT))
             .append(Chat.color(name, col & 0xFFFFFF).withStyle(s -> s.withBold(true)))
-            .append(Chat.color("  ·  " + group + "  ·  " + LocalLedger.TIER[t], Chat.DIM));
-        if (!reward.isEmpty()) { CosmeticData.Def d = CosmeticData.byId(reward); if (d != null) msg.append(Chat.color("  ·  unlocks " + d.name(), Chat.DIM)); }
-        msg.append(Chat.color("  [View]", 0xFFE9B8).withStyle(s -> s.withUnderlined(true)));
+            .append(Chat.color(" (", Chat.DIM)).append(Chat.color(group, Chat.DIM)).append(Chat.color(", ", Chat.DIM)).append(Chat.color(LocalLedger.TIER[t], tc)).append(Chat.color(")", Chat.DIM));
+        if (!reward.isEmpty()) { CosmeticData.Def d = CosmeticData.byId(reward); if (d != null) msg.append(Chat.color(" unlocks ", Chat.DIM)).append(Chat.color(d.name(), Chat.NUMBER)); }
+        msg.append(" ").append(Chat.color("[View]", 0xFFE9B8).withStyle(s -> s.withUnderlined(true)));     // the underline only under the word, not the gap before it
         msg.withStyle(s -> s.withClickEvent(new ClickEvent.RunCommand("/sd star " + id)).withHoverEvent(new HoverEvent.ShowText(hover)));
         mc.player.sendSystemMessage(msg);
         SoundFx.achievement();

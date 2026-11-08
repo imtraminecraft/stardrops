@@ -2271,7 +2271,7 @@ public class StardropsScreen extends Screen {
         if (l != null) return l;
         l = new ArrayList<>();
         switch (t) {
-            case HOME -> l.add(new SubPage("Resources", ":res_heart:", 0xFFFF6B8A, false));
+            case HOME -> l.add(new SubPage("Resources", ":resources:", 0xFFFF6B8A, false));
             case DROPS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // WIP tag = its animation is being remade; the page still opens
             case ANIMATIONS, SOUNDS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // being remade: only Mob Drops is open
             case CHAT -> { l.add(new SubPage("Message & Channel", ":format:", 0xFFFFC857, false)); l.add(new SubPage("Chat Enabled", ":bell:", 0xFF7BE05A, false)); }

@@ -1,36 +1,4 @@
 {
-  "sky_open": {
-    "sounds": [
-      {
-        "name": "stardrops:sky_open",
-        "stream": false
-      }
-    ]
-  },
-  "sky_close": {
-    "sounds": [
-      {
-        "name": "stardrops:sky_close",
-        "stream": false
-      }
-    ]
-  },
-  "sky_zoom": {
-    "sounds": [
-      {
-        "name": "stardrops:sky_zoom",
-        "stream": false
-      }
-    ]
-  },
-  "sky_star": {
-    "sounds": [
-      {
-        "name": "stardrops:sky_star",
-        "stream": false
-      }
-    ]
-  },
   "slr_open_a": {
     "sounds": [
       {
@@ -291,6 +259,46 @@
     "sounds": [
       {
         "name": "stardrops:slr_pulsar_c",
+        "stream": true
+      }
+    ]
+  },
+  "sky_open": {
+    "sounds": [
+      {
+        "name": "stardrops:sky_open",
+        "stream": false
+      }
+    ]
+  },
+  "sky_close": {
+    "sounds": [
+      {
+        "name": "stardrops:sky_close",
+        "stream": false
+      }
+    ]
+  },
+  "sky_zoom": {
+    "sounds": [
+      {
+        "name": "stardrops:sky_zoom",
+        "stream": false
+      }
+    ]
+  },
+  "sky_star": {
+    "sounds": [
+      {
+        "name": "stardrops:sky_star",
+        "stream": false
+      }
+    ]
+  },
+  "sky_lit": {
+    "sounds": [
+      {
+        "name": "stardrops:sky_lit",
         "stream": true
       }
     ]

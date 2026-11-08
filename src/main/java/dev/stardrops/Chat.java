@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 final class Chat {
     // The "vault" colours (0.8.1), the same as the menu: a gold name, warm white text, violet commands.
     static final int[] GRADIENT = {0xC8B4FF, 0x9B7BFF, 0xD27BEF, 0xFF7AD9, 0xC8B4FF};   // violet into nebula pink
-    static final int TEXT = 0xE6E4F6, DIM = 0x8682B0, NUMBER = 0xFFA8E8, MF = 0x55E6FF, COMMAND = 0xB9A8F0, GOOD = 0x62E6A8, BAD = 0xFF7B7B, BRACKET = 0x4A4478, LINE = 0x3A2F6A;
+    static final int TEXT = 0xE6E4F6, DIM = 0x8682B0, NUMBER = 0xFFA8E8, MF = 0x55E6FF, COMMAND = 0xB9A8F0, GOOD = 0x62E6A8, BAD = 0xFF7B7B, BRACKET = 0x6E68A8, LINE = 0x3A2F6A;
 
     private static final Pattern TOKEN = Pattern.compile(
             "(?<mf>\\+\\d[\\d,.]*%)|(?<cmd>/(?:fd|stardrops)\\b)|(?<par>\\([^)]*\\))|(?<good>\\b(?:enabled|on|Sent|Simulating)\\b)|(?<bad>\\b(?:disabled|DISABLED|off|muted)\\b)|(?<num>\\b\\d[\\d,.]*(?:[kKMB]\\b|%)?)");

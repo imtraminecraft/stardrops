@@ -114,18 +114,21 @@ final class IconArt {
                 ball(8 + (float) Math.cos(an) * 7, 8 + (float) Math.sin(an) * 3, 1.3f, 0xFFE9F8);
                 outline();
             }
-            case "sounds" -> {                                                                                 // Sounds: a radio dish on its stand, signal arcs travelling out into space
-                rect(4, 12, 6, 2, 0x5A5A88); rect(6, 9, 2, 3, 0x7672AE);
-                quad(1, 6, 7, 2, 10, 7, 4, 11, 0xC8C4E8); ln(2, 7, 8, 3, 0xFFFFFF);                   // the dish
-                ln(5, 6, 8, 4, 0x7672AE); px(9, 3, 0xFF7AD9);                                        // its feed
-                for (int i = 0; i < 3; i++) { float u = (f + i / 3f) % 1f; int r = 3 + Math.round(u * 4);
-                    for (int k = -2; k <= 2; k++) { float a2 = -0.8f + k * 0.25f; pxa(Math.round(9 + (float) Math.cos(a2) * r), Math.round(3 + (float) Math.sin(a2) * r), 0x9B7BFF, 1f - u); } }
+            case "sounds" -> {                                                                                 // Sounds: a speaker, its rings going out as little stars
+                rect(2, 6, 3, 4, 0x7672AE); tri(4, 6, 9, 2, 9, 8, 0xC8C4E8); tri(4, 10, 9, 14, 9, 8, 0xC8C4E8); rect(4, 6, 1, 4, 0xC8C4E8); ln(9, 2, 9, 14, 0x9B97D0);
+                px(3, 7, 0xE8E4FF);
+                for (int i = 0; i < 2; i++) { float u = (f + i * 0.5f) % 1f; float r = 2.5f + u * 4f;
+                    for (int k = -2; k <= 2; k++) { double an = k * 0.38; int x = Math.round(9 + (float) Math.cos(an) * r), y = Math.round(8 + (float) Math.sin(an) * r); pxa(x, y, k == 0 ? 0xFFE9A0 : 0xC8B4FF, 1f - u); } }
                 outline();
             }
-            case "chat" -> {                                                                                 // Chat: a speech bubble shaped from a little nebula, three stars in it lighting up in turn
-                ball(5, 7, 4, 0x6A4AD8); ball(10, 7, 4.5f, 0x8A6AE8); rect(4, 6, 8, 5, 0x7A5AE0); tri(3, 10, 6, 10, 2, 14, 0x6A4AD8);
-                ball(9, 5.5f, 2, 0xA88AFF);
-                for (int i = 0; i < 3; i++) { float on = Math.max(0f, (float) Math.sin(f * TAU - i * 1.2f)); int x = 5 + i * 3; px(x, 8, mix(0xC8B4FF, 0xFFFFFF, on)); if (on > 0.6f) { pxa(x - 1, 8, 0xFFFFFF, on - 0.4f); pxa(x + 1, 8, 0xFFFFFF, on - 0.4f); pxa(x, 7, 0xFFFFFF, on - 0.4f); pxa(x, 9, 0xFFFFFF, on - 0.4f); } }
+            case "chat" -> {                                                                                 // Chat: a round speech bubble of night sky, a gold star and two dots typing in it
+                ball(8, 7, 6.2f, 0x3A2E9A); ball(7.5f, 6.5f, 5.4f, 0x5A48D0); tri(3, 10, 7, 12, 2, 15, 0x3A2E9A);
+                pxa(5, 4, 0xC8B4FF, 0.8f);
+                float b = Math.max(0f, sn(f)); int lit = (int) (f * 3f) % 3;
+                float[] sx = new float[10], sy = new float[10];
+                for (int q = 0; q < 10; q++) { double an = -Math.PI / 2 + q * Math.PI / 5; float r = (q % 2 == 0 ? 2.2f : 0.9f) * (1f + 0.15f * b); sx[q] = 5.5f + (float) Math.cos(an) * r; sy[q] = 7.2f + (float) Math.sin(an) * r; }
+                poly(sx, sy, 0xFFD25A);
+                for (int d = 0; d < 2; d++) px(9 + d * 2, 7 - (d == lit ? 1 : 0), d == lit ? 0xFFFFFF : 0xB8AEF0);
                 outline();
             }
             case "settings" -> {                                                                                 // Settings: a clean eight-tooth gear, turning slowly, a little star in its hub
@@ -479,13 +482,13 @@ final class IconArt {
                 outline();
                 glint(13, 9 + dn, 1, 0xFFFFFF, t);
             }
-            case "visuals" -> {                                                              // Visuals: an eye-piece view: a ringed planet in a round lens, a star glinting
-                ball(8, 8, 7f, 0x1A1848); ball(8, 8, 6f, 0x0B0C26);
-                ball(8, 8, 3f, 0x9B7BFF); ball(7, 7, 1.5f, 0xD8C8FF);
-                ln(2, 10, 14, 6, 0xFF7AD9);
-                float tw = sn(f * 2) * 0.5f + 0.5f; pxa(12, 3, 0xFFFFFF, tw); pxa(4, 4, 0xFFFFFF, 1 - tw); pxa(11, 12, 0xC8B4FF, tw);
+            case "visuals" -> {                                                              // Visuals: a HUD viewfinder: four corner brackets round a ringed planet, a star blinking in the frame
+                int cb = 0xC8B4FF; rect(1, 1, 4, 1, cb); rect(1, 1, 1, 4, cb); rect(11, 1, 4, 1, cb); rect(14, 1, 1, 4, cb);
+                rect(1, 14, 4, 1, cb); rect(1, 11, 1, 4, cb); rect(11, 14, 4, 1, cb); rect(14, 11, 1, 4, cb);
+                ball(8, 8, 3.4f, 0xFF7AD9); ball(7.3f, 7.3f, 2.3f, 0xFFA8E8); px(6, 6, 0xFFFFFF);
+                ln(3, 10, 13, 6, 0x9B7BFF); ln(3, 11, 13, 7, 0x5A4AA8);
+                float tw = 0.5f + 0.5f * sn(f); pxa(12, 4, 0xFFFFFF, tw); pxa(4, 12, 0xC8E8FF, 1f - tw);
                 outline();
-                glint(5, 5, 1, 0xFFFFFF, t);
             }
             case "cosmos" -> {                                                               // Cosmos: a crescent moon, stars, a shooting star
                 ball(6, 9, 4.5f, 0xE8ECFF); ball(8, 8, 4f, 0x00000000);
@@ -1039,41 +1042,44 @@ final class IconArt {
                 outline();
                 glint(bx + 4, 5, 1, 0xFFFFFF, 1f);
             }
-            case "stardrops" -> {                                                           // the logo: a gem over a chest
-                bev(2, 10, 12, 5, 0x9A5E2C); bev(7, 10, 2, 3, 0xFFD25A);
-                int gy = Math.round(-1f * t);
-                poly(new float[]{5, 11, 13, 8, 3}, new float[]{3 + gy, 3 + gy, 6 + gy, 11 + gy, 6 + gy}, 0x55D8FF);
-                poly(new float[]{5, 8, 11, 8}, new float[]{3 + gy, 6 + gy, 3 + gy, 3 + gy}, 0xBFF1FF);
+            case "stardrops" -> {                                                           // the logo: a star falling as a drop, a violet droplet with a gold star inside, a trail of sparkles above
+                ball(8, 10, 5.2f, 0x5A3AC8); tri(8, 1.5f, 3.4f, 8.5f, 12.6f, 8.5f, 0x5A3AC8);              // the drop
+                ball(7.4f, 9.4f, 4.4f, 0x8A62F0); tri(8, 3.2f, 4.6f, 8.6f, 11.4f, 8.6f, 0x8A62F0);
+                pxa(5, 7, 0xE8DCFF, 0.9f); pxa(5, 8, 0xE8DCFF, 0.6f); pxa(6, 6, 0xE8DCFF, 0.5f);            // its shine
+                float k = 1f + 0.12f * t; float[] sx = new float[10], sy = new float[10];                   // the star inside, breathing
+                for (int q = 0; q < 10; q++) { double an = -Math.PI / 2 + q * Math.PI / 5; float r = (q % 2 == 0 ? 3.3f : 1.4f) * k; sx[q] = 8 + (float) Math.cos(an) * r; sy[q] = 10.2f + (float) Math.sin(an) * r; }
+                poly(sx, sy, 0xFFD25A); px(8, 9, 0xFFF6C8);
                 outline();
-                glint(3, 3, 2, 0xFFFFFF, t); glint(13, 2 + Math.round(t), 1, 0xFF72C6, 1f - t);
+                for (int q = 0; q < 3; q++) { float v = (f + q / 3f) % 1f; pxa(12 + q, Math.round(1 + v * 3) - q, 0xFFE9A0, 1f - v); }
+                glint(13, 2, 1, 0xFFFFFF, t);
             }
-            case "discord" -> {                                                              // community: two bubbles chatting, bobbing against each other, the dots typing in turn
-                int o1 = Math.round((float) Math.sin(f * Math.PI * 2) * 1.2f), o2 = -o1, lit = (int) (f * 3f) % 3, lit2 = (int) (f * 3f + 1f) % 3;
-                bev(1, 2 + o1, 9, 7, 0x7A8CF0); tri(3, 9 + o1, 3, 12 + o1, 6, 9 + o1, 0x7A8CF0);
-                bev(6, 7 + o2, 9, 6, 0xB8C2FF); tri(12, 13 + o2, 13, 15.5f + o2, 10, 13 + o2, 0xB8C2FF);
-                for (int d = 0; d < 3; d++) rect(3 + d * 2, 4 + o1 - (d == lit ? 1 : 0), 1, 1, d == lit ? 0xFFFFFF : 0xC9D2FF);
+            case "discord" -> {                                                              // community: a space crew radio, a little handheld with its antenna blinking and voices (two bubbles) coming out
+                bev(3, 6, 7, 9, 0x5865B8); rect(4, 7, 5, 3, 0x1A1E48); pxa(5, 8, 0x8AA0FF, 0.9f); pxa(7, 8, 0x8AA0FF, 0.6f);
+                rect(4, 11, 1, 1, 0xC8D0FF); rect(6, 11, 1, 1, 0xC8D0FF); rect(8, 11, 1, 1, 0xC8D0FF); rect(4, 13, 5, 1, 0x3A428A);
+                ln(8, 5, 8, 1, 0x9AA4C8); px(8, 1, t > 0.5f ? 0xFF7AD9 : 0x7A3A6A);
+                for (int q = 0; q < 2; q++) { float v = (f + q * 0.5f) % 1f; int x = 11 + Math.round(v * 3), y = 7 - Math.round(v * 5); ball(x, y, 1.4f, mix(0xB8C2FF, 0x5865F2, v)); }
                 outline();
-                for (int d = 0; d < 3; d++) rect(8 + d * 2, 9 + o2 - (d == lit2 ? 1 : 0), 1, 1, d == lit2 ? 0x2A36B8 : 0x4A5AD8);
             }
-            case "patreon" -> {                                                              // support: a heart that beats, with a spark
-                float k = 1f + 0.17f * t, cxh = 8f, cyh = 8.5f;
-                float[] hx = {8, 14, 15, 8, 1, 2}, hy = {3.2f, 1.5f, 6, 15, 6, 1.5f};
-                for (int q = 0; q < 6; q++) { hx[q] = cxh + (hx[q] - cxh) * k; hy[q] = cyh + (hy[q] - cyh) * k; }
-                poly(hx, hy, 0xFF6A5A);
-                ball(cxh + (4.6f - cxh) * k, cyh + (5 - cyh) * k, 3.4f * k, 0xFF6A5A); ball(cxh + (11.4f - cxh) * k, cyh + (5 - cyh) * k, 3.4f * k, 0xFF6A5A);
-                tri(cxh + (1.4f - cxh) * k, cyh + (6.2f - cyh) * k, cxh + (14.6f - cxh) * k, cyh + (6.2f - cyh) * k, 8, cyh + (14.5f - cyh) * k, 0xE04A4A);
+            case "patreon" -> {                                                              // support: a gold star held up in two cupped hands, glowing as it pulses
+                tri(1, 11, 7, 15, 3, 15, 0xE8B890); tri(15, 11, 9, 15, 13, 15, 0xE8B890); rect(4, 12, 8, 3, 0xD8A07A); rect(5, 12, 6, 1, 0xF0C8A0);
+                float k = 1f + 0.14f * t; float[] sx = new float[10], sy = new float[10];
+                for (int q = 0; q < 10; q++) { double an = -Math.PI / 2 + q * Math.PI / 5; float r = (q % 2 == 0 ? 5.2f : 2.2f) * k; sx[q] = 8 + (float) Math.cos(an) * r; sy[q] = 6.5f + (float) Math.sin(an) * r; }
+                poly(sx, sy, 0xFFC830); ball(8, 6.5f, 1.4f, 0xFFF0A0);
                 outline();
-                px(4, 3, 0xFFFFFF); glint(13, 2, 1, 0xFFE08A, Math.max(0f, t));
+                glow(8, 6.5f, 6, 0xFFD25A, 0.12f + 0.12f * t); glint(13, 2, 1, 0xFFFFFF, t);
             }
-            case "github" -> {                                                               // source: a branching tree, nodes breathing in turn, a commit travelling up
-                ln(5, 3, 5, 13, 0xC8D0E4); ln(6, 3, 6, 13, 0x9AA4C0);
-                ln(5, 8, 11, 4, 0xC8D0E4); ln(6, 8, 12, 4, 0x9AA4C0);
-                float w = f * (float) Math.PI * 2;
-                ball(5.5f, 3, 2.2f + 0.7f * (float) Math.sin(w), 0x62E6A8); ball(5.5f, 13, 2.2f + 0.7f * (float) Math.sin(w + 2.1f), 0x62E6A8); ball(11.5f, 4, 2.2f + 0.7f * (float) Math.sin(w + 4.2f), 0xFFC857);
+            case "resources" -> {                                                            // Resources: a telescope on its tripod, looking up at a star that twinkles
+                ln(5, 15, 7, 10, 0x7672AE); ln(10, 15, 8, 10, 0x7672AE); ln(7, 15, 7, 11, 0x5A5A88);
+                tri(3, 11, 11, 4, 12, 6, 0xC8C4E8); tri(3, 11, 12, 6, 4, 12, 0x9B97D0); rect(10, 3, 3, 3, 0xE8E4FF); px(4, 11, 0x5A5A88);
+                float tw = tri(f); glint(14, 1, 1, 0xFFE9A0, tw); pxa(14, 1, 0xFFFFFF, 0.6f + 0.4f * tw);
                 outline();
-                float u = f; int cx2, cy2;
-                if (u < 0.5f) { cx2 = 5; cy2 = Math.round(13 - 10 * u); } else { float v = (u - 0.5f) * 2f; cx2 = Math.round(5.5f + 6 * v); cy2 = Math.round(8 - 4 * v); }
-                px(cx2, cy2, 0xFFFFFF); pxa(cx2, cy2 + 1, 0xFFFFFF, 0.5f);
+            }
+            case "github" -> {                                                               // source: the code, a "</>" on a dark disc with a commit orbiting it like a moon
+                ball(8, 8, 6.6f, 0x24283A); ball(7.5f, 7.5f, 5.8f, 0x323850);
+                ln(5, 5, 3, 8, 0x62E6A8); ln(3, 8, 5, 11, 0x62E6A8); ln(11, 5, 13, 8, 0x62E6A8); ln(13, 8, 11, 11, 0x62E6A8); ln(9, 4, 7, 12, 0xC8D0E4);
+                outline();
+                float an = f * TAU; int ox = Math.round(8 + (float) Math.cos(an) * 7.4f), oy = Math.round(8 + (float) Math.sin(an) * 7.4f * 0.45f);
+                if (Math.sin(an) > 0 || true) { px(ox, oy, 0xFFC857); pxa(ox - 1, oy, 0xFFC857, 0.4f); }
             }
             case "cx_bubbleaura" -> {                                                        // Bubbles: bubbles wobbling up
                 for (int i = 0; i < 4; i++) { float u = (f + i * 0.25f) % 1f; int x = Math.round(4 + i * 2.6f + (float) Math.sin(u * 9 + i) * 1.2f), y = Math.round(14 - u * 13); int r = i % 2 == 0 ? 2 : 1;

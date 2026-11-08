@@ -71,6 +71,7 @@ public final class SoundFx {
         reg("sky_close", "Achievements: close", SoundEvents.AMETHYST_BLOCK_HIT, 0.6f);
         reg("sky_zoom", "Achievements: fly", SoundEvents.PLAYER_ATTACK_SWEEP, 0.6f);
         reg("sky_star", "Achievements: star", SoundEvents.AMETHYST_BLOCK_HIT, 0.5f);
+        reg("sky_lit", "Achievements: star lit", SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 0.75f);    // tools/make_sky_sounds.py
     }
 
     // Minecraft's own sounds, picked to work as a set: bright notes for the stepping slices, a solid hit, a reward, a long glow, a soft close
@@ -165,7 +166,7 @@ public final class SoundFx {
     public static Iterable<String> names() { return ALL.keySet(); }
     public static Fx byName(String n) { return n == null ? null : ALL.get(n.toLowerCase(Locale.ROOT)); }
     /** The little fanfare of an unlocked achievement. */
-    public static void achievement() { Fx f = byName("sky_star"); if (f == null) f = byName("mc_chime"); if (f != null) play(f, 1.2f, 0.8f); }
+    public static void achievement() { Fx f = byName("sky_lit"); if (f == null) f = byName("mc_chime"); if (f != null) play(f, 1.2f, 0.8f); }
 
     /** Every choice for a slot, "none" first: the mod's own sounds, or Minecraft's while Custom sounds is off. */
     public static List<String> choices() {
