@@ -2,8 +2,8 @@
 
 ## 0.9.0
 - **Stardrops:** FancyDrops is now Stardrops, space themed from top to bottom. Your settings and saved data move over on first launch.
-- **Slayer cutscenes:** a little 3D night scene for each slayer, Butcher-style, where a meteor strikes on every beat: they blast the Revenant's grave until the coffin opens, burst the Tarantula's cocoon, knock Sven's cairn apart, light the eyes of Voidgloom's portal, crack Inferno's magma core, and break the chains on Riftstalker's coffin. RNG meteors climb the rarity colours and end in gold.
-- **Slayer sounds:** five moments per animation (arrive, build up, the meteors, the reveal, after), three sounds to choose from for each. Picks from the old set move to the same take of the new one.
+- **Slayer, the Stardrops way:** out in space, the boss stands on its own tiny planet. It is drawn in stars, walks while its planet turns, and falling stars strike it on every beat. The last one shatters it into stardust that gathers into your drop, and the strikes join into its constellation. RNG stars climb the rarity colours and end in gold.
+- **Slayer sounds:** five moments per animation (arrive, walk, the falling stars, the reveal, after), three sounds to choose from for each. Picks from the old set move to the same take of the new one.
 - **Text duration:** set how long the drop text stays (Animations > Text Changes > Layout).
 - **Other categories:** their new animations are in the works. Drops there send their chat alert, and the Drop Library shows a WIP panel.
 - **Menu:** space glass tiles, a Spotify Linked chip, new space icons, `/sd` and `/stardrops` commands, and `/sd edit` to move every HUD.

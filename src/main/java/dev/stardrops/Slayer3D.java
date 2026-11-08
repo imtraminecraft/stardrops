@@ -136,11 +136,11 @@ final class Slayer3D {
     /** One frame: our camera, then Vox3D's meshes, far to near. */
     static void render(State s, SubmitNodeCollector c, ProjectionMatrixBuffer pb) {
         float aspect = (s.x1() - s.x0()) / (float) (s.y1() - s.y0());
-        Vox3D.Frame f = Cut3D.build(s.t(), s.animLen(), Math.floorMod(s.boss(), 6), s.type(), s.energy(), aspect, s.craterY(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
+        Vox3D.Frame f = Star3D.build(s.t(), s.animLen(), Math.floorMod(s.boss(), 6), s.type(), s.energy(), aspect, s.craterY(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
         RenderSystem.setProjectionMatrix(pb.getBuffer(f.proj), ProjectionType.PERSPECTIVE);
         RenderSystem.getModelViewStack().set(f.view);
         PoseStack ws = new PoseStack(), vs = new PoseStack(); vs.mulPose(new Matrix4f(f.view).invert());
-        put(c, 0, ws, OPQ, f.ground); put(c, 0, ws, OPQ, f.opq); put(c, -3, vs, TRANS, f.back); put(c, -2, ws, ADD, f.sky); put(c, 1, ws, TRANS, f.veil); put(c, 2, ws, ADD, f.add);
+        PoseStack gs = new PoseStack(); gs.mulPose(f.groundMat); put(c, 0, gs, OPQ, f.ground); put(c, 0, ws, OPQ, f.opq); put(c, -3, vs, TRANS, f.back); put(c, -2, ws, ADD, f.sky); put(c, 1, ws, TRANS, f.veil); put(c, 2, ws, ADD, f.add);
     }
     static void put(SubmitNodeCollector c, int order, PoseStack ps, RenderType rt, Vox3D.Mesh m) {
         if (m.n == 0) return;

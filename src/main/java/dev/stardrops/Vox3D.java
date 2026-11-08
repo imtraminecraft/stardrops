@@ -32,7 +32,7 @@ final class Vox3D {
     }
     /** One frame: the camera and the meshes in draw order (opaque, then the view-space sky, sky glows, veils, glows). */
     static final class Frame {
-        Matrix4f proj, view; Mesh ground; Mesh opq = new Mesh(false), back = new Mesh(false), sky = new Mesh(true), veil = new Mesh(true), add = new Mesh(true);
+        Matrix4f proj, view, groundMat = new Matrix4f(); Mesh ground; Mesh opq = new Mesh(false), back = new Mesh(false), sky = new Mesh(true), veil = new Mesh(true), add = new Mesh(true);
     }
 
     static int argb(float a, int rgb) { return Math.round(cl(a) * 255) << 24 | (rgb & 0xFFFFFF); }
@@ -471,9 +471,12 @@ final class Vox3D {
         if (burstD >= 0f) {
             float d = burstD; if (d > 1.5f) return; int n = partNo;
             float cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, cz = (z0 + z1) / 2;
-            float an = rnd(n * 13 + 1) * 6.2832f, sp = 30f + rnd(n * 7) * 50f, vy = 40f + rnd(n * 11) * 70f;
+            float an = rnd(n * 13 + 1) * 6.2832f, sp = 20f + rnd(n * 7) * 30f, vy = 25f + rnd(n * 11) * 35f;
             float dx = (float) Math.cos(an) * sp * d + cx * 2f * d, dz = (float) Math.sin(an) * sp * d * 0.7f, dy = vy * d - 150f * d * d;
-            float sc = 1f - sm((d - 0.9f) / 0.6f); if (sc < 0.02f) return;
+            float sc = 1f - sm((d - 0.9f) / 0.6f);
+            Vector3f wc = M.transformPosition(new Vector3f(cx + (float) Math.cos(an) * sp * d, cy + vy * d - 150f * d * d, cz));
+            sc *= sm(edge(wc.x, wc.y, wc.z) * 1.6f);                                                      // gone before the window's soft edge
+            if (sc < 0.02f) return;
             push(); M.translate(cx + dx, Math.max(cy + dy, (y1 - y0) / 2f), cz + dz).rotateXYZ(d * (4 + n % 5), d * (3 + n % 3), d * 2).scale(sc).translate(-cx, -cy, -cz);
             box(x0, y0, z0, x1, y1, z1, s, 1f, 0.6f); pop();
             return;
