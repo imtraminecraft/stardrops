@@ -10,6 +10,7 @@ public final class DropData {
         public boolean untradeable = false, skull = false, amount = false;
         public String img = "";                     // the wiki picture file to use (without .png), when it differs from the name
         public String rarity = "";                  // pets: the usual rarity
+        public String mob = "";                     // Mob Drops: the creature that drops it (crimson.json, mobs.json), which picks the creature the animation shows
         public java.util.Map<String, Long> george;  // pets: what George pays per rarity
         public double[] pct;                        // Mythological: the drop chance in percent for a Common..Mythic Griffin pet (0 = that pet cannot meet it)
         public String color = "";                   // Dyes: the dye's own colour

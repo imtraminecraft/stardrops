@@ -11,7 +11,7 @@
    "drops": [
     {
      "name": "Ragnarock",
-     "id": "RAGNAROCK_AXE",
+     "id": "RAGNAROCK_AXE", "mob": "barbarian_duke",
      "icon": "golden_sword",
      "skull": false,
      "odds": "Rare",
@@ -21,7 +21,7 @@
     },
     {
      "name": "Fire Veil Wand",
-     "id": "FIRE_VEIL_WAND",
+     "id": "FIRE_VEIL_WAND", "mob": "bladesoul",
      "icon": "blaze_rod",
      "skull": false,
      "odds": "Rare",
@@ -31,7 +31,7 @@
     },
     {
      "name": "Flaming Fist",
-     "id": "FLAMING_FIST",
+     "id": "FLAMING_FIST", "mob": "magma_boss",
      "icon": "paper",
      "skull": false,
      "odds": "Rare",
@@ -41,7 +41,7 @@
     },
     {
      "name": "Fire Freeze Staff",
-     "id": "FIRE_FREEZE_STAFF",
+     "id": "FIRE_FREEZE_STAFF", "mob": "ashfang",
      "icon": "yellow_flower",
      "skull": false,
      "odds": "Rare",
@@ -51,7 +51,7 @@
     },
     {
      "name": "Wand of Strength",
-     "id": "WAND_OF_STRENGTH",
+     "id": "WAND_OF_STRENGTH", "mob": "ashfang",
      "icon": "stick",
      "skull": false,
      "odds": "Rare",
@@ -61,7 +61,7 @@
     },
     {
      "name": "Legendary Magma Cube Pet",
-     "id": "MAGMA_CUBE;4",
+     "id": "MAGMA_CUBE;4", "mob": "magma_boss",
      "icon": "player_head",
      "skull": true,
      "odds": "Rare",
@@ -70,7 +70,7 @@
     },
     {
      "name": "Epic Magma Cube Pet",
-     "id": "MAGMA_CUBE;3",
+     "id": "MAGMA_CUBE;3", "mob": "magma_boss",
      "icon": "player_head",
      "skull": true,
      "odds": "Occasional",
@@ -79,7 +79,7 @@
     },
     {
      "name": "Fire Fury Staff",
-     "id": "FIRE_FURY_STAFF",
+     "id": "FIRE_FURY_STAFF", "mob": "mage_outlaw",
      "icon": "blaze_rod",
      "skull": false,
      "odds": "Rare",
@@ -89,7 +89,7 @@
     },
     {
      "name": "Molten Cube",
-     "id": "MOLTEN_CUBE",
+     "id": "MOLTEN_CUBE", "mob": "magma_boss",
      "icon": "paper",
      "skull": false,
      "odds": "Rare",

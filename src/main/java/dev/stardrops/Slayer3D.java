@@ -141,7 +141,7 @@ final class Slayer3D {
     /** One frame: our camera, then Vox3D's meshes, far to near. */
     static void render(State s, SubmitNodeCollector c, ProjectionMatrixBuffer pb) {
         float aspect = (s.x1() - s.x0()) / (float) (s.y1() - s.y0());
-        Vox3D.Frame f = Star3D.build(s.t(), s.animLen(), Math.floorMod(s.boss(), Vox3D.THEMES.length), s.type(), s.energy(), aspect, s.craterY(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
+        Vox3D.Frame f = Star3D.build(s.t(), s.animLen(), Math.floorMod(s.boss(), Star3D.CREATURES), s.type(), s.energy(), aspect, s.craterY(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
         RenderSystem.setProjectionMatrix(pb.getBuffer(f.proj), ProjectionType.PERSPECTIVE);
         RenderSystem.getModelViewStack().set(f.view);
         PoseStack ws = new PoseStack(), vs = new PoseStack(); vs.mulPose(new Matrix4f(f.view).invert());

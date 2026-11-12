@@ -11,7 +11,7 @@
    "drops": [
     {
      "name": "Glacite Jewel",
-     "id": "GLACITE_JEWEL",
+     "id": "GLACITE_JEWEL", "mob": "ice_walker",
      "icon": "paper",
      "skull": false,
      "odds": "Rare",
@@ -21,7 +21,7 @@
     },
     {
      "name": "Sorrow",
-     "id": "SORROW",
+     "id": "SORROW", "mob": "ghost",
      "icon": "ghast_tear",
      "skull": false,
      "odds": "Rare",
@@ -31,7 +31,7 @@
     },
     {
      "name": "Volta",
-     "id": "VOLTA",
+     "id": "VOLTA", "mob": "ghost",
      "icon": "paper",
      "skull": false,
      "odds": "Rare",
@@ -41,7 +41,7 @@
     },
     {
      "name": "Pure Mithril Gem",
-     "id": "PET_ITEM_PURE_MITHRIL_GEM",
+     "id": "PET_ITEM_PURE_MITHRIL_GEM", "mob": "automaton",
      "icon": "player_head",
      "skull": true,
      "odds": "Rare",
@@ -50,7 +50,7 @@
     },
     {
      "name": "Synthetic Heart",
-     "id": "SYNTHETIC_HEART",
+     "id": "SYNTHETIC_HEART", "mob": "automaton",
      "icon": "paper",
      "skull": false,
      "odds": "Rare",
@@ -60,7 +60,7 @@
     },
     {
      "name": "Glacite Chunk",
-     "id": "GLACITE_SHARD",
+     "id": "GLACITE_SHARD", "mob": "ice_walker",
      "icon": "paper",
      "skull": false,
      "odds": "Pray RNGesus",
@@ -70,7 +70,7 @@
     },
     {
      "name": "Plasma",
-     "id": "PLASMA",
+     "id": "PLASMA", "mob": "ghost",
      "icon": "paper",
      "skull": false,
      "odds": "Pray RNGesus",
@@ -80,7 +80,7 @@
     },
     {
      "name": "Ghostly Boots",
-     "id": "GHOST_BOOTS",
+     "id": "GHOST_BOOTS", "mob": "ghost",
      "icon": "leather_boots",
      "skull": false,
      "odds": "RNGesus Incarnate",
@@ -89,7 +89,7 @@
     },
     {
      "name": "Legendary Bal Pet",
-     "id": "BAL;4",
+     "id": "BAL;4", "mob": "bal",
      "icon": "player_head",
      "skull": true,
      "odds": "RNGesus Incarnate",
@@ -98,7 +98,7 @@
     },
     {
      "name": "Epic Bal Pet",
-     "id": "BAL;3",
+     "id": "BAL;3", "mob": "bal",
      "icon": "player_head",
      "skull": true,
      "odds": "Pray RNGesus",
@@ -411,7 +411,7 @@
    "drops": [
     {
      "name": "Legendary Ender Dragon Pet",
-     "id": "ENDER_DRAGON;4",
+     "id": "ENDER_DRAGON;4", "mob": "dragon",
      "icon": "dragon_egg",
      "skull": false,
      "odds": "Pray RNGesus",
@@ -420,7 +420,7 @@
     },
     {
      "name": "Epic Ender Dragon Pet",
-     "id": "ENDER_DRAGON;3",
+     "id": "ENDER_DRAGON;3", "mob": "dragon",
      "icon": "dragon_egg",
      "skull": false,
      "odds": "Pray RNGesus",
@@ -429,7 +429,7 @@
     },
     {
      "name": "Aspect of the Dragons",
-     "id": "ASPECT_OF_THE_DRAGON",
+     "id": "ASPECT_OF_THE_DRAGON", "mob": "dragon",
      "icon": "diamond_sword",
      "skull": false,
      "odds": "Very Rare",
@@ -439,7 +439,7 @@
     },
     {
      "name": "Dragon Horn",
-     "id": "DRAGON_HORN",
+     "id": "DRAGON_HORN", "mob": "dragon",
      "icon": "paper",
      "skull": false,
      "odds": "Very Rare",
@@ -449,7 +449,7 @@
     },
     {
      "name": "Dragon Claw",
-     "id": "DRAGON_CLAW",
+     "id": "DRAGON_CLAW", "mob": "dragon",
      "icon": "paper",
      "skull": false,
      "odds": "Very Rare",
@@ -459,7 +459,7 @@
     },
     {
      "name": "Summoning Eye",
-     "id": "SUMMONING_EYE",
+     "id": "SUMMONING_EYE", "mob": "zealot",
      "icon": "paper",
      "skull": false,
      "odds": "Pray RNGesus",

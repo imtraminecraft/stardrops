@@ -542,7 +542,7 @@ final class Vox3D {
         if (shatter && since < 0.5f) glow(F.add, x, 1f, z, 3f * (1f + since), energy, 0.7f * (1f - since / 0.5f));
         if (type == 0 && since > 0.3f) ash(since, x, z);
     }
-    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f, 1.5f, 1.0f, 1.3f};
+    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f, 1.5f, 1.0f, 1.3f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.6f, 1.2f};
     /** The boss's presence: a shadow under it, dark smoke at its feet, wisps of its energy spiralling up round it. */
     static void aura(float t, float x, float y, float z, float k, int energy, int boss) {
         disc(F.veil, x, 0.014f, z, 0.95f * k, 0x050508, 0.5f);
@@ -772,6 +772,90 @@ final class Vox3D {
         part(-4f, 26f + breathe, -4f, 4f, 35f + breathe, 4f, head);
         for (int s = -1; s <= 1; s += 2) { push(); M.translate(s * 11.5f, 25f + breathe, 0f).rotateX(s * sway * 0.08f).rotateZ(s * 0.06f); part(-2f, -19f, -2.5f, 2f, 0f, 2.5f, iron); part(-2.4f, -22f, -3f, 2.4f, -19f, 3f, (f, u, v, w, h) -> 0x8A8680); pop(); }   // long arms, fists
         Vector3f c = M.transformPosition(new Vector3f(0, 19f, 5f)); glow(F.add, c.x, c.y, c.z, 0.9f + 0.2f * (float) Math.sin(t * 4f), 0x40E8D8, 0.4f);
+    }
+
+    // ---- the other creatures of Mob Drops (9 and up: each stands in one of the three worlds, Star3D.WORLD_OF)
+    private static Skin face8(Skin base, int eye, int mouth) { return (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8) { if (v == 3 && (u == 1 || u == 2 || u == 5 || u == 6)) return eye; if (mouth != 0 && v == 6 && u >= 2 && u <= 5) return mouth; } return base.at(f, u, v, w, h); }; }
+    private static Skin cloth(int col, float n, int seed) { return (f, u, v, w, h) -> mul(col, 1f - n / 2 + rnd(f * 13 + u * 7 + v * 3 + seed) * n); }
+    /** Bladesoul: a towering wither skeleton, charred bones, burning eyes, a great stone blade. */
+    static void bladesoul(float t, float idle) {
+        Skin bone = (f, u, v, w, h) -> { float n = rnd(f * 11 + u * 5 + v * 7 + 3); return n < 0.15f ? 0x4A4648 : mul(0x26242A, 0.8f + n * 0.4f); };
+        Skin ribs = (f, u, v, w, h) -> (f == 4 || f == 5) && v % 3 == 1 && u > 0 && u < w - 1 ? 0x5A565A : (f == 4 || f == 5) && u != w / 2 && u != w / 2 - 1 ? 0x0C0C10 : bone.at(f, u, v, w, h);
+        Skin skull = (f, u, v, w, h) -> { if (f == 4 && v == 3 && (u == 1 || u == 2 || u == 5 || u == 6)) return 0x02FF5A20; if (f == 4 && v == 5 && u >= 3 && u <= 4) return 0x0C0C10; if (f == 4 && v == 7 && u % 2 == 1) return 0x0C0C10; return bone.at(f, u, v, w, h); };
+        Skin blade = (f, u, v, w, h) -> (u + v) % 5 == 0 ? 0x02FF7A30 : mul(0x6A6A72, 0.8f + rnd(u * 3 + v * 5 + f) * 0.35f);
+        for (int s = -1; s <= 1; s += 2) { push(); M.translate(s * 2f, 14f, 0f).rotateX(idle * 0.3f * s); part(-1f, -14f, -1f, 1f, 0f, 1f, bone); pop(); }
+        part(-4f, 14f, -1.5f, 4f, 27f, 1.5f, ribs);
+        push(); M.translate(-6f, 26f, 0f).rotateX(-idle * 0.3f); part(-1f, -13f, -1f, 1f, 1f, 1f, bone); pop();
+        push(); M.translate(6f, 26f, 0f).rotateX(-1.1f + 0.1f * (float) Math.sin(t * 2f)); part(-1f, -13f, -1f, 1f, 1f, 1f, bone);                         // the sword arm, held out
+        M.translate(0f, -13f, 0f).rotateX(1.5f); part(-0.6f, -3f, -1.6f, 0.6f, 0f, 1.6f, bone); part(-0.5f, 0f, -1.3f, 0.5f, 19f, 1.3f, blade); pop();
+        push(); M.translate(0, 27f, 0).rotateY(0.15f * (float) Math.sin(t * 1.3f)); part(-4f, 0f, -4f, 4f, 8f, 4f, skull); pop();
+    }
+    /** Barbarian Duke X: a huge bare-chested barbarian in a horned helm, red beard, war paint, a two-headed axe. */
+    static void duke(float t, float idle) {
+        Skin skin = (f, u, v, w, h) -> { float n = rnd(f * 7 + u * 3 + v * 11); return (f == 4 && (u + v) % 6 == 0) ? 0xB02A1A : mul(0xC88A5E, 0.85f + n * 0.25f); };
+        Skin fur = (f, u, v, w, h) -> v < 4 ? mul(0x6A4A2A, 0.8f + rnd(u * 5 + v * 3 + f) * 0.4f) : skin.at(f, u, v, w, h);
+        Skin head = (f, u, v, w, h) -> { if (v <= 2) return mul(0x8A8A92, 0.85f + rnd(u + v * 3 + f) * 0.25f); if (f == 4 && v == 4 && (u == 1 || u == 2 || u == 5 || u == 6)) return 0x02FFD040; if (f == 4 && v >= 5) return mul(0xB8401A, 0.85f + rnd(u * 3 + v) * 0.3f); return skin.at(f, u, v, w, h); };
+        Skin horn = (f, u, v, w, h) -> mul(0xE8E0C8, 0.85f + rnd(u + v + f) * 0.2f), iron = (f, u, v, w, h) -> (u == 0 || v == 0) ? 0xD8A83A : mul(0x9A9AA4, 0.85f + rnd(u * 3 + v * 7 + f) * 0.3f), wood = cloth(0x5A4028, 0.3f, 2);
+        for (int s = -1; s <= 1; s += 2) { push(); M.translate(s * 2.5f, 12f, 0f).rotateX(idle * 0.4f * s); part(-2.5f, -12f, -2.5f, 2.5f, 0f, 2.5f, fur); pop(); }
+        part(-5.5f, 12f, -3f, 5.5f, 25f, 3f, skin); part(-5.8f, 11f, -3.3f, 5.8f, 14f, 3.3f, cloth(0x6A4A2A, 0.4f, 5));
+        push(); M.translate(-8f, 24f, 0f).rotateX(-idle * 0.4f); part(-2.5f, -12f, -2.5f, 2.5f, 1f, 2.5f, skin); pop();
+        push(); M.translate(8f, 24f, 0f).rotateX(-0.9f + 0.12f * (float) Math.sin(t * 2f)).rotateZ(0.15f); part(-2.5f, -12f, -2.5f, 2.5f, 1f, 2.5f, skin);          // the axe arm
+        M.translate(0f, -11f, 0f).rotateX(1.3f); part(-0.8f, -6f, -0.8f, 0.8f, 20f, 0.8f, wood); part(-0.5f, 13f, -6f, 0.5f, 21f, -0.8f, iron); part(-0.5f, 13f, 0.8f, 0.5f, 21f, 6f, iron); pop();
+        push(); M.translate(0, 25f, 0).rotateY(0.15f * (float) Math.sin(t * 1.3f)); part(-4f, 0f, -4f, 4f, 8f, 4f, head);
+        for (int s = -1; s <= 1; s += 2) { part(s * 4f - 1f, 5f, -1f, s * 4f + 1f, 7f, 1f, horn); part(s * 5.5f - 1f, 7f, -1f, s * 5.5f + 1f, 10f, 1f, horn); part(s * 6f - 0.6f, 10f, -0.6f, s * 6f + 0.6f, 12f, 0.6f, horn); }
+        pop();
+    }
+    /** Ashfang: a great ash-black blaze, its rods wheeling round a burning skull. */
+    static void ashfang(float t) {
+        Skin head = (f, u, v, w, h) -> { if (f == 4 && v == 3 && (u == 1 || u == 2 || u == 5 || u == 6)) return 0x02FFB030; if (f == 4 && v == 6 && u >= 2 && u <= 5) return 0x02FF6A10; float n = rnd(f * 11 + u * 7 + v * 3); return n < 0.04f ? 0x02FF7A20 : mul(0x3A3230, 0.8f + n * 0.4f); };
+        Skin rod = (f, u, v, w, h) -> v >= h - 2 ? 0x02FF8A20 : mul(0x4A4244, 0.8f + rnd(u * 5 + v * 9 + f) * 0.4f);
+        part(-5f, 16f, -5f, 5f, 26f, 5f, head);
+        for (int ringI = 0; ringI < 3; ringI++) for (int k = 0; k < 6; k++) {
+            float an = (float) (k * Math.PI / 3 + t * (1.5f - ringI * 0.4f) * (ringI % 2 == 0 ? 1 : -1)), r = 10f - ringI * 2.5f;
+            push(); M.translate((float) Math.cos(an) * r, 13f - ringI * 5f + (float) Math.sin(t * 3 + k) * 0.7f, (float) Math.sin(an) * r); part(-1.1f, -4.5f, -1.1f, 1.1f, 4.5f, 1.1f, rod); pop();
+        }
+        Vector3f c = M.transformPosition(new Vector3f(0, 14f, 0)); glow(F.add, c.x, c.y, c.z, 1.8f, 0xFF6A20, 0.4f);
+    }
+    /** Mage Outlaw: a hooded sorcerer in violet robes, a tall hat, a staff with a burning orb. */
+    static void mage(float t, float idle) {
+        Skin robe = (f, u, v, w, h) -> { float n = rnd(f * 13 + u * 7 + v * 3 + 9); return (f == 4 && (u == w / 2 || u == w / 2 - 1)) ? 0xD8A83A : v >= h - 1 ? 0xD8A83A : mul(0x4A2A7A, 0.8f + n * 0.4f); };
+        Skin face = face8(cloth(0x2A1A3A, 0.3f, 4), 0x0240E8FF, 0);
+        Skin hat = cloth(0x3A1E6A, 0.35f, 6), wood = cloth(0x5A4028, 0.3f, 2);
+        part(-5f, 0f, -3.5f, 5f, 13f, 3.5f, robe); part(-4f, 13f, -2.2f, 4f, 24f, 2.2f, robe);
+        push(); M.translate(-6f, 22f, 0f).rotateX(-idle * 0.4f); part(-2f, -10f, -2f, 2f, 2f, 2f, robe); pop();
+        push(); M.translate(6f, 22f, 0f).rotateX(-1.2f + 0.08f * (float) Math.sin(t * 2f)); part(-2f, -10f, -2f, 2f, 2f, 2f, robe);
+        M.translate(0f, -9f, 0f).rotateX(1.35f); part(-0.7f, -12f, -0.7f, 0.7f, 16f, 0.7f, wood); float orb = 1.8f + 0.3f * (float) Math.sin(t * 5f);
+        part(-orb, 16f, -orb, orb, 16f + orb * 2, orb, (f, u, v, w, h) -> (u + v + f) % 2 == 0 ? 0x02FF8A30 : 0x02FFE080); pop();
+        push(); M.translate(0, 24f, 0).rotateY(0.15f * (float) Math.sin(t * 1.3f)); part(-4f, 0f, -4f, 4f, 8f, 4f, face);
+        part(-6.5f, 7f, -6.5f, 6.5f, 8.2f, 6.5f, hat); part(-3.5f, 8.2f, -3.5f, 3.5f, 12f, 3.5f, hat); part(-2.2f, 12f, -2.2f, 2.2f, 15.5f, 2.2f, hat); part(-1f, 15.5f, -1f, 1.5f, 18f, 1f, hat);
+        part(-3.6f, 8.2f, -3.6f, 3.6f, 9.2f, 3.6f, (f, u, v, w, h) -> 0xD8A83A); pop();
+    }
+    /** A Ghost of the Mist: a charged creeper gone pale and see-through blue, drifting, sparks crawling over it. */
+    static void ghost(float t, float idle) {
+        Skin pale = (f, u, v, w, h) -> { float n = rnd(f * 17 + u * 7 + v * 13 + (int) (t * 5) % 3); return n < 0.03f ? 0x02FFFFFF : mul(0xA8D8F0, 0.75f + n * 0.4f); };
+        Skin face = (f, u, v, w, h) -> { if (f == 4 && ((v >= 2 && v <= 3 && (u == 1 || u == 2 || u == 5 || u == 6)) || (v >= 4 && v <= 6 && (u == 3 || u == 4)) || (v >= 5 && v <= 7 && (u == 2 || u == 5)))) return 0x1A2A3A; return pale.at(f, u, v, w, h); };
+        float bob = 2f + 1.5f * (float) Math.sin(t * 2.2f);
+        push(); M.translate(0f, bob, 0f);
+        for (int sx = -1; sx <= 1; sx += 2) for (int sz = -1; sz <= 1; sz += 2) { push(); M.translate(sx * 2f, 6f, sz * 4f).rotateX(sz * (0.25f + idle * 0.5f)); part(-2f, -6f, -2f, 2f, 0f, 2f, pale); pop(); }
+        part(-4f, 6f, -2f, 4f, 18f, 2f, pale); part(-4f, 18f, -4f, 4f, 26f, 4f, face);
+        pop();
+        Vector3f c = M.transformPosition(new Vector3f(0, 14f + bob, 0)); glow(F.add, c.x, c.y, c.z, 1.7f, 0x8AD8FF, 0.35f + 0.1f * (float) Math.sin(t * 7f));
+        for (int i = 0; i < 6; i++) { float an = t * 3f + i * 1.05f; Vector3f q = M.transformPosition(new Vector3f((float) Math.cos(an) * 7f, 8f + bob + (i * 3.1f + t * 9f) % 18f, (float) Math.sin(an) * 7f)); glint(F.add, q.x, q.y, q.z, 0.22f, 0xFFFFFF, 0.8f); }
+    }
+    /** An Ice Walker: a frozen miner in plates of glacite, frost on its shoulders, cold blue eyes, an ice pick. */
+    static void walker(float t, float idle) {
+        Skin ice = (f, u, v, w, h) -> { float n = rnd(f * 19 + u * 7 + v * 13 + 1); return (u == 0 || v == 0) ? 0x4A7A9A : n < 0.14f ? 0xFFFFFF : mul(0x8AC8E8, 0.8f + n * 0.35f); };
+        Skin head = face8(ice, 0x0240E8FF, 0x2A4A6A), pick = (f, u, v, w, h) -> mul(0xC8F0FF, 0.85f + rnd(u + v * 3 + f) * 0.2f), wood = cloth(0x5A4028, 0.3f, 2);
+        humanoid(t, idle, false, head, ice, ice, ice, false);
+        part(-7.5f, 22f, -3f, -4.5f, 26f, 3f, (f, u, v, w, h) -> 0xFFFFFF); part(4.5f, 22f, -3f, 7.5f, 26f, 3f, (f, u, v, w, h) -> 0xFFFFFF);            // frost on the shoulders
+        push(); M.translate(7f, 12f, 3f).rotateX(0.5f); part(-0.6f, -2f, -0.6f, 0.6f, 14f, 0.6f, wood); part(-0.6f, 12f, -5f, 0.6f, 14f, 5f, pick); pop();
+        Vector3f c = M.transformPosition(new Vector3f(0, 16f, 0)); glow(F.add, c.x, c.y, c.z, 1.2f, 0x8AD8FF, 0.2f);
+    }
+    /** A special Zealot: an enderman carrying the frame a Summoning Eye sits in. */
+    static void zealot(float t, float idle) {
+        enderman(t, idle);
+        Skin frame = (f, u, v, w, h) -> f == 2 ? ((u >= 2 && u <= 5 && v >= 2 && v <= 5) ? ((u + v) % 2 == 0 ? 0x0240E8A0 : 0x0220A070) : 0x3A6A5A) : v < 2 ? 0x3A6A5A : mul(0xD8D49A, 0.85f + rnd(u * 3 + v * 5 + f) * 0.25f);
+        part(-4f, 18f, 3f, 4f, 24f, 11f, frame);
     }
 
     // ------------------------------------------------------------------ meteors

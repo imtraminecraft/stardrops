@@ -28,7 +28,7 @@ final class Star3D {
     static int starCol(int i, int energy) { return type == 2 ? (i == n - 1 ? 0xFFD24A : SlayerScene.TIER[Math.min(i, SlayerScene.TIER.length - 1)]) : type == 0 ? 0xDDE6FF : i == n - 1 ? mixc(energy, 0xFFFFFF, 0.3f) : 0xFFE9A0; }
 
     static Frame build(float t, float A, int bossIn, int typeIn, int energy, float aspect, float pinY, boolean z01) {
-        boss = bossIn; type = typeIn; Vox3D.lastAspect = aspect; reseed(t); hits = SlayerScene.HITS[type]; n = hits.length; last = hits[n - 1];
+        boss = Math.floorMod(bossIn, CREATURES); world = boss < 9 ? boss : WORLD_OF[boss - 9]; type = typeIn; Vox3D.lastAspect = aspect; reseed(t); hits = SlayerScene.HITS[type]; n = hits.length; last = hits[n - 1];
         F = new Frame(); tint = 0f; M = new Matrix4f(); STACK.clear(); mobMode = false; pass = 0; dyn = false; fovNow = FOV;
         float O = AnimationManager.SL_PIVOT, p = t - O;
 
@@ -54,7 +54,7 @@ final class Star3D {
         float dim = type == 2 ? sm((t - 2.95f) / 0.3f) * (1f - sm((t - last) / 0.25f)) : 0f;
         float sl = t - last; rippleAmp = type > 0 && sl > 0 ? (type == 2 ? 0.42f : 0.2f) * (float) Math.exp(-sl * 1.7f) * sm(sl / 0.05f) : 0f; rippleR = 0.5f + sl * 10.5f; rippleCol = type == 2 ? 0xFFD24A : mixc(energy, 0xFFFFFF, 0.4f);
         goldK = type == 2 && sl > 0 ? sm(sl / 0.2f) * (1f - sm((sl - 3.4f) / 0.8f)) : 0f;
-        Theme th = THEMES[boss];
+        Theme th = THEMES[world];
         space(t, aspect, energy, th, dim);
 
         // ---- the giant planet: its curved surface under the boss, the near ground in blocks (built once per boss)
@@ -63,7 +63,7 @@ final class Star3D {
         atmosphere(t, th, energy, dim);
         backdrop(t, th, energy, dim);
         nearGround(th, dim);
-        if (boss != 4 && boss != 6) Vox3D.weather(t, boss);
+        if (world != 4 && world != 6) Vox3D.weather(t, world);
         spawn(t, energy, th);
 
         // ---- the boss
@@ -199,7 +199,7 @@ final class Star3D {
         int s = 16 / px, uu = u * s, vv = v * s; float nz = rnd(uu * 131 + vv * 977 + i * 7919 + j * 104729), n2 = rnd(uu * 37 + vv * 541 + i * 31 + j * 17 + 5);
         float sh = nz < 0.2f ? 0.8f : nz < 0.55f ? 0.92f : nz < 0.85f ? 1f : 1.1f;
         int c;
-        switch (boss) {
+        switch (world) {
             case 0 -> c = switch (blk) {                                                            // graveyard: podzol, coarse dirt, grass, a gravel path
                 case 0 -> n2 < 0.18f ? 0xA0702E : n2 < 0.3f ? 0x4A3018 : 0x7A5428;
                 case 1 -> n2 < 0.12f ? 0x7A7470 : 0x65452A;
@@ -281,11 +281,11 @@ final class Star3D {
         }
         gP = p; gC = col; gCells = cells.size(); gCell = new int[gCells * 2]; gMid = new float[gCells * 3];
         for (int k = 0; k < gCells; k++) { gCell[k * 2] = cells.get(k)[0]; gCell[k * 2 + 1] = cells.get(k)[1]; System.arraycopy(mids.get(k), 0, gMid, k * 3, 3); }
-        gBoss = boss;
+        gBoss = world;
     }
     /** The near ground, solid in the middle, fading only at the window's soft edge (cells wholly outside it are skipped). */
     static void nearGround(Theme th, float dim) {
-        if (gBoss != boss || gP == null) buildGround(th);
+        if (gBoss != world || gP == null) buildGround(th);
         for (int k = 0; k < gCells; k++) {
             float mx = gMid[k * 3], my = gMid[k * 3 + 1], mz = gMid[k * 3 + 2];
             if (edge(mx, my, mz) <= 0f && edge(mx - 0.7f, my, mz - 0.7f) <= 0f && edge(mx + 0.7f, my, mz + 0.7f) <= 0f && edge(mx + 0.7f, my, mz - 0.7f) <= 0f && edge(mx - 0.7f, my, mz + 0.7f) <= 0f) continue;
@@ -356,12 +356,12 @@ final class Star3D {
                 for (int k = 0; k < cols; k++) {
                     float a = baseAng + (k - cols / 2f) * step / D, a2 = baseAng + (k + 1 - cols / 2f) * step / D;
                     float x = EYE_X + (float) Math.sin(a) * D, z = EYE_Z + (float) Math.cos(a) * D, x2 = EYE_X + (float) Math.sin(a2) * D, z2 = EYE_Z + (float) Math.cos(a2) * D;
-                    float gy = surf(x, z), hgt = 0.9f + 2.0f * vnoise(k * 0.13f + boss * 5f, 1.7f) + 0.4f * vnoise(k * 0.5f, 3.3f); hgt = Math.round(hgt / 0.28f) * 0.28f;
+                    float gy = surf(x, z), hgt = 0.9f + 2.0f * vnoise(k * 0.13f + world * 5f, 1.7f) + 0.4f * vnoise(k * 0.5f, 3.3f); hgt = Math.round(hgt / 0.28f) * 0.28f;
                     wquad(F.veil, x, gy - 2f, z, col, x2, gy - 2f, z2, col, x2, gy + hgt, z2, col, x, gy + hgt, z, col);
                     wquad(F.veil, x, gy + hgt - 0.28f, z, lit, x2, gy + hgt - 0.28f, z2, lit, x2, gy + hgt, z2, lit, x, gy + hgt, z, lit);
                 }
             } else {
-                int[] set = SIL_SET[boss]; int count = layer == 1 ? 14 : 9;
+                int[] set = SIL_SET[world]; int count = layer == 1 ? 14 : 9;
                 for (int k = 0; k < count; k++) {
                     float off = (k - (count - 1) / 2f) / (count / 2f) + (rnd(k * 13 + layer * 7 + boss) - 0.5f) * 0.12f;
                     if (layer == 2 && Math.abs(off) < 0.3f) continue;                                        // keep the space straight behind the boss open
@@ -381,7 +381,7 @@ final class Star3D {
             }
         }
         // bats flapping across the dusk, red-eyed (graveyard, den, rift)
-        if (boss == 0 || boss == 1 || boss == 5 || boss == 8) {
+        if (world == 0 || world == 1 || world == 5 || world == 8) {
             String[] wUp = {"X.....X", "XX.X.XX", ".XXXXX.", "...X..."}, wDn = {"...X...", ".XXXXX.", "XX...XX", "X.....X"};
             int bc = argb(1f, 0x0A0608);
             for (int i = 0; i < 4; i++) {
@@ -408,7 +408,7 @@ final class Star3D {
     // ------------------------------------------------------------------ where it rises from, and what stands round it
     static void spawn(float t, int energy, Theme th) {
         float rise = (t - SlayerScene.RISE) / 0.95f;
-        switch (boss) {
+        switch (world) {
             case 0 -> {                                                                           // its headstone behind it, a cross or two; the grave bursts open
                 Skin stone = (f, u, v, w, hh) -> { float nz = rnd(f * 131 + u * 17 + v * 31 + 5); int c = nz < 0.22f ? 0x6E8A5A : 0x8A918A;
                     if (f == 4 && w >= 12 && hh >= 10) { int ry = hh - 4 - v, rx = u - 1; if (ry >= 0 && ry < 6 && rx >= 0 && rx < 12 && rx + 16 * ry < RIP.length() && RIP.charAt(rx + 16 * ry) == 'X') c = 0x3A3E3A; }
@@ -483,7 +483,8 @@ final class Star3D {
                 for (float[] pl : new float[][]{{-2.3f, -1.4f, 1.7f}, {-1.75f, -1.9f, 2.4f}, {2.5f, -1.5f, 1.4f}, {-2.75f, -0.9f, 0.9f}}) { float gy = surf(pl[0], pl[1]); push(); M.translate(pl[0], gy, pl[1]); box(-0.27f, 0f, -0.27f, 0.27f, pl[2], 0.27f, basalt, 8f, 0.03f); pop(); }
                 { float fx = 2.0f, fz = -2.1f, gy = surf(fx, fz); push(); M.translate(fx, gy, fz); box(-0.14f, 0f, -0.14f, 0.14f, 1.7f, 0.14f, stem, 10f, 0.025f); box(-0.7f, 1.7f, -0.7f, 0.7f, 2.1f, 0.7f, cap, 6f, 0.03f); box(-0.45f, 2.1f, -0.45f, 0.45f, 2.4f, 0.45f, cap, 6f, 0.03f); pop(); }
                 float pulse = 0.5f + 0.5f * (float) Math.sin(t * 3f);
-                disc(F.add, 0, 0.04f, 0, 1.6f, mixc(0xFF6A10, 0xFFC040, pulse), 0.8f); glow(F.add, 0, 0.5f, 0, 2.4f, 0xFF7A20, 0.3f); ring(F.add, 0, 0.05f, 0, 1.6f, 0.12f, 0xFFE080, 0.6f);
+                if (boss == 6 || boss == BAL) { disc(F.add, 0, 0.04f, 0, 1.6f, mixc(0xFF6A10, 0xFFC040, pulse), 0.8f); glow(F.add, 0, 0.5f, 0, 2.4f, 0xFF7A20, 0.3f); ring(F.add, 0, 0.05f, 0, 1.6f, 0.12f, 0xFFE080, 0.6f); }
+                else { disc(F.veil, 0, 0.03f, 0, 1.5f, 0x0A0606, 0.7f); ring(F.add, 0, 0.05f, 0, 1.45f, 0.1f, mixc(0xFF6A10, 0xFFC040, pulse), 0.7f); for (int k = 0; k < 8; k++) { double an = k * Math.PI / 4 + t * 0.4; glow(F.add, (float) Math.cos(an) * 1.45f, 0.12f, (float) Math.sin(an) * 1.45f, 0.16f + 0.05f * pulse, 0xFF8A20, 0.8f); } }   // the minibosses stand in a ring of embers
                 for (int k = 0; k < 2; k++) { float lx = k == 0 ? -1.75f : 2.5f, lz = k == 0 ? -1.9f : -1.5f, top = surf(lx, lz) + (k == 0 ? 2.4f : 1.4f);      // lava running down two of the columns
                     column(F.add, lx, surf(lx, lz), lz + 0.29f, top, 0.16f, 0xFF7A1A, 0.75f); for (int q = 0; q < 5; q++) { float u = ((t * 0.8f + q / 5f + k * 0.3f) % 1f); glow(F.add, lx, top - u * (top - surf(lx, lz)), lz + 0.3f, 0.1f, 0xFFE080, 0.9f); } }
                 for (int i = 0; i < 22; i++) { float u = ((t * 0.3f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 7f, u * 5f, (rnd(i * 11) - 0.5f) * 4f, 0.05f, i % 2 == 0 ? 0xFFB040 : 0xFF6020, (1f - u) * 0.9f); }
@@ -497,7 +498,7 @@ final class Star3D {
                     float gy = surf(pl[0], pl[1]); push(); M.translate(pl[0], gy, pl[1]); box(-0.4f, 0f, -0.4f, 0.4f, pl[2], 0.4f, obs, 6f, 0.03f);
                     M.translate(0f, pl[2] + 0.35f + 0.06f * (float) Math.sin(t * 2 + pl[0]), 0f).rotateXYZ(t * 1.3f, t * 1.7f, 0.6f); box(-0.17f, -0.17f, -0.17f, 0.17f, 0.17f, 0.17f, (f, u, v, w, hh) -> (u + v) % 2 == 0 ? 0x02FF80F0 : 0x02FFFFFF, 4f, 0.02f); pop();
                     glow(F.add, pl[0], gy + pl[2] + 0.35f, pl[1], 0.6f, 0xE070FF, 0.5f);
-                    if (t < last) { Vector3f a = new Vector3f(pl[0], gy + pl[2] + 0.35f, pl[1]), b = new Vector3f(0f, dy, -0.2f); line3(a, b, 0xFF90F0, 0.55f + 0.2f * (float) Math.sin(t * 20 + pl[0])); line3(new Vector3f(a).add(0, 0.03f, 0), new Vector3f(b).add(0, 0.03f, 0), 0xFFFFFF, 0.35f); }   // the crystals heal it, until it is gone
+                    if (t < last && boss == 7) { Vector3f a = new Vector3f(pl[0], gy + pl[2] + 0.35f, pl[1]), b = new Vector3f(0f, dy, -0.2f); line3(a, b, 0xFF90F0, 0.55f + 0.2f * (float) Math.sin(t * 20 + pl[0])); line3(new Vector3f(a).add(0, 0.03f, 0), new Vector3f(b).add(0, 0.03f, 0), 0xFFFFFF, 0.35f); }   // the crystals heal it, until it is gone
                 }
                 push(); M.translate(0.2f, surf(0.2f, -1.6f), -1.6f); box(-0.5f, 0f, -0.5f, 0.5f, 0.28f, 0.5f, bed, 8f, 0.03f); box(-0.14f, 0.28f, -0.14f, 0.14f, 1.1f, 0.14f, bed, 8f, 0.03f); pop();
                 for (int i = 0; i < 26; i++) { float u = ((t * 0.25f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 8f, u * 5f, (rnd(i * 11) - 0.5f) * 5f, 0.05f, i % 3 == 0 ? 0xFFFFFF : 0xD060FF, (1f - u) * 0.8f); }
@@ -553,7 +554,10 @@ final class Star3D {
             case 1 -> { float d = cl(ar * 1.15f); y = 5.5f * (1f - eo(d)) - 0.12f * (float) Math.sin(Math.PI * cl((ar - 0.87f) / 0.25f));      // it drops down on its thread
                 float th = 1f - sm((ar - 1.0f) / 0.5f); if (th > 0.01f) threadLine(0f, y + 1.1f, -0.3f, 0f, y + 12f, -0.3f, argb(0.7f * th, 0xE8ECF8)); }
             case 4 -> y = lerp(-2.8f, 0.3f, sm(ar)) + 0.15f * (float) Math.sin(t * 3f);
-            case 6 -> y = lerp(-2.6f, 0f, sm(ar));                                                       // out of the lava
+            case 6, BAL -> y = lerp(-2.6f, 0f, sm(ar));                                                  // out of the lava
+            case ASHFANG -> y = lerp(-2.8f, 0.3f, sm(ar)) + 0.15f * (float) Math.sin(t * 3f);
+            case GHOST -> { show = ar > 0.7f || ((int) (t * 20)) % 2 == 0; y = 0.1f; }                      // it flickers into being
+            case ZEALOT -> show = ar > 0.6f || ((int) (t * 24)) % 3 != 0;
             case 7 -> { float d = cl(ar * 0.95f); y = 7.5f * (1f - eo(d)); }                             // the dragon swoops down out of the sky
             default -> y = lerp(-2.8f, 0f, sm(ar)) + 0.08f * (float) Math.sin(Math.PI * cl(ar));
         }
@@ -576,6 +580,14 @@ final class Star3D {
                 case 6 -> Vox3D.magma(t, idle);
                 case 7 -> Vox3D.dragon(t, idle);
                 case 8 -> Vox3D.automaton(t, idle);
+                case BLADESOUL -> Vox3D.bladesoul(t, idle);
+                case DUKE -> Vox3D.duke(t, idle);
+                case ASHFANG -> Vox3D.ashfang(t);
+                case MAGE -> Vox3D.mage(t, idle);
+                case GHOST -> Vox3D.ghost(t, idle);
+                case WALKER -> Vox3D.walker(t, idle);
+                case BAL -> Vox3D.magma(t, idle);
+                case ZEALOT -> Vox3D.zealot(t, idle);
                 default -> humanoid(t, idle, false, VAMP_HEAD, VAMP_BODY, VAMP_ARM, VAMP_LEG, true);
             }
             pop(); burstD = -1f; tint = 0f; crumble = 0f; mobMode = false; clipY = -99f;
@@ -588,7 +600,11 @@ final class Star3D {
             glow(F.add, (float) Math.cos(an) * r, yy, (float) Math.sin(an) * r * 0.7f, 0.06f, type == 0 ? 0x9A9AA8 : i % 3 == 0 ? 0xFFFFFF : energy, (1f - u) * 0.9f);
         }
     }
-    static final float[] MOB_K_STAR = {1.4f, 1.5f, 1.85f, 0.85f, 1.4f, 1.35f, 1.45f, 1.0f, 1.2f};
+    static final float[] MOB_K_STAR = {1.4f, 1.5f, 1.85f, 0.85f, 1.4f, 1.35f, 1.45f, 1.0f, 1.2f, 1.3f, 1.35f, 1.25f, 1.35f, 1.4f, 1.4f, 1.75f, 0.85f};
+    /** Creatures 9 and up stand in one of the first nine worlds: Bladesoul, Barbarian Duke X, Ashfang, the Mage Outlaw (Crimson Isle), a Ghost, an Ice Walker (the Mines), Bal (his lava), a special Zealot (the End). */
+    static final int BLADESOUL = 9, DUKE = 10, ASHFANG = 11, MAGE = 12, GHOST = 13, WALKER = 14, BAL = 15, ZEALOT = 16, CREATURES = 17;
+    static final int[] WORLD_OF = {6, 6, 6, 6, 8, 8, 6, 7};
+    static int world;                                                            // the scenery, ground and sky (0..8); boss is the creature
     static void line(float x0, float y0, float x1, float y1, float z, int rgb, float a) {
         float dx = x1 - x0, dy = y1 - y0, l = (float) Math.sqrt(dx * dx + dy * dy); if (l < 1e-4f) return; float w = 0.025f, nx = -dy / l * w, ny = dx / l * w;
         int c = argb(a, rgb);
