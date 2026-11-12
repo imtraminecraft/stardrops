@@ -99,12 +99,17 @@ final class NowPlayingHud {
         int as = 40, ax = 8, ay = 8; float ocx = ax + as / 2f, ocy = ay + as / 2f, mo = drift * 1.1f;
         float mx = ocx + (float) Math.cos(mo) * 23, my = ocy + (float) Math.sin(mo) * 6; boolean behind = Math.sin(mo) < 0;
         if (behind) disc(g, mx, my, 2.2f, Gfx.argb(Math.round(a * 0.7f), 0xC8C4E8));
+        long fnow = System.nanoTime(); float fdt = lastDraw == 0 ? 0f : Math.min(0.1f, (fnow - lastDraw) / 1e9f); lastDraw = fnow; live += ((playing ? 1f : 0f) - live) * Math.min(1f, fdt * 5f);
+        float vr = as / 2f - 3f, vx = ax + as - 9 + 9 * ease(live), spinA = drift * 3.2f;                // the record: out a little while it plays, back in when paused
+        disc(g, vx, ocy, vr, Gfx.argb(a, 0x0C0C14)); circle(g, vx, ocy, vr, Gfx.argb(Math.round(a * 0.5f), 0x3A3A52)); circle(g, vx, ocy, vr - 4, Gfx.argb(Math.round(a * 0.2f), 0x8A88B0));
+        for (int k = 0; k < 2; k++) for (int q = -3; q <= 3; q++) { double an = spinA + k * Math.PI + q * 0.11; dot(g, vx + (float) Math.cos(an) * (vr - 2.5f), ocy + (float) Math.sin(an) * (vr - 2.5f), Gfx.argb(Math.round(a * 0.45f * (1f - Math.abs(q) / 4f)), 0xFFFFFF)); }
         NebulaTex.glow(g, ocx, ocy + 2, as * 0.7f, as * 0.7f, Gfx.argb(Math.round(e * 140), 0x000000));
         NebulaTex.glow(g, ocx, ocy, as * 0.62f, as * 0.62f, Gfx.argb(Math.round(e * 60), V));
         float flip = Math.min(1f, since / 400f), sx = Math.abs((float) Math.cos(Math.PI * 0.5 * (1f - flip)));
         Gfx.push(g); Gfx.translate(g, ax + as / 2f, ay); Gfx.scale(g, Math.max(0.02f, sx), 1f); Gfx.translate(g, -as / 2f, 0);
         cover(g, font, 0, 0, as, a, art, acc);
         for (int[] q : new int[][]{{0, 0}, {as - 1, 0}, {0, as - 1}, {as - 1, as - 1}}) g.fill(q[0], q[1], q[0] + 1, q[1] + 1, Gfx.argb(Math.round(255 * e * op), 0x0B0C26));
+        float sh = (drift % 8f) / 0.9f; if (sh < 1f && playing) { int sxp = Math.round(-6 + (as + 12) * sh); for (int k = 0; k < 5; k++) { int q0 = Math.max(0, sxp + k), q1 = Math.min(as, sxp + k + 1); if (q1 > q0) g.fill(q0, 0, q1, as, Gfx.argb(Math.round(46 * e * (1f - Math.abs(k - 2) / 3f)), 0xFFFFFF)); } }   // a shine passes over it
         if (!playing) { g.fill(0, 0, as, as, Gfx.argb(Math.round(130 * e), 0x000000)); g.fill(as / 2 - 5, as / 2 - 6, as / 2 - 2, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); g.fill(as / 2 + 2, as / 2 - 6, as / 2 + 5, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); }
         Gfx.pop(g);
         rout1(g, ax - 1, ay - 1, as + 2, as + 2, Gfx.argb(Math.round(a * 0.55f), V));
@@ -134,7 +139,7 @@ final class NowPlayingHud {
      * the last seconds it falls into orbit round the world it reached. When the next song starts, the view pans: the world it is
      * circling slides over to the left and becomes the departure, a new world drifts in from the right, and the rocket sets off again.
      */
-    private static String curId, prevId, prev2Id;
+    private static String curId, prevId, prev2Id; private static float live; private static long lastDraw;
     private static final long PAN = 1300;
     private static int seed(String id) { return id == null ? 7 : id.hashCode(); }
     private static void course(GuiGraphicsExtractor g, Font font, int w, int h, int tx, int a, Spotify.Track t, long now, long since, long pos, boolean playing, float warp) {
@@ -173,6 +178,7 @@ final class NowPlayingHud {
         }
         if (behind) flyer(g, rx, ry, ang, a, now, firing, 1f);
         Worlds.draw(g, dx, yb, r0 + (r1 - r0) * (1f - pan), Math.round(a * edge(dx, tx, w)), seed(prevId), spin);
+        if (playing) { float bp = (now % 500L) / 500f, bt = (1f - bp) * (1f - bp); circle(g, dX, yb, r1 + 2f + 5f * bp, Gfx.argb(Math.round(a * 0.45f * bt * edge(dX, tx, w)), 0xD8C8FF)); }   // it pulses with the beat
         Worlds.draw(g, dX, yb, r1, Math.round(a * edge(dX, tx, w)), seed(curId), spin);
         if (!behind) flyer(g, rx, ry, ang, a, now, firing, leave < 1f && leave > 0f ? 1.8f : 1f);
         // the time, small, inside the arc (the card ends right under the worlds)

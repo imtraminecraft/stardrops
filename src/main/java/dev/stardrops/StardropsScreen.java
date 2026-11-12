@@ -2812,6 +2812,7 @@ public class StardropsScreen extends Screen {
         rows.add(section("Night sky"));
         rows.add(toggle(":cos_night:", "Night sky", "At night your world's sky fills with stars, the Milky Way and planets, behind the hills and trees", () -> c.cosNight, v -> c.cosNight = v));
         if (c.cosNight) {
+            rows.add(toggle(":cos_night:", "Only night", "The night sky is always there, day or night, and turns by the real clock (steady even if another mod changes the time)", () -> c.cosOnlyNight, v -> c.cosOnlyNight = v));
             rows.add(toggle(":collection:", "Your constellations", "The stars you have lit in Achievements shine in the real sky, joined up", () -> c.cosCons, v -> c.cosCons = v));
             Row br = row(0, ":size:", "Brightness", "How bright the night sky is", Ui.ACCENT);
             br.ctls.add(new Slider(30, 150, 10, () -> c.cosSkyBright, v -> c.cosSkyBright = (int) v, () -> c.cosSkyBright + "%").typed(1)); rows.add(br);

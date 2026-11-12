@@ -97,7 +97,7 @@ final class SkyBox {
             StardropsConfig c = StardropsConfig.get(); Minecraft mc = Minecraft.getInstance();
             if (!c.cosNight || mc.level == null || !Flicker.on(Flicker.SKY)) return;
             long ticks = mc.level.getOverworldClockTime(); float day = (ticks % 24000L) / 24000f;
-            float night = CosmosHud.nightness(day) * (1f - mc.level.getRainLevel(1f)) * (c.cosSkyBright / 100f);
+            float night = (c.cosOnlyNight ? 1f : CosmosHud.nightness(day) * (1f - mc.level.getRainLevel(1f))) * (c.cosSkyBright / 100f);   // Only night: always there, whatever the world's (or another mod's) clock says
             if (night < 0.02f) return;
             if (sDir == null) make();
             final float Rr = Math.max(96f, mc.options.getEffectiveRenderDistance() * 16f * 2f);
@@ -108,7 +108,8 @@ final class SkyBox {
                 if (now >= nextShoot) { for (int i = 0; i < shoots.length; i++) if (shoots[i] == null || t - shoots[i][0] > 1.2f) { shoots[i] = new float[]{t, R.nextFloat() * 6.28f, 0.35f + R.nextFloat() * 0.8f, R.nextFloat() * 6.28f, 0.25f + R.nextFloat() * 0.3f}; break; } nextShoot = now + 4000 + R.nextInt(14000); }
             }
             PoseStack ps = ctx.poseStack(); ps.pushPose();
-            ps.mulPose(new Quaternionf().rotateZ(0.35f).rotateX(day * 6.2831853f));                 // the whole sky turns once a Minecraft day, on a tilted axis
+            float turn = c.cosOnlyNight ? (now % 5_400_000L) / 5_400_000f : day;                    // Only night: it turns by the real clock (once in 90 minutes), so a mod that changes the time cannot make it jump
+            ps.mulPose(new Quaternionf().rotateZ(0.35f).rotateX(turn * 6.2831853f));                // the whole sky turns, on a tilted axis
             final float nightF = night;
             ctx.submitNodeCollector().submitCustomGeometry(ps, SKY, (pose, buf) -> { Q q = (x, y, z, col) -> buf.addVertex(pose, x * Rr, y * Rr, z * Rr).setColor(col); draw(q, t, nightF, figs, shoot, aur); });
             ps.popPose();
@@ -133,7 +134,7 @@ final class SkyBox {
     private static Vector3f at(double az, double alt) { return new Vector3f((float) (Math.cos(alt) * Math.cos(az)), (float) Math.sin(alt), (float) (Math.cos(alt) * Math.sin(az))); }
     /** Where each constellation hangs (azimuth, altitude in degrees) and how big it is drawn (radians per sky unit). */
     private static final float[][] CON_AT = {{0, 62}, {70, 30}, {140, 38}, {205, 26}, {255, 46}, {310, 34}, {30, -20}, {180, -28}};
-    private static final float CON_K = 1.25f;
+    private static final float CON_K = 1.9f;
 
     static void draw(Q q, float t, float night, float[][][] figs, boolean shoot, boolean aur) {
         Vector3f d = new Vector3f(), u = new Vector3f(), v = new Vector3f();
@@ -158,10 +159,14 @@ final class SkyBox {
             int col = (int) f[0][4]; Vector3f[] p = new Vector3f[f.length];
             for (int i = 0; i < f.length; i++) p[i] = new Vector3f(ctr).add(new Vector3f(cu).mul(-f[i][0] * CON_K)).add(new Vector3f(cv).mul(f[i][1] * CON_K)).normalize();
             for (int i = 0; i < f.length; i++) { int par = (int) f[i][2]; if (par < 0 || par >= f.length) continue; boolean lit = f[i][3] > 0 && f[par][3] > 0;
-                float a = (lit ? 0.6f : 0.07f) * night; line(q, p[par], p[i], lit ? 0.0016f : 0.001f, argb(a, lit ? col : 0x8A94B8), argb(a, lit ? col : 0x8A94B8)); }
+                float a = (lit ? 0.9f : 0.16f) * night; int lc = argb(a, lit ? Ritual.mixc(col, 0xFFFFFF, 0.25f) : 0x8A94B8); line(q, p[par], p[i], lit ? 0.0028f : 0.0014f, lc, lc);
+                if (lit) { int gl = argb(0.22f * night, col); line(q, p[par], p[i], 0.009f, gl, gl); } }                                    // a lit line glows
             for (int i = 0; i < f.length; i++) { boolean lit = f[i][3] > 0; basis(p[i], u, v);
-                if (lit) { float pu = 0.85f + 0.15f * (float) Math.sin(t * 2f + i + c); soft(q, p[i], u, v, 0.03f * pu, col, 0.5f * night, 10); quad(q, p[i].x, p[i].y, p[i].z, u.x, u.y, u.z, v.x, v.y, v.z, 0.0058f, argb(night, 0xFFFFFF)); }
-                else quad(q, p[i].x, p[i].y, p[i].z, u.x, u.y, u.z, v.x, v.y, v.z, 0.0026f, argb(0.4f * night, 0x9AA4C8)); }
+                if (lit) { float pu = 0.85f + 0.15f * (float) Math.sin(t * 2f + i + c); soft(q, p[i], u, v, 0.055f * pu, col, 0.6f * night, 12); soft(q, p[i], u, v, 0.02f, 0xFFFFFF, 0.8f * night, 8); quad(q, p[i].x, p[i].y, p[i].z, u.x, u.y, u.z, v.x, v.y, v.z, 0.0085f, argb(night, 0xFFFFFF));
+                    int g1 = argb(0.9f * night * pu, Ritual.mixc(col, 0xFFFFFF, 0.5f)), g0 = argb(0, col); float L = 0.045f * pu, w = 0.003f;                                    // a four-point glint in its colour
+                    for (int k = 0; k < 2; k++) { Vector3f aa = k == 0 ? u : v, o = k == 0 ? v : u; Vector3f pt = p[i];
+                        q.v(pt.x - aa.x * L, pt.y - aa.y * L, pt.z - aa.z * L, g0); q.v(pt.x + o.x * w, pt.y + o.y * w, pt.z + o.z * w, g1); q.v(pt.x + aa.x * L, pt.y + aa.y * L, pt.z + aa.z * L, g0); q.v(pt.x - o.x * w, pt.y - o.y * w, pt.z - o.z * w, g1); } }
+                else quad(q, p[i].x, p[i].y, p[i].z, u.x, u.y, u.z, v.x, v.y, v.z, 0.0038f, argb(0.6f * night, 0x9AA4C8)); }
         }
         if (shoot) for (float[] s : shoots) {                                                          // shooting stars
             if (s == null) continue; float k = (t - s[0]) / 0.8f; if (k < 0 || k > 1) continue;

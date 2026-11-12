@@ -148,7 +148,7 @@ public class StardropsConfig {
     // Visuals > Instruments (InstrumentsHud): which are on, where each sits (its top-left as a fraction of the screen) and its size in percent
     public boolean[] instOn = new boolean[InstrumentsHud.N]; public float[] instX = new float[InstrumentsHud.N], instY = new float[InstrumentsHud.N]; public int[] instSize = new int[InstrumentsHud.N];
     public int localVolume = 70, localMode = 0;                       // Visuals > Music > Your files: volume in percent; 0 in order, 1 shuffle, 2 repeat one
-    public boolean cosCons = true; public int cosSkyBright = 100;     // the night sky box: your lit constellations in it, how bright it is (percent)
+    public boolean cosCons = true, cosOnlyNight = false; public int cosSkyBright = 100;     // the night sky box: your lit constellations in it, how bright it is (percent)
     public boolean ambGlow = false, ambNotes = false, ambBars = false, ambWave = false, lyricsStars = true; public int ambGlowStrength = 60;   // Ambience (Visuals > Ambience)
     public boolean npOn = true; public int npScale = 100, npHidePaused = 1, npBg = 60;   // npBg: how solid the card's background is, 20..70 %
       // Now Playing; when paused: 0 stays, 1 hides after 8 s, 2 hides at once
