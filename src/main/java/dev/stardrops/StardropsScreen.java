@@ -3355,7 +3355,7 @@ public class StardropsScreen extends Screen {
             }
         }
         Gfx.text(g, font, "v" + StardropsMod.VERSION + "  \u00B7  " + StardropsMod.CHANNEL, px + 40, py + 22, Ui.DIM);
-        if (Spotify.linked() && !cosWin()) {                                                     // linked to Spotify: a small chip in the sidebar under the logo, its dot breathing while music plays
+        if (Spotify.linked() && !cosWin() && query.isBlank()) {                                 // linked to Spotify: a small chip in the sidebar under the logo, its dot breathing while music plays (not while searching: the results list sits there)
             String sl = "Spotify Linked"; int lw2 = Gfx.w(font, sl) + 16, lx = px + (sw - lw2) / 2, ly = py + 50 - sideScroll;
             if (ly >= py + 40) {
                 pill(g, lx, ly, lw2, 13, Canvas.mix(Ui.PANEL2, 0xFF1ED760, 0.14f)); rout(g, lx, ly, lw2, 13, 0x661ED760);

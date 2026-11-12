@@ -23,7 +23,7 @@ final class InstrumentsHud {
     private InstrumentsHud() {}
 
     static final int N = 8;
-    static final String[] NAMES = {"Celestial clock", "Star compass", "Altimeter", "Thruster gauge", "Nav computer", "Deep-space link", "Orbit clock", "Star log"};
+    static final String[] NAMES = {"Day & night clock", "Compass", "Y level", "Speed", "Coordinates", "Ping & FPS", "Real time clock", "Session drops"};      // named for what they show (author: "rename the HUD features according to what they do")
     static final String[] SUBS = {"The sun and moon on their arc at the world's time, the moon's phase", "A tape of headings sliding past a gold marker, your bearing",
         "A height tape with a little rocket at your level", "Your speed on an arc of lights, in blocks a second", "X, Y, Z and the way you face",
         "Your ping as signal bars round a dish, and your FPS", "The real time: the hour a planet, the minute its moon", "This session: time played, drops, RNG drops"};
@@ -43,6 +43,7 @@ final class InstrumentsHud {
     static int drops, rngDrops; static final long T0 = System.currentTimeMillis();
     static void dropLanded(int n, boolean rng) { drops += n; if (rng) rngDrops += n; }
 
+    private static float gaugeMax = 10f;
     private static float away; private static long lastFrame; private static double lx, lz; private static long lt; private static float speed;
 
     static void render(GuiGraphicsExtractor g) {
@@ -52,8 +53,9 @@ final class InstrumentsHud {
         away += ((AnimationManager.isPlaying() && !preview ? 1f : 0f) - away) * Math.min(1f, dt * 6f);
         float a = 1f - away; int W = g.guiWidth(), H = g.guiHeight();
         long nt = System.nanoTime(); double px = mc.player.getX(), pz = mc.player.getZ();
-        if (lt != 0 && nt - lt > 40_000_000L) { float sec = (nt - lt) / 1e9f; float v = (float) Math.sqrt((px - lx) * (px - lx) + (pz - lz) * (pz - lz)) / sec; if (v < 200f) speed += (v - speed) * Math.min(1f, sec * 6f); lx = px; lz = pz; lt = nt; }
-        else if (lt == 0) { lx = px; lz = pz; lt = nt; }
+        // speed: how far the last game tick moved you, times 20. (Measuring between frames jitters: the position only changes 20 times a second.)
+        double ddx = px - mc.player.xo, ddz = pz - mc.player.zo; float v = (float) Math.sqrt(ddx * ddx + ddz * ddz) * 20f;
+        if (v < 200f) speed += (v - speed) * Math.min(1f, dt * 5f); if (speed < 0.05f) speed = 0f; lt = nt; lx = px; lz = pz;
         for (int i = 0; i < N; i++) {
             if (!c.instOn[i]) { BOX[i][2] = BOX[i][0]; continue; }
             float k = c.instSize[i] / 100f; int w = Math.round(SIZE[i][0] * k), h = Math.round(SIZE[i][1] * k);
@@ -154,7 +156,8 @@ final class InstrumentsHud {
     // ------------------------------------------------------------------ 3: the thruster gauge
     private static void thruster(GuiGraphicsExtractor g, Font f, int w, int h, float a, long now) {
         plate(g, w, h, a);
-        float max = speed < 9 ? 10 : speed < 18 ? 20 : speed < 36 ? 40 : 80, u = Math.min(1f, speed / max), cx = w / 2f, cy = 25, r = 19;
+        float want = speed < 9 ? 10 : speed < 18 ? 20 : speed < 36 ? 40 : 80; if (want > gaugeMax || speed < gaugeMax * 0.38f) gaugeMax = want;      // the scale steps up at once but only steps down well below it (no flapping at the edge)
+        float max = gaugeMax, u = Math.min(1f, speed / max), cx = w / 2f, cy = 25, r = 19;
         for (int i = 0; i <= 24; i++) {
             float q = i / 24f; double an = Math.PI + Math.PI * q; float px = cx + (float) Math.cos(an) * r, py = cy + (float) Math.sin(an) * r; boolean on = q <= u + 0.001f;
             int col = q < 0.5f ? Ritual.mixc(VIOLET, PINK, q * 2f) : Ritual.mixc(PINK, GOLD, (q - 0.5f) * 2f);
