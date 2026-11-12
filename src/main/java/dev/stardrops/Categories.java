@@ -65,6 +65,10 @@ final class Categories {
     private static final List<Type> SHOW_TYPES = List.of(
         new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A drop: the creature's world rises around the item, then its text."),
         new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "A rare drop: cinematic bars, blur and a big finish in the creature's colours."));
+    /** The Crimson Isle, the End and the Mines (Mob Drops): the star scene with their own creature and world. */
+    private static final List<Type> STAR_TYPES = List.of(
+        new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A drop: its creature rises in its own world on the curve of a giant planet, burning meteorites rain down, the last one shatters it and its stardust gathers into your drop."),
+        new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "RNG: six meteorites climb the rarity colours and leave star-fires burning round the creature, everything holds its breath, and a golden star falls like a hammer. Your drop appears in a pillar of gold."));
     private static final List<Type> MINE_TYPES = List.of(
         new Type("normal", "Normal", ":normal:", 0xFF55D8FF, "A find: three strikes, then the item rises from the rock with its text."),
         new Type("rng", "RNG", ":dice:", 0xFFFF72C6, "A rare find: cinematic bars, blur and the rock bursts in a shower of gems."));
@@ -83,9 +87,9 @@ final class Categories {
     static final List<Cat> ALL = List.of(
         new Cat("bosses", "Mob Drops", ":raredrops:", 0xFFFF5A5A, false, "Slayers, the Crimson Isle, the End and the creatures of the Mines.", List.of(
             new Group("slayer", "Slayers", ":grp_slayers:", 0xFFFF5A5A, "What plays when a slayer boss drops something.", SLAYER_TYPES),
-            new Group("crimson", "Crimson Isle", ":grp_crimson:", 0xFFFF6A3A, "The Crimson Isle's minibosses and the Magma Boss.", SHOW_TYPES),
-            new Group("dragon", "The End", ":grp_end:", 0xFFC77DFF, "Ender Dragons: the Ender Dragon pet, the Aspect of the Dragons and the dragons' rare loot.", SHOW_TYPES),
-            new Group("mobs", "Mines", ":grp_mines:", 0xFF7FE8D8, "Rare drops of the Dwarven Mines' and the Crystal Hollows' creatures.", SHOW_TYPES))),
+            new Group("crimson", "Crimson Isle", ":grp_crimson:", 0xFFFF6A3A, "The Crimson Isle's minibosses and the Magma Boss.", STAR_TYPES),
+            new Group("dragon", "The End", ":grp_end:", 0xFFC77DFF, "Ender Dragons: the Ender Dragon pet, the Aspect of the Dragons and the dragons' rare loot.", STAR_TYPES),
+            new Group("mobs", "Mines", ":grp_mines:", 0xFF7FE8D8, "Rare drops of the Dwarven Mines' and the Crystal Hollows' creatures.", STAR_TYPES))),
         new Cat("mythological", "Mythological", ":mytho:", 0xFF55D8FF, false, "Mythological Ritual is an event that occurs with the Mythological Ritual perk.", List.of(
             new Group("myth", "Mythological Mobs", ":mytho:", 0xFF55D8FF, "What plays when a ritual creature dies.", MYTH_TYPES),
             new Group("treasure", "Treasure", ":treasure:", 0xFFFFD25A, "What plays when a burrow holds treasure.", MYTH_TYPES))),

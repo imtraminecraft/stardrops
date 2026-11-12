@@ -25,8 +25,20 @@ final class AlbumArt {
         Thread t = new Thread(() -> {
             try {
                 byte[] b = Net.HTTP.send(HttpRequest.newBuilder(URI.create(url)).header("User-Agent", "Stardrops").GET().build(), HttpResponse.BodyHandlers.ofByteArray()).body();
+                show(b, url);
+            } catch (Throwable ignored) { }
+        }, "Stardrops album art");
+        t.setDaemon(true); t.start();
+    }
+    /** A picture that is already here (the cover inside one of your own music files); null = this song has none. */
+    static void loadBytes(String key, byte[] b) {
+        if (key == null || key.equals(forUrl)) return;
+        forUrl = key; ready = false; if (b == null) return;
+        Thread t = new Thread(() -> { try { show(b, key); } catch (Throwable ignored) { } }, "Stardrops album art"); t.setDaemon(true); t.start();
+    }
+    private static void show(byte[] b, String key) throws Exception {
                 java.awt.image.BufferedImage src = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(b));      // album pictures are JPEG: read with Java, then copy into a texture
-                if (src == null || !url.equals(forUrl)) return;
+                if (src == null || !key.equals(forUrl)) return;
                 int S = 64; java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(S, S, java.awt.image.BufferedImage.TYPE_INT_ARGB);
                 var g2 = img.createGraphics(); g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR); g2.drawImage(src, 0, 0, S, S, null); g2.dispose();
                 long r = 0, gg = 0, bb = 0;
@@ -41,9 +53,6 @@ final class AlbumArt {
                         tex.upload(); colour = brighten(avg); ready = true;
                     } catch (Throwable ignored) { }
                 });
-            } catch (Throwable ignored) { }
-        }, "Stardrops album art");
-        t.setDaemon(true); t.start();
     }
     /** The accent everything musical uses: the cover's colour moved into the cool range (teal, blue, violet) and softened, so it is
      *  never loud. Covers keep their own shade within that range, so songs still look different from each other. */

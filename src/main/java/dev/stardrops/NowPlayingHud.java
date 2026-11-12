@@ -31,7 +31,7 @@ final class NowPlayingHud {
         boolean playing = preview || Spotify.playing;
         if (!Spotify.playing && lastPlayingSeen) pausedSince = now; lastPlayingSeen = Spotify.playing;
         long hideAfter = c.npHidePaused == 0 ? Long.MAX_VALUE : c.npHidePaused == 1 ? 8000 : 0;
-        boolean want = preview || (c.npOn && Spotify.linked() && t != null && (Spotify.playing || now - pausedSince < hideAfter) && !AnimationManager.hidesHud() && mc.level != null);
+        boolean want = preview || (c.npOn && (Spotify.linked() || LocalMusic.active) && t != null && (Spotify.playing || now - pausedSince < hideAfter) && !AnimationManager.hidesHud() && mc.level != null);
         show += ((want ? 1f : 0f) - show) * Math.min(1f, dt * 8f);
         if (show < 0.01f || t == null) return;
         if (!t.id().equals(lastId)) { lastId = t.id(); changedAt = now; }
@@ -44,7 +44,7 @@ final class NowPlayingHud {
     static int width() { return 214; }
     /** How solid the glass is (Visuals > Music > Now Playing > Background), 0.2..0.7. */
     static float bg() { return StardropsConfig.get().npBg / 100f; }
-    static int height(boolean lyric) { return lyric ? 72 : 64; }
+    static int height(boolean lyric) { return lyric ? 66 : 58; }
 
     /** Draws the card. cx/top: the middle of its top edge; e: 0..1 how far it has slid in; since: ms since the song changed. */
     static void draw(GuiGraphicsExtractor g, Font font, float cx, float top, float k, float e, Spotify.Track t, long now, long since,
@@ -85,6 +85,16 @@ final class NowPlayingHud {
             Gfx.push(g); Gfx.translate(g, x, y); g.pose().scale(len, 1f); g.fill(0, 0, 1, 1, Gfx.argb(Math.round(a * (0.25f + 0.35f * tw + 0.3f * warp)), i % 6 == 0 ? 0xD8C8FF : STAR)); Gfx.pop(g);
         }
         g.fill(4, 1, w - 4, 2, Gfx.argb(Math.round(26 * e), 0xFFFFFF));
+        // far behind everything: a huge ringed world rising out of the corner, a faint constellation, a comet now and then
+        float gx = w - 30 + (float) Math.sin(drift * 0.05f) * 3, gy = h + 14;
+        cap(g, gx, gy, 34, w, h, Gfx.argb(Math.round(34 * e), Ritual.mixc(acc, V, 0.5f))); cap(g, gx - 5, gy - 4, 30, w, h, Gfx.argb(Math.round(16 * e), 0xFFFFFF));
+        for (int i = 0; i < 44; i++) { double an = Math.PI + Math.PI * i / 43.0; float rx = gx + (float) Math.cos(an) * 52, ry = gy - 20 + (float) Math.sin(an) * 9 + (float) Math.cos(an) * 6; if (rx > 3 && rx < w - 3 && ry > 2 && ry < h - 2) dot(g, rx, ry, Gfx.argb(Math.round(60 * e), 0xD8C8FF)); }
+        float[][] cst = {{0.36f, 0.14f}, {0.44f, 0.3f}, {0.53f, 0.2f}, {0.6f, 0.36f}, {0.7f, 0.16f}};
+        for (int i = 0; i < cst.length; i++) {
+            float px = cst[i][0] * w, py = cst[i][1] * h; g.fill(Math.round(px), Math.round(py), Math.round(px) + 1, Math.round(py) + 1, Gfx.argb(Math.round(a * (0.35f + 0.25f * (float) Math.sin(drift * 1.3f + i * 1.9f))), 0xFFFFFF));
+            if (i > 0) for (int q = 1; q < 6; q++) dot(g, cst[i - 1][0] * w + (px - cst[i - 1][0] * w) * q / 6f, cst[i - 1][1] * h + (py - cst[i - 1][1] * h) * q / 6f, Gfx.argb(Math.round(a * 0.1f), 0xC8B4FF));
+        }
+        float cu = (drift % 11f) / 1.2f; if (cu < 1f) { float hx = w * (0.95f - 0.6f * cu), hy = 4 + 16 * cu; for (int q = 0; q < 9; q++) dot(g, hx + q * 2.2f, hy - q * 0.6f, Gfx.argb(Math.round(a * (float) Math.sin(Math.PI * cu) * (1f - q / 9f) * 0.8f), q == 0 ? 0xFFFFFF : 0xC8B4FF)); }
         // the cover, with a violet rim and a moon circling it (behind it on the far side of its orbit)
         int as = 40, ax = 8, ay = 8; float ocx = ax + as / 2f, ocy = ay + as / 2f, mo = drift * 1.1f;
         float mx = ocx + (float) Math.cos(mo) * 23, my = ocy + (float) Math.sin(mo) * 6; boolean behind = Math.sin(mo) < 0;
@@ -101,7 +111,8 @@ final class NowPlayingHud {
         if (!behind) { disc(g, mx, my, 2.2f, Gfx.argb(a, 0xE8E4FF)); NebulaTex.glow(g, mx, my, 4, 4, Gfx.argb(Math.round(a * 0.3f), 0xFFFFFF)); }
         // the words
         float in = ease(Math.min(1f, Math.max(0f, since - 250) / 380f)), sl = (1f - in) * 14; int tx = 58, eqW = 16, tw = w - tx - eqW - 10;
-        small(g, font, playing ? "NOW PLAYING" : "PAUSED", tx + sl * 0.4f, 8, 0.55f, Gfx.argb(Math.round(a * 0.85f * in), 0xA89CE8));
+        boolean mine = t.id().startsWith("local:");
+        small(g, font, playing ? (mine ? "YOUR MUSIC" : "NOW PLAYING") : "PAUSED", tx + sl * 0.4f, 8, 0.55f, Gfx.argb(Math.round(a * 0.85f * in), mine ? 0x8AF0C0 : 0xA89CE8));
         Gfx.txt(g, font, marquee(font, t.name(), tw, since), Math.round(tx + sl), 15, Gfx.argb(Math.round(a * in), 0xFFFFFF), true);
         small(g, font, cut(font, t.artists(), tw / 0.8f), tx + sl * 0.6f, 26, 0.8f, Gfx.argb(Math.round(a * 0.75f * in), 0xB9B6E6));
         int ex = w - eqW - 7, ey = 15;                                                            // the signal: five bars, violet into pink
@@ -110,7 +121,11 @@ final class NowPlayingHud {
             int bh = Math.max(1, Math.round(8 * amp)), bx = ex + i * 3;
             g.fill(bx, ey - bh, bx + 2, ey, Gfx.argb(Math.round(a * 0.9f), Ritual.mixc(V, PINK, i / 4f)));
         }
+        String left = "-" + mmss(Math.max(0, t.durationMs() - pos)); small(g, font, left, w - 7 - font.width(left) * 0.5f, 19, 0.5f, Gfx.argb(Math.round(a * 0.6f), 0xB9B6E6));   // what is left, under the signal
         course(g, font, w, h, tx, a, t, now, since, pos, playing, warp);
+        float pf = Math.min(1f, pos / (float) Math.max(1, t.durationMs())); int bw = w - 12, fillW = Math.round(bw * pf);                  // a hairline of progress along the bottom edge, in the album's colour
+        g.fill(6, h - 2, 6 + bw, h - 1, Gfx.argb(Math.round(a * 0.12f), 0xFFFFFF)); g.fill(6, h - 2, 6 + fillW, h - 1, Gfx.argb(Math.round(a * 0.85f), Ritual.mixc(acc, 0xFFFFFF, 0.2f)));
+        g.fill(6 + fillW - 1, h - 3, 6 + fillW + 1, h, Gfx.argb(a, 0xFFFFFF)); NebulaTex.glow(g, 6 + fillW, h - 1.5f, 5, 3, Gfx.argb(Math.round(a * 0.5f), acc));
     }
 
     /*
@@ -125,11 +140,11 @@ final class NowPlayingHud {
     private static void course(GuiGraphicsExtractor g, Font font, int w, int h, int tx, int a, Spotify.Track t, long now, long since, long pos, boolean playing, float warp) {
         if (!t.id().equals(curId)) { prev2Id = prevId == null ? t.id() + "~" : prevId; prevId = curId == null ? t.id() + "*" : curId; curId = t.id(); }
         long dur = Math.max(1, t.durationMs()); float f = Math.min(1f, pos / (float) dur), spin = (now % 3_600_000L) / 1000f;
-        int yb = h - 13; float x0 = tx + 7, x1 = w - 17, D = x1 - x0, r0 = 5f, r1 = 6.5f;
+        int yb = h - 11; float x0 = tx + 7, x1 = w - 17, D = x1 - x0, r0 = 5f, r1 = 6.5f;
         float pan = since < PAN ? ease(since / (float) PAN) : 1f, off = (1f - pan) * D;
         float dx = x0 + off, dX = x1 + off, ox = x0 - D + off;                                     // the departure, the destination, the one left behind
         // the arc: from just off the departure world, up and over, to just short of the destination
-        float sx = dx + r0 + 2, sy = yb - 3, ex = dX - r1 - 3, ey = yb - 3, cxp = (sx + ex) / 2f, cyp = yb - 30;
+        float sx = dx + r0 + 2, sy = yb - 3, ex = dX - r1 - 3, ey = yb - 3, cxp = (sx + ex) / 2f, cyp = yb - 27;
         float show = Math.max(0f, Math.min(1f, (since - PAN * 0.7f) / 400f));                   // the course appears once the pan settles
         float end = Math.max(0f, Math.min(1f, 1f - (dur - pos) / 3000f)), orbit = ease(end);
         float tail = Math.max(0f, f - 0.3f);
@@ -160,9 +175,9 @@ final class NowPlayingHud {
         Worlds.draw(g, dx, yb, r0 + (r1 - r0) * (1f - pan), Math.round(a * edge(dx, tx, w)), seed(prevId), spin);
         Worlds.draw(g, dX, yb, r1, Math.round(a * edge(dX, tx, w)), seed(curId), spin);
         if (!behind) flyer(g, rx, ry, ang, a, now, firing, leave < 1f && leave > 0f ? 1.8f : 1f);
-        // the time, small, under the middle of the arc
+        // the time, small, inside the arc (the card ends right under the worlds)
         String tm = mmss(pos) + "  /  " + mmss(dur); float tw2 = font.width(tm) * 0.55f;
-        small(g, font, tm, (sx + ex) / 2f - tw2 / 2f, yb + 2, 0.55f, Gfx.argb(Math.round(a * 0.55f), 0xFFFFFF));
+        small(g, font, tm, (sx + ex) / 2f - tw2 / 2f, yb - 5, 0.55f, Gfx.argb(Math.round(a * 0.6f), 0xFFFFFF));
     }
     private static float edge(float x, int tx, int w) { return Math.max(0f, Math.min(1f, Math.min((x - (tx - 6)) / 12f, (w - 3 - x) / 10f))); }
     private static float bz(float p0, float p1, float p2, float u) { float v = 1f - u; return v * v * p0 + 2 * v * u * p1 + u * u * p2; }
@@ -186,6 +201,10 @@ final class NowPlayingHud {
     /** The rocket turned to ang (0 = flying right). */
     private static void flyer(GuiGraphicsExtractor g, float x, float y, float ang, int a, long now, boolean firing, float boost) {
         Gfx.push(g); Gfx.translate(g, x, y); if (ang != 0f) Gfx.rotate(g, ang); rocket(g, 0, 0, a, now, firing, boost); Gfx.pop(g);
+    }
+    /** A disc cut off at the card's edges (the big world behind the glass must not spill out of it). */
+    private static void cap(GuiGraphicsExtractor g, float cx, float cy, float r, int w, int h, int col) {
+        for (int y = Math.max(2, Math.round(cy - r)); y < Math.min(h - 2, Math.round(cy + r)); y++) { float dy = y + 0.5f - cy, half = (float) Math.sqrt(Math.max(0f, r * r - dy * dy)); int x0 = Math.max(2, Math.round(cx - half)), x1 = Math.min(w - 2, Math.round(cx + half)); if (x1 > x0) g.fill(x0, y, x1, y + 1, col); }
     }
     private static void rout1(GuiGraphicsExtractor g, int x, int y, int w, int h, int c) { g.fill(x + 1, y, x + w - 1, y + 1, c); g.fill(x + 1, y + h - 1, x + w - 1, y + h, c); g.fill(x, y + 1, x + 1, y + h - 1, c); g.fill(x + w - 1, y + 1, x + w, y + h - 1, c); }
     /** One pixel at a fractional place: it slides smoothly instead of hopping from pixel to pixel. */

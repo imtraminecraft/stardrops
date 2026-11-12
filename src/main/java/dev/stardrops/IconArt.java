@@ -521,6 +521,63 @@ final class IconArt {
                 for (int i = 0; i <= 8; i++) { double an = Math.PI + Math.PI * i / 8.0; px(Math.round(8 + (float) Math.cos(an) * 6), Math.round(11 + (float) Math.sin(an) * 6), 0x9B7BFF); }
                 float u = ((f % 1f) + 1f) % 1f; double an = Math.PI + Math.PI * u; ball(8 + (float) Math.cos(an) * 6, 11 + (float) Math.sin(an) * 6, 1.6f, 0xFFE07A);
             }
+            case "instruments" -> {                                                          // Instruments: a round gauge with a swinging needle, a second small dial
+                ball(7, 8, 6f, 0x2C2A66); ball(7, 8, 5f, 0x0E1030);
+                for (int i = 0; i <= 6; i++) { double an = Math.PI * 0.85 + Math.PI * 1.3 * i / 6.0; px(Math.round(7 + (float) Math.cos(an) * 4), Math.round(8 + (float) Math.sin(an) * 4), i > 4 ? 0xFF7AD9 : 0x9B7BFF); }
+                double an = Math.PI * 1.5 + sn(f) * 0.9; ln(7, 8, Math.round(7 + (float) Math.cos(an) * 4), Math.round(8 + (float) Math.sin(an) * 4), 0xFFD27A); px(7, 8, 0xFFFFFF);
+                ball(13, 12, 2.4f, 0x2C2A66); px(13, 12, 0x4FC3FF); pxa(13, 11, 0xFFFFFF, sn(f * 2) * 0.5f + 0.5f);
+                outline();
+            }
+            case "inst_compass" -> {                                                         // Star compass: a ring, a needle that sways, north in pink
+                ball(8, 8, 6.5f, 0x2C2A66); ball(8, 8, 5.4f, 0x0E1030);
+                px(8, 2, 0xFF7AD9); px(8, 14, 0x8A93B0); px(2, 8, 0x8A93B0); px(14, 8, 0x8A93B0);
+                double an = -Math.PI / 2 + sn(f) * 0.5; int ex = Math.round(8 + (float) Math.cos(an) * 4), ey = Math.round(8 + (float) Math.sin(an) * 4);
+                ln(8, 8, ex, ey, 0xFFD27A); ln(8, 8, 16 - ex, 16 - ey, 0xEEF2FF); px(8, 8, 0xFFFFFF);
+                outline();
+            }
+            case "inst_alt" -> {                                                             // Altimeter: a height tape, a rocket climbing it
+                rect(4, 1, 1, 14, 0x9B7BFF); for (int y = 2; y < 15; y += 3) rect(2, y, 2, 1, y % 2 == 0 ? 0xEEF2FF : 0x8A93B0);
+                int ry = 10 - Math.round((sn(f) * 0.5f + 0.5f) * 6);
+                px(10, ry - 2, 0xEEF2FF); rect(9, ry - 1, 3, 4, 0xEEF2FF); px(10, ry, 0x4FC3FF); px(8, ry + 2, 0xFF7AD9); px(12, ry + 2, 0xFF7AD9); pxa(10, ry + 3, 0xFFD27A, 1f); pxa(10, ry + 4, 0xFFD27A, 0.5f);
+                rect(6, ry, 2, 1, 0xFFD27A);
+                outline();
+            }
+            case "inst_speed" -> {                                                           // Thruster gauge: an arc of lights filling up, a needle
+                float u = sn(f) * 0.5f + 0.5f;
+                for (int i = 0; i <= 8; i++) { double an = Math.PI + Math.PI * i / 8.0; boolean on = i / 8f <= u; px(Math.round(8 + (float) Math.cos(an) * 6), Math.round(11 + (float) Math.sin(an) * 6), !on ? 0x4A4878 : i < 4 ? 0x9B7BFF : i < 7 ? 0xFF7AD9 : 0xFFD27A); }
+                double an = Math.PI + Math.PI * u; ln(8, 11, Math.round(8 + (float) Math.cos(an) * 4), Math.round(11 + (float) Math.sin(an) * 4), 0xEEF2FF); px(8, 11, 0x9B7BFF);
+                rect(5, 13, 6, 1, 0x8A93B0);
+                outline();
+            }
+            case "inst_nav" -> {                                                             // Nav computer: three read-outs, a blinking cursor
+                rect(1, 2, 14, 12, 0x2C2A66); rect(2, 3, 12, 10, 0x0E1030);
+                px(3, 5, 0xFF8A8A); rect(5, 5, 6, 1, 0xEEF2FF); px(3, 8, 0x8AF0A0); rect(5, 8, 4, 1, 0xEEF2FF); px(3, 11, 0x8AB8FF); rect(5, 11, 7, 1, 0xEEF2FF);
+                pxa(12, 8, 0xFFD27A, sn(f * 2) > 0 ? 1f : 0.15f);
+                outline();
+            }
+            case "inst_link" -> {                                                            // Deep-space link: a dish sending rings
+                rect(3, 6, 1, 4, 0xEEF2FF); rect(4, 4, 1, 8, 0xEEF2FF); rect(5, 3, 1, 10, 0xEEF2FF); rect(6, 7, 2, 1, 0xEEF2FF); px(8, 7, 0xFFD27A); rect(4, 13, 3, 1, 0x8A93B0);
+                float u = ((f % 1f) + 1f) % 1f;
+                for (int k = 0; k < 2; k++) { float q = (u + k * 0.5f) % 1f; int r = 2 + Math.round(q * 5); for (int w2 = -2; w2 <= 2; w2++) pxa(8 + Math.round((float) Math.cos(w2 * 0.35) * r), 7 + Math.round((float) Math.sin(w2 * 0.35) * r), 0x9B7BFF, 1f - q); }
+                outline();
+            }
+            case "inst_orbit" -> {                                                           // Orbit clock: a sun, a planet going round it, a moon round the planet
+                ball(8, 8, 1.6f, 0xFFE8A0);
+                for (int i = 0; i < 12; i++) { double an = i * Math.PI / 6; pxa(Math.round(8 + (float) Math.cos(an) * 6.5f), Math.round(8 + (float) Math.sin(an) * 6.5f), 0x8A93B0, i % 3 == 0 ? 1f : 0.5f); }
+                double an = f * Math.PI * 2; float px0 = 8 + (float) Math.cos(an) * 4.5f, py0 = 8 + (float) Math.sin(an) * 4.5f;
+                ball(px0, py0, 1.3f, 0x8AB8FF); px(Math.round(px0 + (float) Math.cos(an * 4) * 2.4f), Math.round(py0 + (float) Math.sin(an * 4) * 2.4f), 0xFFFFFF);
+            }
+            case "inst_log" -> {                                                             // Star log: a logbook page, a gold star twinkling on it
+                rect(3, 1, 10, 14, 0x2C2A66); rect(4, 2, 8, 12, 0x0E1030); rect(5, 4, 6, 1, 0x9B7BFF); rect(5, 7, 4, 1, 0xEEF2FF); rect(5, 10, 5, 1, 0xEEF2FF);
+                float tw = sn(f * 2) * 0.5f + 0.5f; rect(10, 9, 1, 3, 0xFFD27A); rect(9, 10, 3, 1, 0xFFD27A); pxa(10, 10, 0xFFFFFF, tw);
+                outline();
+            }
+            case "music_file" -> {                                                           // Your own files: a film strip with a note on it
+                rect(2, 3, 12, 10, 0x2C2A66); rect(3, 4, 10, 8, 0x0E1030);
+                for (int x = 3; x < 13; x += 3) { px(x, 3, 0xEEF2FF); px(x, 12, 0xEEF2FF); }
+                int b = Math.round(sn(f * 2)); rect(8, 5 + b, 1, 5, 0x1ED760); rect(9, 5 + b, 2, 1, 0x1ED760); rect(6, 9 + b, 3, 2, 0x1ED760);
+                outline();
+            }
             case "sty_pop" -> {                                                              // Starlight: a star flaring, opening into a word
                 float fl = sn(f) * 0.5f + 0.5f;
                 rect(3, 11, 10, 1, 0xEEF2FF); rect(4, 13, 7, 1, 0x8A94C0);

@@ -2275,7 +2275,7 @@ public class StardropsScreen extends Screen {
             case DROPS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // WIP tag = its animation is being remade; the page still opens
             case ANIMATIONS, SOUNDS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // being remade: only Mob Drops is open
             case CHAT -> { l.add(new SubPage("Message & Channel", ":format:", 0xFFFFC857, false)); l.add(new SubPage("Chat Enabled", ":bell:", 0xFF7BE05A, false)); }
-            case VISUALS -> { l.add(new SubPage("Music", ":note:", 0xFF1ED760, false)); l.add(new SubPage("Cosmos", ":cosmos:", 0xFF9B7BFF, false)); }
+            case VISUALS -> { l.add(new SubPage("Music", ":note:", 0xFF1ED760, false)); l.add(new SubPage("Cosmos", ":cosmos:", 0xFF9B7BFF, false)); l.add(new SubPage("Instruments", ":instruments:", 0xFFFFD27A, false)); }
             case GENERAL -> {
                 l.add(new SubPage("Menu", ":menu:", 0xFFB0B6C2, false)); l.add(new SubPage("Cosmetics", ":cosmetics:", 0xFFC77DFF, false));
                 l.add(new SubPage("Prices", ":coin:", 0xFFFFC857, false)); l.add(new SubPage("Drop Data", ":refresh:", 0xFF56D8FF, false));
@@ -2549,7 +2549,7 @@ public class StardropsScreen extends Screen {
         if (cat.wip()) { wipPanel(cat.icon(), cat.name() + " drops", cat.blurb()); return; }
         // three levels: the category hub (Mythological Mobs / Treasure), a group page (the creatures), and one source page (a creature or the burrow)
         for (Categories.Group gr : cat.groups()) {
-            srcList.add(new String[]{gr.id(), gr.name(), gr.icon(), String.valueOf(gr.color())}); if (gr.wip() || !gr.id().equals("slayer")) srcWip.add(gr.id());
+            srcList.add(new String[]{gr.id(), gr.name(), gr.icon(), String.valueOf(gr.color())}); if (gr.wip() || !AnimationManager.isSlayer(gr.id())) srcWip.add(gr.id());
             boolean inGrp = dropSrc != null && (dropSrc.equals(gr.id()) || dropSrc.startsWith(gr.id() + "/"));          // a group's creatures show only once you are inside that group
             if (Categories.hasSubs(gr) && inGrp) for (DropData.Source s : cat.sources(gr.id())) srcList.add(new String[]{gr.id() + "/" + s.id, srcName(s), srcIcon(s), String.valueOf(s.color()), "sub"});          // the creatures sit under Mythological Mobs
         }
@@ -2579,7 +2579,7 @@ public class StardropsScreen extends Screen {
             lb[i] = g.name(); sb[i] = g.wip() ? "Soon\u2122" : t + " drops"; co[i] = g.color(); ic[i] = g.icon(); wp[i] = g.wip();
         }
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
-        boolean anyLive = false; for (Categories.Group g : cat.groups()) anyLive |= g.id().equals("slayer");
+        boolean anyLive = false; for (Categories.Group g : cat.groups()) anyLive |= AnimationManager.isSlayer(g.id());
         if (!anyLive) animWip(cat.name());
     }
     /** Under a drop page whose animation is being remade: the station at work. Drops still pick their animation and chat alert now; the picks carry over. */
@@ -2599,7 +2599,7 @@ public class StardropsScreen extends Screen {
         int n = srcs.size(); String[] lb = new String[n], sb = new String[n], mi = new String[n]; int[] co = new int[n];
         for (int i = 0; i < n; i++) { lb[i] = srcName(srcs.get(i)); sb[i] = srcs.get(i).drops.size() + " drops"; co[i] = grp.id().equals("myth") ? PET_COL[Math.max(0, Math.min(5, srcs.get(i).minPet))] : srcs.get(i).color(); mi[i] = srcIcon(srcs.get(i)); }
         rows.add(picker("", "", lb, sb, mi, co, null, 3, () -> -1, i -> openPage(curSub(), grp.id() + "/" + srcs.get(i).id, lb[i])));
-        if (!grp.id().equals("slayer")) animWip(grp.name());
+        if (!AnimationManager.isSlayer(grp.id())) animWip(grp.name());
     }
 
     private void dropsSource(Categories.Cat cat, Categories.Group grp, DropData.Source s, StardropsConfig c, boolean single) {
@@ -2616,10 +2616,10 @@ public class StardropsScreen extends Screen {
         rows.add(mr);
         for (DropData.Drop d : s.drops) rows.add(dropRow(s, d, c));
         if (s == TreasureData.SOURCE) rows.add(note("The chance is per burrow you dig. Creature burrows are the other 75%.", Ui.DIM));
-        if (!grp.id().equals("slayer")) animWip(nm);
+        if (!AnimationManager.isSlayer(grp.id())) animWip(nm);
     }
 
-    private static boolean isSlayerSrc(DropData.Source s) { return SlayerData.byId(s.id) == s; }
+    private static boolean isSlayerSrc(DropData.Source s) { return AnimationManager.isSlayer(DropListener.groupOf(s)); }      // a source whose drops play the star scene (it gets Preview buttons)
     /** One drop: a Preview button (animated pages only), its animation and its chat alert. */
     private Row dropRow(DropData.Source s, DropData.Drop d, StardropsConfig c) {
         StardropsConfig.DropCfg dc = c.drop(s.id, d.name);
@@ -2643,11 +2643,11 @@ public class StardropsScreen extends Screen {
         if (searching || landing()) { animationsLanding(c); return; }
         Categories.Cat cat = curCat();
         if (locked(cat)) { wipPanel(cat.icon(), cat.name() + " animations", cat.blurb()); return; }
-        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip() || !gr0.id().equals("slayer")) srcWip.add(gr0.id()); }
+        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip() || !AnimationManager.isSlayer(gr0.id())) srcWip.add(gr0.id()); }
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
         if (gr == null) { groupTiles(cat, "Open one to edit its animations."); return; }
-        if (!gr.id().equals("slayer")) { wipPanel(gr.icon(), gr.name(), "Being remade for Stardrops. Slayer is the first one done."); return; }
+        if (!AnimationManager.isSlayer(gr.id())) { wipPanel(gr.icon(), gr.name(), "Being remade for Stardrops. Mob Drops are the first ones done."); return; }
         animationEditor(cat, gr, c);
     }
 
@@ -2676,15 +2676,15 @@ public class StardropsScreen extends Screen {
     private void groupTiles(Categories.Cat cat, String hint) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb() + " " + hint, cat.color()));
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n]; boolean[] wp = new boolean[n];
-        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); boolean lock = g.wip() || !g.id().equals("slayer"); lb[i] = g.name(); sb[i] = g.types().size() + (tab == Tab.SOUNDS ? " animations \u00B7 " + g.types().size() * SoundFx.SLOTS.length + " sounds" : " animations"); ic[i] = g.icon(); co[i] = g.color(); wp[i] = lock; }   // being remade for Stardrops: only Slayer is open
+        for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); boolean lock = g.wip() || !AnimationManager.isSlayer(g.id()); lb[i] = g.name(); sb[i] = g.types().size() + (tab == Tab.SOUNDS ? " animations \u00B7 " + g.types().size() * SoundFx.SLOTS.length + " sounds" : " animations"); ic[i] = g.icon(); co[i] = g.color(); wp[i] = lock; }   // being remade for Stardrops: only Slayer is open
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
     }
 
     /** The Animation Editor of one group: pick the type, then its length and size (and the bars and blur of RNG). */
     private static final String[] SLAYER_BLURB = {
-        "Nothing dropped: on the curve of a giant planet under the stars, the boss rises out of its spawn (the Revenant from its grave) and roars at you. One falling star strikes it and it crumbles to grey stardust; the lone star flickers out. \"Nothing dropped\" stays as long as any drop's words.",
-        "A drop: falling stars strike the boss on every beat, the last one shatters it, its stardust gathers into your drop, and the strikes join into a constellation round it. The words stay after it for as long as Text Changes says.",
-        "RNG: the falling stars climb through the rarity colours like a gacha roll, the sky holds its breath, the last star is gold; your drop appears in a gold constellation with rays and confetti while the bars close in."};
+        "Nothing dropped: on the curve of a giant planet under the stars, the boss rises out of its spawn (the Revenant from its grave) and roars at you. One burning meteorite strikes it and it crumbles to grey stardust; the lone star flickers out. \"Nothing dropped\" stays as long as any drop's words.",
+        "A drop: burning meteorites rain down on every beat, some cratering the ground beside the boss, some striking it; the last one shatters it and cracks the ground, its stardust gathers into your drop, and the strikes join into a constellation round it. The words stay after it for as long as Text Changes says.",
+        "RNG: six meteorites climb through the rarity colours like a gacha roll, each leaving a star-fire burning round the boss. Everything holds its breath: their light streams up into a golden star gathering overhead, the boss looks up, stones lift off the ground. Then it falls like a hammer: a white flash, a dome of gold, the ground rolling away in a wave and cracking with light, far meteors and aurora across the sky. Your drop appears in a pillar of gold with orbiting light, rays and confetti while the bars close in."};
     private void animationEditor(Categories.Cat cat, Categories.Group gr, StardropsConfig c) {
         int ti = Math.max(0, Math.min(gr.types().size() - 1, edType));
         Categories.Type ty = gr.types().get(ti);
@@ -2729,14 +2729,14 @@ public class StardropsScreen extends Screen {
     private static final Map<String, String[]> SL_SLOT = Map.ofEntries(
         Map.entry("rise", new String[]{"Rise", "The boss rises out of its spawn"}),
         Map.entry("approach", new String[]{"Roar", "It roars at you"}),
-        Map.entry("strike", new String[]{"Strike", "One falling star"}),
+        Map.entry("strike", new String[]{"Strike", "One burning meteorite"}),
         Map.entry("dust", new String[]{"Dust", "It crumbles to grey stardust"}),
         Map.entry("none", new String[]{"Nothing", "Under \"Nothing dropped\""}),
-        Map.entry("barrage", new String[]{"Falling stars", "Star after star, the last one shatters it"}),
+        Map.entry("barrage", new String[]{"Meteorites", "One after another, the last one shatters it"}),
         Map.entry("reveal", new String[]{"Reveal", "The stardust gathers into your drop"}),
         Map.entry("close", new String[]{"Close", "The scene fades away"}),
-        Map.entry("shower", new String[]{"Star shower", "Stars climbing the rarities, a held breath, the gold one"}),
-        Map.entry("jackpot", new String[]{"Jackpot", "Your drop appears in a gold constellation"}),
+        Map.entry("shower", new String[]{"Star-fires", "Six climbing the rarities, the hush, the gold hammer"}),
+        Map.entry("jackpot", new String[]{"Jackpot", "Your drop appears in a pillar of gold"}),
         Map.entry("glow", new String[]{"Glow", "The glow around your drop"}));
     private static String slotName(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_NAMES[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[0]; }
     private static String slotSub(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_SUBS[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[1] + "  \u00B7  3 takes"; }
@@ -2745,11 +2745,11 @@ public class StardropsScreen extends Screen {
         if (searching || landing()) { soundsLanding(c); return; }
         Categories.Cat cat = curCat();
         if (locked(cat)) { wipPanel(cat.icon(), cat.name() + " sounds", cat.blurb()); return; }
-        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip() || !gr0.id().equals("slayer")) srcWip.add(gr0.id()); }
+        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip() || !AnimationManager.isSlayer(gr0.id())) srcWip.add(gr0.id()); }
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
         if (gr == null) { groupTiles(cat, "Open one to edit its sounds."); return; }
-        if (!gr.id().equals("slayer")) { wipPanel(gr.icon(), gr.name() + " sounds", "Being remade for Stardrops along with its animation."); return; }
+        if (!AnimationManager.isSlayer(gr.id())) { wipPanel(gr.icon(), gr.name() + " sounds", "Being remade for Stardrops along with its animation."); return; }
         soundEditor(cat, gr, c);
     }
 
@@ -2808,34 +2808,74 @@ public class StardropsScreen extends Screen {
     // ---- Visuals: Now Playing, Lyrics, Spotify
     /** Visuals > Cosmos: the sky around you while you play. */
     private void cosmosPage(StardropsConfig c) {
-        rows.add(note("The sky around you while you play, drawn lightly over the game. Everything fades away during drop animations.", 0xFF9B7BFF));
+        rows.add(note("The sky around you while you play. The night sky is a real sky in your world; the moments burn across your screen.", 0xFF9B7BFF));
         rows.add(section("Night sky"));
-        rows.add(toggle(":cos_shoot:", "Shooting stars", "Now and then a meteor streaks across the top of your screen", () -> c.cosShooting, v -> c.cosShooting = v));
-        if (c.cosShooting) rows.add(toggle(":clock:", "Only at night", "Only once it's dark in your world", () -> c.cosShootNight, v -> c.cosShootNight = v));
-        rows.add(toggle(":cos_night:", "Starry corners", "At night, faint stars twinkle in the top corners of your screen", () -> c.cosNight, v -> c.cosNight = v));
-        rows.add(toggle(":cos_aurora:", "Aurora", "At night, a soft ribbon of violet and green light sways across the top", () -> c.cosAurora, v -> c.cosAurora = v));
+        rows.add(toggle(":cos_night:", "Night sky", "At night your world's sky fills with stars, the Milky Way and planets, behind the hills and trees", () -> c.cosNight, v -> c.cosNight = v));
+        if (c.cosNight) {
+            rows.add(toggle(":collection:", "Your constellations", "The stars you have lit in Achievements shine in the real sky, joined up", () -> c.cosCons, v -> c.cosCons = v));
+            Row br = row(0, ":size:", "Brightness", "How bright the night sky is", Ui.ACCENT);
+            br.ctls.add(new Slider(30, 150, 10, () -> c.cosSkyBright, v -> c.cosSkyBright = (int) v, () -> c.cosSkyBright + "%").typed(1)); rows.add(br);
+        }
+        rows.add(toggle(":cos_shoot:", "Shooting stars", "Now and then a shooting star crosses the night sky", () -> c.cosShooting, v -> c.cosShooting = v));
+        rows.add(toggle(":cos_aurora:", "Aurora", "At night, curtains of green and violet light sway low in the north", () -> c.cosAurora, v -> c.cosAurora = v));
+        if (!SkyBox.on()) rows.add(note("The sky box could not start on this game version, so the stars are drawn over the top of your screen instead.", 0xFFFFC857));
         rows.add(section("Moments"));
-        rows.add(toggle(":cos_meteor:", "Meteor on RNG", "A big meteor burns across your screen the moment an RNG drop lands", () -> c.cosMeteor, v -> c.cosMeteor = v));
+        rows.add(toggle(":cos_meteor:", "Drop moments", "The moment a drop lands, one meteor burns across your screen. An RNG drop brings a whole meteor shower", () -> c.cosMeteor, v -> c.cosMeteor = v));
+        if (c.cosMeteor) { Row tr = row(0, ":play:", "Try them", "See what each one looks like", 0xFFFFD27A);
+            tr.ctls.add(new Btn("Meteor", 0xFF9B7BFF, () -> { onClose(); CosmosHud.meteor(false); })); tr.ctls.add(new Btn("Shower", 0xFFE8A93A, () -> { onClose(); CosmosHud.meteor(true); })); rows.add(tr); }
+    }
+    /** Visuals > Music > Your files: your own MP4 / M4A music, played by the mod. */
+    private void localPage(StardropsConfig c) {
+        rows.add(note("Play your own music. Put .mp4 or .m4a files (a music video works: only its sound is used) into the music folder, then play them here. Now Playing, lyrics and the music keys all work with them.", 0xFF8AF0C0));
+        Row fo = row(0, ":music_file:", "Music folder", "config/stardrops/music", 0xFF8AF0C0);
+        fo.ctls.add(new Btn("Open folder", 0xFF2E9A6A, () -> { try { java.nio.file.Files.createDirectories(LocalMusic.dir()); net.minecraft.util.Util.getPlatform().openPath(LocalMusic.dir()); } catch (Throwable e) { toast("Couldn't open the folder", 0xFFFF6B6B); } }));
+        fo.ctls.add(new Btn("Rescan", Ui.ROW_HOVER, () -> { LocalMusic.scan(); toast(LocalMusic.count() + " songs found", 0xFF62E6A8); })); rows.add(fo);
+        java.util.List<LocalMusic.Song> songs = LocalMusic.songs(); int cur = LocalMusic.playingIndex();
+        if (songs.isEmpty()) { rows.add(note("No songs yet. Press Open folder, drop your files in, then press Rescan.", 0xFFFFC857)); return; }
+        Row pl = row(0, ":play:", cur >= 0 ? songs.get(Math.min(cur, songs.size() - 1)).title() : "Nothing playing", cur >= 0 ? (LocalMusic.paused() ? "Paused" : "Playing now") : "Pick a song below, or press Play", 0xFF8AF0C0);
+        pl.ctls.add(new Btn("Prev", Ui.ROW_HOVER, () -> { LocalMusic.control("previous"); }));
+        pl.ctls.add(new Btn(cur >= 0 && !LocalMusic.paused() ? "Pause" : "Play", 0xFF2E9A6A, () -> { LocalMusic.control("toggle"); }));
+        pl.ctls.add(new Btn("Next", Ui.ROW_HOVER, () -> { LocalMusic.control("next"); }));
+        if (cur >= 0) pl.ctls.add(new Btn("Stop", 0xFFB04A4A, () -> { LocalMusic.stopAll(); }));
+        rows.add(pl);
+        Row vo = row(0, ":size:", "Volume", "How loud your files play (the game's master volume applies too)", 0xFF8AF0C0);
+        vo.ctls.add(new Slider(0, 100, 5, () -> c.localVolume, v -> c.localVolume = (int) v, () -> c.localVolume + "%").typed(1)); rows.add(vo);
+        rows.add(picker("After a song", "What plays when one ends", new String[]{"In order", "Shuffle", "Repeat"}, new String[]{"The next file", "A random one", "The same again"},
+            new String[]{":mus_next:", ":dice:", ":refresh:"}, new int[]{0xFF8AF0C0, 0xFFFFC857, 0xFF56D8FF}, null, 3, () -> c.localMode, i -> c.localMode = i));
+        if (!LocalMusic.status.isEmpty()) rows.add(note(LocalMusic.status, 0xFF8A93B0));
+        rows.add(section("Songs"));
+        for (int i = 0; i < songs.size(); i++) { final int k = i; LocalMusic.Song sg = songs.get(i); long d = sg.durationMs() / 1000;
+            Row r = row(0, i == cur ? ":note:" : ":music_file:", sg.title(), (sg.artist().isEmpty() ? "" : sg.artist() + "  \u00B7  ") + (d > 0 ? d / 60 + ":" + String.format("%02d", d % 60) : sg.file().getFileName().toString()), i == cur ? 0xFF8AF0C0 : Ui.ACCENT);
+            r.ctls.add(new Btn(i == cur ? "Playing" : "Play", i == cur ? 0xFF2E9A6A : Ui.ROW_HOVER, () -> { LocalMusic.play(k); })); rows.add(r); }
+    }
+    /** Visuals > Instruments: little flight instruments for the HUD. */
+    private void instrumentsPage(StardropsConfig c) {
+        rows.add(note("Small flight instruments for your HUD. Switch on the ones you like, then drag them where you want and scroll to size them.", 0xFFFFD27A));
+        if (InstrumentsHud.any()) { Row mv = row(0, ":move:", "Place them", "Drag each one anywhere on the screen, scroll over it to resize", 0xFFFFD27A);
+            mv.ctls.add(new Btn("Move instruments", 0xFFE8A93A, () -> minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.INSTRUMENTS)))); rows.add(mv); }
         rows.add(section("Instruments"));
-        rows.add(toggle(":cos_clock:", "Celestial clock", "A little dial, top left: the sun and moon on their arc at the real time, the moon's phase", () -> c.cosClock, v -> c.cosClock = v));
+        for (int i = 0; i < InstrumentsHud.N; i++) { final int k = i; rows.add(toggle(InstrumentsHud.ICONS[i], InstrumentsHud.NAMES[i], InstrumentsHud.SUBS[i], () -> c.instOn[k], v -> c.instOn[k] = v)); }
+        rows.add(note("They fade out while a drop animation plays. /sd edit moves every HUD at once.", 0xFF8A93B0));
     }
     private void visualsPage(StardropsConfig c) {
         String[] wheres = {"Starlight", "Constellation", "Drift", "Sung line"};
         int ambOn = (c.ambGlow ? 1 : 0) + (c.ambBars ? 1 : 0) + (c.ambNotes ? 1 : 0) + (c.ambWave ? 1 : 0);
         if (searching || landing()) {
             rows.add(hero(":visuals:", "Visuals", "How Stardrops looks while you play: your music on screen, and the sky around you.", 0xFF9B7BFF));
-            int cosOn = (c.cosShooting ? 1 : 0) + (c.cosClock ? 1 : 0) + (c.cosNight ? 1 : 0) + (c.cosMeteor ? 1 : 0) + (c.cosAurora ? 1 : 0);
-            rows.add(picker("", "", new String[]{"Music", "Cosmos"}, new String[]{Spotify.linked() ? (c.npOn ? "Now Playing on" : "Linked") : "Spotify not linked yet", cosOn == 0 ? "Off" : cosOn + " of 5 on"},
-                new String[]{":note:", ":cosmos:"}, new int[]{0xFF1ED760, 0xFF9B7BFF}, null, 2, () -> -1, i -> openPage(i, null, null)));
+            int cosOn = (c.cosShooting ? 1 : 0) + (c.cosNight ? 1 : 0) + (c.cosMeteor ? 1 : 0) + (c.cosAurora ? 1 : 0), insOn = InstrumentsHud.count();
+            rows.add(picker("", "", new String[]{"Music", "Cosmos", "Instruments"}, new String[]{Spotify.linked() || LocalMusic.count() > 0 ? (c.npOn ? "Now Playing on" : "Ready") : "Spotify or your own files", cosOn == 0 ? "Off" : cosOn + " of 4 on", insOn == 0 ? "Off" : insOn + " of " + InstrumentsHud.N + " on"},
+                new String[]{":note:", ":cosmos:", ":instruments:"}, new int[]{0xFF1ED760, 0xFF9B7BFF, 0xFFFFD27A}, null, 3, () -> -1, i -> openPage(i, null, null)));
             if (!Spotify.linked()) rows.add(note("Music starts with Spotify: link it once and everything there comes alive.", 0xFF1ED760));
             return;
         }
         if (curSub() == 1) { cosmosPage(c); return; }
+        if (curSub() == 2) { instrumentsPage(c); return; }
         // Music: Now Playing, Lyrics, Ambience and Spotify, picked here
-        String[] lb = {"Now Playing", "Lyrics", "Ambience", "Spotify"};
-        String[] sb = {c.npOn ? "On \u00B7 " + c.npScale + "%" : "Off", c.lyricsOn ? wheres[c.lyricsStyle] : "Off", ambOn == 0 ? "Off" : ambOn + " of 4 on", Spotify.linked() ? "Linked" : "Not linked yet"};
-        rows.add(picker("", "", lb, sb, new String[]{":disc:", ":note:", ":amb:", ":spot:"}, new int[]{0xFF1ED760, 0xFFFFC8A0, 0xFFB48CFF, 0xFF1DB954}, null, 4, () -> musicSel, i -> { musicSel = i; scroll = 0; }));
+        String[] lb = {"Now Playing", "Lyrics", "Ambience", "Spotify", "Your files"};
+        String[] sb = {c.npOn ? "On \u00B7 " + c.npScale + "%" : "Off", c.lyricsOn ? wheres[c.lyricsStyle] : "Off", ambOn == 0 ? "Off" : ambOn + " of 4 on", Spotify.linked() ? "Linked" : "Not linked yet", LocalMusic.playingIndex() >= 0 ? "Playing" : LocalMusic.count() == 0 ? "MP4 and M4A" : LocalMusic.count() + (LocalMusic.count() == 1 ? " song" : " songs")};
+        rows.add(picker("", "", lb, sb, new String[]{":disc:", ":note:", ":amb:", ":spot:", ":music_file:"}, new int[]{0xFF1ED760, 0xFFFFC8A0, 0xFFB48CFF, 0xFF1DB954, 0xFF8AF0C0}, null, 5, () -> musicSel, i -> { musicSel = i; scroll = 0; }));
         int ms = musicSel;
+        if (ms == 4) { localPage(c); return; }
         if (ms == 0) {
             rows.add(toggle(":disc:", "Now Playing", "The song you're playing, on your screen", () -> c.npOn, v -> c.npOn = v));
             if (!c.npOn) return;

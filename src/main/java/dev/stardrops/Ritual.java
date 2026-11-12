@@ -138,7 +138,7 @@ final class Ritual {
     static void paint(float t, boolean tre, int type, float S, float sz, float isc, int rc, float icy, int blade, boolean itemBob, float bobAmp) {
         boolean rng = type == AnimationManager.RNG, nod = type == AnimationManager.NO_DROPS;
         String grp = slayerMode ? "slayer" : ""; float O = AnimationManager.opening(grp, type), p = t - O, icx = CW / 2f, gy = icy + 22 * sz, rx = 50 * sz, ry = 13 * sz;
-        int energy = tre ? GOLD : slayerMode ? SL_ENERGY[Math.floorMod(kind - 12, 6)] : CYAN;
+        int energy = tre ? GOLD : slayerMode ? SL_ENERGY[Math.floorMod(kind - 12, SL_ENERGY.length)] : CYAN;
         float bg = 1f - sm((p - 0.5f) / 0.9f);                                             // the background fades while the words show
         float fxEnd = AnimationManager.animLen(grp, type) + hold;                                     // the finish ends with the animation; the words stay on after it
         float itemA = TextFx.itemOnly ? 1f : sm(p / 0.22f) * (1f - sm((t - (fxEnd - 0.6f)) / 0.6f));
@@ -146,7 +146,7 @@ final class Ritual {
         cv.clear();
         if (!slayerMode) return;                                                                // Stardrops: only Slayer has its new animation; the rest are being remade
         float cyS = itemY(t, p, gy, icy, sz, itemBob, bobAmp);
-        SlayerScene.paint(t, AnimationManager.animLen("slayer", type), Math.floorMod(kind - 12, 6), energy, rc, rng, nod, icx, icy, sz, isc, itemA, itemOffs, cyS, bg);
+        SlayerScene.paint(t, AnimationManager.animLen("slayer", type), Math.floorMod(kind - 12, SL_ENERGY.length), energy, rc, rng, nod, icx, icy, sz, isc, itemA, itemOffs, cyS, bg);
     }
 
     static boolean threeD;                                                              // this frame's slayer scene is drawn in 3D (Slayer3D); the canvas only keeps the item's glow
@@ -179,9 +179,9 @@ final class Ritual {
     static float sizeOf(int n) { return n <= 1 ? 1f : n == 2 ? 0.85f : n == 3 ? 0.76f : Math.max(0.5f, 2.6f / n); }
     static void end() { hold = 0f; slayerMode = false; itemOffs = new float[]{0f}; }
     /** The colour of each boss: zombie, spider, wolf, enderman, blaze, vampire. */
-    static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030};
-    static boolean isSlayer(Anim a) { return a.group.equals("slayer"); }
-    static int slTheme(Anim a) { return Math.floorMod(a.kind >= 0 ? a.kind : a.item != null && a.item.source != null ? SlayerData.theme(a.item.source.id) : 0, 6); }
+    static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030, 0xFF6A2A, 0xC77DFF, 0x7FE8D8};   // the six slayers, then the Crimson Isle, the End, the Mines
+    static boolean isSlayer(Anim a) { return AnimationManager.isSlayer(a.group); }
+    static int slTheme(Anim a) { int fixed = AnimationManager.starBoss(a.group); if (fixed >= 0) return fixed; return Math.floorMod(a.kind >= 0 ? a.kind : a.item != null && a.item.source != null ? SlayerData.theme(a.item.source.id) : 0, 6); }
 
 
     /** Where the animation sits when it is at the Top Center: its highest point (the boss, or the item) just touches the top of the screen, or the bottom of the top bar. */
@@ -302,7 +302,7 @@ final class Ritual {
                 float craterY = 1f - 2f * ((icy + 14 * ssz) - top) / Math.max(1f, bot - top);
                 float al = sm(t / 0.35f) * (1f - sm((t - (A + hd - 0.7f)) / 0.7f)) * (1f - 0.35f * sm((p - 0.8f) / 0.8f));
                 Slayer3D.submit(g, Math.round((CW / 2f - hw) * u) + sx, Math.round(top * u) + sy, Math.round((CW / 2f + hw) * u) + sx, Math.round(bot * u) + sy,
-                        t, A + hd, Math.floorMod(kind - 12, 6), type, SL_ENERGY[Math.floorMod(kind - 12, 6)], al, craterY);
+                        t, A + hd, Math.floorMod(kind - 12, SL_ENERGY.length), type, SL_ENERGY[Math.floorMod(kind - 12, SL_ENERGY.length)], al, craterY);
             }
             {
                 long nowMs = System.currentTimeMillis();

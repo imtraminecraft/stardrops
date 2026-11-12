@@ -144,8 +144,11 @@ public class StardropsConfig {
     public java.util.Map<String, Integer> songOffset = new java.util.LinkedHashMap<>();   // a timing fix for one song (Spotify id -> ms), on top of lyricsOffset
     /** The timing fix for the song playing now: yours for every song plus this song's own. */
     static int lyricsShift() { StardropsConfig c = get(); Spotify.Track t = Spotify.track; Integer s = t == null || c.songOffset == null ? null : c.songOffset.get(t.id()); return c.lyricsOffset + (s == null ? 0 : s); }
-    public int cosClockX = 26, cosClockY = 24, cosClockSize = 100;   // where the celestial clock sits (its centre, gui pixels) and its size
-    public boolean cosShooting = true, cosShootNight = true, cosClock = false, cosNight = true, cosAurora = false, cosMeteor = true;   // Visuals > Cosmos
+    public boolean cosShooting = true, cosShootNight = true, cosClock = false /* before Instruments: moved to instOn[0] on load */, cosNight = true, cosAurora = false, cosMeteor = true;   // Visuals > Cosmos
+    // Visuals > Instruments (InstrumentsHud): which are on, where each sits (its top-left as a fraction of the screen) and its size in percent
+    public boolean[] instOn = new boolean[InstrumentsHud.N]; public float[] instX = new float[InstrumentsHud.N], instY = new float[InstrumentsHud.N]; public int[] instSize = new int[InstrumentsHud.N];
+    public int localVolume = 70, localMode = 0;                       // Visuals > Music > Your files: volume in percent; 0 in order, 1 shuffle, 2 repeat one
+    public boolean cosCons = true; public int cosSkyBright = 100;     // the night sky box: your lit constellations in it, how bright it is (percent)
     public boolean ambGlow = false, ambNotes = false, ambBars = false, ambWave = false, lyricsStars = true; public int ambGlowStrength = 60;   // Ambience (Visuals > Ambience)
     public boolean npOn = true; public int npScale = 100, npHidePaused = 1, npBg = 60;   // npBg: how solid the card's background is, 20..70 %
       // Now Playing; when paused: 0 stays, 1 hides after 8 s, 2 hides at once
@@ -189,7 +192,7 @@ public class StardropsConfig {
         c.titleScale = clamp(c.titleScale, 0.5f, 1.5f); c.subScale = clamp(c.subScale, 0.5f, 1.5f); c.subDelay = clamp(c.subDelay, 0f, 3f); c.textHold = clamp(c.textHold, 1f, 8f);
         c.animScale = clamp(c.animScale, 0.5f, 1.5f); c.itemSpin = clamp(c.itemSpin, 0f, 2f); c.itemGlow = clamp(c.itemGlow, 0f, 1.5f);
         c.barPx = Math.max(5, Math.min(15, c.barPx));
-        c.lyricsStyle = Math.max(0, Math.min(3, c.lyricsStyle)); c.npLine = c.npLine == 2 ? 2 : 1; c.npBg = c.npBg == 0 ? 60 : Math.max(20, Math.min(70, c.npBg)); c.cosClockSize = c.cosClockSize == 0 ? 100 : Math.max(60, Math.min(160, c.cosClockSize)); c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
+        c.lyricsStyle = Math.max(0, Math.min(3, c.lyricsStyle)); c.npLine = c.npLine == 2 ? 2 : 1; c.npBg = c.npBg == 0 ? 60 : Math.max(20, Math.min(70, c.npBg)); c.cosSkyBright = c.cosSkyBright == 0 ? 100 : Math.max(30, Math.min(150, c.cosSkyBright)); c.localVolume = Math.max(0, Math.min(100, c.localVolume)); c.localMode = Math.max(0, Math.min(2, c.localMode)); instruments(c); c.lyY = Math.max(0.05f, Math.min(0.95f, c.lyY == 0 ? 0.64f : c.lyY));   // lyrics: 0 Pop, 1 Karaoke
         c.mythPet = Math.max(0, Math.min(5, c.mythPet)); c.mythSpade = Math.max(0, Math.min(2, c.mythSpade));
         c.menuTranslucency = Math.max(0, Math.min(70, c.menuTranslucency)); c.previewAt = Math.max(0, Math.min(2, c.previewAt));
         c.animPos = Math.max(0, Math.min(2, c.animPos)); c.textPos = Math.max(0, Math.min(1, c.textPos));
@@ -208,4 +211,17 @@ public class StardropsConfig {
     }
 
     public float textK() { return 0.6f + 0.4f * textScale; }
+    /** Instruments: arrays as long as there are instruments (new ones arrive off, at home), sizes in range; the old Celestial clock switch carries over once. */
+    private static void instruments(StardropsConfig c) {
+        int n = InstrumentsHud.N;
+        if (c.instOn == null || c.instOn.length != n) c.instOn = c.instOn == null ? new boolean[n] : java.util.Arrays.copyOf(c.instOn, n);
+        if (c.instX == null || c.instX.length != n) c.instX = c.instX == null ? new float[n] : java.util.Arrays.copyOf(c.instX, n);
+        if (c.instY == null || c.instY.length != n) c.instY = c.instY == null ? new float[n] : java.util.Arrays.copyOf(c.instY, n);
+        if (c.instSize == null || c.instSize.length != n) c.instSize = c.instSize == null ? new int[n] : java.util.Arrays.copyOf(c.instSize, n);
+        for (int i = 0; i < n; i++) {
+            if (c.instSize[i] == 0) { c.instSize[i] = 100; c.instX[i] = InstrumentsHud.homeX(i); c.instY[i] = InstrumentsHud.homeY(i); }
+            c.instSize[i] = Math.max(60, Math.min(200, c.instSize[i])); c.instX[i] = Math.max(0f, Math.min(1f, c.instX[i])); c.instY[i] = Math.max(0f, Math.min(1f, c.instY[i]));
+        }
+        if (c.cosClock) { c.instOn[0] = true; c.cosClock = false; }
+    }
 }

@@ -76,8 +76,9 @@ public final class AnimationManager {
      *  instead of queueing: they join a waiting animation, or the playing one while its items have not appeared yet. */
     public static void play(Anim a) {
         if (a == null) return;
-        if (a.type == RNG) CosmosHud.meteor();                                   // Visuals > Cosmos: a meteor burns across the moment an RNG drop lands
-        if (!isSlayer(a.group)) { for (Item i : a.items()) DropListener.announceNow(i); return; }     // Stardrops: only Slayer has its new animation so far; the others send just their chat alert until theirs are done
+        if (a.item != null) InstrumentsHud.dropLanded(a.count(), a.type == RNG);     // Visuals > Instruments: the star log's session count
+        if (a.item != null) CosmosHud.meteor(a.type == RNG);                     // Visuals > Cosmos: one meteor burns across the moment a drop lands, a whole shower for an RNG drop
+        if (!isSlayer(a.group)) { for (Item i : a.items()) DropListener.announceNow(i); return; }     // Stardrops: Mob Drops have their new animation; the other categories send just their chat alert for now until theirs are done
         if (a.item != null) {
             Anim last = QUEUE.peekLast();
             if (last != null && canStack(last, a)) { stack(last, a, false); return; }
@@ -134,7 +135,10 @@ public final class AnimationManager {
 
     // ---- Slayer (Stardrops): its own timeline. The black hole forms, the boss is pulled in (three gulps), and at 3.4 s it is gone:
     // No Drops 5.5 s (the hole swallows the scene, "nothing dropped"), a drop 6 s, RNG 7 s (the supernova); the words stay 3 s after.
-    static boolean isSlayer(String groupOrKey) { return groupOrKey != null && groupOrKey.startsWith("slayer"); }
+    /** The groups that play the star scene (Star3D): the slayer bosses, and since 0.9 the rest of Mob Drops: the Crimson Isle, the End, the Mines. */
+    static boolean isSlayer(String groupOrKey) { return groupOrKey != null && (groupOrKey.startsWith("slayer") || groupOrKey.startsWith("crimson") || groupOrKey.startsWith("dragon") || groupOrKey.startsWith("mobs")); }
+    /** Which creature and world the star scene shows for a group that has only one (-1: a slayer boss, by its own theme). */
+    static int starBoss(String group) { return group.startsWith("crimson") ? 6 : group.startsWith("dragon") ? 7 : group.startsWith("mobs") ? 8 : -1; }
     static final float SL_PIVOT = 3.4f;
     static float animLen(String g, int type) { return isSlayer(g) ? (type == RNG ? 7f : type == NORMAL ? 6f : 5.5f) : animLen(type); }
     static float opening(String g, int type) { return isSlayer(g) ? SL_PIVOT : opening(type); }

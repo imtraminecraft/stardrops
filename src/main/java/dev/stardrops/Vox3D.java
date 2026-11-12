@@ -44,7 +44,7 @@ final class Vox3D {
     // ------------------------------------------------------------------ per frame state
     static Frame F; static Matrix4f projView; static final Vector3f eye = new Vector3f(), right = new Vector3f(), up = new Vector3f();
     static Matrix4f M = new Matrix4f(); static final ArrayDeque<Matrix4f> STACK = new ArrayDeque<>();
-    static boolean mobMode; static int rimCol; static float clipY = -99f;
+    static boolean mobMode; static int rimCol; static float clipY = -99f, lastAspect = 1.45f;
     static int pass; static boolean dyn;                         // pass 1: build the still scenery once; pass 2: only what moves (dyn)
     static float fovNow = 30f;
     static float shiftX, shiftY;                                 // the NDC shift that pins the drop's spot; the sky is drawn against it so it stays centred
@@ -286,7 +286,10 @@ final class Vox3D {
         new Theme(0x081020, 0x152A3A, 0x2E4A44, 0x4E8A34, 0x5E9A3E, 0x5A3E26, 0x55565E, 0xEEF6FF),   // Sven: a forest clearing
         new Theme(0x05030C, 0x140A26, 0x2E1440, 0xD8D49A, 0xC8C48A, 0xA8A472, 0x1E1428, 0xE8D8FF),   // Voidgloom: the End
         new Theme(0x120404, 0x3A0E08, 0x7A2A0E, 0x7A2A22, 0x8E3A2E, 0x5A1A16, 0x2E1A18, 0xFFD8A0),   // Inferno: the Nether
-        new Theme(0x0C030E, 0x2A0A2A, 0x5A1236, 0x4A2A4A, 0x5A2050, 0x3A1E3A, 0x1A101E, 0xFFC8D8)};  // Riftstalker: the Rift
+        new Theme(0x0C030E, 0x2A0A2A, 0x5A1236, 0x4A2A4A, 0x5A2050, 0x3A1E3A, 0x1A101E, 0xFFC8D8),   // Riftstalker: the Rift
+        new Theme(0x100406, 0x34100A, 0x8A3410, 0x3A2A2E, 0x5A1A16, 0x2A1E22, 0x1E1618, 0xFFC890),   // Crimson Isle (6): blackstone and magma under a burning dusk
+        new Theme(0x04030A, 0x100A22, 0x34185A, 0xD8D49A, 0xC8C48A, 0xA8A472, 0x1E1428, 0xE0D0FF),   // The End (7): end stone under a violet void
+        new Theme(0x040A10, 0x0C1E2A, 0x1E4A52, 0x6A7078, 0x7A8088, 0x4A4E56, 0x3A3E46, 0xD8FFF4)};  // The Mines (8): mithril-grey stone, a teal glow
 
     /** A world point at a fixed place in the window: (sx, sy) in -1..1 of the window, d deep. */
     static Vector3f onSky(float sx, float sy, float d, float aspect) {
@@ -539,7 +542,7 @@ final class Vox3D {
         if (shatter && since < 0.5f) glow(F.add, x, 1f, z, 3f * (1f + since), energy, 0.7f * (1f - since / 0.5f));
         if (type == 0 && since > 0.3f) ash(since, x, z);
     }
-    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f};
+    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f, 1.5f, 1.0f, 1.3f};
     /** The boss's presence: a shadow under it, dark smoke at its feet, wisps of its energy spiralling up round it. */
     static void aura(float t, float x, float y, float z, float k, int energy, int boss) {
         disc(F.veil, x, 0.014f, z, 0.95f * k, 0x050508, 0.5f);
@@ -702,6 +705,73 @@ final class Vox3D {
             push(); M.translate((float) Math.cos(an) * r, 13f - ringI * 5f + (float) Math.sin(t * 3 + k) * 0.6f, (float) Math.sin(an) * r); part(-1f, -4f, -1f, 1f, 4f, 1f, rod); pop();
         }
         Vector3f c = M.transformPosition(new Vector3f(0, 14f, 0)); glow(F.add, c.x, c.y, c.z, 1.4f, 0xFF9A30, 0.35f);
+    }
+
+    /** Crimson Isle: the Magma Boss, a huge magma cube. Dark crust in four slabs that part as it bounces, showing the molten core; burning eyes. */
+    static void magma(float t, float idle) {
+        float hop = Math.max(0f, (float) Math.sin(t * 3.2f)), gap = 0.5f + 2.2f * hop, lift = 2.5f * hop;
+        Skin crust = (f, u, v, w, h) -> { float n = rnd(f * 13 + u * 7 + v * 29 + 4); boolean seam = n < 0.07f || (f != 2 && f != 3 && v == h - 1 && (u * 5 + f) % 4 == 0);
+            return seam ? 0x02FF7A1A : n > 0.85f ? 0x5A221A : mul(0x34120E, 0.8f + n * 0.4f); };
+        Skin face = (f, u, v, w, h) -> {
+            if (f == 4) { if ((u >= 2 && u <= 5 || u >= 10 && u <= 13) && v <= 2) return v == 1 && (u == 4 || u == 11) ? 0x02FFFFFF : 0x02FFC030; }
+            return crust.at(f, u, v, w, h); };
+        Skin core = (f, u, v, w, h) -> { float n = rnd(f * 3 + u * 11 + v * 17 + (int) (t * 6)); return n < 0.3f ? 0xFFD040 : n < 0.7f ? 0xFF8A1A : 0xE85A10; };
+        part(-6f, 1.5f + lift, -6f, 6f, 14.5f + lift + gap * 3f, 6f, core);
+        for (int k = 0; k < 4; k++) { float y0 = k * 4f + lift + gap * k; part(-8f, y0, -8f, 8f, y0 + 4f, 8f, k == 2 ? face : crust); }
+        Vector3f c = M.transformPosition(new Vector3f(0, 8f + lift, 0)); glow(F.add, c.x, c.y, c.z, 1.7f + 0.5f * hop, 0xFF6A1A, 0.3f + 0.25f * hop);
+    }
+    /** The End: the Ender Dragon, hovering on slow wingbeats. Black scales, grey spines, burning violet eyes, a long neck and tail. */
+    static void dragon(float t, float idle) {
+        Skin scale = (f, u, v, w, h) -> { float n = rnd(f * 17 + u * 7 + v * 11 + 2); return n < 0.14f ? 0x6A4A9A : n > 0.88f ? 0x4A3A62 : mul(0x2A2236, 0.8f + n * 0.4f); };
+        Skin spine = (f, u, v, w, h) -> mul(0x8A8A96, 0.8f + rnd(f + u * 3 + v * 5) * 0.3f);
+        Skin skull = (f, u, v, w, h) -> {
+            if (f == 4 && v == 2 && (u == 1 || u == 2 || u == w - 2 || u == w - 3)) return 0x02E040FF;
+            if (f == 4 && v == 3 && (u == 2 || u == w - 3)) return 0x02FF90FF;
+            return scale.at(f, u, v, w, h); };
+        Skin snout = (f, u, v, w, h) -> f == 4 && v == 1 && (u == 1 || u == w - 2) ? 0x0A080C : f == 4 && v >= h - 1 && u % 2 == 0 ? 0xE8E4D8 : scale.at(f, u, v, w, h);
+        Skin wing = (f, u, v, w, h) -> { float n = rnd(u * 5 + v * 9 + f); return (u % 6 == 0) ? 0x2A2236 : mul(0x7A4AC0, 0.75f + n * 0.3f); };
+        float flap = (float) Math.sin(t * 4.6f), flap2 = (float) Math.sin(t * 4.6f - 0.9f), bob = 1.2f * (float) Math.cos(t * 4.6f);
+        push(); M.translate(0f, 6f + bob, 0f);
+        part(-5f, 12f, -14f, 5f, 21f, 8f, scale);                                                      // body
+        for (int k = 0; k < 5; k++) part(-1f, 21f, -12f + k * 4.2f, 1f, 23.5f, -10f + k * 4.2f, spine);
+        limb(0f, 18f, 7f, 0f, 24f, 13f, 3.2f, scale); limb(0f, 24f, 13f, 0f, 27f, 17f, 2.8f, scale);     // neck
+        push(); M.translate(0f, 27f, 17f).rotateX(0.18f + 0.06f * (float) Math.sin(t * 2f));
+        part(-4.5f, -3.5f, -3f, 4.5f, 4f, 7f, skull); part(-3.2f, -3.5f, 7f, 3.2f, 1f, 13f, snout);     // head and snout
+        part(-3f, -5.2f - 0.8f * Math.max(0f, (float) Math.sin(t * 2f)), 1f, 3f, -3.7f, 12f, scale);     // jaw
+        part(-4f, 4f, -2f, -2.5f, 7.5f, 0f, spine); part(2.5f, 4f, -2f, 4f, 7.5f, 0f, spine);            // horns
+        pop();
+        for (int s = -1; s <= 1; s += 2) {                                                              // wings: two bones each, skin stretched under them
+            push(); M.translate(s * 5f, 20f, 2f).rotateZ(s * (0.5f + 0.45f * flap));
+            part(Math.min(0f, s * 14f), -0.9f, 1.5f, Math.max(0f, s * 14f), 0.9f, 3.5f, spine); part(Math.min(0f, s * 14f), -0.35f, -14f, Math.max(0f, s * 14f), 0.35f, 2f, wing);
+            M.translate(s * 14f, 0f, 0f).rotateZ(s * (0.2f + 0.5f * flap2));
+            part(Math.min(0f, s * 14f), -0.8f, 1.5f, Math.max(0f, s * 14f), 0.8f, 3.2f, spine); part(Math.min(0f, s * 14f), -0.3f, -15f, Math.max(0f, s * 14f), 0.3f, 2f, wing); part(Math.min(s * 13f, s * 15f), -0.8f, -1f, Math.max(s * 13f, s * 15f), 0.8f, 5f, spine);
+            pop();
+            part(s * 3f - 1.5f, 6f, 2f, s * 3f + 1.5f, 12.5f, 5f, scale); part(s * 3f - 1.5f, 6f, -11f, s * 3f + 1.5f, 12.5f, -8f, scale);        // legs tucked under
+            part(s * 3f - 1.8f, 4.6f, 2f, s * 3f + 1.8f, 6f, 7f, spine); part(s * 3f - 1.8f, 4.6f, -11f, s * 3f + 1.8f, 6f, -6f, spine);
+        }
+        float px = 0f, py = 16f, pz = -14f;                                                              // tail: six links swaying
+        for (int k = 0; k < 6; k++) { float w = 3.6f - k * 0.5f, nx = (float) Math.sin(t * 2.2f + k * 0.7f) * (1.2f + k * 0.7f), ny = 16f - k * 1.3f + (float) Math.sin(t * 2.6f + k) * 0.6f, nz = -14f - (k + 1) * 5.2f;
+            limb(px, py, pz, nx, ny, nz, w, scale); if (k % 2 == 0) part(nx - 0.8f, ny + w, nz, nx + 0.8f, ny + w + 2f, nz + 2f, spine); px = nx; py = ny; pz = nz; }
+        pop();
+    }
+    /** The Mines: an Automaton, an iron guardian of the Precursor city. Riveted plates, gold trim, a glowing gemstone heart, red lamp eyes. */
+    static void automaton(float t, float idle) {
+        Skin iron = (f, u, v, w, h) -> { float n = rnd(f * 19 + u * 7 + v * 13 + 6); boolean seam = u == 0 || v == 0; return seam ? 0x6E6A64 : n < 0.08f ? 0x5A8A6A : n > 0.9f ? 0xD8D4CC : mul(0xB4B0A8, 0.85f + n * 0.25f); };
+        Skin chest = (f, u, v, w, h) -> {
+            if (f == 4) { int cu = w / 2, cv = h / 2 - 1; if (Math.abs(u - cu + 0.5f) < 2 && Math.abs(v - cv) < 2.5f) return (u + v) % 2 == 0 ? 0x0240E8D8 : 0x02A0FFF0; if (Math.abs(u - cu + 0.5f) < 3.5f && Math.abs(v - cv) < 3.5f) return 0xD8A83A; if (v == h - 3) return 0xD8A83A; }
+            return iron.at(f, u, v, w, h); };
+        Skin head = (f, u, v, w, h) -> {
+            if (f == 4 && v == 3 && (u == 1 || u == 2 || u == w - 2 || u == w - 3)) return 0x02FF5030;
+            if (f == 4 && v >= 4 && v <= 6 && (u == w / 2 || u == w / 2 - 1)) return 0x8A8680;
+            if (v == 0) return 0xD8A83A;
+            return iron.at(f, u, v, w, h); };
+        float sway = idle * 2f, breathe = 0.3f * (float) Math.sin(t * 2f);
+        part(-5f, 0f, -2.5f, -1f, 12f, 2.5f, iron); part(1f, 0f, -2.5f, 5f, 12f, 2.5f, iron);                // legs
+        part(-9f, 12f, -5f, 9f, 26f + breathe, 5f, chest);                                              // the great chest with its gemstone heart
+        part(-11f, 23f + breathe, -4f, -9f, 28f + breathe, 4f, iron); part(9f, 23f + breathe, -4f, 11f, 28f + breathe, 4f, iron);   // shoulders
+        part(-4f, 26f + breathe, -4f, 4f, 35f + breathe, 4f, head);
+        for (int s = -1; s <= 1; s += 2) { push(); M.translate(s * 11.5f, 25f + breathe, 0f).rotateX(s * sway * 0.08f).rotateZ(s * 0.06f); part(-2f, -19f, -2.5f, 2f, 0f, 2.5f, iron); part(-2.4f, -22f, -3f, 2.4f, -19f, 3f, (f, u, v, w, h) -> 0x8A8680); pop(); }   // long arms, fists
+        Vector3f c = M.transformPosition(new Vector3f(0, 19f, 5f)); glow(F.add, c.x, c.y, c.z, 0.9f + 0.2f * (float) Math.sin(t * 4f), 0x40E8D8, 0.4f);
     }
 
     // ------------------------------------------------------------------ meteors

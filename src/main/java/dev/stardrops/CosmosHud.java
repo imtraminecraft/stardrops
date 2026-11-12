@@ -4,36 +4,34 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
- * Visuals > Cosmos: the sky around you while you play, drawn lightly over the game (all of it fades away during drop animations).
+ * Visuals > Cosmos: the sky around you while you play.
  *
- *   Shooting stars: now and then a meteor streaks across the top of the screen (at night only, if you like).
- *   Celestial clock: a little dial in the top-left corner: the sun and the moon on their arc at the real Minecraft time, the moon's phase.
- *   Night sky: when it is dark out, a few faint stars twinkle in the top corners of the screen.
- *   Aurora: at night, a soft ribbon of violet and green light waves slowly across the top of the screen.
- *   Meteor on RNG: a big meteor burns across the screen the moment an RNG drop lands, before its animation.
+ *   Night sky: a real sky box in the world (SkyBox): stars, the Milky Way, planets, your constellations. If the sky box cannot be drawn,
+ *              a few faint stars twinkle in the top corners of the screen instead.
+ *   Shooting stars and Aurora: in the sky box; over the top of the screen if the sky box is off or unavailable.
+ *   Moments: the moment a drop lands, one meteor burns across the screen; the moment an RNG drop lands, a whole meteor shower does.
+ * The instruments (the celestial clock and the others) live in InstrumentsHud.
  */
 final class CosmosHud {
     private CosmosHud() {}
 
-    static boolean preview;                                                  // the HUD editor: draw the clock even when it is off
-    private static int[] clockBox = {0, 0, 0, 0};
-    static int[] clockBox() { return clockBox; }
-    private static long nextShoot, shootAt = -99999, meteorAt = -99999; private static float shootY, shootDir, away; private static long lastFrame;
+    private static long nextShoot, shootAt = -99999, meteorAt = -99999; private static float shootY, shootDir, away; private static long lastFrame; private static boolean showerNow; private static int meteorSeed;
     private static final java.util.Random R = new java.util.Random();
 
-    /** An RNG drop just landed. */
-    static void meteor() { if (StardropsConfig.get().cosMeteor) meteorAt = System.currentTimeMillis(); }
+    /** A drop just landed: one meteor for a drop, a shower for an RNG drop. */
+    static void meteor(boolean rng) { if (StardropsConfig.get().cosMeteor) { long now = System.currentTimeMillis(); if (!rng && showerNow && now - meteorAt < SHOWER_MS) return; meteorAt = now; showerNow = rng; meteorSeed = R.nextInt(1000); } }
+    private static final int ONE_MS = 1500, SHOWER_MS = 3400;
 
     static void render(GuiGraphicsExtractor g) {
         StardropsConfig c = StardropsConfig.get(); Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
-        if (!(c.cosShooting || c.cosClock || c.cosNight || c.cosAurora || c.cosMeteor || preview)) return;
         long now = System.currentTimeMillis(); float dt = Math.min(0.1f, (now - (lastFrame == 0 ? now : lastFrame)) / 1000f); lastFrame = now;
         away += ((AnimationManager.isPlaying() ? 1f : 0f) - away) * Math.min(1f, dt * 6f);
         int W = g.guiWidth(), H = g.guiHeight();
+        if (now - meteorAt < (showerNow ? SHOWER_MS : ONE_MS)) { if (showerNow) shower(g, W, H, (now - meteorAt) / 1000f); else oneMeteor(g, W, H, (now - meteorAt) / (float) ONE_MS); }
+        if (SkyBox.on() || !(c.cosShooting || c.cosNight || c.cosAurora)) return;                 // the sky box draws the sky in the world; what follows is only its stand-in
         long ticks = mc.level.getOverworldClockTime(); float day = (ticks % 24000L) / 24000f;
         boolean dark = mc.level.isDarkOutside(); float night = nightness(day);
-        if (now - meteorAt < 1400) bigMeteor(g, W, H, (now - meteorAt) / 1400f);
         float vis = 1f - away; if (vis < 0.02f) return;
         if (c.cosAurora && night > 0.05f) aurora(g, W, H, now, night * vis);
         if (c.cosNight && night > 0.05f) corners(g, W, H, now, night * vis);
@@ -42,12 +40,59 @@ final class CosmosHud {
             if (now >= nextShoot) { shootAt = now; shootY = 0.05f + R.nextFloat() * 0.25f; shootDir = R.nextBoolean() ? 1f : -1f; nextShoot = now + 15000 + R.nextInt(40000); }
             if (now - shootAt < 900) shooting(g, W, H, (now - shootAt) / 900f, vis);
         }
-        if (c.cosClock || preview) { float k = c.cosClockSize / 100f; int cx = c.cosClockX, cy = c.cosClockY;
-            clockBox = new int[]{Math.round(cx - 22 * k), Math.round(cy - 23 * k), Math.round(cx + 23 * k), Math.round(cy + 2 * k)};
-            Gfx.push(g); Gfx.translate(g, cx - 26 * k, cy - 24 * k); Gfx.scale(g, k); clock(g, day, ticks, preview ? 1f : vis); Gfx.pop(g); }
+    }
+    // ------------------------------------------------------------------ moments
+    private static final int[][] ROCK = {{0, 1, 1, 1, 0}, {1, 2, 1, 3, 1}, {1, 1, 3, 1, 1}, {1, 3, 1, 2, 1}, {0, 1, 1, 1, 0}};
+    /** One burning meteorite at u (0 entering .. 1 gone) flying from (x0, y0) to (x1, y1): rock, white-hot core, flame, smoke and sparks. */
+    private static void burn(GuiGraphicsExtractor g, float x0, float y0, float x1, float y1, float u, float k, int hot, int flame, int seed, float fade) {
+        if (u <= 0 || u >= 1 || fade < 0.01f) return;
+        float dx = x1 - x0, dy = y1 - y0, len = (float) Math.sqrt(dx * dx + dy * dy), nx = dx / len, ny = dy / len, hx = x0 + dx * u, hy = y0 + dy * u, t = (System.currentTimeMillis() % 100000L) / 1000f;
+        float a = Math.min(1f, u * 8f) * Math.min(1f, (1f - u) * 5f) * fade, tail = Math.min(len * u, 170f * k);
+        for (int i = 26; i >= 1; i--) {                                                                // smoke, then flame: far to near
+            float q = i / 26f, px = hx - nx * tail * q, py = hy - ny * tail * q, wob = (float) Math.sin(t * 22 + i * 1.3f + seed) * 2.2f * k * q;
+            if (i % 2 == 0) NebulaTex.glow(g, px - ny * wob, py + nx * wob - q * 5f * k, (4f + 9f * q) * k, (4f + 9f * q) * k, Gfx.argb(Math.round(70 * a * (1f - q)), 0x1A1418));
+        }
+        for (int i = 22; i >= 0; i--) {
+            float q = i / 22f, px = hx - nx * tail * q * 0.85f, py = hy - ny * tail * q * 0.85f, wob = (float) Math.sin(t * 31 + i * 1.7f + seed) * 1.6f * k * q, r = (4f + 13f * (1f - q) * (1f - q)) * k;
+            int col = q < 0.18f ? Ritual.mixc(0xFFFFFF, hot, q / 0.18f) : Ritual.mixc(hot, flame, Math.min(1f, (q - 0.18f) / 0.5f));
+            NebulaTex.glow(g, px - ny * wob, py + nx * wob, r * 1.5f, r * 1.5f, Gfx.argb(Math.round(200 * a * (1f - q * 0.85f)), col)); if (i < 12) NebulaTex.glow(g, px, py, r * 0.7f, r * 0.7f, Gfx.argb(Math.round(220 * a * (1f - q)), 0xFFFFFF));
+        }
+        for (int i = 0; i < 46; i++) { float q = i / 46f, px = hx - nx * tail * q * 0.7f, py = hy - ny * tail * q * 0.7f; int w = Math.max(1, Math.round(3.6f * k * (1f - q)));      // the white-hot line down the middle
+            g.fill(Math.round(px) - w / 2, Math.round(py) - w / 2, Math.round(px) - w / 2 + w, Math.round(py) - w / 2 + w, Gfx.argb(Math.round(235 * a * (1f - q)), q < 0.35f ? 0xFFFFFF : hot)); }
+        for (int i = 0; i < 14; i++) {                                                                // sparks shed behind it, falling
+            float life = ((u * 5f + rnd(seed * 7 + i * 13)) % 1f), back = (0.1f + 0.9f * rnd(seed + i * 5)) * tail * 0.8f, sp = (rnd(seed * 3 + i * 11) - 0.5f) * 26f * k * life;
+            float px = hx - nx * back - ny * sp, py = hy - ny * back + nx * sp + life * life * 16f * k; int w = life < 0.5f && i % 3 == 0 ? 2 : 1;
+            g.fill(Math.round(px), Math.round(py), Math.round(px) + w, Math.round(py) + w, Gfx.argb(Math.round(240 * a * (1f - life)), i % 2 == 0 ? 0xFFFFFF : hot));
+        }
+        NebulaTex.glow(g, hx, hy, 60f * k, 60f * k, Gfx.argb(Math.round(120 * a), flame)); NebulaTex.glow(g, hx, hy, 30f * k, 30f * k, Gfx.argb(Math.round(240 * a), hot)); NebulaTex.glow(g, hx, hy, 14f * k, 14f * k, Gfx.argb(Math.round(255 * a), 0xFFFFFF));
+        int ps = Math.max(1, Math.round(1.6f * k)), ox = Math.round(hx) - ps * 5 / 2, oy = Math.round(hy) - ps * 5 / 2;                 // the rock itself, in big pixels
+        for (int j = 0; j < 5; j++) for (int i = 0; i < 5; i++) { int m = ROCK[(j + seed) % 5][i]; if (m == 0) continue; g.fill(ox + i * ps, oy + j * ps, ox + (i + 1) * ps, oy + (j + 1) * ps, Gfx.argb(Math.round(255 * a), m == 1 ? 0x6A4630 : m == 2 ? 0xFFB060 : 0xFFFFFF)); }
+        for (int i = 0; i < 4; i++) { float gl = 0.5f + 0.5f * (float) Math.sin(t * 12 + i * 2); float L = (10f + 6f * gl) * k; int c0 = Gfx.argb(Math.round(200 * a * gl), 0xFFFFFF);      // a glint on the head
+            if (i < 2) g.fill(Math.round(hx - L), Math.round(hy), Math.round(hx + L), Math.round(hy) + 1, c0); else g.fill(Math.round(hx), Math.round(hy - L), Math.round(hx) + 1, Math.round(hy + L), c0); }
+    }
+    /** A drop: one big meteorite burns across the top of the screen, lighting the edge it comes from. */
+    private static void oneMeteor(GuiGraphicsExtractor g, int W, int H, float u) {
+        boolean left = meteorSeed % 2 == 0; float x0 = left ? -60 : W + 60, x1 = left ? W + 80 : -80, y0 = H * (0.04f + 0.08f * rnd(meteorSeed)), y1 = H * (0.34f + 0.1f * rnd(meteorSeed + 3));
+        float in = Math.max(0f, 1f - u / 0.25f); if (in > 0) NebulaTex.glow(g, left ? 0 : W, y0 + 10, W * 0.3f, H * 0.3f, Gfx.argb(Math.round(70 * in), 0xFFC878));
+        burn(g, x0, y0, x1, y1, eio(u), 1.9f, 0xFFE2A0, 0xFF7AD9, meteorSeed, 1f);
+    }
+    private static float eio(float u) { return u * u * (3 - 2 * u) * 0.35f + u * 0.65f; }
+    /** An RNG drop: the sky opens. A gold flash, then a shower of meteorites burning down across the whole screen, a few of them huge. */
+    private static void shower(GuiGraphicsExtractor g, int W, int H, float t) {
+        float fl = Math.max(0f, 1f - t / 0.5f); if (fl > 0) { NebulaTex.glow(g, W * 0.5f, 0, W * 0.8f, H * 0.6f, Gfx.argb(Math.round(95 * fl), 0xFFD24A)); g.fill(0, 0, W, H, Gfx.argb(Math.round(26 * fl * fl), 0xFFF4D0)); }
+        float glow = (float) Math.sin(Math.PI * Math.min(1f, t / (SHOWER_MS / 1000f))); NebulaTex.glow(g, W * 0.5f, -H * 0.05f, W * 0.75f, H * 0.28f, Gfx.argb(Math.round(40 * glow), 0xFF9AD0));
+        boolean left = meteorSeed % 2 == 0; int n = 16;
+        for (int i = 0; i < n; i++) {
+            int sd = meteorSeed + i * 37; boolean big = i % 5 == 0; float start = i == 0 ? 0.05f : 0.1f + rnd(sd) * 2.1f, dur = big ? 1.15f : 0.75f + 0.3f * rnd(sd + 1), u = (t - start) / dur;
+            if (u <= 0 || u >= 1) continue;
+            float lane = rnd(sd + 2), sx = (left ? -0.25f + 1.1f * lane : 1.25f - 1.1f * lane) * W, sy = -30 - 40 * rnd(sd + 4), run = (0.75f + 0.5f * rnd(sd + 5)) * H;
+            float ex = sx + (left ? 1 : -1) * run * 0.95f, ey = sy + run * 0.8f;
+            int[] hots = {0xFFE2A0, 0xFFFFFF, 0xBFE0FF, 0xFFC8F0}, flames = {0xFF7AD9, 0x6AB8FF, 0xB56BFF, 0xFFD24A};
+            burn(g, sx, sy, ex, ey, u, big ? 2.1f : 0.8f + 0.6f * rnd(sd + 6), big ? 0xFFE89A : hots[i % 4], big ? 0xFFB02A : flames[i % 4], sd, 1f);
+        }
     }
     /** 0 by day, 1 deep in the night, easing through dusk and dawn (Minecraft: night is about 13000..23000 ticks). */
-    private static float nightness(float day) {
+    static float nightness(float day) {
         float t = day * 24000f;
         if (t < 12000) return 0f; if (t < 13500) return (t - 12000) / 1500f; if (t < 22500) return 1f; return Math.max(0f, 1f - (t - 22500) / 1500f);
     }
@@ -55,14 +100,6 @@ final class CosmosHud {
         float x0 = shootDir > 0 ? W * 0.1f : W * 0.9f, hx = x0 + shootDir * W * 0.55f * u, hy = H * shootY + H * 0.12f * u, fade = (float) Math.sin(Math.PI * u) * a;
         for (int i = 0; i < 18; i++) { float q = i / 18f; float tx = hx - shootDir * q * 50, ty = hy - q * 11; g.fill(Math.round(tx), Math.round(ty), Math.round(tx) + 1, Math.round(ty) + 1, Gfx.argb(Math.round(230 * fade * (1f - q)), q < 0.3f ? 0xFFFFFF : 0xC8B4FF)); }
         NebulaTex.glow(g, hx, hy, 4, 4, Gfx.argb(Math.round(200 * fade), 0xFFFFFF));
-    }
-    private static void bigMeteor(GuiGraphicsExtractor g, int W, int H, float u) {
-        float hx = -40 + (W + 80) * u, hy = H * 0.08f + H * 0.25f * u, fade = Math.min(1f, (1f - u) * 3f);
-        for (int i = 0; i < 40; i++) { float q = i / 40f, tx = hx - q * 140, ty = hy - q * 34, w = 3 * (1f - q);
-            g.fill(Math.round(tx), Math.round(ty - w / 2), Math.round(tx) + 4, Math.round(ty + w / 2) + 1, Gfx.argb(Math.round(220 * fade * (1f - q)), Ritual.mixc(0xFFF0C8, 0xFF7AD9, q))); }
-        NebulaTex.glow(g, hx, hy, 14, 14, Gfx.argb(Math.round(230 * fade), 0xFFE8B0));
-        NebulaTex.glow(g, hx, hy, 40, 18, Gfx.argb(Math.round(120 * fade), 0xFF7AD9));
-        for (int i = 0; i < 6; i++) { float q = ((u * 3 + i / 6f) % 1f); float sx = hx - 30 - q * 60 + i * 7, sy = hy + q * 20 + (i % 3) * 4; g.fill(Math.round(sx), Math.round(sy), Math.round(sx) + 1, Math.round(sy) + 1, Gfx.argb(Math.round(220 * fade * (1f - q)), 0xFFD8A0)); }   // sparks shed behind it
     }
     /** Faint stars in the top corners, twinkling, only where there is no hotbar or chat. */
     private static void corners(GuiGraphicsExtractor g, int W, int H, long now, float a) {
@@ -80,24 +117,6 @@ final class CosmosHud {
             int col = Ritual.mixc(0x9B7BFF, 0x5AF0B0, 0.5f + 0.5f * (float) Math.sin(u * 3 + t * 0.2f));
             NebulaTex.glow(g, x, y, W / (float) n * 1.4f, H * 0.05f, Gfx.argb(Math.round(40 * a), col));
         }
-    }
-    /** The celestial clock: a half dial, the sun or moon on its arc, the moon drawn in its phase. Top left. */
-    private static void clock(GuiGraphicsExtractor g, float day, long ticks, float a) {
-        int cx = 26, cy = 24, r = 18; int A = Math.round(255 * a);
-        NowPlayingHud.disc(g, cx, cy - 4, r + 3, Gfx.argb(Math.round(150 * a), 0x070816));
-        g.fill(cx - r - 3, cy, cx + r + 4, cy + 1, Gfx.argb(Math.round(200 * a), 0x2C2A66));                       // the horizon
-        for (int i = 0; i <= 18; i++) { double an = Math.PI + Math.PI * i / 18.0; int px = Math.round(cx + (float) Math.cos(an) * r), py = Math.round(cy + (float) Math.sin(an) * r); g.fill(px, py, px + 1, py + 1, Gfx.argb(Math.round(110 * a), 0x9B7BFF)); }   // the arc
-        // Minecraft: sunrise at 0 (east, left), noon at 6000 (top), sunset at 12000 (right); the moon the other half
-        boolean sunUp = day < 0.5f; float k = sunUp ? day * 2f : (day - 0.5f) * 2f; double an = Math.PI + Math.PI * k;
-        float bx = cx + (float) Math.cos(an) * r, by = cy + (float) Math.sin(an) * r;
-        if (sunUp) { NebulaTex.glow(g, bx, by, 7, 7, Gfx.argb(Math.round(170 * a), 0xFFC870)); NowPlayingHud.disc(g, bx, by, 3f, Gfx.argb(A, 0xFFE8A0)); }
-        else {
-            int phase = (int) ((ticks / 24000L) % 8);                                                       // 0 full .. 4 new .. back
-            NebulaTex.glow(g, bx, by, 6, 6, Gfx.argb(Math.round(110 * a), 0xC8D4FF)); NowPlayingHud.disc(g, bx, by, 3f, Gfx.argb(A, 0xE8ECFF));
-            float cover = phase <= 4 ? phase / 4f : (8 - phase) / 4f, off = (phase <= 4 ? 1 : -1) * (1f - cover) * 6f;
-            if (cover > 0.02f) NowPlayingHud.disc(g, bx + (phase <= 4 ? 6f - 6f * cover : -6f + 6f * cover) * 0.5f, by, 3f * cover + 0.2f, Gfx.argb(A, 0x070816));
-        }
-        for (int i = 0; i < 5; i++) if (!sunUp) { float sx = cx - r + rnd(i * 5) * r * 2, sy = cy - 4 - rnd(i * 9) * r * 0.8f; g.fill(Math.round(sx), Math.round(sy), Math.round(sx) + 1, Math.round(sy) + 1, Gfx.argb(Math.round(170 * a), 0xFFFFFF)); }
     }
     private static float rnd(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }
 }

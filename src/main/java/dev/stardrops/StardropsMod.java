@@ -78,6 +78,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
     @Override
     public void onInitializeClient() {
         StardropsConfig.load();
+        SkyBox.register();                                         // Visuals > Cosmos: the night sky box (falls back to screen stars if it cannot)
         Slayer3D.register();                                       // the 3D slayer scene (falls back to the pixel scene if it cannot)
         Cosmetics.checkIcons();
         DataFiles.reloadAll();   // slayer drop tables
@@ -129,7 +130,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
                     if (!Flicker.on(Flicker.HUD)) return;
                     float away = Math.min(1f, slideOffset(true) / 63f);                                      // a big scene: our own HUD slides up out of the way with the hotbar going down
                     if (away < 0.99f) { boolean mv = away > 0.01f; if (mv) { Gfx.push(graphics); Gfx.translate(graphics, 0, -away * 90f); }
-                        CosmosHud.render(graphics); AmbienceHud.render(graphics); LyricsHud.hud(graphics); NowPlayingHud.hud(graphics);
+                        CosmosHud.render(graphics); InstrumentsHud.render(graphics); AmbienceHud.render(graphics); LyricsHud.hud(graphics); NowPlayingHud.hud(graphics);
                         if (mv) Gfx.pop(graphics); }
                     StarToast.render(graphics); });
 
@@ -281,7 +282,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
         helpLine(s, "/sd", "Open the menu");
         helpLine(s, "/sd <words>", "Open the menu and search for them (for example /sd minos)");
         helpLine(s, "/sd achievement", "Open the achievements");
-        helpLine(s, "/sd edit", "Move and resize every HUD (Now Playing, lyrics, the celestial clock)");
+        helpLine(s, "/sd edit", "Move and resize every HUD (Now Playing, lyrics, your instruments)");
         helpLine(s, "/sd mute", "Turn every sound on or off");
         helpLine(s, "/sd toggle", "Turn the whole mod on or off");
         helpLine(s, "/sd help simulate", "Category: every /sd simulate command");

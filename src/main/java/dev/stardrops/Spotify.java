@@ -45,6 +45,7 @@ final class Spotify {
     /** Where the song is now, in ms. Each poll can put the clock back a little (network delay); a small step back is ignored so lyric
      *  lines never flick back to the previous one. A real jump (you seek) still goes through at once. */
     static long position() {
+        if (LocalMusic.active) return LocalMusic.position();                                        // one of your own files is the song
         long p = progressMs + (playing ? System.currentTimeMillis() - progressAt : 0); if (track != null) p = Math.min(p, track.durationMs());
         String id = track == null ? "" : track.id();
         long now = System.currentTimeMillis(), dt = shownAt == 0 ? 0 : Math.min(250, now - shownAt); shownAt = now;
@@ -116,6 +117,7 @@ final class Spotify {
     static void tick() {
         if (!status.equals(logged)) { logged = status; System.err.println("[Stardrops] spotify: " + status); }      // every change of state goes to latest.log, so a fault can be traced
         StardropsConfig c = StardropsConfig.get();
+        if (LocalMusic.active) return;                                                               // your own file is playing: Spotify is not asked
         if (!(c.lyricsOn || c.npOn) || !linked() || busy) return;
         long now = System.currentTimeMillis();
         if (playing && lastGood > 0 && now - lastGood > 10_000) { progressMs = position(); progressAt = now; playing = false; status = "Lost touch with Spotify."; }   // no answer for 10 s: stop the clock, don't pretend it plays
@@ -157,6 +159,7 @@ final class Spotify {
             Track tr = new Track(it.has("id") && !it.get("id").isJsonNull() ? it.get("id").getAsString() : it.get("name").getAsString(), it.get("name").getAsString(), ar.toString(), album, it.has("duration_ms") ? it.get("duration_ms").getAsLong() : 0, art);
             long prog = o.has("progress_ms") && !o.get("progress_ms").isJsonNull() ? o.get("progress_ms").getAsLong() : 0;
             boolean pl = o.has("is_playing") && o.get("is_playing").getAsBoolean();
+            if (LocalMusic.active) return;                                                           // your own file started while we were asking
             progressMs = prog; progressAt = (sentAt + System.currentTimeMillis()) / 2; playing = pl;     // Spotify read the position halfway through the request
             if (track == null || !track.id().equals(tr.id())) { track = tr; Lyrics.load(tr); AlbumArt.load(tr.art()); }
             status = (pl ? "Playing: " : "Paused: ") + tr.name() + " - " + tr.artists();
@@ -166,6 +169,7 @@ final class Spotify {
     // ------------------------------------------------------------------ controls (keys in Options > Controls > Stardrops: Music; Spotify Premium only)
     /** "toggle", "next" or "previous": sent from a worker thread; the next poll comes right after so the HUD catches up. */
     static void control(String what) {
+        if (LocalMusic.active || (!linked() && LocalMusic.count() > 0)) { LocalMusic.control(what); return; }   // the music keys work your own files too
         if (!linked()) { status = "Link Spotify first (Visuals > Spotify)."; return; }
         Thread t = new Thread(() -> {
             try {

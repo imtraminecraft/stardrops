@@ -163,7 +163,7 @@
     "sounds": [
       {
         "name": "stardrops:slr_barrage_a",
-        "stream": true
+        "stream": false
       }
     ]
   },
@@ -187,7 +187,7 @@
     "sounds": [
       {
         "name": "stardrops:slr_reveal_a",
-        "stream": true
+        "stream": false
       }
     ]
   },
@@ -235,7 +235,7 @@
     "sounds": [
       {
         "name": "stardrops:slr_shower_a",
-        "stream": true
+        "stream": false
       }
     ]
   },
@@ -243,7 +243,7 @@
     "sounds": [
       {
         "name": "stardrops:slr_shower_b",
-        "stream": true
+        "stream": false
       }
     ]
   },
@@ -251,7 +251,7 @@
     "sounds": [
       {
         "name": "stardrops:slr_shower_c",
-        "stream": true
+        "stream": false
       }
     ]
   },
@@ -267,7 +267,7 @@
     "sounds": [
       {
         "name": "stardrops:slr_jackpot_b",
-        "stream": true
+        "stream": false
       }
     ]
   },

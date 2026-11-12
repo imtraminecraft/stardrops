@@ -768,6 +768,17 @@ final class Codex {
         sky(7, new float[]{.1f, .4f, -.05f, .2f, -.2f, .05f, -.95f, -.55f, .2f, .2f, .3f, 0f, -.35f, -.9f, .75f, .55f, .9f, -.55f},
                -1, 0, 1, 2, 0, 4, 5, 0, 5);
     }
+    private static float[][][] skyFig; private static long skyFigAt;
+    /** For the sky box: each constellation's stars as {du, dv, parent, lit, colour}, refreshed every two seconds. */
+    static float[][][] skyFigures() {
+        long now = System.currentTimeMillis(); if (skyFig != null && now - skyFigAt < 2000) return skyFig;
+        float[][][] out = new float[ACH.length][][];
+        try {
+            for (int c = 0; c < ACH.length; c++) { List<Node> t = tree(c); out[c] = new float[t.size()][];
+                for (int i = 0; i < t.size(); i++) { Node n = t.get(i); out[c][i] = new float[]{n.du(), n.dv(), n.parent(), n.a().done() ? 1f : 0f, ACH_COL[c] & 0xFFFFFF}; } }
+        } catch (Throwable e) { }
+        skyFig = out; skyFigAt = now; return out;
+    }
     private static List<Node> tree(int c) {
         Achievements.Profile p = Achievements.profile();
         if (treesFor != p) { TREES.clear(); treesFor = p; }

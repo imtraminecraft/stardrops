@@ -1,6 +1,13 @@
 # Changelog
 
 ## 0.9.0
+- Mob Drops animate: the Crimson Isle (the Magma Boss), the End (the Ender Dragon) and the Mines (an Automaton) each have their own creature and world.
+- Slayer: real burning meteorites that crater the ground, and a far bigger RNG: six star-fires, a held breath, a golden star that falls like a hammer.
+- A new, cinematic sound set for Mob Drops: war drums, horns, choir.
+- Cosmos: the night sky is now a real sky in your world with your Achievement constellations in it; a meteor burns across the screen when a drop lands, a meteor shower for RNG.
+- Visuals > Instruments: eight HUD instruments (compass, altimeter, speed, coordinates, ping and FPS, real-time clock, session log, and the celestial clock).
+- Now Playing is a little smaller and fuller; you can play your own MP4 / M4A music files (Visuals > Music > Your files).
+- Fixed: animation previews in the menu played in the middle of the screen.
 - Slayer scene: the moon and planets are different every time (side, size, colours, rings, bands); Tarantula is a proper hairy tarantula that drops in on its thread, in a den of webbed dead trees, egg sacs and bones.
 - Slayer scene: a solid, pixel-textured floor in each boss's own blocks that darkens into fog and a vignette (no more see-through tiles), and a far more detailed backdrop: dusk sky, pixel moon, a ringed planet, layered hills and silhouettes with haze, bats and rain.
 - **Stardrops:** FancyDrops is now Stardrops, space themed from top to bottom. Your settings and saved data move over on first launch.
