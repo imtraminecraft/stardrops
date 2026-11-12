@@ -1,6 +1,11 @@
 # Changelog
 
 ## 0.9.0
+- Mob Drops show the creature that drops the item: Bladesoul, Barbarian Duke, Ashfang, Mage Outlaw, Ghost, Ice Walker, Bal and the Zealot join the Magma Boss, the Dragon and the Automaton.
+- Cosmos: "Only night" keeps the sky steady whatever other mods do to the time; constellations stand out more.
+- HUD pieces are named for what they show (Y level, Speed, Compass...). The speed gauge is steady while you run.
+- Now Playing: a record peeks out behind the cover, a shine crosses it, the destination pulses with the beat.
+- Fixed: the Spotify button covering the left menu while searching.
 - Mob Drops animate: the Crimson Isle (the Magma Boss), the End (the Ender Dragon) and the Mines (an Automaton) each have their own creature and world.
 - Slayer: real burning meteorites that crater the ground, and a far bigger RNG: six star-fires, a held breath, a golden star that falls like a hammer.
 - A new, cinematic sound set for Mob Drops: war drums, horns, choir.
