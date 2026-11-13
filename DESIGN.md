@@ -839,3 +839,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Cosmos: the live sky preview is gone (too squished); "Try a drop moment" has Meteor and Shower buttons.
 - Page skies (bgScene, bgCols): each main page has its own nebula colours (eased between pages) and a faint scene: Home a planet rising in the corner, Catalog a ringed giant, Drop effects a meteor shower, Visuals an aurora along the bottom, Settings a constellation.
 - The mark next to the name (drawBrand): a ringed planet in a violet night tile, stars twinkling, a star falling onto it every 3.2 s with a flash. Drawn, not the old icon.png.
+
+## 13 Nov, 21:56: Music preview in the dock; the right mob for shared drops
+- Visuals > Music: the live Now Playing preview sits in the live dock above the menu (below if the dock is moved), like Drop effects (drawMusicDock, dock height 92). Inline only when the screen is too short for the dock.
+- Drops several mobs share (Foraging Exp Boost: Honeymite, Drybark, Soul of the Alpha, the Loch Emperor; Summoning Eye; Combat Exp Boost...): ExtraData collects every mob it can come from and MobContext picks one: a mob of that name within 48 blocks (Hypixel names every mob over its head), else the mob of the area you are in (sidebar "⏣ ..." line, tab list "Area: ..."), else the first. The Loch Emperor got its Foraging Exp Boost (chance not in the data, shown as unknown); mobs.json v10.

@@ -1,5 +1,5 @@
 {
- "v": 9,
+ "v": 10,
  "sources": [
   {
    "id": "crystal_nucleus",
@@ -2272,6 +2272,16 @@
      "skull": true,
      "odds": "Rare",
      "chance": "1 in 200",
+     "rank": 2
+    },
+    {
+     "name": "Foraging Exp Boost",
+     "id": "PET_ITEM_FORAGING_SKILL_BOOST_RARE",
+     "mob": "the_loch_emperor",
+     "icon": "iron_axe",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "",
      "rank": 2
     }
    ],

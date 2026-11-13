@@ -545,6 +545,7 @@ public class StardropsScreen extends Screen {
 
     /** The dock's height: the animation dock is 128, the chat dock hugs its message(s) so no empty space is left. */
     private int dockH() {
+        if (tab == Tab.VISUALS) return 92;                                                                // Music: your Now Playing card, live
         if (tab != Tab.CHAT) return DOCK_H0;
         StardropsConfig c = StardropsConfig.get();
         String k = c.channel + c.alsoAll + c.formatFor(chatCat) + chatCat + pw;
@@ -557,6 +558,7 @@ public class StardropsScreen extends Screen {
     private boolean dockWanted() {
         if (!dockPossible() || !query.isBlank()) return false;
         if (tab == Tab.CHAT) return !landing() && curSub() == 0 && formatError == null && !Categories.byId(chatCat).wip();
+        if (tab == Tab.VISUALS) return !landing() && curSub() == 0;                                         // Visuals > Music: the live preview sits above the menu, like Drop effects
         return (tab == Tab.ANIMATIONS || tab == Tab.SOUNDS) && curGroup() != null;      // only inside an animation's editor
     }
 
@@ -583,6 +585,7 @@ public class StardropsScreen extends Screen {
         boolean top = c.previewAt == 0, sounds = tab == Tab.SOUNDS;
         int x0 = px, w = pw, y0 = top ? py - dockH() - DOCK_GAP : py + ph + DOCK_GAP;
         if (tab == Tab.CHAT) { drawChatDock(g, mx, my, x0, y0, w, top, intro); return; }
+        if (tab == Tab.VISUALS) { drawMusicDock(g, mx, my, x0, y0, w, top, intro, now); return; }
         Categories.Group gr = curGroup(); if (gr == null) return;
         Categories.Type ty = gr.types().get(Math.max(0, Math.min(gr.types().size() - 1, edType)));
         String key = gr.key(ty); int acc = ty.color();
@@ -611,6 +614,26 @@ public class StardropsScreen extends Screen {
         int rx = x0 + 8 + bw + 14, rw = x0 + w - 8 - rx;
         if (sounds) drawSoundChips(g, rx, y0 + 19, rw, ph0, key, mx, my, now);
         else drawDetails(g, rx, y0 + 19, rw, gr, ty, c);
+        if (intro < 1f) pill(g, x0, y0, w, dockH(), Gfx.argb(Math.round((1f - intro) * 150), 0x0C0E14));
+    }
+
+    /** Visuals > Music: your Now Playing card exactly as it looks on your screen, in the live dock above (or below) the menu. */
+    private void drawMusicDock(GuiGraphicsExtractor g, int mx, int my, int x0, int y0, int w, boolean top, float intro, long now) {
+        int col = V_COL[0];
+        pill(g, x0, y0, w, dockH(), Ui.PANEL); rout(g, x0, y0, w, dockH(), Ui.BORDER);
+        g.fill(x0 + 6, y0 + 1, x0 + w - 6, y0 + 2, Gfx.argb(150, col & 0xFFFFFF));
+        float live = 0.5f + 0.5f * (float) Math.sin(fxNow / 380.0);
+        pill(g, x0 + 8, y0 + 5, 7, 7, Gfx.argb(Math.round(110 + 145 * live), 0xFF4A5E)); pill(g, x0 + 18, y0 + 4, Gfx.w(font, "LIVE") + 8, 11, Canvas.mix(Ui.PANEL2, 0xFFFF4A5E, 0.2f));
+        Gfx.text(g, font, "LIVE", x0 + 22, y0 + 6, 0xFFFF8A94);
+        Gfx.push(g); Gfx.translate(g, x0 + 54, y0 + 4); Gfx.scale(g, 0.75f); Icons.draw(g, V_ICON[0], 0, 0, 2400L); Gfx.pop(g);
+        Gfx.text(g, font, "Music  \u00B7  Now Playing", x0 + 70, y0 + 6, Canvas.mix(Ui.SUB, col, 0.55f));
+        String lab = top ? "\u25BC Move to bottom" : "\u25B2 Move to top";
+        int bwid = Gfx.w(font, lab) + 12, bx2 = x0 + w - bwid - 6, by2 = y0 + 3;
+        boolean hv = mx >= bx2 && mx < bx2 + bwid && my >= by2 && my < by2 + 13;
+        pill(g, bx2, by2, bwid, 13, hv ? Ui.ROW_HOVER : Ui.PANEL2); Gfx.text(g, font, lab, bx2 + 6, by2 + 3, hv ? Ui.TEXT : Ui.SUB);
+        dockBtn[0] = bx2; dockBtn[1] = by2; dockBtn[2] = bx2 + bwid; dockBtn[3] = by2 + 13;
+        int sx = x0 + 8, sy = y0 + 19, sw0 = w - 16, sh = dockH() - 25;
+        pill(g, sx, sy, sw0, sh, 0xFF05061A); mini(g, 0, false, sx + 1, sy + 1, sw0 - 2, sh - 2, now); rout(g, sx, sy, sw0, sh, Gfx.argb(130, col & 0xFFFFFF));
         if (intro < 1f) pill(g, x0, y0, w, dockH(), Gfx.argb(Math.round((1f - intro) * 150), 0x0C0E14));
     }
 
@@ -3460,7 +3483,7 @@ public class StardropsScreen extends Screen {
     }
     /** Visuals > Music. */
     private void musicRoom(StardropsConfig c) {
-        if (!searching) rows.add(vPrev(0, new String[0], new Runnable[0]));                           // your real Now Playing card, as it looks on your screen
+        if (!searching && !dockWanted()) rows.add(vPrev(0, new String[0], new Runnable[0]));            // your real Now Playing card: in the live dock above the menu when there is room, here otherwise
         Row np = vLine(0, "np", ":disc:", "Now Playing", "The song you're playing, on your screen", () -> c.npOn, v -> c.npOn = v, true); rows.add(np); vBody(np, () -> npOpts(c));
         Row ly = vLine(0, "lyrics", ":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v, true); rows.add(ly); vBody(ly, () -> lyricsOpts(c));
         Row am = vLine(0, "amb", ":amb:", "Ambience", "The space around you in the album's colours, while a song plays", null, null, true); rows.add(am); vBody(am, () -> ambOpts(c));

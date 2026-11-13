@@ -45,7 +45,9 @@ public final class ExtraData {
     private static Object[] hit(String name) {
         String n = FarmData.stripRarity(name), low = n.toLowerCase(java.util.Locale.ROOT);
         if (low.endsWith(" dye")) for (DropData.Source s : group("dyes")) for (DropData.Drop d : s.drops) if (DropData.loose(d.name, n)) return new Object[]{s, d};      // a dye always plays the Dyes scene
-        for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) if (DropData.loose(d.name, n) || DropData.loose(d.name, name)) return new Object[]{s, d};
+        List<DropData.Source> cands = new ArrayList<>(); List<DropData.Drop> drs = new ArrayList<>();          // every mob it can come from: MobContext picks the one you are fighting
+        for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) if (DropData.loose(d.name, n) || DropData.loose(d.name, name)) { cands.add(s); drs.add(d); break; }
+        if (!cands.isEmpty()) { DropData.Source s = MobContext.pick(cands); return new Object[]{s, drs.get(cands.indexOf(s))}; }
         for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) {
             String dl = d.name.toLowerCase(java.util.Locale.ROOT);
             if (dl.equals(low + " pet") || dl.endsWith(" " + low + " pet")) return new Object[]{s, d};
