@@ -109,7 +109,12 @@ final class SkyBox {
             StardropsConfig c = StardropsConfig.get(); Minecraft mc = Minecraft.getInstance();
             if (!c.cosNight || mc.level == null || !Flicker.on(Flicker.SKY)) return;
             long ticks = mc.level.getOverworldClockTime(); float day = (ticks % 24000L) / 24000f;
-            float night = (c.cosOnlyNight ? 1f : CosmosHud.nightness(day) * (1f - mc.level.getRainLevel(1f))) * (c.cosSkyBright / 100f);   // Only night: always there, whatever the world's (or another mod's) clock says
+            long nowMs = System.currentTimeMillis();
+            day = steadyDay(day, nowMs);                                                         // a clock that jumps back and forth is not believed until it stays
+            float rawNight = (c.cosOnlyNight ? 1f : CosmosHud.nightness(day) * (1f - mc.level.getRainLevel(1f))) * (c.cosSkyBright / 100f);   // Only night: always there, whatever the world's (or another mod's) clock says
+            double dtN = lastNightAt == 0 ? 1 : Math.min(0.25, (nowMs - lastNightAt) / 1000.0); lastNightAt = nowMs;
+            nightE = lastNightAt == 0 || nightE < 0 ? rawNight : nightE + (float) ((rawNight - nightE) * Math.min(1.0, dtN / 1.5));   // and the stars fade in and out over a second and a half, never in one frame
+            float night = nightE;
             if (night < 0.02f) return;
             if (sDir == null) make();
             milky = c.cosMilky; planets = c.cosPlanets; deep = c.cosDeep; comet = c.cosComet;
@@ -144,6 +149,21 @@ final class SkyBox {
      *  everything at its height, so whatever hangs above the horizon stays up there. */
     static final float TILT = 0.1f;
     static Quaternionf rot(float turn) { return new Quaternionf().rotateZ(TILT).rotateY(turn * 6.2831853f); }
+    /**
+     * The day as the sky believes it. Some servers and mods fight over the client's clock (the author's video, 13 Nov: day and night
+     * swapped on every other frame), so a jump of the clock is only taken once it has held for 1.5 s; until then the last steady
+     * time goes on. The stars must never follow the clock frame by frame (standing rule: no light flickering).
+     */
+    private static float steadyDay(float day, long now) {
+        if (dayHeld < 0) { dayHeld = day; return day; }
+        float d = day - dayHeld; d -= Math.round(d);
+        if (Math.abs(d) < 0.02f) { dayHeld = day; dayPendAt = 0; return day; }
+        float p = day - dayPend; p -= Math.round(p);
+        if (dayPendAt == 0 || Math.abs(p) > 0.02f) { dayPend = day; dayPendAt = now; return dayHeld; }
+        if (now - dayPendAt >= 1500) { dayHeld = day; dayPendAt = 0; return day; }
+        return dayHeld;
+    }
+    private static float dayHeld = -1, dayPend, nightE = -1; private static long dayPendAt, lastNightAt;
     static float minS; static boolean milky = true, planets = true, deep = true, comet = true;
     /** The turn the sky is drawn at (the aurora is held still against it). */
     static float drawTurn;
