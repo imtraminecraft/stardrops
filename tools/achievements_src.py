@@ -1,7 +1,7 @@
 # The achievements, one table for the mod and the server. Run tools/make_achievements.py after editing.
 # tier: 0 Bronze, 1 Silver, 2 Gold. stat: drops | rng | r3 | value | best | uniq | days | bosses | vinyl | dyes |
-#   fd (drops on your first day) | fdr (RNG drops on your first day) | pt (minutes played) | g:a+b (drops from groups) |
-#   gr:a+b (RNG drops from groups) | gv:a+b (coins from groups). RNG = a drop worth 10M coins or more. first: first day only.
+#   fd (drops in the current 24 hour run) | fdr (RNG drops in it) | pt (minutes played) | g:a+b (drops from groups) |
+#   gr:a+b (RNG drops from groups) | gv:a+b (coins from groups). RNG = a drop worth 10M coins or more. first: a 24 hour run (starts with a drop, starts again if missed).
 C, U, R, L = 0, 0, 1, 2   # Bronze, Bronze, Silver, Gold
 M = 1_000_000
 CH = [("ledger", "Every Drop"), ("time", "Playtime"), ("myth", "Mythological"), ("mob", "Mob Drops"), ("mine", "Mining"),
@@ -20,26 +20,26 @@ A = [
  ("frequent", "ledger", R, "Frequent Finder", "Find 10 RNG drops.", "dice", 10, "rng", "", False, False),
  ("devout", "ledger", R, "Devout", "Find 3 Pray RNGesus drops.", "star", 3, "r3", "", False, False),
  ("multimillionaire", "ledger", R, "Multimillionaire", "Find 250M coins worth of drops.", "coin", 250 * M, "value", "", False, False),
- ("fast_start", "ledger", R, "Fast Starter", "Find 20 drops on your first day with Stardrops.", "clock", 20, "fd", "", False, True),
+ ("fast_start", "ledger", R, "Fast Starter", "Find 20 drops in one day.", "clock", 20, "fd", "", False, True),
  ("hoarder", "ledger", L, "Hoarder", "Find 500 drops with Stardrops on.", "sack", 500, "drops", "sweep", False, False),
  ("rng_magnet", "ledger", L, "RNG Magnet", "Find 100 RNG drops.", "crown", 100, "rng", "ripple", False, False),
  ("blessed", "ledger", L, "Blessed", "Find 50 RNG drops.", "dice", 50, "rng", "dice", False, False),
  ("pray", "ledger", L, "Chosen by RNGesus", "Find 10 Pray RNGesus drops.", "star", 10, "r3", "coinaura", False, False),
  ("tycoon", "ledger", L, "Billionaire", "Find 1B coins worth of drops.", "coin", 1000 * M, "value", "neon", False, False),
- ("prodigy", "ledger", L, "Prodigy", "Find 50 drops on your first day with Stardrops.", "clock", 50, "fd", "", False, True),
+ ("prodigy", "ledger", L, "Prodigy", "Find 50 drops in one day.", "clock", 50, "fd", "", False, True),
  ("jackpot", "ledger", L, "Jackpot", "One drop worth 100M coins or more.", "gem", 1, "best100", "", True, False),
  ("regular", "ledger", R, "Week of Luck", "Find drops on 7 different days.", "clock", 7, "days", "", False, False),
  ("devoted", "ledger", L, "Devoted", "Find drops on 30 different days.", "clock", 30, "days", "", False, False),
  # ---- Playtime
  ("time_1h", "time", C, "First Hour", "Play for an hour with Stardrops on.", "clock", 60, "pt", "", False, False),
  ("time_5h", "time", C, "Settling In", "Play for 5 hours with Stardrops on.", "clock", 300, "pt", "", False, False),
- ("fresh_face", "time", C, "Fresh Face", "Find 5 drops on your first day with Stardrops.", "seal", 5, "fd", "", False, True),
+ ("fresh_face", "time", C, "Fresh Face", "Find 5 drops in one day.", "seal", 5, "fd", "", False, True),
  ("time_10h", "time", C, "Regular", "Play for 10 hours with Stardrops on.", "clock", 600, "pt", "", False, False),
  ("time_24h", "time", U, "Full Day", "Play for 24 hours with Stardrops on.", "clock", 1440, "pt", "", False, False),
- ("quick_learner", "time", U, "Quick Learner", "Find 25 drops on your first day with Stardrops.", "seal", 25, "fd", "", False, True),
- ("beginners_luck", "time", U, "Beginner's Luck", "Find an RNG drop on your first day with Stardrops.", "dice", 1, "fdr", "", False, True),
- ("natural", "time", L, "Natural", "Find 50 drops on your first day with Stardrops.", "seal", 50, "fd", "", False, True),
- ("born_lucky", "time", L, "Born Lucky", "Find 5 RNG drops on your first day with Stardrops.", "dice", 5, "fdr", "", False, True),
+ ("quick_learner", "time", U, "Quick Learner", "Find 25 drops in one day.", "seal", 25, "fd", "", False, True),
+ ("beginners_luck", "time", U, "Beginner's Luck", "Find an RNG drop in one day.", "dice", 1, "fdr", "", False, True),
+ ("natural", "time", L, "Natural", "Find 50 drops in one day.", "seal", 50, "fd", "", False, True),
+ ("born_lucky", "time", L, "Born Lucky", "Find 5 RNG drops in one day.", "dice", 5, "fdr", "", False, True),
  ("time_50h", "time", L, "Dedicated", "Play for 50 hours with Stardrops on.", "clock", 3000, "pt", "", False, False),
  ("time_100h", "time", L, "Centurion", "Play for 100 hours with Stardrops on.", "clock", 6000, "pt", "clock", False, False),
  # ---- Mythological

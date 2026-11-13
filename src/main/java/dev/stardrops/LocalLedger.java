@@ -18,7 +18,7 @@ final class LocalLedger {
 
     /** The counts, the same shape as the server's profile. g: per group {drops, RNG drops, coins}. fd / fdr: drops / RNG drops on your first day. */
     static final class P {
-        double drops, rng, bigRng, value, best, r3, fd, fdr; long first = System.currentTimeMillis();
+        double drops, rng, bigRng, value, best, r3, fd, fdr; long first = System.currentTimeMillis(), fdAt;   // fdAt: when the current 24 hour run began (0: none yet)
         Map<String, Integer> uniq = new HashMap<>(), days = new HashMap<>(), vinyl = new HashMap<>(), bosses = new HashMap<>(), dyes = new HashMap<>();
         Map<String, double[]> g = new HashMap<>();
         Map<String, Long> unlocked = new HashMap<>();
@@ -44,16 +44,21 @@ final class LocalLedger {
     static Def def(String id) { for (Def d : ACH) if (d.id.equals(id)) return d; return null; }
     /** Minutes played with Stardrops on (Playtime). */
     static double minutes() { return StardropsConfig.get().playMinutes; }
-    /** Still your first day of playing with Stardrops (the first 24 hours of playtime)? */
-    static boolean firstDay() { return minutes() < 1440; }
+    /**
+     * The "in one day" stars are a 24 hour run: it starts with a drop, and any star not reached by the end starts again from 0 with
+     * your next drop (the server keeps the same clock). True while a run is going.
+     */
+    static final long DAY_MS = 86_400_000L;
+    static boolean firstDay() { P q = get(); return q.fdAt > 0 && System.currentTimeMillis() - q.fdAt < DAY_MS; }
     /** How far along an achievement is right now: Playtime stars count the seconds as they pass, the rest come from the profile. */
     static double live(Achievements.Ach a) {
         if (!a.done()) for (Def d : ACH) if (d.id.equals(a.id())) { if (d.stat.equals("pt")) return Math.min(a.goal(), minutes()); break; }
         return a.progress();
     }
-    /** "13:59:41" left of your first day, counting down. */
-    static String firstDayLeft() { return Ledger.hms(Math.max(0, 1440 - minutes())); }
+    /** "13:59:41" left of the run, counting down ("24:00:00" before it starts). */
+    static String firstDayLeft() { P q = get(); return Ledger.hms(firstDay() ? Math.max(0, (DAY_MS - (System.currentTimeMillis() - q.fdAt)) / 60000.0) : 1440); }
 
+    private static boolean live(P q) { return q.fdAt > 0 && System.currentTimeMillis() - q.fdAt < DAY_MS; }
     private static double[] grp(P p, String k) { double[] v = p.g.get(k); if (v != null && v.length < 3) { v = Arrays.copyOf(v, 3); p.g.put(k, v); } return v; }
     /** A star's number (the same words as the server's stat()). */
     static double stat(P p, String s) {
@@ -66,7 +71,7 @@ final class LocalLedger {
             case "drops" -> p.drops; case "rng" -> p.rng; case "r3" -> p.r3; case "value" -> p.value; case "best" -> p.best;
             case "best100" -> p.best >= 100_000_000 ? 1 : 0;
             case "uniq" -> p.uniq.size(); case "days" -> p.days.size(); case "bosses" -> p.bosses.size(); case "vinyl" -> p.vinyl.size(); case "dyes" -> p.dyes.size();
-            case "fd" -> p.fd; case "fdr" -> p.fdr; case "pt" -> minutes();
+            case "fd" -> live(p) ? p.fd : 0; case "fdr" -> live(p) ? p.fdr : 0; case "pt" -> minutes();
             default -> 0;
         };
     }
@@ -87,7 +92,7 @@ final class LocalLedger {
         } catch (Throwable ignored) { }
         if (p.g == null) p.g = new HashMap<>(); if (p.unlocked == null) p.unlocked = new HashMap<>();
         for (var e : StardropsConfig.get().playDone.entrySet()) p.unlocked.putIfAbsent(e.getKey(), e.getValue());          // Playtime stars lit before they joined the table
-        for (Def d : ACH) { Long at = p.unlocked.get(d.id); if (at != null && stat(p, d.stat) < d.goal) p.unlocked.remove(d.id); }   // the table changed: a star whose goal moved past what you have goes dark again
+        for (Def d : ACH) { Long at = p.unlocked.get(d.id); if (at != null && !d.first && stat(p, d.stat) < d.goal) p.unlocked.remove(d.id); }   // (a won 24 hour star stays won)   // the table changed: a star whose goal moved past what you have goes dark again
         check(p, System.currentTimeMillis());                                                     // and a new star you already have the numbers for lights at once
         return p;
     }
@@ -110,8 +115,8 @@ final class LocalLedger {
         String grp = e.has("g") ? e.get("g").getAsString() : "", id = e.has("id") ? e.get("id").getAsString() : "", item = e.has("item") ? e.get("item").getAsString() : "", src = e.has("src") ? e.get("src").getAsString() : "";
         if (grp.isEmpty() || id.isEmpty()) return List.of();
         double v = e.has("v") ? Math.max(0, e.get("v").getAsDouble()) : 0; int r = e.has("r") ? e.get("r").getAsInt() : 0; boolean rng = v >= RNG_COINS;
-        boolean fresh1 = e.has("pt") ? e.get("pt").getAsDouble() < 1440 : firstDay();
-        p.drops++; if (rng) p.rng++; if (r >= 3) p.r3++; if (fresh1) { p.fd++; if (rng) p.fdr++; }
+        if (!live(p)) { p.fdAt = now; p.fd = 0; p.fdr = 0; }                                       // a new 24 hour run starts with this drop
+        p.drops++; if (rng) p.rng++; if (r >= 3) p.r3++; p.fd++; if (rng) p.fdr++;
         p.value += v; p.best = Math.max(p.best, v);
         p.uniq.put(id, 1); p.days.put(java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString(), 1);
         if (item.toLowerCase(Locale.ROOT).contains("vinyl")) p.vinyl.put(id, 1);
@@ -140,11 +145,11 @@ final class LocalLedger {
         List<Achievements.Ach> list = new ArrayList<>();
         for (Def d : ACH) {
             Long at = p.unlocked.get(d.id); boolean done = at != null;
-            String desc = d.first && !done && !firstDay() ? d.desc + " (Missed: your first day has passed)" : d.first ? d.desc + " (First day only)" : d.desc;
+            String desc = d.first && !done ? d.desc + (firstDay() ? " (" + firstDayLeft() + " left)" : " (24 hours from your next drop)") : d.desc;
             list.add(new Achievements.Ach(d.id, d.ch, CH.get(d.ch), d.name, desc, d.icon, d.goal, Math.min(d.goal, stat(p, d.stat)), done, at == null ? 0 : at, d.reward, d.secret, d.tier, d.first));
         }
         Map<String, Double> st = new HashMap<>();
-        st.put("drops", p.drops); st.put("rng", p.rng); st.put("bigRng", p.bigRng); st.put("value", p.value); st.put("best", p.best); st.put("r3", p.r3); st.put("fd", p.fd); st.put("fdr", p.fdr);
+        st.put("drops", p.drops); st.put("rng", p.rng); st.put("bigRng", p.bigRng); st.put("value", p.value); st.put("best", p.best); st.put("r3", p.r3); st.put("fd", live(p) ? p.fd : 0); st.put("fdr", live(p) ? p.fdr : 0);
         st.put("unique", (double) p.uniq.size()); st.put("days", (double) p.days.size()); st.put("bosses", (double) p.bosses.size()); st.put("vinyls", (double) p.vinyl.size()); st.put("dyes", (double) p.dyes.size());
         Map<String, double[]> groups = new HashMap<>(); for (var e : p.g.entrySet()) groups.put(e.getKey(), Arrays.copyOf(e.getValue(), 3));
         return new Achievements.Profile(st, groups, list, new HashSet<>(), new LinkedHashMap<>(CH), p.first);
@@ -160,7 +165,8 @@ final class LocalLedger {
             for (Achievements.Ach l : local.list()) { if (l.done()) WAITING.add(l.id()); l0.add(new Achievements.Ach(l.id(), l.ch(), l.chapter(), l.name(), l.desc(), l.icon(), l.goal(), l.progress(), false, 0, l.reward(), l.secret(), l.tier(), l.first())); }
             return new Achievements.Profile(local.stats(), local.groups(), l0, new HashSet<>(), local.chapters(), local.since());
         }
-        Map<String, Double> st = new HashMap<>(server.stats()); local.stats().forEach((k, v) -> st.merge(k, v, Math::max));
+        boolean pending = Achievements.pending() > 0;
+        Map<String, Double> st = new HashMap<>(server.stats()); if (pending) local.stats().forEach((k, v) -> st.merge(k, v, Math::max));
         Map<String, double[]> gr = new HashMap<>(); server.groups().forEach((k, v) -> gr.put(k, Arrays.copyOf(v, 3)));
         local.groups().forEach((k, v) -> gr.merge(k, v, (a, b) -> new double[]{Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.max(a[2], b[2])}));
         Map<String, Achievements.Ach> srv = new HashMap<>(); for (Achievements.Ach a : server.list()) srv.put(a.id(), a);
@@ -169,8 +175,11 @@ final class LocalLedger {
             Achievements.Ach a = srv.get(l.id());
             if (a == null) { if (l.done()) WAITING.add(l.id()); list.add(new Achievements.Ach(l.id(), l.ch(), l.chapter(), l.name(), l.desc(), l.icon(), l.goal(), l.progress(), false, 0, l.reward(), l.secret(), l.tier(), l.first())); continue; }
             boolean done = a.done(); long at = a.done() ? a.at() : 0;                                 // only the server lights a star
-            if (!done && l.done()) WAITING.add(l.id());
-            list.add(new Achievements.Ach(l.id(), l.ch(), l.chapter(), l.name(), l.desc(), l.icon(), l.goal(), Math.max(Math.min(l.goal(), a.progress()), l.progress()), done, at, l.reward(), l.secret(), l.tier(), l.first()));
+            // Waiting only while drops are still on their way. Once the server has everything, its count is the answer (it caps a drop's
+            // coins at what the item sells for, and has daily limits, so its numbers can be lower than this computer's).
+            if (!done && l.done() && pending) WAITING.add(l.id());
+            double prog = pending ? Math.max(Math.min(l.goal(), a.progress()), l.progress()) : Math.min(l.goal(), a.progress());
+            list.add(new Achievements.Ach(l.id(), l.ch(), l.chapter(), l.name(), l.desc(), l.icon(), l.goal(), prog, done, at, l.reward(), l.secret(), l.tier(), l.first()));
         }
         return new Achievements.Profile(st, gr, list, server.cosmetics(), new LinkedHashMap<>(local.chapters()), server.since() == 0 ? local.since() : Math.min(server.since(), local.since()));
     }

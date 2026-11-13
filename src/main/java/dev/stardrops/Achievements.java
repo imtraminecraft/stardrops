@@ -28,6 +28,8 @@ final class Achievements {
     private static volatile long fetchedAt, failedAt; private static volatile boolean fetching, posting;
     static volatile String status = "Connecting to the ledger...";
     private static final List<JsonObject> PENDING = new ArrayList<>();
+    /** Drops counted here and not yet taken by the server (waiting to be sent, or sent and refused). */
+    static int pending() { synchronized (PENDING) { return PENDING.size() + (posting ? 1 : 0); } }
     private static long firstPending, retryAt;
     /** How sending drops is going, for the star map: "" while fine. */
     static volatile String syncNote = ""; static volatile int unsent;
