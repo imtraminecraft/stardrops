@@ -1,6 +1,13 @@
 # Changelog
 
 ## 0.9.0
+- Visuals menu remade: three rooms (Music, Cosmos, HUDs) with live previews, quick switches, and one feature open at a time.
+- Now Playing: the rocket no longer covers the artist, several artists read cleanly, no bottom bar. New Peek option.
+- Drop moments: a new drop never restarts a meteor shower that is still burning.
+- Smoother, lighter animations; the night sky no longer shimmers or steps.
+- "First day" achievements are now daily runs of 24 hours.
+- Night sky: Milky Way and Planets switches. HUDs can stay on screen during drop animations.
+- Server: no more daily storage limit errors once moved to D1; achievements no longer stay "waiting for the server".
 - Mob Drops show the creature that drops the item: Bladesoul, Barbarian Duke, Ashfang, Mage Outlaw, Ghost, Ice Walker, Bal and the Zealot join the Magma Boss, the Dragon and the Automaton.
 - Cosmos: "Only night" keeps the sky steady whatever other mods do to the time; constellations stand out more.
 - HUD pieces are named for what they show (Y level, Speed, Compass...). The speed gauge is steady while you run.
