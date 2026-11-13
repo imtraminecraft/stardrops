@@ -458,7 +458,7 @@ public class StardropsScreen extends Screen {
     private void marquee(GuiGraphicsExtractor g, String s, int x, int y, int limit, int color) {
         int w = Gfx.w(font, s);
         if (w <= limit) { Gfx.text(g, font, s, x, y, color); return; }
-        float over = w - limit, speed = 26f, move = over / speed, pause = 1.0f, cyc = 2 * (move + pause);
+        float over = w - limit, speed = 18f, move = over / speed, pause = 1.8f, cyc = 2 * (move + pause);
         float tt = (System.currentTimeMillis() % (long) (cyc * 1000)) / 1000f, off;
         if (tt < pause) off = 0; else if (tt < pause + move) off = (tt - pause) * speed;
         else if (tt < 2 * pause + move) off = over; else off = over - (tt - 2 * pause - move) * speed;
@@ -804,7 +804,7 @@ public class StardropsScreen extends Screen {
     private void scrollText(GuiGraphicsExtractor g, String text, int x, int y, int maxW, float scale, int color, long now) {
         float w = Gfx.w(font, text) * scale, over = w - maxW;
         if (over <= 0.5f) { Gfx.push(g); Gfx.translate(g, x, y); Gfx.scale(g, scale); Gfx.text(g, font, text, 0, 0, color); Gfx.pop(g); return; }
-        float move = 2.2f, wait = 1.0f, cyc = 2f * (move + wait), u = (now % 3600000L) / 1000f % cyc, off;     // a fixed time for every text: they all start, stop and turn together
+        float move = Math.max(1.2f, over / 18f), wait = 1.8f, cyc = 2f * (move + wait), u = (now % 3600000L) / 1000f % cyc, off;     // a calm reading speed (18 px a second), a long pause at each end
         if (u < wait) off = 0f; else if (u < wait + move) off = over * Ritual.sm((u - wait) / move); else if (u < 2f * wait + move) off = over; else off = over * (1f - Ritual.sm((u - 2f * wait - move) / move));
         g.enableScissor(x, y - 2, x + maxW, y + 12);
         Gfx.push(g); Gfx.translate(g, x - off, y); Gfx.scale(g, scale); Gfx.text(g, font, text, 0, 0, color); Gfx.pop(g);
@@ -2992,11 +2992,12 @@ public class StardropsScreen extends Screen {
         return;
     }
     private void lyricsOpts(StardropsConfig c) {
-        String[] wheres = {"Starlight", "Constellation", "Drift", "Sung line"};
+        String[] wheres = {"Starlight", "Constellation", "Sung line"}; int[] styleOf = {LyricsHud.POP, LyricsHud.KARAOKE, LyricsHud.SUNG};
         if (!c.lyricsOn) { rows.add(note(Lyrics.status.isEmpty() ? "Switch it on to set it up." : Lyrics.status, 0xFF8A93B0)); return; }
         rows.add(section("Style"));
-        rows.add(picker("", "", wheres, new String[]{"Each word is born from a star", "Stars over the words, joined like a star chart", "Lines drift up through the dark", "One line, docked to Now Playing"},
-            new String[]{":sty_pop:", ":sty_kara:", ":sty_scroll:", ":sty_sung:"}, new int[]{0xFFEEF2FF, 0xFFB4A0FF, 0xFF8AB4FF, 0xFF4FC3FF}, null, 4, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
+        rows.add(picker("", "", wheres, new String[]{"Words born from stars", "A star chart of words", "On Now Playing"},
+            new String[]{":sty_pop:", ":sty_kara:", ":sty_sung:"}, new int[]{0xFFEEF2FF, 0xFFB4A0FF, 0xFF4FC3FF}, null, 3,
+            () -> c.lyricsStyle == LyricsHud.SUNG ? 2 : c.lyricsStyle == LyricsHud.KARAOKE ? 1 : 0, i -> c.lyricsStyle = styleOf[i]));
         if (c.lyricsStyle == LyricsHud.SUNG) {
             rows.add(section("Place"));
             Row nl = row(0, ":lyr_dock:", "Docked", "Above or below the Now Playing card", 0xFF4FC3FF);
@@ -3008,7 +3009,7 @@ public class StardropsScreen extends Screen {
             lm.ctls.add(new Btn("Move them", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.LINE)))); rows.add(lm);
             Row ls = row(0, ":size:", "Size", "How big the words are", Ui.ACCENT);
             ls.ctls.add(new Slider(60, 160, 5, () -> c.lyricsSize, v -> c.lyricsSize = (int) v, () -> c.lyricsSize + "%").typed(1)); rows.add(ls);
-            if (c.lyricsStyle != LyricsHud.SCROLL) rows.add(toggle(":format:", "Next line", "The coming line, faintly below", () -> c.lyricsNext, v -> c.lyricsNext = v));          // (Scroll always shows what comes next)
+            rows.add(toggle(":format:", "Next line", "The coming line, faintly below", () -> c.lyricsNext, v -> c.lyricsNext = v));
             rows.add(toggle(":lyr_prev:", "Previous line", "Keep the line just sung in view", () -> c.lyricsPrev, v -> c.lyricsPrev = v));
         }
         rows.add(section("Extras"));
