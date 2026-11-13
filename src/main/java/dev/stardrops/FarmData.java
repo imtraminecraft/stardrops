@@ -57,7 +57,7 @@ public final class FarmData {
     }
 
     public static void initDefaults(StardropsConfig c) {
-        for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) StardropsConfig.initDrop(c.drop(s.id, d.name), d.rank);
+        for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) StardropsConfig.initDrop(c.drop(s.id, d.name), d);
     }
     private FarmData() {}
 }

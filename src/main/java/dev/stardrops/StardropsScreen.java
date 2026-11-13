@@ -2743,7 +2743,7 @@ public class StardropsScreen extends Screen {
         StardropsConfig.SourceCfg sc = c.source(s.id);
         if (!single) rows.add(backRow(grp.name(), "Back to all the " + grp.name(), grp.color(), () -> openPage(curSub(), grp.id(), grp.name())));
         AnimAll aa = new AnimAll(); List<StardropsConfig.DropCfg> all = new ArrayList<>();
-        for (DropData.Drop d : s.drops) { StardropsConfig.DropCfg dc = c.drop(s.id, d.name); StardropsConfig.initDrop(dc, Math.max(0, d.rank)); aa.cfgs.add(dc); all.add(dc); }
+        for (DropData.Drop d : s.drops) { StardropsConfig.DropCfg dc = c.drop(s.id, d.name); StardropsConfig.initDrop(dc, d); aa.cfgs.add(dc); all.add(dc); }
         qaSrcName = single ? grp.name() : nm; qaSrcCfgs = all;
         int nRng = 0, nChat = 0; java.util.LinkedHashSet<String> mobs = new java.util.LinkedHashSet<>();
         for (StardropsConfig.DropCfg dc : all) { if (dc.anim == 2) nRng++; if (dc.announce) nChat++; }
@@ -2808,7 +2808,7 @@ public class StardropsScreen extends Screen {
     /** One drop: a Preview button (animated pages only), its animation and its chat alert. */
     private Row dropRow(DropData.Source s, DropData.Drop d, StardropsConfig c) {
         StardropsConfig.DropCfg dc = c.drop(s.id, d.name);
-        StardropsConfig.initDrop(dc, Math.max(0, d.rank));
+        StardropsConfig.initDrop(dc, d);
         Row dr = row(0, d.icon, d.name, d.chance.isEmpty() ? "chance unknown" : d.chance, s.color());
         dr.iconId = s == TreasureData.SOURCE && !TreasureData.headArt(d.id) ? null : d.id; dr.subColor = d.chance.isEmpty() ? Ui.DIM : Ui.odds(d.odds);
         dr.cell = CELL; dr.dcfg = dc; dr.dropRank = Math.max(0, d.rank);
@@ -3513,7 +3513,7 @@ public class StardropsScreen extends Screen {
         quick(new String[]{"Chat alerts", "RNG also in public"}, new String[]{":bell:", ":chan_public:"}, new BooleanSupplier[]{() -> c.masterAnnounce, () -> c.alsoAll}, v -> c.masterAnnounce = v, v -> c.alsoAll = v);
         rows.add(section("Pages"));
         int on = 0, all = 0;                                                                              // how many drops announce, for the tile and the status
-        for (Categories.Cat cat : Categories.ALL) if (!cat.wip()) for (Categories.Group gr : cat.groups()) for (DropData.Source src : cat.sources(gr.id())) for (DropData.Drop d : src.drops) { StardropsConfig.DropCfg dc = c.drop(src.id, d.name); StardropsConfig.initDrop(dc, Math.max(0, d.rank)); all++; if (dc.announce) on++; }
+        for (Categories.Cat cat : Categories.ALL) if (!cat.wip()) for (Categories.Group gr : cat.groups()) for (DropData.Source src : cat.sources(gr.id())) for (DropData.Drop d : src.drops) { StardropsConfig.DropCfg dc = c.drop(src.id, d.name); StardropsConfig.initDrop(dc, d); all++; if (dc.announce) on++; }
         boolean off = c.channel.equals("OFF");
         String chn = c.channel.equals("PARTY") ? "party" : c.channel.equals("COOP") ? "co-op" : "public";
         String[] lb = {"Message & Channel", "Chat Enabled"}, sb = {off ? "Off  ·  pick a channel" : "Posts in " + chn + " chat", c.masterAnnounce ? on + " / " + all + " drops are live" : "All alerts are off"}, ic = {":format:", ":bell:"};
@@ -3568,7 +3568,7 @@ public class StardropsScreen extends Screen {
             for (Categories.Group gr : cat.groups()) if (gr.wip()) { Row w = row(0, gr.icon(), gr.name(), "Soon\u2122", gr.color()); w.locked = true; w.noSearch = true; rows.add(w); }
             for (Categories.Group gr : cat.groups()) for (DropData.Source s : cat.sources(gr.id())) {
                 List<StardropsConfig.DropCfg> dcs = new ArrayList<>();
-                for (DropData.Drop d : s.drops) { StardropsConfig.DropCfg dc = c.drop(s.id, d.name); StardropsConfig.initDrop(dc, Math.max(0, d.rank)); dcs.add(dc); }
+                for (DropData.Drop d : s.drops) { StardropsConfig.DropCfg dc = c.drop(s.id, d.name); StardropsConfig.initDrop(dc, d); dcs.add(dc); }
                 int on = 0; for (StardropsConfig.DropCfg dc : dcs) if (dc.announce) on++;
                 String nm = Categories.single(gr) ? gr.name() : srcName(s);
                 Row f = fold("ce_" + s.id, Categories.hasSubs(gr) ? srcIcon(s) : gr.id().equals("treasure") ? s.icon : gr.icon(), nm, gr.name() + "  ·  " + on + " of " + dcs.size() + " announce", s.color());
@@ -3649,6 +3649,9 @@ public class StardropsScreen extends Screen {
                     rows.add(bp);
                     Row ah = toggle(":hammer:", "Auction House", "Items sold by players (lowest BIN)", () -> c.useAuctions, v -> { c.useAuctions = v; PriceService.refreshAsync(); });
                     rows.add(ah);
+                    Row rp = row(0, ":raredrops:", "RNG price", "Worth this or more plays RNG; cheaper plays Normal", 0xFFFFC857);
+                    rp.ctls.add(new Slider(1, 500, 1, () -> c.epicThreshold / 1_000_000.0, v -> c.epicThreshold = Math.round(v) * 1_000_000L, () -> (c.epicThreshold / 1_000_000L) + "M").typed(1));
+                    rows.add(rp);
                 }
                 Row rf = row(0, ":refresh:", "Refresh prices now", "Status: " + PriceService.status, Ui.ACCENT);
                 rf.ctls.add(new Btn("Refresh", Ui.ROW_HOVER, () -> { PriceService.refreshAsync(); toast("Refreshing prices.", 0xFF62E6A8); }));

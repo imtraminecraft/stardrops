@@ -142,7 +142,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 
 ## Standing requirements added in 0.4.15
 - Mythological is ONE sub page with two sub-sub pages: Mythological Mobs (pet + creatures) and Treasure (spade + Erudite + drops). It reverses the 0.4.14 split. Treasure and Mobs are also the two animation groups of the Animations and Sounds pages.
-- The Drop Library has no per-page enable switch. Defaults on first start: every drop Normal, rare drops (rank 2+) RNG; Normal = chat alert OFF, RNG = chat alert ON, set at once when the state button is pressed.
+- The Drop Library has no per-page enable switch. Defaults (13 Nov 22:01, author's pick "price only"): a drop you never picked plays RNG when it is worth the RNG price (Settings > Prices, default 10m) or more, else Normal, however rare; Normal = chat alert OFF, RNG = chat alert ON, set at once when the state button is pressed.
 - Animation size: the scene is drawn at 0.75 x the Size slider, so 100% is 25% smaller than in 0.4.14; the slider ends at 120%. After the pivot the scene lasts 3.2 s (Ritual.TAIL).
 - Skulls are real 3D blocks that turn smoothly (SkullSpin). Coin icons use the Hypixel coin head.
 - Animations and Chat > Message & Channel must not need scrolling. Test is on the Chat landing page; placeholder buttons sit beside the Message format field (not outside the menu).
@@ -211,7 +211,7 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 
 ## Standing requirements added in 0.4.37
 - The main page is **Bosses** (id `bosses`), with one sub page **Slayers** (group `slayer`, types No Drops, Normal, RNG; keys `slayer.nodrops|normal|rng`) and the six bosses as sub sub pages. Future boss types (Rift, Nether...) are new groups of Bosses. Chat has one message for Bosses.
-- Slayer data lives in `slayers.json` (same shapes as `mythological.json`, loaded by `SlayerData`). Drop ranks come from the old odds names (Occasional 0, Rare 1, Extraordinary 2, Pray RNGesus / RNGesus Incarnate 3); rank 2 and up default to RNG.
+- Slayer data lives in `slayers.json` (same shapes as `mythological.json`, loaded by `SlayerData`). Drop ranks come from the old odds names (Occasional 0, Rare 1, Extraordinary 2, Pray RNGesus / RNGesus Incarnate 3); (Rank no longer decides the default: the RNG price does.)
 - The slayer scene uses the Mythological ritual engine in `Ritual.java` (`slayerMode`): the same ground circle, boss silhouette (kinds 12..17: zombie, spider, wolf, enderman, blaze, vampire), strike beats, shatter and item pivot, with a sword slashing the boss instead of lightning (`slash`). No backdrop or platform: the screen behind stays visible. The old software-3D SlayerScene, Depth and Tex are gone.
 - The slayer sound bank is `slay_*` (slash, cleave, reveal, reveal_epic, glow, end). The sword cues sit on the Mythological strike beats (0.34, 0.58, 0.80 of the opening).
 - Every page of Slayers must describe slayer scenes (text on the Animations page says a sword slices the boss).
@@ -843,3 +843,9 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 ## 13 Nov, 21:56: Music preview in the dock; the right mob for shared drops
 - Visuals > Music: the live Now Playing preview sits in the live dock above the menu (below if the dock is moved), like Drop effects (drawMusicDock, dock height 92). Inline only when the screen is too short for the dock.
 - Drops several mobs share (Foraging Exp Boost: Honeymite, Drybark, Soul of the Alpha, the Loch Emperor; Summoning Eye; Combat Exp Boost...): ExtraData collects every mob it can come from and MobContext picks one: a mob of that name within 48 blocks (Hypixel names every mob over its head), else the mob of the area you are in (sidebar "⏣ ..." line, tab list "Area: ..."), else the first. The Loch Emperor got its Foraging Exp Boost (chance not in the data, shown as unknown); mobs.json v10.
+
+## 13 Nov, 22:01: The RNG price decides RNG
+- Author: "make the play rng default for drops less than 10m in price (or whatever my RNG price is at)", answer "Price only". A drop you never picked plays RNG (chat alert on) when its price is at least the RNG price, else Normal (alert off), even if rare. Unknown price = Normal. Coin piles count their coins.
+- StardropsConfig.initDrop(dc, Drop) re-resolves every call (DropCfg.auto), so drops move over once prices load or the RNG price changes; prices cached 5 s per drop (worthRng). setAnim marks a drop as yours (auto=false).
+- Migration (DropCfg.v): an old entry whose pick still equals the old rarity default counts as never picked; anything else stays as you set it.
+- RNG price is a setting now: Settings > Prices > "RNG price" slider 1M–500M (type a number in millions). epicThreshold moved to 10m once (the hidden default was 20m). LocalLedger's RNG count uses it too.

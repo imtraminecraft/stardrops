@@ -13,7 +13,7 @@ public class StardropsConfig {
     // ------------------------------------------------------------------ the shapes
 
     /** One drop in the Drop Library. anim: 0 = by rarity (rare drops play RNG, the rest Normal), 1 = Normal, 2 = RNG, 3 = no animation. */
-    public static class DropCfg { public int anim = 0; public boolean announce = false; public boolean init; }
+    public static class DropCfg { public int anim = 0; public boolean announce = false; public boolean init; public boolean auto = true; public int v; }   // auto: never picked by you, so it follows the RNG price
     /** One source (a creature, the treasure): its master switch and its drops. */
     public static class SourceCfg { public boolean enabled = true; public Map<String, DropCfg> drops = new LinkedHashMap<>(); }
     /** The settings of one animation (key like "myth.rng"): how long, where, how big, and for RNG the bars and the blur. */
@@ -34,8 +34,9 @@ public class StardropsConfig {
     public boolean customSounds = true;      // the mod's own sound effects (off = Minecraft's sounds instead)
     public Map<String, String> sounds = new LinkedHashMap<>();      // "<scene>.<slot>" -> sound name, see SoundFx
     public Map<String, String> mcSounds = new LinkedHashMap<>();    // the same slots for the Minecraft sound set
-    public boolean epicEffects = true;       // a drop worth epicThreshold or more plays RNG even when its rarity says Normal
-    public long epicThreshold = 20_000_000L; // coins
+    public boolean epicEffects = true;       // (old switch, no longer shown)
+    public long epicThreshold = 10_000_000L; // the RNG price: a drop you never picked plays RNG when it is worth this or more, else Normal
+    public int rngPriceV = 0;                // 1 once the RNG price moved from the old hidden 20m default to 10m
     public boolean popups = true;            // notices pop up under the menu instead of going to chat
 
     // ------------------------------------------------------------------ prices
@@ -96,14 +97,37 @@ public class StardropsConfig {
         }
         return source(sourceId).drops.computeIfAbsent(name, k -> new DropCfg());
     }
-    /** A drop that was never touched starts Normal (chat off); rare drops (rank 2 and up) start RNG (chat on). */
-    public static void initDrop(DropCfg dc, int rank) {
-        if (dc.anim == 0) dc.anim = rank >= 2 ? 2 : 1;                       // first start: every drop is Normal, rare drops are RNG (the old "Auto" is gone)
-        if (dc.init) return;
-        dc.init = true; dc.announce = dc.anim == 2;                         // Normal = chat alert off, RNG = on
+    /**
+     * A drop you never picked follows the RNG price (Settings > Prices): worth it or more, it plays RNG with a chat alert; cheaper, or
+     * with no price at all, it plays Normal without one, however rare it is. Your own pick in the Catalog always wins.
+     * Asked again each time, so a drop moves over once its price loads or the RNG price changes.
+     */
+    public static void initDrop(DropCfg dc, DropData.Drop d) {
+        if (dc.v < 1) {                                                     // settings from before: a pick that still equals the old rarity default was never yours
+            dc.v = 1;
+            int rank = d == null ? 0 : Math.max(0, d.rank);
+            dc.auto = !dc.init || dc.anim == 0 || dc.anim == (rank >= 2 ? 2 : 1) && dc.announce == (dc.anim == 2);
+        }
+        dc.init = true;
+        if (!dc.auto) return;
+        int a = worthRng(d) ? 2 : 1;
+        dc.anim = a; dc.announce = a == 2;
     }
+    /** Whether a drop is worth the RNG price. Coin piles count their coins; unknown prices count as cheap. */
+    public static boolean worthRng(DropData.Drop d) {
+        if (d == null) return false;
+        String k = d.id + "|" + d.name; long now = System.currentTimeMillis();
+        double[] e = PRICE_SEEN.get(k);
+        if (e == null || now - e[1] > 5000) {                              // asked every frame by the menu: a price is looked up again every few seconds at most
+            double p = -1;
+            try { long cn = TreasureData.coins(d.name); p = cn > 0 ? cn : PriceService.lookup(d.id, d.name, false); } catch (Throwable ignored) { }
+            e = new double[]{p, now}; PRICE_SEEN.put(k, e);
+        }
+        return e[0] >= get().epicThreshold;
+    }
+    private static final java.util.Map<String, double[]> PRICE_SEEN = new java.util.concurrent.ConcurrentHashMap<>();
     /** Picks an animation state for a drop. The chat alert follows at once: Normal turns it off, RNG turns it on. */
-    public static void setAnim(DropCfg dc, int v) { dc.anim = v; if (v == 1) dc.announce = false; else if (v == 2) dc.announce = true; }
+    public static void setAnim(DropCfg dc, int v) { dc.auto = false; dc.v = 1; dc.init = true; dc.anim = v; if (v == 1) dc.announce = false; else if (v == 2) dc.announce = true; }
     public int mythPet = 5;                  // Mythological: the Griffin pet rarity drop chances are shown for (0 Common .. 5 Mythic)
     public int mythSpade = 2;                // Mythological treasure: the spade the chances are shown for (0 Ancestral, 1 Archaic, 2 Deific)
     public boolean mythErudite = false;      // ... with the Erudite reforge (2 more burrows in a chain)
@@ -190,6 +214,8 @@ public class StardropsConfig {
         if (c.ver < 6) { c.ver = 6; if ("minos".equals(c.suffix) || "rod".equals(c.suffix)) c.suffix = ""; save(); }          // 0.7.8: the King Minos and Fishing Rod icons are gone
         if (c.ver < 9) { c.ver = 9; c.itemScale = Math.min(1.1f, c.itemScale * 1.5f); save(); }          // Item size: the old 50% is the new 75%, capped at 110%
         if (c.ver < 8) { c.ver = 8; c.animScale = 1f; c.animPos = 1; save(); }          // the pixel cutscenes (Nov 7): size and place start fresh
+        if (c.rngPriceV < 1) { c.rngPriceV = 1; c.epicThreshold = 10_000_000L; save(); }          // the RNG price is a setting now: 10m to start (the hidden old value was 20m)
+        c.epicThreshold = Math.max(1_000_000L, Math.min(1_000_000_000L, c.epicThreshold));
         c.textScale = clamp(c.textScale, 0f, 1.1f); c.itemScale = clamp(c.itemScale, 0.5f, 1.1f);
         c.titleScale = clamp(c.titleScale, 0.5f, 1.5f); c.subScale = clamp(c.subScale, 0.5f, 1.5f); c.subDelay = clamp(c.subDelay, 0f, 3f); c.textHold = clamp(c.textHold, 1f, 8f);
         c.animScale = clamp(c.animScale, 0.5f, 1.5f); c.itemSpin = clamp(c.itemSpin, 0f, 2f); c.itemGlow = clamp(c.itemGlow, 0f, 1.5f);

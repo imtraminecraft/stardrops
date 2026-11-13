@@ -43,7 +43,7 @@ public final class ExperimentData {
     /** RNG items (pets, collectibles, dyes) get the longer book; the enchantment books and Extraordinary items get the normal one. */
 
     public static void initDefaults(StardropsConfig c) {
-        for (DropData.Drop d : SOURCE.drops) StardropsConfig.initDrop(c.drop(SOURCE.id, d.name), d.rank);
+        for (DropData.Drop d : SOURCE.drops) StardropsConfig.initDrop(c.drop(SOURCE.id, d.name), d);
     }
     private ExperimentData() {}
 }

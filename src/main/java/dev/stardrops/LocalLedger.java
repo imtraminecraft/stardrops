@@ -114,7 +114,7 @@ final class LocalLedger {
         P p = get(); long now = System.currentTimeMillis();
         String grp = e.has("g") ? e.get("g").getAsString() : "", id = e.has("id") ? e.get("id").getAsString() : "", item = e.has("item") ? e.get("item").getAsString() : "", src = e.has("src") ? e.get("src").getAsString() : "";
         if (grp.isEmpty() || id.isEmpty()) return List.of();
-        double v = e.has("v") ? Math.max(0, e.get("v").getAsDouble()) : 0; int r = e.has("r") ? e.get("r").getAsInt() : 0; boolean rng = v >= RNG_COINS;
+        double v = e.has("v") ? Math.max(0, e.get("v").getAsDouble()) : 0; int r = e.has("r") ? e.get("r").getAsInt() : 0; boolean rng = v >= StardropsConfig.get().epicThreshold;
         if (!live(p)) { p.fdAt = now; p.fd = 0; p.fdr = 0; }                                       // a new 24 hour run starts with this drop
         p.drops++; if (rng) p.rng++; if (r >= 3) p.r3++; p.fd++; if (rng) p.fdr++;
         p.value += v; p.best = Math.max(p.best, v);

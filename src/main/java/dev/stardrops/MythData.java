@@ -88,7 +88,7 @@ public final class MythData {
 
     /** Every drop starts from its rarity default (see StardropsConfig.initDrop), so the menu and the game agree before the library is ever opened. */
     public static void initDefaults(StardropsConfig c) {
-        for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) if (!isDye(d)) StardropsConfig.initDrop(cfg(c, s, d), d.rank);
+        for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) if (!isDye(d)) StardropsConfig.initDrop(cfg(c, s, d), d);
     }
 
 

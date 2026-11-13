@@ -108,14 +108,14 @@ public final class AnimationManager {
         return t >= O - 0.8f && t < S + cur.hold() - 0.05f;                                           // only while the cinematic bars are on screen (they slide in at O - 0.8 s, out at the end)
     }
 
-    /** Which type a drop plays: its own pick in the Drop Library, else RNG for rare drops (rank 2 up, or worth the RNG price), else Normal. -1 = it has no animation. */
+    /** Which type a drop plays: its own pick in the Catalog, else RNG when it is worth the RNG price (Settings > Prices), else Normal. -1 = it has no animation. */
     public static int typeOf(Item it, StardropsConfig.DropCfg dc) {
         StardropsConfig c = StardropsConfig.get();
         int pick = dc == null ? 0 : dc.anim;
         if (pick == 3) return -1;
         if (pick == 1) return NORMAL;
         if (pick == 2) return RNG;
-        return it.rank >= 2 ? RNG : NORMAL;
+        return it.price >= c.epicThreshold ? RNG : NORMAL;
     }
 
     /** How much faster than real time a scene plays (1.8 after a cocooned slayer boss). */

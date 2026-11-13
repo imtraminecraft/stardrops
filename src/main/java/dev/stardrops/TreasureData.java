@@ -96,7 +96,7 @@ final class TreasureData {
     }
     /** Every treasure drop starts from its rarity default (see StardropsConfig.initDrop). */
     static void initDefaults(StardropsConfig c) {
-        for (int sp = 0; sp < 3; sp++) for (DropData.Drop d : drops(sp)) StardropsConfig.initDrop(c.drop(SOURCE.id, d.name), d.rank);
+        for (int sp = 0; sp < 3; sp++) for (DropData.Drop d : drops(sp)) StardropsConfig.initDrop(c.drop(SOURCE.id, d.name), d);
     }
     /** A drop by its name: the chosen spade first, then the others. Null when it is not a treasure. */
     static DropData.Drop find(String name, int sp) {

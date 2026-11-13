@@ -64,7 +64,7 @@ public final class SlayerData {
     public static String headFallback(String id) { return id.equals("zombie") ? "zombie_head" : "player_head"; }
 
     public static void initDefaults(StardropsConfig c) {
-        for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) StardropsConfig.initDrop(c.drop(s.id, d.name), d.rank);
+        for (DropData.Source s : ALL) for (DropData.Drop d : s.drops) StardropsConfig.initDrop(c.drop(s.id, d.name), d);
     }
     private SlayerData() {}
 }

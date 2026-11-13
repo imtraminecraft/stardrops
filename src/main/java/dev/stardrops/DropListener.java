@@ -166,14 +166,14 @@ public final class DropListener {
         DropData.Source src = MythData.sourceOf(d.name());
         if (dr == null || src == null) return false;
         StardropsConfig.SourceCfg sc = c.source(src.id); StardropsConfig.DropCfg dc = c.drop(src.id, dr.name);
-        StardropsConfig.initDrop(dc, dr.rank);
+        StardropsConfig.initDrop(dc, dr);
         boolean animate = c.masterAnimate && sc.enabled && dc.anim != 3, announce = c.masterAnnounce && c.chatEnabled("mythological") && sc.enabled && dc.announce;
         dlog("mythological: " + dr.name + " from " + src.id + "  animate=" + animate + " announce=" + announce);
         Item it = mythItem(src, dr, d.mf(), d.sim());
         Achievements.report(it, "myth", dr.rank >= 2);                                 // every real drop counts for the ledger, shown or not
         if (!animate && !announce) { lookupPrice(it, false); return false; }
         it.amount = Math.max(1, d.amount());
-        it.announce = announce; it.rngPick = dc.anim == 2 || dc.anim == 0 && it.rank >= 2;
+        it.announce = announce; it.rngPick = dc.anim == 2 || dc.anim == 0 && it.price >= c.epicThreshold;
         lookupPrice(it, announce && !animate);
         if (animate) AnimationManager.play(new Anim("myth", AnimationManager.typeOf(it, dc), it));
         return animate;
@@ -196,12 +196,12 @@ public final class DropListener {
     private static Plan plan(DropData.Source src, DropData.Drop dr, Item it, String chatCat, String what) {
         StardropsConfig c = StardropsConfig.get();
         StardropsConfig.SourceCfg sc = c.source(src.id); StardropsConfig.DropCfg dc = c.drop(src.id, dr.name);
-        StardropsConfig.initDrop(dc, dr.rank);
+        StardropsConfig.initDrop(dc, dr);
         boolean animate = c.masterAnimate && sc.enabled && dc.anim != 3, announce = c.masterAnnounce && c.chatEnabled(chatCat) && sc.enabled && dc.announce;
         dlog(what + ": " + dr.name + " from " + src.id + "  animate=" + animate + " announce=" + announce);
         Achievements.report(it, groupOf(src), dr.rank >= 2);                          // every real drop counts for the ledger, shown or not
         if (!animate && !announce) { lookupPrice(it, false); return null; }
-        it.announce = announce; it.rngPick = dc.anim == 2 || dc.anim == 0 && it.rank >= 2;
+        it.announce = announce; it.rngPick = dc.anim == 2 || dc.anim == 0 && it.price >= c.epicThreshold;
         return new Plan(it, animate, announce, animate ? AnimationManager.typeOf(it, dc) : -1);
     }
 
@@ -285,7 +285,7 @@ public final class DropListener {
         StardropsConfig c = StardropsConfig.get();
         DropData.Drop dr = dropOf(d.name()); DropData.Source src = srcOf(d.name());
         if (dr == null || src == null) return false;
-        StardropsConfig.SourceCfg sc = c.source(src.id); StardropsConfig.DropCfg dc = c.drop(src.id, dr.name); StardropsConfig.initDrop(dc, dr.rank);
+        StardropsConfig.SourceCfg sc = c.source(src.id); StardropsConfig.DropCfg dc = c.drop(src.id, dr.name); StardropsConfig.initDrop(dc, dr);
         boolean wanted = c.masterAnimate && sc.enabled && dc.anim != 3 || c.masterAnnounce && c.chatEnabled("bosses") && sc.enabled && dc.announce;
         if (!wanted) { dlog("slayer: " + dr.name + " left in chat (animation and alert are off)"); return false; }
         pendSlayer = d; pendAt = now;
@@ -528,14 +528,14 @@ public final class DropListener {
         String cfgName = dr.name; long cn = TreasureData.coins(dr.name);
         if (cn > 0) { boolean listed = false; for (DropData.Drop x : TreasureData.drops(c.mythSpade)) if (x.name.equalsIgnoreCase(dr.name)) listed = true; if (!listed) { String nn = TreasureData.nearestCoins(cn, c.mythSpade); if (nn != null) cfgName = nn; } }
         StardropsConfig.SourceCfg sc = c.source(TreasureData.SOURCE.id); StardropsConfig.DropCfg dc = c.drop(TreasureData.SOURCE.id, cfgName);
-        StardropsConfig.initDrop(dc, dr.rank);
+        StardropsConfig.initDrop(dc, dr);
         boolean animate = c.masterAnimate && sc.enabled && dc.anim != 3, announce = c.masterAnnounce && c.chatEnabled("mythological") && sc.enabled && dc.announce;
         dlog("treasure: " + dr.name + "  animate=" + animate + " announce=" + announce);
         Item it = treasureItem(dr);
         Achievements.report(it, "treasure", dr.rank >= 2);
         if (!animate && !announce) { lookupPrice(it, false); return false; }
         it.stateKey = cfgName;
-        it.announce = announce; it.rngPick = dc.anim == 2 || dc.anim == 0 && it.rank >= 2;
+        it.announce = announce; it.rngPick = dc.anim == 2 || dc.anim == 0 && it.price >= c.epicThreshold;
         lookupPrice(it, announce && !animate);
         if (animate) AnimationManager.play(new Anim("treasure", AnimationManager.typeOf(it, dc), it));
         return animate;

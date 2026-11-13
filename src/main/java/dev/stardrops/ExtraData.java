@@ -33,7 +33,7 @@ public final class ExtraData {
         }
         BY_GROUP = m; ALL = List.copyOf(all);
         StardropsConfig c = StardropsConfig.get();
-        for (DropData.Source s : all) for (DropData.Drop d : s.drops) StardropsConfig.initDrop(c.drop(s.id, d.name), d.rank);
+        for (DropData.Source s : all) for (DropData.Drop d : s.drops) StardropsConfig.initDrop(c.drop(s.id, d.name), d);
     }
 
     public static List<DropData.Source> group(String g) { return BY_GROUP.getOrDefault(g, List.of()); }
