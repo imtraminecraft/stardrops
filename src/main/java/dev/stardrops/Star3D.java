@@ -257,7 +257,7 @@ final class Star3D {
             float mx = i + 0.5f, mz = j + 0.5f; if (mx * mx + mz * mz > NEAR_R * NEAR_R) continue;
             float de = (float) Math.hypot(mx - EYE_X, mz - EYE_Z);
             if (mz > EYE_Z - 1.5f) continue;                                                            // under or behind the camera
-            int px = de < 9.5f ? 16 : de < 14f ? 8 : 4, blk = blockAt(i, j); int start = n;
+            int px = de < 9.5f ? 8 : 4, blk = blockAt(i, j); int start = n;
             float bright = 0.94f + 0.12f * rnd(i * 41 + j * 13);
             for (int v = 0; v < px; v++) {
                 int[] row = new int[px];
@@ -286,21 +286,22 @@ final class Star3D {
     /** The near ground, solid in the middle, fading only at the window's soft edge (cells wholly outside it are skipped). */
     static void nearGround(Theme th, float dim) {
         if (gBoss != world || gP == null) buildGround(th);
+        int vigCol = mixc(fogCol(th), 0x000000, 0.5f);
         for (int k = 0; k < gCells; k++) {
             float mx = gMid[k * 3], my = gMid[k * 3 + 1], mz = gMid[k * 3 + 2];
             if (edge(mx, my, mz) <= 0f && edge(mx - 0.7f, my, mz - 0.7f) <= 0f && edge(mx + 0.7f, my, mz + 0.7f) <= 0f && edge(mx + 0.7f, my, mz - 0.7f) <= 0f && edge(mx - 0.7f, my, mz + 0.7f) <= 0f) continue;
             for (int q = gCell[k * 2], e = gCell[k * 2 + 1]; q < e; q++) {
                 float x = gP[q * 3], y = gP[q * 3 + 1], z = gP[q * 3 + 2];
-                float vig = 0.9f * sm((edgeR(x, y, z) - 0.38f) / 0.45f) + 0.4f * dim;              // darker toward the window's edge, Butcher's vignette
-                int c = gC[q]; if (vig > 0.01f) c = 0xFF000000 | mixc(c & 0xFFFFFF, mixc(fogCol(th), 0x000000, 0.5f), Math.min(1f, vig));
+                float er = edgeR(x, y, z), vig = 0.9f * sm((er - 0.38f) / 0.45f) + 0.4f * dim;       // darker toward the window's edge, Butcher's vignette
+                int c = gC[q]; if (vig > 0.01f) c = 0xFF000000 | mixc(c & 0xFFFFFF, vigCol, Math.min(1f, vig));
                 if (rippleAmp > 0f) { float rp = ripple((float) Math.sqrt(x * x + z * z)); if (rp > 0.004f) { y += rp; c = 0xFF000000 | mixc(c & 0xFFFFFF, rippleCol, Math.min(0.7f, rp / rippleAmp * 0.7f)); } }   // the last strike's wave lifts the ground and lights its crest
-                F.veil.v(x, y, z, c);
+                F.veil.vf(x, y, z, c, er >= 9f ? 0f : 1f - sm((er - 0.72f) / 0.27f));             // the fade from the same projection (edge() would project the point again)
             }
         }
     }
     /** The rest of the planet out to its horizon: a smooth curved surface in the fog's colour, fading at the window's edge. */
     static void farGround(Theme th, float dim) {
-        int rings = 24, seg = 72; float r0 = NEAR_R - 1.2f, r1 = 34f; int fc = fogCol(th), base = mixc(mul(th.top(), 0.84f), 0x1E2A50, 0.12f);
+        int rings = 18, seg = 48; float r0 = NEAR_R - 1.2f, r1 = 34f; int fc = fogCol(th), base = mixc(mul(th.top(), 0.84f), 0x1E2A50, 0.12f);
         for (int r = 0; r < rings; r++) for (int k = 0; k < seg; k++) {
             float ra = lerp(r0, r1, (float) Math.pow(r / (float) rings, 1.6f)), rb = lerp(r0, r1, (float) Math.pow((r + 1) / (float) rings, 1.6f));
             double a0 = k * Math.PI * 2 / seg, a1 = (k + 1) * Math.PI * 2 / seg;
@@ -700,7 +701,7 @@ final class Star3D {
     }
     /** Light over the whole window, soft at its edge like everything else (built on the window's own rings, so no hard rectangle). */
     static void flash(int rgb, float a) {
-        if (a < 0.01f) return; int rings = 9, seg = 36; float asp = Vox3D.lastAspect;
+        if (a < 0.01f) return; int rings = 7, seg = 28; float asp = Vox3D.lastAspect;
         for (int r = 0; r < rings; r++) for (int k = 0; k < seg; k++) {
             float r0 = r / (float) rings, r1 = (r + 1) / (float) rings; double a0 = k * Math.PI * 2 / seg, a1 = (k + 1) * Math.PI * 2 / seg;
             Vector3f p0 = onSky((float) Math.cos(a0) * r0, (float) Math.sin(a0) * r0, 3f, asp), p1 = onSky((float) Math.cos(a1) * r0, (float) Math.sin(a1) * r0, 3f, asp), q0 = onSky((float) Math.cos(a0) * r1, (float) Math.sin(a0) * r1, 3f, asp), q1 = onSky((float) Math.cos(a1) * r1, (float) Math.sin(a1) * r1, 3f, asp);

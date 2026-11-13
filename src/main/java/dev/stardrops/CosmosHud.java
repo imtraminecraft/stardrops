@@ -54,18 +54,21 @@ final class CosmosHud {
         if (u <= 0 || u >= 1 || fade < 0.01f) return;
         float dx = x1 - x0, dy = y1 - y0, len = (float) Math.sqrt(dx * dx + dy * dy), nx = dx / len, ny = dy / len, hx = x0 + dx * u, hy = y0 + dy * u, t = (System.currentTimeMillis() % 100000L) / 1000f;
         float a = Math.min(1f, u * 8f) * Math.min(1f, (1f - u) * 5f) * fade, tail = Math.min(len * u, 170f * k);
-        for (int i = 26; i >= 1; i--) {                                                                // smoke, then flame: far to near
-            float q = i / 26f, px = hx - nx * tail * q, py = hy - ny * tail * q, wob = (float) Math.sin(t * 22 + i * 1.3f + seed) * 2.2f * k * q;
-            if (i % 2 == 0) NebulaTex.glow(g, px - ny * wob, py + nx * wob - q * 5f * k, (4f + 9f * q) * k, (4f + 9f * q) * k, Gfx.argb(Math.round(70 * a * (1f - q)), 0x1A1418));
+        for (int i = 13; i >= 1; i--) {                                                                // smoke, then flame: far to near
+            float q = i / 13f, px = hx - nx * tail * q, py = hy - ny * tail * q, wob = (float) Math.sin(t * 22 + i * 1.3f + seed) * 2.2f * k * q;
+            NebulaTex.glow(g, px - ny * wob, py + nx * wob - q * 5f * k, (6f + 10f * q) * k, (6f + 10f * q) * k, Gfx.argb(Math.round(70 * a * (1f - q)), 0x1A1418));
         }
-        for (int i = 22; i >= 0; i--) {
-            float q = i / 22f, px = hx - nx * tail * q * 0.85f, py = hy - ny * tail * q * 0.85f, wob = (float) Math.sin(t * 31 + i * 1.7f + seed) * 1.6f * k * q, r = (4f + 13f * (1f - q) * (1f - q)) * k;
+        for (int i = 15; i >= 0; i--) {
+            float q = i / 15f, px = hx - nx * tail * q * 0.85f, py = hy - ny * tail * q * 0.85f, wob = (float) Math.sin(t * 31 + i * 1.7f + seed) * 1.6f * k * q, r = (5f + 13f * (1f - q) * (1f - q)) * k;
             int col = q < 0.18f ? Ritual.mixc(0xFFFFFF, hot, q / 0.18f) : Ritual.mixc(hot, flame, Math.min(1f, (q - 0.18f) / 0.5f));
-            NebulaTex.glow(g, px - ny * wob, py + nx * wob, r * 1.5f, r * 1.5f, Gfx.argb(Math.round(200 * a * (1f - q * 0.85f)), col)); if (i < 12) NebulaTex.glow(g, px, py, r * 0.7f, r * 0.7f, Gfx.argb(Math.round(220 * a * (1f - q)), 0xFFFFFF));
+            NebulaTex.glow(g, px - ny * wob, py + nx * wob, r * 1.5f, r * 1.5f, Gfx.argb(Math.round(200 * a * (1f - q * 0.85f)), col)); if (i < 7) NebulaTex.glow(g, px, py, r * 0.7f, r * 0.7f, Gfx.argb(Math.round(220 * a * (1f - q)), 0xFFFFFF));
         }
-        for (int i = 0; i < 46; i++) { float q = i / 46f, px = hx - nx * tail * q * 0.7f, py = hy - ny * tail * q * 0.7f; int w = Math.max(1, Math.round(3.6f * k * (1f - q)));      // the white-hot line down the middle
-            g.fill(Math.round(px) - w / 2, Math.round(py) - w / 2, Math.round(px) - w / 2 + w, Math.round(py) - w / 2 + w, Gfx.argb(Math.round(235 * a * (1f - q)), q < 0.35f ? 0xFFFFFF : hot)); }
-        for (int i = 0; i < 14; i++) {                                                                // sparks shed behind it, falling
+        { float ang = (float) Math.atan2(ny, nx), seg = tail * 0.7f / 12f;                                  // the white-hot line down the middle: 12 solid pieces along the path
+          Gfx.push(g); Gfx.translate(g, hx, hy); Gfx.rotate(g, ang);
+          for (int i = 0; i < 12; i++) { float q = i / 12f; float w = Math.max(1f, 3.6f * k * (1f - q)); Gfx.push(g); Gfx.translate(g, -seg * (i + 1), -w / 2f); Gfx.scale(g, seg + 0.6f, w);
+              g.fill(0, 0, 1, 1, Gfx.argb(Math.round(235 * a * (1f - q)), q < 0.35f ? 0xFFFFFF : hot)); Gfx.pop(g); }
+          Gfx.pop(g); }
+        for (int i = 0; i < 9; i++) {                                                                 // sparks shed behind it, falling
             float life = ((u * 5f + rnd(seed * 7 + i * 13)) % 1f), back = (0.1f + 0.9f * rnd(seed + i * 5)) * tail * 0.8f, sp = (rnd(seed * 3 + i * 11) - 0.5f) * 26f * k * life;
             float px = hx - nx * back - ny * sp, py = hy - ny * back + nx * sp + life * life * 16f * k; int w = life < 0.5f && i % 3 == 0 ? 2 : 1;
             g.fill(Math.round(px), Math.round(py), Math.round(px) + w, Math.round(py) + w, Gfx.argb(Math.round(240 * a * (1f - life)), i % 2 == 0 ? 0xFFFFFF : hot));

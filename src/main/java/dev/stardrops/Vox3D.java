@@ -24,6 +24,12 @@ final class Vox3D {
     static final class Mesh {
         float[] p = new float[3 * 4096]; int[] c = new int[4096]; int n; final boolean fade;
         Mesh(boolean fade) { this.fade = fade; }
+        /** A vertex with its edge fade already worked out (e = 0..1), so the point is not projected twice. */
+        void vf(float x, float y, float z, int argb, float e) {
+            if (fade) argb = Math.round((argb >>> 24) * e) << 24 | (argb & 0xFFFFFF);
+            if (n == c.length) { p = java.util.Arrays.copyOf(p, p.length * 2); c = java.util.Arrays.copyOf(c, c.length * 2); }
+            p[n * 3] = x; p[n * 3 + 1] = y; p[n * 3 + 2] = z; c[n++] = argb;
+        }
         void v(float x, float y, float z, int argb) {
             if (fade) { float e = edge(x, y, z); argb = Math.round((argb >>> 24) * e) << 24 | (argb & 0xFFFFFF); }
             if (n == c.length) { p = java.util.Arrays.copyOf(p, p.length * 2); c = java.util.Arrays.copyOf(c, c.length * 2); }
@@ -160,16 +166,18 @@ final class Vox3D {
     static void tri(Mesh m, Vector3f a, Vector3f b, Vector3f c, int col) { m.v(a.x, a.y, a.z, col); m.v(b.x, b.y, b.z, col); m.v(c.x, c.y, c.z, col); }
 
     // ------------------------------------------------------------------ glows and shapes (world space, facing the camera)
+    private static float[] ring(int n) { float[] t = new float[n * 2 + 2]; for (int k = 0; k <= n; k++) { t[k * 2] = (float) Math.cos(k * Math.PI * 2 / n); t[k * 2 + 1] = (float) Math.sin(k * Math.PI * 2 / n); } return t; }
+    private static final float[] CS8 = ring(8), CS16 = ring(16);
     static void glow(Mesh m, float x, float y, float z, float r, int rgb, float a) {
         if (a < 0.005f || r <= 0) return;
-        int seg = r > 1.2f ? 20 : 10, rings = r > 1.5f ? 4 : 1;                                       // big glows in rings, so the window's soft edge is followed closely
+        int seg = r > 1.2f ? 16 : 8, rings = r > 1.5f ? 3 : 1;                                        // big glows in rings, so the window's soft edge is followed closely
+        float[] cs = seg == 16 ? CS16 : CS8;
         float[] rr = new float[rings + 1], aa = new float[rings + 1];
         for (int k = 0; k <= rings; k++) { float f = k / (float) rings; rr[k] = r * f; aa[k] = a * (1f - f) * (1f - f * 0.35f); }
         for (int q = 0; q < rings; q++) {
             int c0 = argb(aa[q], rgb), c1 = argb(aa[q + 1], rgb);
             for (int k = 0; k < seg; k++) {
-                double a0 = k * Math.PI * 2 / seg, a1 = (k + 1) * Math.PI * 2 / seg;
-                float x0 = (float) Math.cos(a0), y0 = (float) Math.sin(a0), x1 = (float) Math.cos(a1), y1 = (float) Math.sin(a1);
+                float x0 = cs[k * 2], y0 = cs[k * 2 + 1], x1 = cs[k * 2 + 2], y1 = cs[k * 2 + 3];
                 float ia = rr[q], oa = rr[q + 1];
                 float px0 = x + (right.x * x0 + up.x * y0) * ia, py0 = y + (right.y * x0 + up.y * y0) * ia, pz0 = z + (right.z * x0 + up.z * y0) * ia;
                 float px1 = x + (right.x * x1 + up.x * y1) * ia, py1 = y + (right.y * x1 + up.y * y1) * ia, pz1 = z + (right.z * x1 + up.z * y1) * ia;
@@ -221,7 +229,7 @@ final class Vox3D {
     }
     /** A view-space disc at depth d filling the window, soft at the edge; colour by height (top..bottom). */
     static void sky(Mesh m, float aspect, float d, int top, int mid, int low, float a) {
-        float hh = d * (float) Math.tan(Math.toRadians(fovNow / 2)), hw = hh * aspect; int seg = 56, rings = 12;
+        float hh = d * (float) Math.tan(Math.toRadians(fovNow / 2)), hw = hh * aspect; int seg = 44, rings = 9;
         for (int r = 0; r < rings; r++) for (int k = 0; k < seg; k++) {
             float r0 = r / (float) rings, r1 = (r + 1) / (float) rings; double t0 = k * Math.PI * 2 / seg, t1 = (k + 1) * Math.PI * 2 / seg;
             float[][] pt = {{r0, (float) t0}, {r0, (float) t1}, {r1, (float) t1}, {r1, (float) t0}}; float[] xs = new float[8]; int[] cs = new int[4];
@@ -292,9 +300,11 @@ final class Vox3D {
         new Theme(0x040A10, 0x0C1E2A, 0x1E4A52, 0x6A7078, 0x7A8088, 0x4A4E56, 0x3A3E46, 0xD8FFF4)};  // The Mines (8): mithril-grey stone, a teal glow
 
     /** A world point at a fixed place in the window: (sx, sy) in -1..1 of the window, d deep. */
+    private static final Matrix4f invView = new Matrix4f(); private static Matrix4f invOf;
     static Vector3f onSky(float sx, float sy, float d, float aspect) {
         float hh = d * (float) Math.tan(Math.toRadians(fovNow / 2)), hw = hh * aspect;
-        return new Matrix4f(F.view).invert().transformPosition(new Vector3f((sx - shiftX) * hw, (sy - shiftY) * hh, -d));
+        if (invOf != F.view) { invView.set(F.view).invert(); invOf = F.view; }                          // once per frame, not once per call
+        return invView.transformPosition(new Vector3f((sx - shiftX) * hw, (sy - shiftY) * hh, -d));
     }
     static void stars(float t, float dim, float aspect) {
         for (int i = 0; i < 90; i++) {

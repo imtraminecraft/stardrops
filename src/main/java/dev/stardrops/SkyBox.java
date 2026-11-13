@@ -61,7 +61,7 @@ final class SkyBox {
         d.cross(a, u).normalize(); d.cross(u, v).normalize();
     }
     static void make() {
-        N = 1500; sDir = new float[N * 3]; sU = new float[N * 3]; sV = new float[N * 3]; sSize = new float[N]; sPh = new float[N]; sCol = new int[N];
+        N = 1100; sDir = new float[N * 3]; sU = new float[N * 3]; sV = new float[N * 3]; sSize = new float[N]; sPh = new float[N]; sCol = new int[N];
         Vector3f bu = new Vector3f(), bv = new Vector3f(); basis(BAND_N, bu, bv);
         for (int i = 0; i < N; i++) {
             Vector3f d;
@@ -152,14 +152,14 @@ final class SkyBox {
 
     static void draw(Q q, float t, float night, float[][][] figs, boolean shoot, boolean aur) {
         Vector3f d = new Vector3f(), u = new Vector3f(), v = new Vector3f();
-        for (float[] h : haze) { d.set(h[0], h[1], h[2]); basis(d, u, v); soft(q, d, u, v, h[3], (int) h[4], h[5] * night, 10); }          // the Milky Way's haze
+        for (float[] h : haze) { d.set(h[0], h[1], h[2]); basis(d, u, v); soft(q, d, u, v, h[3], (int) h[4], h[5] * night, 8); }          // the Milky Way's haze
         for (int i = 0; i < N; i++) {                                                                 // the stars
             float tw = sSize[i] > 0.0036f ? 0.72f + 0.28f * (float) Math.sin(t * (1.3f + (i % 7) * 0.35f) + sPh[i]) : 1f, s = sSize[i];
             float b = Math.min(1f, 0.35f + (s - 0.0016f) / 0.0042f * 1.1f) * night * tw;
             quad(q, sDir[i * 3], sDir[i * 3 + 1], sDir[i * 3 + 2], sU[i * 3], sU[i * 3 + 1], sU[i * 3 + 2], sV[i * 3], sV[i * 3 + 1], sV[i * 3 + 2], s, argb(b, sCol[i]));
             if (s > 0.0042f) {                                                                         // the bright ones: a halo and a four-point glint
                 d.set(sDir[i * 3], sDir[i * 3 + 1], sDir[i * 3 + 2]); u.set(sU[i * 3], sU[i * 3 + 1], sU[i * 3 + 2]); v.set(sV[i * 3], sV[i * 3 + 1], sV[i * 3 + 2]);
-                soft(q, d, u, v, s * 4.5f, sCol[i], 0.3f * night * tw, 8);
+                soft(q, d, u, v, s * 4.5f, sCol[i], 0.3f * night * tw, 6);
                 int c1 = argb(0.75f * night * tw, sCol[i]), c0 = argb(0, sCol[i]); float L = s * 5.5f, w = s * 0.45f;
                 for (int k = 0; k < 2; k++) { Vector3f a = k == 0 ? u : v, o = k == 0 ? v : u;
                     q.v(d.x - a.x * L, d.y - a.y * L, d.z - a.z * L, c0); q.v(d.x + o.x * w, d.y + o.y * w, d.z + o.z * w, c1); q.v(d.x + a.x * L, d.y + a.y * L, d.z + a.z * L, c0); q.v(d.x - o.x * w, d.y - o.y * w, d.z - o.z * w, c1); }
