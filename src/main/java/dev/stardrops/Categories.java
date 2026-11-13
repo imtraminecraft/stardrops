@@ -85,11 +85,20 @@ final class Categories {
     static boolean hasSubs(Group g) { return g.id().equals("myth") || g.id().equals("slayer") || ExtraData.group(g.id()).size() > 1; }
 
     static final List<Cat> ALL = List.of(
-        new Cat("bosses", "Mob Drops", ":raredrops:", 0xFFFF5A5A, false, "Slayers, the Crimson Isle, the End and the creatures of the Mines.", List.of(
+        new Cat("bosses", "Mob Drops", ":raredrops:", 0xFFFF5A5A, false, "Every mob's rare drops, sorted by where the mob spawns, then by the mob.", List.of(
             new Group("slayer", "Slayers", ":grp_slayers:", 0xFFFF5A5A, "What plays when a slayer boss drops something.", SLAYER_TYPES),
-            new Group("crimson", "Crimson Isle", ":grp_crimson:", 0xFFFF6A3A, "The Crimson Isle's minibosses and the Magma Boss.", STAR_TYPES),
-            new Group("dragon", "The End", ":grp_end:", 0xFFC77DFF, "Ender Dragons: the Ender Dragon pet, the Aspect of the Dragons and the dragons' rare loot.", STAR_TYPES),
-            new Group("mobs", "Mines", ":grp_mines:", 0xFF7FE8D8, "Rare drops of the Dwarven Mines' and the Crystal Hollows' creatures.", STAR_TYPES))),
+            new Group("mobs_hub", "Hub", "rotten_flesh", 0xFF8FD0FF, "The Hub's graveyard, wolves and the Shiny Pig.", STAR_TYPES),
+            new Group("mobs_spider", "Spider's Den", "spider_eye", 0xFFC46AFF, "Spiders, Arachne and her keepers.", STAR_TYPES),
+            new Group("dragon", "The End", ":grp_end:", 0xFFC77DFF, "Ender Dragons, Zealots, Endermen, Voidlings and the Obsidian Defender.", STAR_TYPES),
+            new Group("crimson", "Crimson Isle", ":grp_crimson:", 0xFFFF6A3A, "The minibosses, the Magma Boss and every creature of the Crimson Isle.", STAR_TYPES),
+            new Group("mobs_deep", "Deep Caverns", "lapis_lazuli", 0xFF6FA8FF, "The miners, slimes and pigmen of the Deep Caverns.", STAR_TYPES),
+            new Group("mobs", "Dwarven Mines", ":grp_mines:", 0xFF7FE8D8, "Ghosts, goblins, Treasure Hoarders and the Glacite creatures.", STAR_TYPES),
+            new Group("mobs_hollows", "Crystal Hollows", "amethyst_shard", 0xFFC59BFF, "Automatons, Grunts and Bal.", STAR_TYPES),
+            new Group("mobs_park", "The Park", "oak_log", 0xFF7BE05A, "The spirits of the Howling Cave.", STAR_TYPES),
+            new Group("mobs_marsh", "Moonglade Marsh", "lily_pad", 0xFF5BD3B0, "Galatea: Nessie, the Loch Emperor and the marsh.", STAR_TYPES),
+            new Group("mobs_canyon", "Torrhus Canyon", "honeycomb", 0xFFE0A060, "Galatea: the canyon's ants, isopods and spirits.", STAR_TYPES),
+            new Group("mobs_spooky", "Spooky Festival", "jack_o_lantern", 0xFFFF9A3A, "The Spooky Festival's creatures.", STAR_TYPES),
+            new Group("mobs_dungeon", "Catacombs", "skeleton_skull", 0xFFB0B6C2, "Dungeon mobs' rare drops.", STAR_TYPES))),
         new Cat("mythological", "Mythological", ":mytho:", 0xFF55D8FF, false, "Mythological Ritual is an event that occurs with the Mythological Ritual perk.", List.of(
             new Group("myth", "Mythological Mobs", ":mytho:", 0xFF55D8FF, "What plays when a ritual creature dies.", MYTH_TYPES),
             new Group("treasure", "Treasure", ":treasure:", 0xFFFFD25A, "What plays when a burrow holds treasure.", MYTH_TYPES))),

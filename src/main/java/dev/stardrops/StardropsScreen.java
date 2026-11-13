@@ -2340,7 +2340,7 @@ public class StardropsScreen extends Screen {
     // ---- small row builders
 
     private Row hero(String icon, String title, String sub, int accent) {
-        Row h = row(0, icon, title, sub, accent); h.kind = HERO; h.h = 30; h.noSearch = true; return h;      // compact: one line, like the Visuals page
+        Row h = row(0, icon, title, sub, accent); h.kind = HERO; h.h = 84; h.noSearch = true; return h;      // the big centred card: the icon floating in the middle, the name, the words under it
     }
     private void wipPanel(String icon, String title, String sub) {
         Row wp = row(0, icon, title, sub, Ui.DIM); wp.kind = PANEL; wp.h = 150; wp.noSearch = true; rows.add(wp);
@@ -2573,7 +2573,7 @@ public class StardropsScreen extends Screen {
             if (r.cell > 0) avail -= r.cell * r.ctls.size(); else for (Ctl c : r.ctls) avail -= c.width() + 8;
             if (avail > 70 && Gfx.w(font, r.sub) > avail) { r.wrapSub = true; r.subW = avail; r.h = Math.max(r.h, 19 + 11 * wrap(r.sub, avail).size()); }
         }
-        for (Row r : rows) if (r.kind == HERO) r.h = 30;
+        for (Row r : rows) if (r.kind == HERO) r.h = Math.max(r.h, 76 + 11 * wrap(r.sub, cw - 60).size());      // the words always fit inside the card
         if (landing() && query.isBlank()) scroll = 0;
         relayout();
         if (landing() && query.isBlank()) {                                // main pages never scroll: the tiles get a little shorter until everything fits
@@ -2716,6 +2716,7 @@ public class StardropsScreen extends Screen {
         int nRng = 0, nChat = 0; java.util.LinkedHashSet<String> mobs = new java.util.LinkedHashSet<>();
         for (StardropsConfig.DropCfg dc : all) { if (dc.anim == 2) nRng++; if (dc.announce) nChat++; }
         for (DropData.Drop d : s.drops) if (d.mob != null && !d.mob.isBlank()) mobs.add(mobName(d.mob));
+        if (mobs.size() == 1 && mobs.iterator().next().equalsIgnoreCase(s.name)) mobs.clear();
         Row hd = row(0, single ? grp.icon() : srcIcon(s), single ? grp.name() : nm, String.join(", ", mobs), s.color()); hd.v2 = 4; hd.h = mobs.isEmpty() ? 20 : 30; hd.noSearch = true;           // the header: what this is, how many, and who drops them
         hd.pills = List.of(s.drops.size() + "|drops|" + 0xFFA9ADD8, nRng + "|RNG|" + GOLD, nChat + "|in chat|" + GRN); rows.add(hd);
         Row mr = row(0, null, "Every drop here", "changes all " + all.size() + " at once", s.color()); mr.v2 = 2; mr.h = 26; mr.noSearch = true;
@@ -2743,7 +2744,7 @@ public class StardropsScreen extends Screen {
         Row dr = row(0, d.icon, d.name, d.chance.isEmpty() ? "chance unknown" : d.chance, s.color());
         dr.iconId = s == TreasureData.SOURCE && !TreasureData.headArt(d.id) ? null : d.id; dr.subColor = d.chance.isEmpty() ? Ui.DIM : Ui.odds(d.odds);
         dr.cell = CELL; dr.dcfg = dc; dr.dropRank = Math.max(0, d.rank);
-        dr.v2 = 1; dr.h = 24; dr.cell = 0; dr.mob = d.mob == null ? "" : mobName(d.mob); dr.odds = d.chance.isEmpty() ? "chance unknown" : d.chance; dr.oddsCol = dr.subColor; dr.burst = dc;
+        dr.v2 = 1; dr.h = 24; dr.cell = 0; dr.mob = d.mob == null || mobName(d.mob).equalsIgnoreCase(s.name) ? "" : mobName(d.mob);      // (not repeated on a page that is the creature itself) dr.odds = d.chance.isEmpty() ? "chance unknown" : d.chance; dr.oddsCol = dr.subColor; dr.burst = dc;
         Runnable pv = isSlayerSrc(s) ? () -> play(() -> DropListener.playDrop(s, d)) : null;          // Preview: only where there is an animation to show
         dr.ctls.add(new Plays(() -> Math.max(1, Math.min(3, dc.anim)), v -> StardropsConfig.setAnim(dc, v), pv, dc));
         dr.ctls.add(new ChatSw(() -> dc.announce, v -> dc.announce = v));
@@ -3048,6 +3049,32 @@ public class StardropsScreen extends Screen {
         for (Ctl c : r.ctls) { c.key = tab + r.title + "|v2|" + (ci++); c.draw(g, r.y, r.h, mx >= c.x0 && mx < c.x1 && my >= r.y && my < r.y + r.h && my >= lt && my < lb); }
     }
 
+    /** Spotify, top right above the menu: a small pop-up box while you are linked (the song when one plays). Click: Visuals > Music. */
+    private long spotAt; private boolean spotWas;
+    private int[] spotBox() {
+        int top = StardropsConfig.get().previewAt == 0 ? Math.round((dockH() + DOCK_GAP) * dockK) : 0, y = Math.max(2, py - top - 25);
+        Spotify.Track tr = Spotify.track; String l2 = tr != null && Spotify.playing ? tr.name() + "  \u00B7  " + tr.artists() : "Linked";
+        int w = Math.max(70, Math.min(170, Math.max(Gfx.w(font, "Spotify"), Gfx.w(font, l2) * 6 / 10) + 30)); int x1 = px + pw - 22;
+        return new int[]{x1 - w, y, x1, y + 22};
+    }
+    private void drawSpotifyPop(GuiGraphicsExtractor g, int mx, int my, long now) {
+        boolean on = Spotify.linked(); if (on && !spotWas) spotAt = now; spotWas = on; if (!on) return;
+        float k = StardropsConfig.get().menuAnimated ? ease(Math.min(1f, (now - Math.max(spotAt, born + 250)) / 380f)) : 1f; if (k <= 0.01f) return;
+        int[] b = spotBox(); boolean hv = in2(mx, my, b); int dy = Math.round((1f - k) * -8f);
+        Gfx.push(g); Gfx.translate(g, 0, dy);
+        int w = b[2] - b[0], a = Math.round(255 * k);
+        rnd(g, b[0] - 1, b[1] + 1, w + 2, 23, 7, Gfx.argb(Math.round(70 * k), 0x000000));                                   // a soft shadow: it floats
+        rnd(g, b[0], b[1], w, 22, 7, Gfx.argb(a, hv ? 0x18323A : 0x10231E)); rndOut(g, b[0], b[1], w, 22, 7, Gfx.argb(Math.round((hv ? 230 : 150) * k), 0x1ED760));
+        float br = Spotify.playing && !STILL ? 0.5f + 0.5f * (float) Math.sin(now / 260.0) : 1f;
+        NebulaTex.glow(g, b[0] + 10, b[1] + 11, 9, 9, Gfx.argb(Math.round(110 * br * k), 0x1ED760));
+        rnd(g, b[0] + 7, b[1] + 8, 6, 6, 3, Gfx.argb(Math.round((150 + 105 * br) * k), 0x1ED760));
+        Spotify.Track tr = Spotify.track; boolean song = tr != null && Spotify.playing;
+        Gfx.text(g, font, "Spotify", b[0] + 18, b[1] + 3, Gfx.argb(a, 0x8FF0B0));
+        String l2 = song ? tr.name() + "  \u00B7  " + tr.artists() : "Linked";
+        Gfx.push(g); Gfx.translate(g, b[0] + 18, b[1] + 13); Gfx.scale(g, 0.6f); Gfx.text(g, font, Gfx.fit(font, l2, Math.round((w - 22) / 0.6f)), 0, 0, Gfx.argb(a, 0xC8E8D4)); Gfx.pop(g);
+        Gfx.pop(g);
+    }
+
     // ------------------------------------------------------------------ Quick actions: search and commands in one box (the search box, Ctrl F or /)
     private boolean qaOpen; private String qaText = ""; private int qaSel; private long qaAt;
     private String qaSrcName; private List<StardropsConfig.DropCfg> qaSrcCfgs;
@@ -3209,6 +3236,7 @@ public class StardropsScreen extends Screen {
     /** A page's quick switches: its most used on/off switches, two to a line (the same look as the Visuals page). */
     @SuppressWarnings("unchecked")
     private void quick(String[] labels, String[] icons, BooleanSupplier[] get, Consumer<Boolean>... set) {
+        if (true) return;                                                                  // the author took the Quick switches off the landing pages again (13 Nov); the switches live on their own pages
         rows.add(section("Quick switches"));
         Row q = new Row(); q.kind = VQUICK; q.noSearch = true; q.h = ((labels.length + 1) / 2) * 22 - 2;
         q.qLabels = labels; q.qIcons = icons; q.qGet = get; q.qSet = set; q.qTog = new Tog[labels.length];
@@ -3666,7 +3694,7 @@ public class StardropsScreen extends Screen {
     /** The pinned Settings block at the bottom of the sidebar: a line, then the Settings tab (its pages open upwards). */
     private int pinTop() { return py + ph - 29 - (tab == Tab.GENERAL ? Math.round(subExp * SUBH * subs().length) + 2 : 0); }
     private int sideBottom() { return query.isBlank() ? pinTop() - 2 : py + ph - 4; }
-    private int sideMax() { if (!query.isBlank()) return Math.max(0, searchSideH - (ph - 70 - 8)); return Math.max(0, slotY(4) + tp() + 4 + srcExtra() + (tab == Tab.GENERAL ? 0 : Math.round(subExp * subH() * subs().length)) - (sideBottom() - (py + NAV_TOP) - 4)); }
+    private int sideMax() { if (!query.isBlank()) return Math.max(0, searchSideH - (ph - 70 - 8)); return Math.max(0, slotY(3) + tp() + 4 + srcExtra() + (tab == Tab.GENERAL ? 0 : Math.round(subExp * subH() * subs().length)) - (sideBottom() - (py + NAV_TOP) - 4)); }
     private boolean inSide(double mx, double my) { return !cosWin() && mx >= px && mx < px + sw && my >= py + 42 && my < py + ph - 4; }
     private int[] tabBox(int i) {
         Tab ti = Tab.values()[i];
@@ -3813,12 +3841,6 @@ public class StardropsScreen extends Screen {
         if (pass == 0) {                                                                           // the group labels
             int[] lb1 = tabBox(Tab.DROPS.ordinal()), lb2 = tabBox(Tab.ANIMATIONS.ordinal());
             for (int q = 0; q < 2; q++) { int ly = (q == 0 ? lb1 : lb2)[1] - LBL + 3; Gfx.push(g); Gfx.translate(g, px + 14, ly); Gfx.scale(g, 0.6f); Gfx.text(g, font, q == 0 ? "B R O W S E" : "C U S T O M I Z E", 0, 0, 0xFF5A5E92); Gfx.pop(g); }
-            int[] cb = cosNav(); boolean ch = mx >= cb[0] && mx < cb[2] && my >= cb[1] && my < cb[3] && my < sideBottom();       // Cosmetics: opens its own window
-            float chv = anim("tab|cos", ch ? 1f : 0f, 48f); int cc = 0xFFC77DFF;
-            if (chv > 0.01f) rnd(g, cb[0], cb[1], cb[2] - cb[0], cb[3] - cb[1], 5, Gfx.argb(Math.round(255 * chv), Ui.ROW_HOVER & 0xFFFFFF));
-            rnd(g, cb[0] + 5, cb[1] + 2, 18, 18, 4, Gfx.argb(Math.round(255 * (0.16f + 0.1f * chv)), cc & 0xFFFFFF));
-            Icons.drawCentered(g, ":cosmetics:", cb[0] + 14, cb[1] + 11, ch ? now : 2400L);
-            Gfx.text(g, font, "Cosmetics", cb[0] + 28 + Math.round(chv * 2), cb[1] + 7, Canvas.mix(Canvas.mix(Ui.DIM, cc, 0.2f), Ui.TEXT, 0.35f + chv * 0.6f));
         }
         for (int i = 0; i < Tab.values().length; i++) {
             Tab t = Tab.values()[i]; if (hiddenTab(t) || (t == Tab.GENERAL) != (pass == 1) || t == Tab.SOUNDS || t == Tab.CHAT) continue; int[] b = tabBox(i);
@@ -3839,11 +3861,6 @@ public class StardropsScreen extends Screen {
                     if (q < 2) { Gfx.text(g, font, " \u00B7 ", sx0, 0, 0xFF4A4E80); sx0 += Gfx.w(font, " \u00B7 "); } }
                 Gfx.pop(g);
             } else Gfx.text(g, font, t.label, b[0] + 28 + dx, b[1] + 7 + toff, nameCol);
-            if (t == Tab.GENERAL && Spotify.linked()) {                                            // the foot: Spotify's status beside Settings, its dot breathing while music plays
-                float br = Spotify.playing && !STILL ? 0.5f + 0.5f * (float) Math.sin(now / 260.0) : 1f; String sl = "Spotify"; int slw = Gfx.w(font, sl);
-                Gfx.push(g); Gfx.translate(g, b[2] - 4 - slw * 0.7f, b[1] + 8 + toff); Gfx.scale(g, 0.7f); Gfx.text(g, font, sl, 0, 0, 0xFF8FE0B0); Gfx.pop(g);
-                int dx0 = Math.round(b[2] - 10 - slw * 0.7f); rnd(g, dx0, b[1] + 8 + toff, 5, 5, 2, Gfx.argb(Math.round(150 + 105 * br), 0x1ED760));
-            }
             Gfx.pop(g);
         }
 
@@ -3917,6 +3934,7 @@ public class StardropsScreen extends Screen {
             float tt = masterAt == 0L ? 9f : (now - masterAt) / 1000f, fly = on ? Math.min(1f, tt / 2.6f) : 1f - Math.min(1f, tt / 3.0f);   // the launch takes 2.6 s, the landing 3 s (LaunchPad eases each part)
             LaunchPad.draw(g, font, b[0], b[1], w, h, on, fly, mv, hv, pulse, now, STILL);
         }
+        if (!cosWin()) drawSpotifyPop(g, mx, my, now);
         // page header
         if (fx(tab) && query.isBlank() && !cosWin()) {                                                    // Drop effects: Animations, Sounds and Chat as tabs, then where you are
             int sx = cx - 1, sy0 = py + 6; int tot = 4; for (Tab ft : FX_TABS) tot += Gfx.w(font, ft.label) + 14;
@@ -3971,17 +3989,6 @@ public class StardropsScreen extends Screen {
             if (r.kind == CHATPREV) { drawChatPrev(g, r); continue; }
             if (r.kind == COSPREV) { drawCosPreview(g, r); continue; }
             if (r.v2 > 0) { drawV2(g, r, mx, my); continue; }
-            if (r.kind == HERO) {                                                   // the page's header, compact: its icon, name, a line of words, and a counter on the right
-                pill(g, r.x, r.y, r.w, r.h, Ui.ROW); long nw = System.currentTimeMillis(); g.fill(r.x + 1, r.y + 4, r.x + 3, r.y + r.h - 4, r.accent);
-                if (Icons.has(r.icon)) Icons.draw(g, r.icon, r.x + 8, r.y + 7, nw); else if (r.icon != null) Gfx.item(g, r.icon, r.x + 8, r.y + 7);
-                int bw = 0;
-                if (r.badge != null) { String[] bp = r.badge.split("\\|"); int nw0 = Gfx.w(font, bp[0]); bw = nw0 + Gfx.w(font, bp[1]) + 19; int bx = r.x + r.w - bw - 8, by = r.y + 8;
-                    pill(g, bx, by, bw, 15, Canvas.mix(Ui.PANEL2, Ui.ACCENT, 0.12f)); rout(g, bx, by, bw, 15, Gfx.argb(110, Ui.ACCENT & 0xFFFFFF));
-                    Gfx.text(g, font, bp[0], bx + 7, by + 4, 0xFFFFC857); Gfx.text(g, font, bp[1], bx + 12 + nw0, by + 4, Ui.SUB); }
-                Gfx.text(g, font, r.title, r.x + 30, r.y + 5, Ui.TEXT);
-                marquee(g, r.sub, r.x + 30, r.y + 17, Math.max(40, r.w - 40 - bw - (bw > 0 ? 12 : 0)), Ui.SUB);
-                continue;
-            }
             if (r.kind == PANEL || r.kind == HERO) {                                // a centred banner (HERO: just icon, title, words) or a construction site for a page that is not built yet
                 pill(g, r.x, r.y, r.w, r.h, r.kind == PANEL ? 0xFF06071A : Ui.ROW);
                 int mid = r.x + r.w / 2; long nw = System.currentTimeMillis(); float sec = (nw % 3600000L) / 1000f;
@@ -4072,9 +4079,7 @@ public class StardropsScreen extends Screen {
             if (sf || sh) rndOut(g, sb[0], sb[1], sb[2] - sb[0], 16, 8, Gfx.argb(sf ? 190 : 90, Ui.ACCENT & 0xFFFFFF));
             lens(g, sb[0] + 8, sb[1] + 8, sf ? 0xFFFFFFFF : 0xFFA9ADD8);
             if (query.isEmpty() && !searchField.isFocused()) {                                         // the hint: it does more than search
-                Gfx.text(g, font, Gfx.fit(font, "Search or do anything", sb[2] - sb[0] - 39), sb[0] + 17, sb[1] + 4, 0xFF6C70A2);
-                int kw = Gfx.w(font, "Ctrl F") / 2 + 6; rnd(g, sb[2] - kw - 4, sb[1] + 3, kw, 10, 3, 0xFF1A1C44);
-                Gfx.push(g); Gfx.translate(g, sb[2] - kw - 1, sb[1] + 6); Gfx.scale(g, 0.5f); Gfx.text(g, font, "Ctrl F", 0, 0, 0xFFA9ADD8); Gfx.pop(g);
+                Gfx.text(g, font, "Search", sb[0] + 17, sb[1] + 4, 0xFF6C70A2);
             }
             searchField.extractRenderState(g, mx, my, delta);
         } else searchField.setFocused(false);
@@ -4350,6 +4355,7 @@ public class StardropsScreen extends Screen {
 
         if (button == 0 && in2(mx, my, achBtn())) { Codex.open(achBtn(), -1); return true; }
         if (button == 0 && !cosWin() && in2(mx, my, cosBtn())) { openCos(); return true; }
+        if (button == 0 && !cosWin() && Spotify.linked() && in2(mx, my, spotBox())) { goPage(Tab.VISUALS, 0); return true; }      // the Spotify box: Visuals > Music
         if (button == 0 && !cosWin() && mx >= masterBox()[0] && mx < masterBox()[2] && my >= masterBox()[1] && my < masterBox()[3]) {
             StardropsConfig mc = StardropsConfig.get(); boolean on = !(mc.masterAnimate || mc.masterAnnounce);
             mc.setMaster(on, on); StardropsConfig.save();
@@ -4374,7 +4380,6 @@ public class StardropsScreen extends Screen {
             }
             if (inSide(mx, my) && mx >= b[0] && mx < b[2] && my >= b[1] && my < b[3]) { dropSrc = null; dropSrcName = null; if (tab != Tab.values()[i]) { tabChanged = System.currentTimeMillis(); } tab = Tab.values()[i]; subSel[tab.ordinal()] = -1; scroll = 0; open.removeIf(o -> o.startsWith("dd_")); return true; }
         }
-        if (button == 0 && query.isBlank() && !cosWin() && inSide(mx, my) && my < sideBottom() && in2(mx, my, cosNav())) { openCos(); return true; }
         if (button == 0 && query.isBlank() && fx(tab)) for (int q = 0; q < 3; q++) if (fxSeg[q] != null && in2(mx, my, fxSeg[q])) { goFx(FX_TABS[q]); return true; }
         if (srcTab() && srcExp > 0.9f && query.isBlank()) {
             for (int j = 0; j < srcList.size(); j++) {

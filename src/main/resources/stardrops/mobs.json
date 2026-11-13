@@ -1,112 +1,6 @@
 {
- "v": 7,
+ "v": 8,
  "sources": [
-  {
-   "id": "mines",
-   "name": "Mines",
-   "boss": "the Mines",
-   "icon": "prismarine_crystals",
-   "color": "#7FE8D8",
-   "group": "mobs",
-   "drops": [
-    {
-     "name": "Glacite Jewel",
-     "id": "GLACITE_JEWEL", "mob": "ice_walker",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Rare",
-     "chance": "1 in 25",
-     "rank": 1,
-     "flat": true
-    },
-    {
-     "name": "Sorrow",
-     "id": "SORROW", "mob": "ghost",
-     "icon": "ghast_tear",
-     "skull": false,
-     "odds": "Rare",
-     "chance": "1 in 833",
-     "rank": 1,
-     "flat": true
-    },
-    {
-     "name": "Volta",
-     "id": "VOLTA", "mob": "ghost",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Rare",
-     "chance": "1 in 500",
-     "rank": 1,
-     "flat": true
-    },
-    {
-     "name": "Pure Mithril Gem",
-     "id": "PET_ITEM_PURE_MITHRIL_GEM", "mob": "diamond_goblin",
-     "icon": "player_head",
-     "skull": true,
-     "odds": "Rare",
-     "chance": "1 in 100",
-     "rank": 1
-    },
-    {
-     "name": "Synthetic Heart",
-     "id": "SYNTHETIC_HEART", "mob": "automaton",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Rare",
-     "chance": "1 in 100",
-     "rank": 1,
-     "flat": true
-    },
-    {
-     "name": "Glacite Chunk",
-     "id": "GLACITE_SHARD", "mob": "ice_walker",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Pray RNGesus",
-     "chance": "1 in 1,000",
-     "rank": 3,
-     "flat": true
-    },
-    {
-     "name": "Plasma",
-     "id": "PLASMA", "mob": "ghost",
-     "icon": "paper",
-     "skull": false,
-     "odds": "Pray RNGesus",
-     "chance": "1 in 1,000",
-     "rank": 3,
-     "flat": true
-    },
-    {
-     "name": "Ghostly Boots",
-     "id": "GHOST_BOOTS", "mob": "ghost",
-     "icon": "leather_boots",
-     "skull": false,
-     "odds": "RNGesus Incarnate",
-     "chance": "1 in 10,000",
-     "rank": 3
-    },
-    {
-     "name": "Legendary Bal Pet",
-     "id": "BAL;4", "mob": "bal",
-     "icon": "player_head",
-     "skull": true,
-     "odds": "RNGesus Incarnate",
-     "chance": "1 in 18,519",
-     "rank": 3
-    },
-    {
-     "name": "Epic Bal Pet",
-     "id": "BAL;3", "mob": "bal",
-     "icon": "player_head",
-     "skull": true,
-     "odds": "Pray RNGesus",
-     "chance": "1 in 7,937",
-     "rank": 3
-    }
-   ]
-  },
   {
    "id": "crystal_nucleus",
    "name": "Crystal Nucleus",
@@ -411,7 +305,8 @@
    "drops": [
     {
      "name": "Legendary Ender Dragon Pet",
-     "id": "ENDER_DRAGON;4", "mob": "dragon",
+     "id": "ENDER_DRAGON;4",
+     "mob": "dragon",
      "icon": "dragon_egg",
      "skull": false,
      "odds": "Pray RNGesus",
@@ -420,7 +315,8 @@
     },
     {
      "name": "Epic Ender Dragon Pet",
-     "id": "ENDER_DRAGON;3", "mob": "dragon",
+     "id": "ENDER_DRAGON;3",
+     "mob": "dragon",
      "icon": "dragon_egg",
      "skull": false,
      "odds": "Pray RNGesus",
@@ -429,7 +325,8 @@
     },
     {
      "name": "Aspect of the Dragons",
-     "id": "ASPECT_OF_THE_DRAGON", "mob": "dragon",
+     "id": "ASPECT_OF_THE_DRAGON",
+     "mob": "dragon",
      "icon": "diamond_sword",
      "skull": false,
      "odds": "Very Rare",
@@ -439,7 +336,8 @@
     },
     {
      "name": "Dragon Horn",
-     "id": "DRAGON_HORN", "mob": "dragon",
+     "id": "DRAGON_HORN",
+     "mob": "dragon",
      "icon": "paper",
      "skull": false,
      "odds": "Very Rare",
@@ -449,23 +347,3160 @@
     },
     {
      "name": "Dragon Claw",
-     "id": "DRAGON_CLAW", "mob": "dragon",
+     "id": "DRAGON_CLAW",
+     "mob": "dragon",
      "icon": "paper",
      "skull": false,
      "odds": "Very Rare",
      "chance": "",
      "rank": 2,
      "flat": true
+    }
+   ]
+  },
+  {
+   "id": "mobs_hub_crypt_ghoul",
+   "name": "Crypt Ghoul",
+   "boss": "Crypt Ghoul",
+   "icon": "skull",
+   "color": "#8FD0FF",
+   "group": "mobs_hub",
+   "area": "Hub",
+   "drops": [
+    {
+     "name": "Epic Ghoul Pet",
+     "id": "GHOUL;3",
+     "mob": "crypt_ghoul",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 33,333",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Ghoul Pet",
+     "id": "GHOUL;4",
+     "mob": "crypt_ghoul",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 100,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_hub_golden_ghoul",
+   "name": "Golden Ghoul",
+   "boss": "Golden Ghoul",
+   "icon": "skull",
+   "color": "#8FD0FF",
+   "group": "mobs_hub",
+   "area": "Hub",
+   "drops": [
+    {
+     "name": "Golden Powder",
+     "id": "GOLDEN_POWDER",
+     "mob": "golden_ghoul",
+     "icon": "glowstone_dust",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 2,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_hub_old_wolf",
+   "name": "Old Wolf",
+   "boss": "Old Wolf",
+   "icon": "skull",
+   "color": "#8FD0FF",
+   "group": "mobs_hub",
+   "area": "Hub",
+   "drops": [
+    {
+     "name": "Wolf Talisman",
+     "id": "WOLF_TALISMAN",
+     "mob": "old_wolf",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    },
+    {
+     "name": "Epic Hound Pet",
+     "id": "HOUND;3",
+     "mob": "old_wolf",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 33,333",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Hound Pet",
+     "id": "HOUND;4",
+     "mob": "old_wolf",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 100,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_hub_shiny_pig",
+   "name": "Shiny Pig",
+   "boss": "Shiny Pig",
+   "icon": "skull",
+   "color": "#8FD0FF",
+   "group": "mobs_hub",
+   "area": "Hub",
+   "drops": [
+    {
+     "name": "Farming for Dummies",
+     "id": "FARMING_FOR_DUMMIES",
+     "mob": "shiny_pig",
+     "icon": "book",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20.8",
+     "rank": 0
+    },
+    {
+     "name": "Potato Spreading",
+     "id": "POTATO_SPREADING",
+     "mob": "shiny_pig",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Occasional",
+     "chance": "1 in 69.4",
+     "rank": 0
+    },
+    {
+     "name": "Enchanted Book",
+     "id": "HARVESTING;6",
+     "mob": "shiny_pig",
+     "icon": "enchanted_book",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 104",
+     "rank": 2
+    },
+    {
+     "name": "Flying Pig",
+     "id": "PET_ITEM_FLYING_PIG",
+     "mob": "shiny_pig",
+     "icon": "feather",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 693",
+     "rank": 2
+    },
+    {
+     "name": "Blood God Crest",
+     "id": "BLOOD_GOD_CREST",
+     "mob": "shiny_pig",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,041",
+     "rank": 3
+    },
+    {
+     "name": "Potato Talisman",
+     "id": "POTATO_TALISMAN",
+     "mob": "shiny_pig",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 2,079",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_hub_wolf",
+   "name": "Wolf",
+   "boss": "Wolf",
+   "icon": "skull",
+   "color": "#8FD0FF",
+   "group": "mobs_hub",
+   "area": "Hub",
+   "drops": [
+    {
+     "name": "Epic Hound Pet",
+     "id": "HOUND;3",
+     "mob": "wolf",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 100,000",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Hound Pet",
+     "id": "HOUND;4",
+     "mob": "wolf",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 333,333",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_hub_zombie_villager",
+   "name": "Zombie Villager",
+   "boss": "Zombie Villager",
+   "icon": "skull",
+   "color": "#8FD0FF",
+   "group": "mobs_hub",
+   "area": "Hub",
+   "drops": [
+    {
+     "name": "Poisonous Potato",
+     "id": "POISONOUS_POTATO",
+     "mob": "zombie_villager",
+     "icon": "poisonous_potato",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_spider_arachne",
+   "name": "Arachne",
+   "boss": "Arachne",
+   "icon": "skull",
+   "color": "#C46AFF",
+   "group": "mobs_spider",
+   "area": "Spider's Den",
+   "drops": [
+    {
+     "name": "Epic Tarantula Pet",
+     "id": "TARANTULA;3",
+     "mob": "arachne",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    },
+    {
+     "name": "Legendary Tarantula Pet",
+     "id": "TARANTULA;4",
+     "mob": "arachne",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_spider_arachne_s_keeper",
+   "name": "Arachne's Keeper",
+   "boss": "Arachne's Keeper",
+   "icon": "skull",
+   "color": "#C46AFF",
+   "group": "mobs_spider",
+   "area": "Spider's Den",
+   "drops": [
+    {
+     "name": "Arachne's Gloves",
+     "id": "ARACHNE_GLOVES",
+     "mob": "arachne_s_keeper",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 40",
+     "rank": 0
+    },
+    {
+     "name": "Arachne's Necklace",
+     "id": "ARACHNE_NECKLACE",
+     "mob": "arachne_s_keeper",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 40",
+     "rank": 0
+    },
+    {
+     "name": "Arachne's Cloak",
+     "id": "ARACHNE_CLOAK",
+     "mob": "arachne_s_keeper",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 40",
+     "rank": 0
+    },
+    {
+     "name": "Arachne's Belt",
+     "id": "ARACHNE_BELT",
+     "mob": "arachne_s_keeper",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 40",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_spider_broodmother",
+   "name": "Broodmother",
+   "boss": "Broodmother",
+   "icon": "skull",
+   "color": "#C46AFF",
+   "group": "mobs_spider",
+   "area": "Spider's Den",
+   "drops": [
+    {
+     "name": "Luxurious Spool",
+     "id": "LUXURIOUS_SPOOL",
+     "mob": "broodmother",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Travel Scroll to Spider's Den Top of Nest",
+     "id": "SPIDERS_DEN_TOP_TRAVEL_SCROLL",
+     "mob": "broodmother",
+     "icon": "map",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 3,333",
+     "rank": 3
+    },
+    {
+     "name": "Epic Tarantula Pet",
+     "id": "TARANTULA;3",
+     "mob": "broodmother",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 5,000",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Tarantula Pet",
+     "id": "TARANTULA;4",
+     "mob": "broodmother",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 12,500",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_spider_dasher_spider",
+   "name": "Dasher Spider",
+   "boss": "Dasher Spider",
+   "icon": "skull",
+   "color": "#C46AFF",
+   "group": "mobs_spider",
+   "area": "Spider's Den",
+   "drops": [
+    {
+     "name": "Arachne's Calling",
+     "id": "ARACHNE_KEEPER_FRAGMENT",
+     "mob": "dasher_spider",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 500",
+     "rank": 2
+    },
+    {
+     "name": "Travel Scroll to Spider's Den Top of Nest",
+     "id": "SPIDERS_DEN_TOP_TRAVEL_SCROLL",
+     "mob": "dasher_spider",
+     "icon": "map",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 5,000",
+     "rank": 3
+    },
+    {
+     "name": "Epic Tarantula Pet",
+     "id": "TARANTULA;3",
+     "mob": "dasher_spider",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 25,000",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Tarantula Pet",
+     "id": "TARANTULA;4",
+     "mob": "dasher_spider",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 100,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_spider_splitter_spider",
+   "name": "Splitter Spider",
+   "boss": "Splitter Spider",
+   "icon": "skull",
+   "color": "#C46AFF",
+   "group": "mobs_spider",
+   "area": "Spider's Den",
+   "drops": [
+    {
+     "name": "Travel Scroll to Spider's Den Top of Nest",
+     "id": "SPIDERS_DEN_TOP_TRAVEL_SCROLL",
+     "mob": "splitter_spider",
+     "icon": "map",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 5,000",
+     "rank": 3
+    },
+    {
+     "name": "Epic Tarantula Pet",
+     "id": "TARANTULA;3",
+     "mob": "splitter_spider",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 50,000",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Tarantula Pet",
+     "id": "TARANTULA;4",
+     "mob": "splitter_spider",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 125,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_spider_weaver_spider",
+   "name": "Weaver Spider",
+   "boss": "Weaver Spider",
+   "icon": "skull",
+   "color": "#C46AFF",
+   "group": "mobs_spider",
+   "area": "Spider's Den",
+   "drops": [
+    {
+     "name": "Arachne's Calling",
+     "id": "ARACHNE_KEEPER_FRAGMENT",
+     "mob": "weaver_spider",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 500",
+     "rank": 2
+    },
+    {
+     "name": "Travel Scroll to Spider's Den Top of Nest",
+     "id": "SPIDERS_DEN_TOP_TRAVEL_SCROLL",
+     "mob": "weaver_spider",
+     "icon": "map",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 5,000",
+     "rank": 3
+    },
+    {
+     "name": "Epic Tarantula Pet",
+     "id": "TARANTULA;3",
+     "mob": "weaver_spider",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 25,000",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Tarantula Pet",
+     "id": "TARANTULA;4",
+     "mob": "weaver_spider",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 100,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "dragon_enderman",
+   "name": "Enderman",
+   "boss": "Enderman",
+   "icon": "skull",
+   "color": "#C77DFF",
+   "group": "dragon",
+   "area": "The End",
+   "drops": [
+    {
+     "name": "Ender Helmet",
+     "id": "END_HELMET",
+     "mob": "enderman",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Ender Boots",
+     "id": "END_BOOTS",
+     "mob": "enderman",
+     "icon": "chainmail_boots",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Ender Leggings",
+     "id": "END_LEGGINGS",
+     "mob": "enderman",
+     "icon": "chainmail_leggings",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Ender Chestplate",
+     "id": "END_CHESTPLATE",
+     "mob": "enderman",
+     "icon": "chainmail_chestplate",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Ender Necklace",
+     "id": "ENDER_NECKLACE",
+     "mob": "enderman",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    },
+    {
+     "name": "Common Enderman Pet",
+     "id": "ENDERMAN;0",
+     "mob": "enderman",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 2,000",
+     "rank": 3
+    },
+    {
+     "name": "Uncommon Enderman Pet",
+     "id": "ENDERMAN;1",
+     "mob": "enderman",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 5,000",
+     "rank": 3
+    },
+    {
+     "name": "Rare Enderman Pet",
+     "id": "ENDERMAN;2",
+     "mob": "enderman",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    },
+    {
+     "name": "Epic Enderman Pet",
+     "id": "ENDERMAN;3",
+     "mob": "enderman",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Enderman Pet",
+     "id": "ENDERMAN;4",
+     "mob": "enderman",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 166,667",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "dragon_obsidian_defender",
+   "name": "Obsidian Defender",
+   "boss": "Obsidian Defender",
+   "icon": "skull",
+   "color": "#C77DFF",
+   "group": "dragon",
+   "area": "The End",
+   "drops": [
+    {
+     "name": "Ender Belt",
+     "id": "ENDER_BELT",
+     "mob": "obsidian_defender",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Obsidian Chestplate",
+     "id": "OBSIDIAN_CHESTPLATE",
+     "mob": "obsidian_defender",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    },
+    {
+     "name": "Combat Exp Boost",
+     "id": "PET_ITEM_COMBAT_SKILL_BOOST_RARE",
+     "mob": "obsidian_defender",
+     "icon": "iron_sword",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    },
+    {
+     "name": "Combat Exp Boost",
+     "id": "PET_ITEM_COMBAT_SKILL_BOOST_EPIC",
+     "mob": "obsidian_defender",
+     "icon": "iron_sword",
+     "skull": false,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 30,303",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "dragon_voidling_extremist",
+   "name": "Voidling Extremist",
+   "boss": "Voidling Extremist",
+   "icon": "skull",
+   "color": "#C77DFF",
+   "group": "dragon",
+   "area": "The End",
+   "drops": [
+    {
+     "name": "Enderman Cortex Rewriter",
+     "id": "ENDERMAN_CORTEX_REWRITER",
+     "mob": "voidling_extremist",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
     },
     {
      "name": "Summoning Eye",
-     "id": "SUMMONING_EYE", "mob": "zealot",
+     "id": "SUMMONING_EYE",
+     "mob": "voidling_extremist",
      "icon": "paper",
      "skull": false,
      "odds": "Pray RNGesus",
      "chance": "1 in 2,500",
-     "rank": 3,
-     "flat": true
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "dragon_voidling_fanatic",
+   "name": "Voidling Fanatic",
+   "boss": "Voidling Fanatic",
+   "icon": "skull",
+   "color": "#C77DFF",
+   "group": "dragon",
+   "area": "The End",
+   "drops": [
+    {
+     "name": "Epic Enderman Pet",
+     "id": "ENDERMAN;3",
+     "mob": "voidling_fanatic",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 8,333",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Enderman Pet",
+     "id": "ENDERMAN;4",
+     "mob": "voidling_fanatic",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 142,857",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "dragon_zealot",
+   "name": "Zealot",
+   "boss": "Zealot",
+   "icon": "ender_eye",
+   "color": "#C77DFF",
+   "group": "dragon",
+   "area": "The End",
+   "drops": [
+    {
+     "name": "Summoning Eye",
+     "id": "SUMMONING_EYE",
+     "mob": "zealot",
+     "icon": "ender_eye",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 420",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_deep_emerald_slime",
+   "name": "Emerald Slime",
+   "boss": "Emerald Slime",
+   "icon": "skull",
+   "color": "#6FA8FF",
+   "group": "mobs_deep",
+   "area": "Deep Caverns",
+   "drops": [
+    {
+     "name": "Exp Share Core",
+     "id": "PET_ITEM_EXP_SHARE_DROP",
+     "mob": "emerald_slime",
+     "icon": "dye",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_deep_lapis_zombie",
+   "name": "Lapis Zombie",
+   "boss": "Lapis Zombie",
+   "icon": "skull",
+   "color": "#6FA8FF",
+   "group": "mobs_deep",
+   "area": "Deep Caverns",
+   "drops": [
+    {
+     "name": "Lapis Crystal",
+     "id": "LAPIS_CRYSTAL",
+     "mob": "lapis_zombie",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Lapis Armor Helmet",
+     "id": "LAPIS_ARMOR_HELMET",
+     "mob": "lapis_zombie",
+     "icon": "sea_lantern",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Lapis Armor Chestplate",
+     "id": "LAPIS_ARMOR_CHESTPLATE",
+     "mob": "lapis_zombie",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Lapis Armor Leggings",
+     "id": "LAPIS_ARMOR_LEGGINGS",
+     "mob": "lapis_zombie",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Lapis Armor Boots",
+     "id": "LAPIS_ARMOR_BOOTS",
+     "mob": "lapis_zombie",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Exp Share Core",
+     "id": "PET_ITEM_EXP_SHARE_DROP",
+     "mob": "lapis_zombie",
+     "icon": "dye",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_deep_miner_skeleton",
+   "name": "Miner Skeleton",
+   "boss": "Miner Skeleton",
+   "icon": "skull",
+   "color": "#6FA8FF",
+   "group": "mobs_deep",
+   "area": "Deep Caverns",
+   "drops": [
+    {
+     "name": "Miner Helmet",
+     "id": "TANK_MINER_HELMET",
+     "mob": "miner_skeleton",
+     "icon": "diamond_helmet",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Miner Chestplate",
+     "id": "TANK_MINER_CHESTPLATE",
+     "mob": "miner_skeleton",
+     "icon": "diamond_chestplate",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Miner Leggings",
+     "id": "TANK_MINER_LEGGINGS",
+     "mob": "miner_skeleton",
+     "icon": "diamond_leggings",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Miner Boots",
+     "id": "TANK_MINER_BOOTS",
+     "mob": "miner_skeleton",
+     "icon": "diamond_boots",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Exp Share Core",
+     "id": "PET_ITEM_EXP_SHARE_DROP",
+     "mob": "miner_skeleton",
+     "icon": "dye",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_deep_miner_zombie",
+   "name": "Miner Zombie",
+   "boss": "Miner Zombie",
+   "icon": "skull",
+   "color": "#6FA8FF",
+   "group": "mobs_deep",
+   "area": "Deep Caverns",
+   "drops": [
+    {
+     "name": "Miner Helmet",
+     "id": "TANK_MINER_HELMET",
+     "mob": "miner_zombie",
+     "icon": "diamond_helmet",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Miner Chestplate",
+     "id": "TANK_MINER_CHESTPLATE",
+     "mob": "miner_zombie",
+     "icon": "diamond_chestplate",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Miner Leggings",
+     "id": "TANK_MINER_LEGGINGS",
+     "mob": "miner_zombie",
+     "icon": "diamond_leggings",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Miner Boots",
+     "id": "TANK_MINER_BOOTS",
+     "mob": "miner_zombie",
+     "icon": "diamond_boots",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Exp Share Core",
+     "id": "PET_ITEM_EXP_SHARE_DROP",
+     "mob": "miner_zombie",
+     "icon": "dye",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_deep_redstone_pigman",
+   "name": "Redstone Pigman",
+   "boss": "Redstone Pigman",
+   "icon": "skull",
+   "color": "#6FA8FF",
+   "group": "mobs_deep",
+   "area": "Deep Caverns",
+   "drops": [
+    {
+     "name": "Flaming Sword",
+     "id": "FLAMING_SWORD",
+     "mob": "redstone_pigman",
+     "icon": "iron_sword",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Exp Share Core",
+     "id": "PET_ITEM_EXP_SHARE_DROP",
+     "mob": "redstone_pigman",
+     "icon": "dye",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_deep_sneaky_creeper",
+   "name": "Sneaky Creeper",
+   "boss": "Sneaky Creeper",
+   "icon": "skull",
+   "color": "#6FA8FF",
+   "group": "mobs_deep",
+   "area": "Deep Caverns",
+   "drops": [
+    {
+     "name": "Exp Share Core",
+     "id": "PET_ITEM_EXP_SHARE_DROP",
+     "mob": "sneaky_creeper",
+     "icon": "dye",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_diamond_goblin",
+   "name": "Diamond Goblin",
+   "boss": "Diamond Goblin",
+   "icon": "skull",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Pure Mithril Gem",
+     "id": "PET_ITEM_PURE_MITHRIL_GEM",
+     "mob": "diamond_goblin",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_ghost",
+   "name": "Ghost",
+   "boss": "Ghost",
+   "icon": "skull",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Volta",
+     "id": "VOLTA",
+     "mob": "ghost",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 500",
+     "rank": 2
+    },
+    {
+     "name": "Sorrow",
+     "id": "SORROW",
+     "mob": "ghost",
+     "icon": "ghast_tear",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 833",
+     "rank": 2
+    },
+    {
+     "name": "Plasma",
+     "id": "PLASMA",
+     "mob": "ghost",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    },
+    {
+     "name": "Ghostly Boots",
+     "id": "GHOST_BOOTS",
+     "mob": "ghost",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_glacite_bowman",
+   "name": "Glacite Bowman",
+   "boss": "Glacite Bowman",
+   "icon": "skull",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Fine Citrine Gemstone",
+     "id": "FINE_CITRINE_GEM",
+     "mob": "glacite_bowman",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Aquamarine Gemstone",
+     "id": "FINE_AQUAMARINE_GEM",
+     "mob": "glacite_bowman",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Onyx Gemstone",
+     "id": "FINE_ONYX_GEM",
+     "mob": "glacite_bowman",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Peridot Gemstone",
+     "id": "FINE_PERIDOT_GEM",
+     "mob": "glacite_bowman",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Glacite Jewel",
+     "id": "GLACITE_JEWEL",
+     "mob": "glacite_bowman",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Glacite Chunk",
+     "id": "GLACITE_SHARD",
+     "mob": "glacite_bowman",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_glacite_mage",
+   "name": "Glacite Mage",
+   "boss": "Glacite Mage",
+   "icon": "skull",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Fine Citrine Gemstone",
+     "id": "FINE_CITRINE_GEM",
+     "mob": "glacite_mage",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Aquamarine Gemstone",
+     "id": "FINE_AQUAMARINE_GEM",
+     "mob": "glacite_mage",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Onyx Gemstone",
+     "id": "FINE_ONYX_GEM",
+     "mob": "glacite_mage",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Peridot Gemstone",
+     "id": "FINE_PERIDOT_GEM",
+     "mob": "glacite_mage",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Glacite Jewel",
+     "id": "GLACITE_JEWEL",
+     "mob": "glacite_mage",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Glacite Chunk",
+     "id": "GLACITE_SHARD",
+     "mob": "glacite_mage",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_glacite_mutt",
+   "name": "Glacite Mutt",
+   "boss": "Glacite Mutt",
+   "icon": "skull",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Fine Citrine Gemstone",
+     "id": "FINE_CITRINE_GEM",
+     "mob": "glacite_mutt",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Aquamarine Gemstone",
+     "id": "FINE_AQUAMARINE_GEM",
+     "mob": "glacite_mutt",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Onyx Gemstone",
+     "id": "FINE_ONYX_GEM",
+     "mob": "glacite_mutt",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Fine Peridot Gemstone",
+     "id": "FINE_PERIDOT_GEM",
+     "mob": "glacite_mutt",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Glacite Jewel",
+     "id": "GLACITE_JEWEL",
+     "mob": "glacite_mutt",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Glacite Chunk",
+     "id": "GLACITE_SHARD",
+     "mob": "glacite_mutt",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_glacite_walker",
+   "name": "Glacite Walker",
+   "boss": "Glacite Walker",
+   "icon": "packed_ice",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Glacite Jewel",
+     "id": "GLACITE_JEWEL",
+     "mob": "ice_walker",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    },
+    {
+     "name": "Glacite Helmet",
+     "id": "GLACITE_HELMET",
+     "mob": "ice_walker",
+     "icon": "packed_ice",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    },
+    {
+     "name": "Glacite Chestplate",
+     "id": "GLACITE_CHESTPLATE",
+     "mob": "ice_walker",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    },
+    {
+     "name": "Glacite Leggings",
+     "id": "GLACITE_LEGGINGS",
+     "mob": "ice_walker",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    },
+    {
+     "name": "Glacite Boots",
+     "id": "GLACITE_BOOTS",
+     "mob": "ice_walker",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_goblin",
+   "name": "Goblin",
+   "boss": "Goblin",
+   "icon": "skull",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Goblin Egg",
+     "id": "GOBLIN_EGG",
+     "mob": "goblin",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Goblin Helmet",
+     "id": "GOBLIN_HELMET",
+     "mob": "goblin",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Extraordinary",
+     "chance": "1 in 333",
+     "rank": 2
+    },
+    {
+     "name": "Goblin Chestplate",
+     "id": "GOBLIN_CHESTPLATE",
+     "mob": "goblin",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 333",
+     "rank": 2
+    },
+    {
+     "name": "Goblin Leggings",
+     "id": "GOBLIN_LEGGINGS",
+     "mob": "goblin",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 333",
+     "rank": 2
+    },
+    {
+     "name": "Goblin Boots",
+     "id": "GOBLIN_BOOTS",
+     "mob": "goblin",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 333",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_littlefoot",
+   "name": "Littlefoot",
+   "boss": "Littlefoot",
+   "icon": "skull",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Glacite Amalgamation",
+     "id": "GLACITE_AMALGAMATION",
+     "mob": "littlefoot",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    },
+    {
+     "name": "Littlefoot Fluff",
+     "id": "LITTLEFOOT_FLUFF",
+     "mob": "littlefoot",
+     "icon": "dye",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 500",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_treasure_hoarder",
+   "name": "Treasure Hoarder",
+   "boss": "Treasure Hoarder",
+   "icon": "skull",
+   "color": "#7FE8D8",
+   "group": "mobs",
+   "area": "Dwarven Mines",
+   "drops": [
+    {
+     "name": "Kaleidoscopic Mineral",
+     "id": "SALMON_OPAL",
+     "mob": "treasure_hoarder",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Treasurite",
+     "id": "TREASURITE",
+     "mob": "treasure_hoarder",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_hollows_automaton",
+   "name": "Automaton",
+   "boss": "Automaton",
+   "icon": "skull",
+   "color": "#C59BFF",
+   "group": "mobs_hollows",
+   "area": "Crystal Hollows",
+   "drops": [
+    {
+     "name": "Synthetic Heart",
+     "id": "SYNTHETIC_HEART",
+     "mob": "automaton",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Control Switch",
+     "id": "CONTROL_SWITCH",
+     "mob": "automaton",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Superlite Motor",
+     "id": "SUPERLITE_MOTOR",
+     "mob": "automaton",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Robotron Reflector",
+     "id": "ROBOTRON_REFLECTOR",
+     "mob": "automaton",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "FTX 3070",
+     "id": "FTX_3070",
+     "mob": "automaton",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Electron Transmitter",
+     "id": "ELECTRON_TRANSMITTER",
+     "mob": "automaton",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_hollows_bal",
+   "name": "Bal",
+   "boss": "Bal",
+   "icon": "skull",
+   "color": "#C59BFF",
+   "group": "mobs_hollows",
+   "area": "Crystal Hollows",
+   "drops": [
+    {
+     "name": "Flawed Ruby Gemstone",
+     "id": "FLAWED_RUBY_GEM",
+     "mob": "bal",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Flawed Topaz Gemstone",
+     "id": "FLAWED_TOPAZ_GEM",
+     "mob": "bal",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Yoggie",
+     "id": "YOGGIE",
+     "mob": "bal",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 22.2",
+     "rank": 0
+    },
+    {
+     "name": "Epic Bal Pet",
+     "id": "BAL;3",
+     "mob": "bal",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 7,937",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Bal Pet",
+     "id": "BAL;4",
+     "mob": "bal",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 18,519",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_hollows_grunt",
+   "name": "Grunt",
+   "boss": "Grunt",
+   "icon": "skull",
+   "color": "#C59BFF",
+   "group": "mobs_hollows",
+   "area": "Crystal Hollows",
+   "drops": [
+    {
+     "name": "Treasurite",
+     "id": "TREASURITE",
+     "mob": "grunt",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_park_howling_spirit",
+   "name": "Howling Spirit",
+   "boss": "Howling Spirit",
+   "icon": "skull",
+   "color": "#7BE05A",
+   "group": "mobs_park",
+   "area": "The Park",
+   "drops": [
+    {
+     "name": "Travel Scroll to Howling Cave",
+     "id": "PARK_CAVE_TRAVEL_SCROLL",
+     "mob": "howling_spirit",
+     "icon": "map",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 5,000",
+     "rank": 3
+    },
+    {
+     "name": "Epic Hound Pet",
+     "id": "HOUND;3",
+     "mob": "howling_spirit",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 33,333",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Hound Pet",
+     "id": "HOUND;4",
+     "mob": "howling_spirit",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 100,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_park_pack_spirit",
+   "name": "Pack Spirit",
+   "boss": "Pack Spirit",
+   "icon": "skull",
+   "color": "#7BE05A",
+   "group": "mobs_park",
+   "area": "The Park",
+   "drops": [
+    {
+     "name": "Travel Scroll to Howling Cave",
+     "id": "PARK_CAVE_TRAVEL_SCROLL",
+     "mob": "pack_spirit",
+     "icon": "map",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 5,000",
+     "rank": 3
+    },
+    {
+     "name": "Epic Hound Pet",
+     "id": "HOUND;3",
+     "mob": "pack_spirit",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 33,333",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Hound Pet",
+     "id": "HOUND;4",
+     "mob": "pack_spirit",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 100,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_park_soul_of_the_alpha",
+   "name": "Soul of the Alpha",
+   "boss": "Soul of the Alpha",
+   "icon": "skull",
+   "color": "#7BE05A",
+   "group": "mobs_park",
+   "area": "The Park",
+   "drops": [
+    {
+     "name": "Weak Wolf Catalyst",
+     "id": "WEAK_WOLF_CATALYST",
+     "mob": "soul_of_the_alpha",
+     "icon": "bone",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 1,124",
+     "rank": 3
+    },
+    {
+     "name": "Foraging Exp Boost",
+     "id": "PET_ITEM_FORAGING_SKILL_BOOST_EPIC",
+     "mob": "soul_of_the_alpha",
+     "icon": "iron_axe",
+     "skull": false,
+     "odds": "Pray RNGesus",
+     "chance": "1 in 10,000",
+     "rank": 3
+    },
+    {
+     "name": "Travel Scroll to Howling Cave",
+     "id": "PARK_CAVE_TRAVEL_SCROLL",
+     "mob": "soul_of_the_alpha",
+     "icon": "map",
+     "skull": false,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 28,571",
+     "rank": 3
+    },
+    {
+     "name": "Epic Hound Pet",
+     "id": "HOUND;3",
+     "mob": "soul_of_the_alpha",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 33,333",
+     "rank": 3
+    },
+    {
+     "name": "Legendary Hound Pet",
+     "id": "HOUND;4",
+     "mob": "soul_of_the_alpha",
+     "icon": "skull",
+     "skull": true,
+     "odds": "RNGesus Incarnate",
+     "chance": "1 in 100,000",
+     "rank": 3
+    }
+   ]
+  },
+  {
+   "id": "mobs_marsh_honeymite",
+   "name": "Honeymite",
+   "boss": "Honeymite",
+   "icon": "skull",
+   "color": "#5BD3B0",
+   "group": "mobs_marsh",
+   "area": "Moonglade Marsh",
+   "drops": [
+    {
+     "name": "Foraging Exp Boost",
+     "id": "PET_ITEM_FORAGING_SKILL_BOOST_RARE",
+     "mob": "honeymite",
+     "icon": "iron_axe",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_marsh_nessie",
+   "name": "Nessie",
+   "boss": "Nessie",
+   "icon": "skull",
+   "color": "#5BD3B0",
+   "group": "mobs_marsh",
+   "area": "Moonglade Marsh",
+   "drops": [
+    {
+     "name": "Mound of Seagrass",
+     "id": "MOUND_OF_SEAGRASS",
+     "mob": "nessie",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    },
+    {
+     "name": "Bobbin' Scriptures",
+     "id": "BOBBIN_SCRIPTURES",
+     "mob": "nessie",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Vibrant Coral",
+     "id": "VIBRANT_CORAL",
+     "mob": "nessie",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_marsh_the_loch_emperor",
+   "name": "The Loch Emperor",
+   "boss": "The Loch Emperor",
+   "icon": "skull",
+   "color": "#5BD3B0",
+   "group": "mobs_marsh",
+   "area": "Moonglade Marsh",
+   "drops": [
+    {
+     "name": "Rare Flying Fish Pet",
+     "id": "FLYING_FISH;2",
+     "mob": "the_loch_emperor",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Epic Flying Fish Pet",
+     "id": "FLYING_FISH;3",
+     "mob": "the_loch_emperor",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    },
+    {
+     "name": "Mangcore",
+     "id": "MANGCORE",
+     "mob": "the_loch_emperor",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 54.1",
+     "rank": 0
+    },
+    {
+     "name": "Legendary Flying Fish Pet",
+     "id": "FLYING_FISH;4",
+     "mob": "the_loch_emperor",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_beeheemoth",
+   "name": "Beeheemoth",
+   "boss": "Beeheemoth",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Behemoth Pot of Honeycomb",
+     "id": "BEHEMOTH_POT_OF_HONEYCOMB",
+     "mob": "beeheemoth",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_brineling",
+   "name": "Brineling",
+   "boss": "Brineling",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Sea Brine",
+     "id": "SEA_BRINE",
+     "mob": "brineling",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 200",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_drybark",
+   "name": "Drybark",
+   "boss": "Drybark",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Foraging Exp Boost",
+     "id": "PET_ITEM_FORAGING_SKILL_BOOST_RARE",
+     "mob": "drybark",
+     "icon": "iron_axe",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_giant_isopod",
+   "name": "Giant Isopod",
+   "boss": "Giant Isopod",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Veilshroom Bunch",
+     "id": "VEILSHROOM_BUNCH",
+     "mob": "giant_isopod",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Helixis",
+     "id": "HELIXIS",
+     "mob": "giant_isopod",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Isopod Husk",
+     "id": "ISOPOD_HUSK",
+     "mob": "giant_isopod",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    },
+    {
+     "name": "Reinforced Netting",
+     "id": "REINFORCED_NETTING",
+     "mob": "giant_isopod",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_pangolin",
+   "name": "Pangolin",
+   "boss": "Pangolin",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Helixis",
+     "id": "HELIXIS",
+     "mob": "pangolin",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_puck",
+   "name": "Puck",
+   "boss": "Puck",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Bottled Mischief",
+     "id": "BOTTLED_MISCHIEF",
+     "mob": "puck",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_queen_ant",
+   "name": "Queen Ant",
+   "boss": "Queen Ant",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Helixis",
+     "id": "HELIXIS",
+     "mob": "queen_ant",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_silkbreeze",
+   "name": "Silkbreeze",
+   "boss": "Silkbreeze",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Helixis",
+     "id": "HELIXIS",
+     "mob": "silkbreeze",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Veilshroom Bunch",
+     "id": "VEILSHROOM_BUNCH",
+     "mob": "silkbreeze",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Distant Echo",
+     "id": "DISTANT_ECHO",
+     "mob": "silkbreeze",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_canyon_torrid",
+   "name": "Torrid",
+   "boss": "Torrid",
+   "icon": "skull",
+   "color": "#E0A060",
+   "group": "mobs_canyon",
+   "area": "Torrhus Canyon",
+   "drops": [
+    {
+     "name": "Water Hyacinth",
+     "id": "WATER_HYACINTH",
+     "mob": "torrid",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Helixis",
+     "id": "HELIXIS",
+     "mob": "torrid",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 500",
+     "rank": 2
+    },
+    {
+     "name": "Veilshroom Bunch",
+     "id": "VEILSHROOM_BUNCH",
+     "mob": "torrid",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 500",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_spooky_crazy_witch",
+   "name": "Crazy Witch",
+   "boss": "Crazy Witch",
+   "icon": "skull",
+   "color": "#FF9A3A",
+   "group": "mobs_spooky",
+   "area": "Spooky Festival",
+   "drops": [
+    {
+     "name": "Purple Candy",
+     "id": "PURPLE_CANDY",
+     "mob": "crazy_witch",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_spooky_phantom_spirit",
+   "name": "Phantom Spirit",
+   "boss": "Phantom Spirit",
+   "icon": "skull",
+   "color": "#FF9A3A",
+   "group": "mobs_spooky",
+   "area": "Spooky Festival",
+   "drops": [
+    {
+     "name": "Purple Candy",
+     "id": "PURPLE_CANDY",
+     "mob": "phantom_spirit",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_spooky_scary_jerry",
+   "name": "Scary Jerry",
+   "boss": "Scary Jerry",
+   "icon": "skull",
+   "color": "#FF9A3A",
+   "group": "mobs_spooky",
+   "area": "Spooky Festival",
+   "drops": [
+    {
+     "name": "Purple Candy",
+     "id": "PURPLE_CANDY",
+     "mob": "scary_jerry",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_spooky_trick_or_treater",
+   "name": "Trick or Treater",
+   "boss": "Trick or Treater",
+   "icon": "skull",
+   "color": "#FF9A3A",
+   "group": "mobs_spooky",
+   "area": "Spooky Festival",
+   "drops": [
+    {
+     "name": "Purple Candy",
+     "id": "PURPLE_CANDY",
+     "mob": "trick_or_treater",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_spooky_wraith",
+   "name": "Wraith",
+   "boss": "Wraith",
+   "icon": "skull",
+   "color": "#FF9A3A",
+   "group": "mobs_spooky",
+   "area": "Spooky Festival",
+   "drops": [
+    {
+     "name": "Purple Candy",
+     "id": "PURPLE_CANDY",
+     "mob": "wraith",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_bat",
+   "name": "Bat",
+   "boss": "Bat",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Bat Talisman",
+     "id": "BAT_TALISMAN",
+     "mob": "bat",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_crypt_dreadlord",
+   "name": "Crypt Dreadlord",
+   "boss": "Crypt Dreadlord",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Dreadlord Sword",
+     "id": "CRYPT_DREADLORD_SWORD",
+     "mob": "crypt_dreadlord",
+     "icon": "iron_sword",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Premium Flesh",
+     "id": "PREMIUM_FLESH",
+     "mob": "crypt_dreadlord",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_crypt_souleater",
+   "name": "Crypt Souleater",
+   "boss": "Crypt Souleater",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Soulstealer Bow",
+     "id": "CRYPT_BOW",
+     "mob": "crypt_souleater",
+     "icon": "bow",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_golem",
+   "name": "Golem",
+   "boss": "Golem",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Ancient Rose",
+     "id": "GOLEM_POPPY",
+     "mob": "golem",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_king_midas",
+   "name": "King Midas",
+   "boss": "King Midas",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Midas Jewel",
+     "id": "MIDAS_JEWEL",
+     "mob": "king_midas",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_scared_skeleton",
+   "name": "Scared Skeleton",
+   "boss": "Scared Skeleton",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Machine Gun Shortbow",
+     "id": "MACHINE_GUN_BOW",
+     "mob": "scared_skeleton",
+     "icon": "bow",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_shadow_assassin",
+   "name": "Shadow Assassin",
+   "boss": "Shadow Assassin",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Silent Death",
+     "id": "SILENT_DEATH",
+     "mob": "shadow_assassin",
+     "icon": "iron_sword",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_skeleton_grunt",
+   "name": "Skeleton Grunt",
+   "boss": "Skeleton Grunt",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Skeleton Grunt Helmet",
+     "id": "SKELETON_GRUNT_HELMET",
+     "mob": "skeleton_grunt",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Skeleton Grunt Chestplate",
+     "id": "SKELETON_GRUNT_CHESTPLATE",
+     "mob": "skeleton_grunt",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Skeleton Grunt Leggings",
+     "id": "SKELETON_GRUNT_LEGGINGS",
+     "mob": "skeleton_grunt",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Skeleton Grunt Boots",
+     "id": "SKELETON_GRUNT_BOOTS",
+     "mob": "skeleton_grunt",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_skeleton_master",
+   "name": "Skeleton Master",
+   "boss": "Skeleton Master",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Skeleton Master Helmet",
+     "id": "SKELETON_MASTER_HELMET",
+     "mob": "skeleton_master",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Skeleton Master Chestplate",
+     "id": "SKELETON_MASTER_CHESTPLATE",
+     "mob": "skeleton_master",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Skeleton Master Leggings",
+     "id": "SKELETON_MASTER_LEGGINGS",
+     "mob": "skeleton_master",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Skeleton Master Boots",
+     "id": "SKELETON_MASTER_BOOTS",
+     "mob": "skeleton_master",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Machine Gun Shortbow",
+     "id": "MACHINE_GUN_BOW",
+     "mob": "skeleton_master",
+     "icon": "bow",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_skeleton_soldier",
+   "name": "Skeleton Soldier",
+   "boss": "Skeleton Soldier",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Skeleton Soldier Helmet",
+     "id": "SKELETON_SOLDIER_HELMET",
+     "mob": "skeleton_soldier",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Pure Skeleton Soldier Chestplate",
+     "id": "SKELETON_SOLDIER_CHESTPLATE",
+     "mob": "skeleton_soldier",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Skeleton Soldier Leggings",
+     "id": "SKELETON_SOLDIER_LEGGINGS",
+     "mob": "skeleton_soldier",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Skeleton Soldier Boots",
+     "id": "SKELETON_SOLDIER_BOOTS",
+     "mob": "skeleton_soldier",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_skeletor",
+   "name": "Skeletor",
+   "boss": "Skeletor",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Skeletor Helmet",
+     "id": "SKELETOR_HELMET",
+     "mob": "skeletor",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Skeletor Chestplate",
+     "id": "SKELETOR_CHESTPLATE",
+     "mob": "skeletor",
+     "icon": "chainmail_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Skeletor Leggings",
+     "id": "SKELETOR_LEGGINGS",
+     "mob": "skeletor",
+     "icon": "chainmail_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Skeletor Boots",
+     "id": "SKELETOR_BOOTS",
+     "mob": "skeletor",
+     "icon": "chainmail_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_sniper",
+   "name": "Sniper",
+   "boss": "Sniper",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Sniper Helmet",
+     "id": "SNIPER_HELMET",
+     "mob": "sniper",
+     "icon": "skull",
+     "skull": true,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Sniper Bow",
+     "id": "SNIPER_BOW",
+     "mob": "sniper",
+     "icon": "bow",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_super_archer",
+   "name": "Super Archer",
+   "boss": "Super Archer",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Bouncy Helmet",
+     "id": "BOUNCY_HELMET",
+     "mob": "super_archer",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 33.3",
+     "rank": 0
+    },
+    {
+     "name": "Bouncy Chestplate",
+     "id": "BOUNCY_CHESTPLATE",
+     "mob": "super_archer",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 33.3",
+     "rank": 0
+    },
+    {
+     "name": "Bouncy Leggings",
+     "id": "BOUNCY_LEGGINGS",
+     "mob": "super_archer",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 33.3",
+     "rank": 0
+    },
+    {
+     "name": "Bouncy Boots",
+     "id": "BOUNCY_BOOTS",
+     "mob": "super_archer",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 33.3",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_super_tank_zombie",
+   "name": "Super Tank Zombie",
+   "boss": "Super Tank Zombie",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Super Heavy Helmet",
+     "id": "SUPER_HEAVY_HELMET",
+     "mob": "super_tank_zombie",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 40",
+     "rank": 0
+    },
+    {
+     "name": "Super Heavy Chestplate",
+     "id": "SUPER_HEAVY_CHESTPLATE",
+     "mob": "super_tank_zombie",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 40",
+     "rank": 0
+    },
+    {
+     "name": "Super Heavy Leggings",
+     "id": "SUPER_HEAVY_LEGGINGS",
+     "mob": "super_tank_zombie",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 40",
+     "rank": 0
+    },
+    {
+     "name": "Super Heavy Boots",
+     "id": "SUPER_HEAVY_BOOTS",
+     "mob": "super_tank_zombie",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 40",
+     "rank": 0
+    },
+    {
+     "name": "Earthen Blade",
+     "id": "EARTH_SHARD",
+     "mob": "super_tank_zombie",
+     "icon": "stone_sword",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Premium Flesh",
+     "id": "PREMIUM_FLESH",
+     "mob": "super_tank_zombie",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_tank_zombie",
+   "name": "Tank Zombie",
+   "boss": "Tank Zombie",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Heavy Helmet",
+     "id": "HEAVY_HELMET",
+     "mob": "tank_zombie",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Heavy Chestplate",
+     "id": "HEAVY_CHESTPLATE",
+     "mob": "tank_zombie",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Heavy Leggings",
+     "id": "HEAVY_LEGGINGS",
+     "mob": "tank_zombie",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Heavy Boots",
+     "id": "HEAVY_BOOTS",
+     "mob": "tank_zombie",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Premium Flesh",
+     "id": "PREMIUM_FLESH",
+     "mob": "tank_zombie",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_undead",
+   "name": "Undead",
+   "boss": "Undead",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Beating Heart",
+     "id": "BEATING_HEART",
+     "mob": "undead",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 500",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_withermancer",
+   "name": "Withermancer",
+   "boss": "Withermancer",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Conjuring",
+     "id": "CONJURING_SWORD",
+     "mob": "withermancer",
+     "icon": "stone_sword",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_zombie_commander",
+   "name": "Zombie Commander",
+   "boss": "Zombie Commander",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Zombie Commander Helmet",
+     "id": "ZOMBIE_COMMANDER_HELMET",
+     "mob": "zombie_commander",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Zombie Commander Chestplate",
+     "id": "ZOMBIE_COMMANDER_CHESTPLATE",
+     "mob": "zombie_commander",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Zombie Commander Leggings",
+     "id": "ZOMBIE_COMMANDER_LEGGINGS",
+     "mob": "zombie_commander",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Zombie Commander Boots",
+     "id": "ZOMBIE_COMMANDER_BOOTS",
+     "mob": "zombie_commander",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Zombie Commander Whip",
+     "id": "ZOMBIE_COMMANDER_WHIP",
+     "mob": "zombie_commander",
+     "icon": "fishing_rod",
+     "skull": false,
+     "odds": "Rare",
+     "chance": "1 in 100",
+     "rank": 2
+    },
+    {
+     "name": "Premium Flesh",
+     "id": "PREMIUM_FLESH",
+     "mob": "zombie_commander",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_zombie_grunt",
+   "name": "Zombie Grunt",
+   "boss": "Zombie Grunt",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Rotten Helmet",
+     "id": "ROTTEN_HELMET",
+     "mob": "zombie_grunt",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Rotten Chestplate",
+     "id": "ROTTEN_CHESTPLATE",
+     "mob": "zombie_grunt",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Rotten Leggings",
+     "id": "ROTTEN_LEGGINGS",
+     "mob": "zombie_grunt",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Rotten Boots",
+     "id": "ROTTEN_BOOTS",
+     "mob": "zombie_grunt",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 20",
+     "rank": 0
+    },
+    {
+     "name": "Premium Flesh",
+     "id": "PREMIUM_FLESH",
+     "mob": "zombie_grunt",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_zombie_knight",
+   "name": "Zombie Knight",
+   "boss": "Zombie Knight",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Zombie Knight Helmet",
+     "id": "ZOMBIE_KNIGHT_HELMET",
+     "mob": "zombie_knight",
+     "icon": "golden_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Zombie Knight Chestplate",
+     "id": "ZOMBIE_KNIGHT_CHESTPLATE",
+     "mob": "zombie_knight",
+     "icon": "golden_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Zombie Knight Leggings",
+     "id": "ZOMBIE_KNIGHT_LEGGINGS",
+     "mob": "zombie_knight",
+     "icon": "golden_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Zombie Knight Boots",
+     "id": "ZOMBIE_KNIGHT_BOOTS",
+     "mob": "zombie_knight",
+     "icon": "golden_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Zombie Knight Sword",
+     "id": "ZOMBIE_KNIGHT_SWORD",
+     "mob": "zombie_knight",
+     "icon": "iron_sword",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    },
+    {
+     "name": "Premium Flesh",
+     "id": "PREMIUM_FLESH",
+     "mob": "zombie_knight",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 500",
+     "rank": 2
+    }
+   ]
+  },
+  {
+   "id": "mobs_dungeon_zombie_soldier",
+   "name": "Zombie Soldier",
+   "boss": "Zombie Soldier",
+   "icon": "skull",
+   "color": "#B0B6C2",
+   "group": "mobs_dungeon",
+   "area": "Catacombs",
+   "drops": [
+    {
+     "name": "Zombie Soldier Helmet",
+     "id": "ZOMBIE_SOLDIER_HELMET",
+     "mob": "zombie_soldier",
+     "icon": "leather_helmet",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Zombie Soldier Chestplate",
+     "id": "ZOMBIE_SOLDIER_CHESTPLATE",
+     "mob": "zombie_soldier",
+     "icon": "leather_chestplate",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Zombie Soldier Leggings",
+     "id": "ZOMBIE_SOLDIER_LEGGINGS",
+     "mob": "zombie_soldier",
+     "icon": "leather_leggings",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Zombie Soldier Boots",
+     "id": "ZOMBIE_SOLDIER_BOOTS",
+     "mob": "zombie_soldier",
+     "icon": "leather_boots",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 25",
+     "rank": 0
+    },
+    {
+     "name": "Zombie Soldier Cutlass",
+     "id": "ZOMBIE_SOLDIER_CUTLASS",
+     "mob": "zombie_soldier",
+     "icon": "iron_sword",
+     "skull": false,
+     "odds": "Occasional",
+     "chance": "1 in 50",
+     "rank": 0
+    },
+    {
+     "name": "Premium Flesh",
+     "id": "PREMIUM_FLESH",
+     "mob": "zombie_soldier",
+     "icon": "paper",
+     "skull": false,
+     "odds": "Extraordinary",
+     "chance": "1 in 1,000",
+     "rank": 2
     }
    ]
   }

@@ -1,6 +1,9 @@
 # Changelog
 
 ## 0.9.0
+- Mob Drops: every mob's rare drops, sorted by where it spawns (Hub, Spider's Den, The End, Crimson Isle, the Mines, the Park, Galatea, Spooky Festival, Catacombs) and by mob, with their chances. Rare drops play RNG by default.
+- Spotify shows as a small pop-up box at the top right of the menu.
+- The big centred page cards are back; the Quick switches are gone.
 - New menu look: a rounded window with an Opacity setting, a tidier sidebar in groups (Browse, Customize), and Animations, Sounds and Chat together as Drop effects.
 - Drop Library pages: a clear header with counts, one bar to change every drop, and rows that show what plays and whether you brag in chat. Point at Normal to make it RNG; RNG drops shine gold.
 - Quick actions: click the search box or press Ctrl F to test a drop, switch things on or off, jump to a page or find any drop.
