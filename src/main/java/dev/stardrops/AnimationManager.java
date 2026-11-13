@@ -143,7 +143,7 @@ public final class AnimationManager {
     static int creature(String mob) {
         return switch (mob == null ? "" : mob) {
             case "magma_boss" -> 6; case "dragon" -> 7; case "automaton" -> 8; case "bladesoul" -> Star3D.BLADESOUL; case "barbarian_duke" -> Star3D.DUKE; case "ashfang" -> Star3D.ASHFANG;
-            case "mage_outlaw" -> Star3D.MAGE; case "ghost" -> Star3D.GHOST; case "ice_walker" -> Star3D.WALKER; case "bal" -> Star3D.BAL; case "zealot" -> Star3D.ZEALOT; default -> -1; };
+            case "mage_outlaw" -> Star3D.MAGE; case "ghost" -> Star3D.GHOST; case "ice_walker" -> Star3D.WALKER; case "bal" -> Star3D.BAL; case "zealot" -> Star3D.ZEALOT; case "diamond_goblin" -> Star3D.GOBLIN; default -> -1; };
     }
     static final float SL_PIVOT = 3.4f;
     static float animLen(String g, int type) { return isSlayer(g) ? (type == RNG ? 7f : type == NORMAL ? 6f : 5.5f) : animLen(type); }

@@ -179,7 +179,7 @@ final class Ritual {
     static float sizeOf(int n) { return n <= 1 ? 1f : n == 2 ? 0.85f : n == 3 ? 0.76f : Math.max(0.5f, 2.6f / n); }
     static void end() { hold = 0f; slayerMode = false; itemOffs = new float[]{0f}; }
     /** The colour of each boss: zombie, spider, wolf, enderman, blaze, vampire. */
-    static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030, 0xFF6A2A, 0xC77DFF, 0x7FE8D8, 0xFF5A20, 0xFFB040, 0xFF7A20, 0xB070FF, 0x8AD8FF, 0x8AC8E8, 0xFF6A2A, 0x40E8A0};   // the six slayers, then the Crimson Isle, the End, the Mines
+    static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030, 0xFF6A2A, 0xC77DFF, 0x7FE8D8, 0xFF5A20, 0xFFB040, 0xFF7A20, 0xB070FF, 0x8AD8FF, 0x8AC8E8, 0xFF6A2A, 0x40E8A0, 0x6AE8F0};   // the six slayers, then the Crimson Isle, the End, the Mines
     static boolean isSlayer(Anim a) { return AnimationManager.isSlayer(a.group); }
     static int slTheme(Anim a) { int fixed = AnimationManager.starBoss(a.group); if (fixed >= 0) { int cr = -1; if (a.item != null && a.item.source != null) for (DropData.Drop d : a.item.source.drops) if (d.id.equals(a.item.id)) { cr = AnimationManager.creature(d.mob); break; } return cr >= 0 ? cr : fixed; }      // the drop's own creature (its "mob" in the data), else the group's
         return Math.floorMod(a.kind >= 0 ? a.kind : a.item != null && a.item.source != null ? SlayerData.theme(a.item.source.id) : 0, 6); }

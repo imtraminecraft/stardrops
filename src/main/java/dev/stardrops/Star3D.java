@@ -589,6 +589,7 @@ final class Star3D {
                 case WALKER -> Vox3D.walker(t, idle);
                 case BAL -> Vox3D.magma(t, idle);
                 case ZEALOT -> Vox3D.zealot(t, idle);
+                case GOBLIN -> Vox3D.goblin(t, idle);
                 default -> humanoid(t, idle, false, VAMP_HEAD, VAMP_BODY, VAMP_ARM, VAMP_LEG, true);
             }
             pop(); burstD = -1f; tint = 0f; crumble = 0f; mobMode = false; clipY = -99f;
@@ -601,10 +602,10 @@ final class Star3D {
             glow(F.add, (float) Math.cos(an) * r, yy, (float) Math.sin(an) * r * 0.7f, 0.06f, type == 0 ? 0x9A9AA8 : i % 3 == 0 ? 0xFFFFFF : energy, (1f - u) * 0.9f);
         }
     }
-    static final float[] MOB_K_STAR = {1.4f, 1.5f, 1.85f, 0.85f, 1.4f, 1.35f, 1.45f, 1.0f, 1.2f, 1.3f, 1.35f, 1.25f, 1.35f, 1.4f, 1.4f, 1.75f, 0.85f};
+    static final float[] MOB_K_STAR = {1.4f, 1.5f, 1.85f, 0.85f, 1.4f, 1.35f, 1.45f, 1.0f, 1.2f, 1.3f, 1.35f, 1.25f, 1.35f, 1.4f, 1.4f, 1.75f, 0.85f, 1.05f};
     /** Creatures 9 and up stand in one of the first nine worlds: Bladesoul, Barbarian Duke X, Ashfang, the Mage Outlaw (Crimson Isle), a Ghost, an Ice Walker (the Mines), Bal (his lava), a special Zealot (the End). */
-    static final int BLADESOUL = 9, DUKE = 10, ASHFANG = 11, MAGE = 12, GHOST = 13, WALKER = 14, BAL = 15, ZEALOT = 16, CREATURES = 17;
-    static final int[] WORLD_OF = {6, 6, 6, 6, 8, 8, 6, 7};
+    static final int BLADESOUL = 9, DUKE = 10, ASHFANG = 11, MAGE = 12, GHOST = 13, WALKER = 14, BAL = 15, ZEALOT = 16, GOBLIN = 17, CREATURES = 18;
+    static final int[] WORLD_OF = {6, 6, 6, 6, 8, 8, 6, 7, 8};          // the scenery each creature from 9 on stands in (Crimson Isle 6, the End 7, the Mines 8)
     static int world;                                                            // the scenery, ground and sky (0..8); boss is the creature
     static void line(float x0, float y0, float x1, float y1, float z, int rgb, float a) {
         float dx = x1 - x0, dy = y1 - y0, l = (float) Math.sqrt(dx * dx + dy * dy); if (l < 1e-4f) return; float w = 0.025f, nx = -dy / l * w, ny = dx / l * w;

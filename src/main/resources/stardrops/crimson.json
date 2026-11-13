@@ -1,5 +1,5 @@
 {
- "v": 3,
+ "v": 4,
  "sources": [
   {
    "id": "crimson_isle",
@@ -11,7 +11,7 @@
    "drops": [
     {
      "name": "Ragnarock",
-     "id": "RAGNAROCK_AXE", "mob": "barbarian_duke",
+     "id": "RAGNAROCK_AXE", "mob": "bladesoul",
      "icon": "golden_sword",
      "skull": false,
      "odds": "Rare",
@@ -21,7 +21,7 @@
     },
     {
      "name": "Fire Veil Wand",
-     "id": "FIRE_VEIL_WAND", "mob": "bladesoul",
+     "id": "FIRE_VEIL_WAND", "mob": "ashfang",
      "icon": "blaze_rod",
      "skull": false,
      "odds": "Rare",
@@ -31,7 +31,7 @@
     },
     {
      "name": "Flaming Fist",
-     "id": "FLAMING_FIST", "mob": "magma_boss",
+     "id": "FLAMING_FIST", "mob": "barbarian_duke",
      "icon": "paper",
      "skull": false,
      "odds": "Rare",
@@ -41,7 +41,7 @@
     },
     {
      "name": "Fire Freeze Staff",
-     "id": "FIRE_FREEZE_STAFF", "mob": "ashfang",
+     "id": "FIRE_FREEZE_STAFF", "mob": "mage_outlaw",
      "icon": "yellow_flower",
      "skull": false,
      "odds": "Rare",
@@ -51,7 +51,7 @@
     },
     {
      "name": "Wand of Strength",
-     "id": "WAND_OF_STRENGTH", "mob": "ashfang",
+     "id": "WAND_OF_STRENGTH", "mob": "mage_outlaw",
      "icon": "stick",
      "skull": false,
      "odds": "Rare",
@@ -79,7 +79,7 @@
     },
     {
      "name": "Fire Fury Staff",
-     "id": "FIRE_FURY_STAFF", "mob": "mage_outlaw",
+     "id": "FIRE_FURY_STAFF", "mob": "magma_boss",
      "icon": "blaze_rod",
      "skull": false,
      "odds": "Rare",

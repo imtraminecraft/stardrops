@@ -1,5 +1,5 @@
 {
- "v": 6,
+ "v": 7,
  "sources": [
   {
    "id": "mines",
@@ -41,7 +41,7 @@
     },
     {
      "name": "Pure Mithril Gem",
-     "id": "PET_ITEM_PURE_MITHRIL_GEM", "mob": "automaton",
+     "id": "PET_ITEM_PURE_MITHRIL_GEM", "mob": "diamond_goblin",
      "icon": "player_head",
      "skull": true,
      "odds": "Rare",

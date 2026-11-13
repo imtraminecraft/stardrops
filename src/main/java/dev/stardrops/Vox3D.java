@@ -552,7 +552,7 @@ final class Vox3D {
         if (shatter && since < 0.5f) glow(F.add, x, 1f, z, 3f * (1f + since), energy, 0.7f * (1f - since / 0.5f));
         if (type == 0 && since > 0.3f) ash(since, x, z);
     }
-    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f, 1.5f, 1.0f, 1.3f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.6f, 1.2f};
+    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f, 1.5f, 1.0f, 1.3f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.6f, 1.2f, 1.1f};
     /** The boss's presence: a shadow under it, dark smoke at its feet, wisps of its energy spiralling up round it. */
     static void aura(float t, float x, float y, float z, float k, int energy, int boss) {
         disc(F.veil, x, 0.014f, z, 0.95f * k, 0x050508, 0.5f);
@@ -860,6 +860,17 @@ final class Vox3D {
         part(-7.5f, 22f, -3f, -4.5f, 26f, 3f, (f, u, v, w, h) -> 0xFFFFFF); part(4.5f, 22f, -3f, 7.5f, 26f, 3f, (f, u, v, w, h) -> 0xFFFFFF);            // frost on the shoulders
         push(); M.translate(7f, 12f, 3f).rotateX(0.5f); part(-0.6f, -2f, -0.6f, 0.6f, 14f, 0.6f, wood); part(-0.6f, 12f, -5f, 0.6f, 14f, 5f, pick); pop();
         Vector3f c = M.transformPosition(new Vector3f(0, 16f, 0)); glow(F.add, c.x, c.y, c.z, 1.2f, 0x8AD8FF, 0.2f);
+    }
+    /** A Diamond Goblin: a small green goblin with long pointed ears, in diamond armour, a sack of loot over its shoulder. */
+    static void goblin(float t, float idle) {
+        Skin skin = cloth(0x5AA040, 0.25f, 4), dia = (f, u, v, w, h) -> { float n = rnd(f * 23 + u * 7 + v * 11 + 3); return n < 0.1f ? 0x02E8FFFF : (u + v) % 3 == 0 ? 0x2AA8C8 : mul(0x6AE8F0, 0.85f + n * 0.3f); };
+        Skin head = face8(skin, 0x02FF3020, 0x2A3A18), sack = cloth(0x8A6A3A, 0.3f, 9);
+        humanoid(t, idle, false, head, dia, skin, dia, false);
+        part(-7f, 26f, -1f, -4f, 29f, 1f, skin); part(4f, 26f, -1f, 7f, 29f, 1f, skin);                                    // the ears
+        part(-8f, 28f, -0.5f, -6f, 30f, 0.5f, skin); part(6f, 28f, -0.5f, 8f, 30f, 0.5f, skin);
+        push(); M.translate(-5f, 20f, -3f).rotateZ(0.3f); part(-3f, -3f, -3f, 3f, 4f, 3f, sack); pop();                      // its sack of loot
+        Vector3f c = M.transformPosition(new Vector3f(0, 14f, 0)); glow(F.add, c.x, c.y, c.z, 1.2f, 0x6AE8F0, 0.2f + 0.08f * (float) Math.sin(t * 6f));
+        for (int i = 0; i < 4; i++) { float an = t * 2.5f + i * 1.57f; Vector3f q = M.transformPosition(new Vector3f((float) Math.cos(an) * 8f, 10f + 4f * (float) Math.sin(t * 3f + i), (float) Math.sin(an) * 8f)); glint(F.add, q.x, q.y, q.z, 0.2f, 0xC8FFFF, 0.8f); }
     }
     /** A special Zealot: an enderman carrying the frame a Summoning Eye sits in. */
     static void zealot(float t, float idle) {
