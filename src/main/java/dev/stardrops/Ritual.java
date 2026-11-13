@@ -402,6 +402,7 @@ final class Ritual {
             if (barsOn) { float bhg = barH * u; top = Math.max(bhg + 6, Math.min(H - bhg - th - 6, top)); }
             float tl = TextFx.textOnly ? TextFx.loopClock(4.6f) : 0f;                                    // the Text editor replays the words on their own clock
             TextFx.revealT = TextFx.textOnly ? tl : textT; TextFx.waveT = TextFx.textOnly ? tl : t; TextFx.waveOut = TextFx.textOnly ? sm((tl - 2.9f) / 1.1f) : textOut; TextFx.lineDelay = 0f;
+            TextFx.rngWords = rng;
             if (a.count() >= 2) TextFx.blockN(g, font, W / 2, Math.round(top), sc, a.items(), c, 255); else TextFx.block(g, font, W / 2, Math.round(top), sc, it, c, 255);
         }
     }

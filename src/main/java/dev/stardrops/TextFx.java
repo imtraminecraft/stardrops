@@ -20,28 +20,71 @@ final class TextFx {
     private static float clamp(float v) { return Math.max(0f, Math.min(1f, v)); }
 
     /** How many lines of text block() draws for this drop (a text lines is 9 px tall at scale 1). */
+    /** Set by the scene before the words are drawn: this drop plays the RNG scene (its headline says so). */
+    static boolean rngWords;
+    private static boolean hasValue(Item it, StardropsConfig c) { return c.showPrice && !it.untradeable && it.price != -1; }
+    /** The quiet last line: the chance, the odds word and the Magic Find, whichever are known and switched on ({text, colour} pairs). */
+    private static List<Object> meta(Item it, StardropsConfig c) {
+        List<Object> m = new ArrayList<>();
+        if (c.showOdds && !it.chance.isEmpty()) { m.add(lit(it.chance)); m.add(0xFFE6EAF6); }                 // a drop with no known chance simply has none here
+        if (c.showOdds && !it.odds.isEmpty() && !it.odds.equals(it.chance)) { if (!m.isEmpty()) { m.add(lit("  \u00B7  ")); m.add(0xFF6E7690); } m.add(lit(it.odds)); m.add(Ui.odds(it.odds)); }
+        if (c.showMagicFind && it.mf != null) { if (!m.isEmpty()) { m.add(lit("  \u00B7  ")); m.add(0xFF6E7690); } m.add(lit(mfText(it.mf))); m.add(mfColor(it.mf)); }
+        if (it.extra != null) { if (!m.isEmpty()) { m.add(lit("  \u00B7  ")); m.add(0xFF6E7690); } m.add(lit(it.extra)); m.add(it.extraCol); }
+        if (hasValue(it, c) && c.showPriceSource && it.price >= 0 && it.priceSource != null && !it.priceSource.isEmpty()) { if (!m.isEmpty()) { m.add(lit("  \u00B7  ")); m.add(0xFF6E7690); } m.add(lit(it.priceSource)); m.add(0xFF8A91A8); }
+        return m;
+    }
     static float blockHeight(Item it, float sc, StardropsConfig c) {
         float big = 1.5f * sc * c.titleScale, small = 1.1f * sc * c.subScale;
         if (it == null) return 9 * big + 4 + 9 * small;
-        boolean facts = hasFacts(it, c), mf = c.showMagicFind && it.mf != null;
-        return 9 * big + 4 + 9 * small * (facts ? 1.95f : 1f) + (mf ? 3 + 9 * small : 0);
+        return 9 * small * 0.62f + 3 + 9 * big + 9 * sc + (hasValue(it, c) ? 9 * small * 0.9f + 2 : 0) + (meta(it, c).isEmpty() ? 0 : 9 * small * 0.62f);
     }
 
-    /** The whole text of one drop (or the "Nothing" text when it is null), centred on cx, its top edge at y. sc = the scene's text size. */
+    /**
+     * The words of one drop (or the "Nothing" text when it is null), centred on cx, its top edge at y. sc = the scene's text size.
+     * The format of 14 Nov (author: "make the animation look cooler ... change the text format"): a small spaced headline (RARE DROP, or RNG DROP in gold),
+     * the name big in its rarity colour, a hairline that draws itself out from a diamond, the value on its own line counting up in gold,
+     * and one quiet line with the chance, the odds and the Magic Find. Every line still plays the effects chosen in Text Changes.
+     */
     static void block(GuiGraphicsExtractor g, Font font, int cx, int y, float sc, Item it, StardropsConfig c, int alpha) {
         if (alpha <= 4) return;
         float big = 1.5f * sc * c.titleScale, small = 1.1f * sc * c.subScale;
-        int dy = y + Math.round(9 * big) + 4;
         if (it == null) {
+            int dy = y + Math.round(9 * big) + 4;
             line(g, font, cx, y, big, alpha, lit("Nothing :(").withStyle(ChatFormatting.BOLD), 0xFFB9BFC9);
             line(g, font, cx, dy, small, alpha, lit("Better luck next time"), 0xFF7C8494);
             return;
         }
-        boolean facts = hasFacts(it, c);
-        line(g, font, cx, y, big, alpha, lit(it.title()).withStyle(ChatFormatting.BOLD), it.color());
-        if (facts) columns(g, font, cx, dy, dy + Math.round(9 * small * 0.9f), small, it, c, alpha);
-        else detailAt(g, font, cx, dy, small, it, c, alpha);
-        if (c.showMagicFind && it.mf != null) { lineDelay = 4f * c.subDelay; line(g, font, cx, dy + Math.round(9 * small * (facts ? 1.95f : 1f)) + 3, small, alpha, lit(mfText(it.mf)), mfColor(it.mf)); lineDelay = 0f; }
+        float step = c.subDelay / 0.35f; int rc = it.color();
+        float ks = small * 0.62f; int yy = y;
+        String kick = rngWords ? "R N G   D R O P" : "R A R E   D R O P";
+        line(g, font, cx, yy, ks, alpha, lit(kick), rngWords ? 0xFFFFD25A : Canvas.mix(rc, 0xFFC9D0E6, 0.55f));
+        yy += Math.round(9 * ks) + 3;
+        lineDelay = 0.12f * step; line(g, font, cx, yy, big, alpha, lit(it.title()).withStyle(ChatFormatting.BOLD), rc);
+        int tw = Math.round(font.width(lit(it.title()).withStyle(ChatFormatting.BOLD)) * big);
+        yy += Math.round(9 * big);
+        {                                                                                   // the hairline: out from the middle, brightest at the diamond, gone at its ends
+            float grow = clamp((revealT - 0.25f * step) / 0.5f); grow = 1f - (1f - grow) * (1f - grow) * (1f - grow); float keep = (1f - waveOut) * alpha / 255f;
+            int half = Math.round(Math.max(34 * sc, tw * 0.5f) * grow), ry = yy + Math.round(4 * sc), lc = rngWords ? 0xFFD25A : Canvas.mix(rc, 0xFFFFFFFF, 0.35f) & 0xFFFFFF, th = Math.max(1, Math.round(sc * 0.6f));
+            int segs = 6; for (int k = 0; k < segs; k++) { int x0 = half * k / segs, x1 = half * (k + 1) / segs; int al = Math.round(200 * keep * (1f - k / (float) segs)); if (al <= 0 || x1 <= x0) continue;
+                g.fill(cx + x0, ry, cx + x1, ry + th, Gfx.argb(al, lc)); g.fill(cx - x1, ry, cx - x0, ry + th, Gfx.argb(al, lc)); }
+            int d = Math.max(2, Math.round(2.2f * sc)); float da = clamp(revealT / 0.3f) * keep;
+            for (int k = -d; k <= d; k++) { int hw = d - Math.abs(k); g.fill(cx - hw, ry + k, cx + hw + 1, ry + k + 1, Gfx.argb(Math.round(255 * da), k < 0 ? 0xFFFFFF : lc)); }
+        }
+        yy += Math.round(9 * sc);
+        if (hasValue(it, c)) {
+            float vs = small * 0.9f; float pd = 0.45f * step; double tot = it.price * Math.max(1, it.amount);
+            List<Object> v = new ArrayList<>();
+            v.add(lit(it.price < 0 ? "..." : fullCoins(counted(tot, pd)) + " coins")); v.add(Ui.PRICE);
+            lineDelay = pd; line(g, font, cx, yy, vs, alpha, v.toArray());
+            yy += Math.round(9 * vs) + 2;
+        }
+        List<Object> m = meta(it, c);
+        if (!m.isEmpty()) {
+            int mw = 0; for (int i = 0; i < m.size(); i += 2) mw += font.width((Component) m.get(i));
+            float ms = Math.min(small * 0.62f, Math.max(tw * 1.35f, 120 * sc) / Math.max(1, mw));          // never wider than the name and a bit: a long line shrinks instead of running off
+            lineDelay = 0.8f * step; line(g, font, cx, yy, ms, alpha, m.toArray());
+        }
+        lineDelay = 0f;
     }
 
     // ---- two drops from one kill or reward: each gets its name and one detail line, one under the other
