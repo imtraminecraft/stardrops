@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.9.0
+- Flicker guard: Stardrops watches for a flickering sky by itself. If one of its parts causes it, that part switches off and chat tells you which; if something else does, chat says so.
 - Drops now play RNG by default only when worth your RNG price (new in Settings > Prices, 10m to start); cheaper drops play Normal. Your own picks stay.
 - New sound pack for every Mob Drop: VOYAGER, sonar pings, thrusters, warp whooshes, crystal bells and a starry choir.
 - The Drop Library is now the Catalog. Visuals opens each room's settings under its three big buttons. Each main page has its own sky, and Stardrops has a new mark.

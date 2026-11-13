@@ -36,6 +36,7 @@ public class StardropsConfig {
     public Map<String, String> mcSounds = new LinkedHashMap<>();    // the same slots for the Minecraft sound set
     public boolean epicEffects = true;       // (old switch, no longer shown)
     public long epicThreshold = 10_000_000L; // the RNG price: a drop you never picked plays RNG when it is worth this or more, else Normal
+    public boolean flickerGuard = true;      // watch the screen for the sky flicker and find its cause (FlickerGuard)
     public int rngPriceV = 0;                // 1 once the RNG price moved from the old hidden 20m default to 10m
     public boolean popups = true;            // notices pop up under the menu instead of going to chat
 

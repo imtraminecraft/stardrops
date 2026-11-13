@@ -118,6 +118,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
 
         try {                                                                                  // auras are real particles in the world: hidden by blocks and bodies, always on the player
             net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_EXTRACTION.register(AuraFx::extract);
+            net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_EXTRACTION.register(ctx -> FlickerGuard.frame());      // standing rule: the sky never flickers (FlickerGuard watches and finds the cause)
         } catch (Throwable t) { System.err.println("[Stardrops] world auras unavailable: " + t); }
 
         HudElementRegistry.addLast(

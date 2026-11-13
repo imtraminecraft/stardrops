@@ -3616,6 +3616,7 @@ public class StardropsScreen extends Screen {
                     new int[]{0xFF6C86FF, 0xFFFF72C6, 0xFF8A8F9E}, null, 3, () -> c.previewAt, i -> c.previewAt = i));
                 rows.add(section("Notices"));
                 rows.add(toggle(":bell:", "Pop-up notices", "Small notices under the menu (saved, discarded, links) instead of chat messages", () -> c.popups, v -> c.popups = v));
+                rows.add(toggle(":cosmos:", "Flicker guard", "Watches for a flickering sky and finds what causes it", () -> c.flickerGuard, v -> c.flickerGuard = v));
                 rows.add(section("Cosmetics"));
                 rows.add(section("What to show"));
                 Row you = row(0, ":cos_suffix:", "On you", "Click a chip to turn it on or off", 0xFFC77DFF);
