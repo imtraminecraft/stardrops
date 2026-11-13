@@ -116,15 +116,11 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
             return !DropListener.onChat(message);   // the RARE DROP line is replaced by the animation
         });
 
-        HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
-                Identifier.fromNamespaceAndPath("stardrops", "drop_animation"),
-                (graphics, deltaTracker) -> { GnetumCompat.uncache("drop_animation"); if (Flicker.on(Flicker.HUD)) AnimationManager.render(graphics); });
-
         try {                                                                                  // auras are real particles in the world: hidden by blocks and bodies, always on the player
             net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_EXTRACTION.register(AuraFx::extract);
         } catch (Throwable t) { System.err.println("[Stardrops] world auras unavailable: " + t); }
 
-        HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
+        HudElementRegistry.addLast(
                 Identifier.fromNamespaceAndPath("stardrops", "lyrics"),
                 (graphics, deltaTracker) -> { GnetumCompat.uncache("lyrics"); if (Flicker.on(Flicker.AURAS)) AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false));
                     if (!Flicker.on(Flicker.HUD)) return;
@@ -134,9 +130,16 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
                         if (mv) Gfx.pop(graphics); }
                     StarToast.render(graphics); });
 
-        HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
+        HudElementRegistry.addLast(
                 Identifier.fromNamespaceAndPath("stardrops", "auras"),
                 (graphics, deltaTracker) -> { GnetumCompat.uncache("auras"); if (Flicker.on(Flicker.AURAS)) AuraFx.render(graphics); });
+
+        // Our HUD elements are layers of their own (addLast), not attached to the chat: Gnetum (a HUD caching mod) only knows which element
+        // is drawing for layers it wraps itself, and it must be told not to cache ours, which move every frame (GnetumCompat).
+        HudElementRegistry.addLast(                                                            // last: the drop animation draws over all the rest
+                Identifier.fromNamespaceAndPath("stardrops", "drop_animation"),
+                (graphics, deltaTracker) -> { GnetumCompat.uncache("drop_animation"); if (Flicker.on(Flicker.HUD)) AnimationManager.render(graphics); });
+
 
         try {                                                                                  // moving name effects: refresh the tab list every frame, just before it is drawn
             HudElementRegistry.attachElementBefore(Identifier.withDefaultNamespace("player_list"), Identifier.fromNamespaceAndPath("stardrops", "tab_fx"),

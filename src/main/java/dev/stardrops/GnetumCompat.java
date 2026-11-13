@@ -12,11 +12,12 @@ final class GnetumCompat {
     private static final java.util.Set<String> DONE = new java.util.HashSet<>();
 
     /** Call at the start of one of our HUD elements' drawing. */
+    private static java.lang.reflect.Field current;
     static void uncache(String element) {
         if (DONE.contains(element)) return;
-        if (!looked) { looked = true; try { disable = Class.forName("me.decce.gnetum.Gnetum").getMethod("disableCachingForCurrentElement", String.class); } catch (Throwable ignored) { } }
-        DONE.add(element);
-        if (disable == null) return;
-        try { disable.invoke(null, "Stardrops " + element + " moves every frame"); } catch (Throwable ignored) { }
+        if (!looked) { looked = true; try { Class<?> g = Class.forName("me.decce.gnetum.Gnetum"); disable = g.getMethod("disableCachingForCurrentElement", String.class); current = g.getField("currentElement"); } catch (Throwable ignored) { } }
+        if (disable == null || current == null) { DONE.add(element); return; }
+        try { if (current.get(null) == null) return;                                         // Gnetum is not drawing an element of its own right now: try again next frame
+            disable.invoke(null, "Stardrops " + element + " moves every frame"); DONE.add(element); } catch (Throwable e) { DONE.add(element); }
     }
 }
