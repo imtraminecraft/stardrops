@@ -87,14 +87,12 @@ final class NowPlayingHud {
             Gfx.push(g); Gfx.translate(g, x, y); g.pose().scale(len, 1f); g.fill(0, 0, 1, 1, Gfx.argb(Math.round(a * (0.25f + 0.35f * tw + 0.3f * warp)), i % 6 == 0 ? 0xD8C8FF : STAR)); Gfx.pop(g);
         }
         g.fill(4, 1, w - 4, 2, Gfx.argb(Math.round(26 * e), 0xFFFFFF));
-        // far behind everything: a huge ringed world rising out of the corner, a faint constellation, a comet now and then
+        // far behind everything: a huge world rising out of the corner, a few brighter stars, a comet now and then
         float gx = w - 30 + (float) Math.sin(drift * 0.05f) * 3, gy = h + 14;
         cap(g, gx, gy, 34, w, h, Gfx.argb(Math.round(34 * e), Ritual.mixc(acc, V, 0.5f))); cap(g, gx - 5, gy - 4, 30, w, h, Gfx.argb(Math.round(16 * e), 0xFFFFFF));
-        for (int i = 0; i < 44; i++) { double an = Math.PI + Math.PI * i / 43.0; float rx = gx + (float) Math.cos(an) * 52, ry = gy - 20 + (float) Math.sin(an) * 9 + (float) Math.cos(an) * 6; if (rx > 3 && rx < w - 3 && ry > 2 && ry < h - 2) dot(g, rx, ry, Gfx.argb(Math.round(60 * e), 0xD8C8FF)); }
         float[][] cst = {{0.36f, 0.14f}, {0.44f, 0.3f}, {0.53f, 0.2f}, {0.6f, 0.36f}, {0.7f, 0.16f}};
         for (int i = 0; i < cst.length; i++) {
             float px = cst[i][0] * w, py = cst[i][1] * h; g.fill(Math.round(px), Math.round(py), Math.round(px) + 1, Math.round(py) + 1, Gfx.argb(Math.round(a * (0.35f + 0.25f * (float) Math.sin(drift * 1.3f + i * 1.9f))), 0xFFFFFF));
-            if (i > 0) for (int q = 1; q < 6; q++) dot(g, cst[i - 1][0] * w + (px - cst[i - 1][0] * w) * q / 6f, cst[i - 1][1] * h + (py - cst[i - 1][1] * h) * q / 6f, Gfx.argb(Math.round(a * 0.1f), 0xC8B4FF));
         }
         float cu = (drift % 11f) / 1.2f; if (cu < 1f) { float hx = w * (0.95f - 0.6f * cu), hy = 4 + 16 * cu; for (int q = 0; q < 9; q++) dot(g, hx + q * 2.2f, hy - q * 0.6f, Gfx.argb(Math.round(a * (float) Math.sin(Math.PI * cu) * (1f - q / 9f) * 0.8f), q == 0 ? 0xFFFFFF : 0xC8B4FF)); }
         // the cover, with a violet rim and a moon circling it (behind it on the far side of its orbit)
