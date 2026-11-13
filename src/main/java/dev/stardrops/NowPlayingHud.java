@@ -31,16 +31,18 @@ final class NowPlayingHud {
         boolean playing = preview || Spotify.playing;
         if (!Spotify.playing && lastPlayingSeen) pausedSince = now; lastPlayingSeen = Spotify.playing;
         long hideAfter = c.npHidePaused == 0 ? Long.MAX_VALUE : c.npHidePaused == 1 ? 8000 : 0;
-        boolean want = preview || (c.npOn && (Spotify.linked() || LocalMusic.active) && t != null && (Spotify.playing || now - pausedSince < hideAfter) && !AnimationManager.hidesHud() && mc.level != null);
+        if (t != null && !t.id().equals(lastId)) { lastId = t.id(); changedAt = now; peekAt = now; }
+        if (Spotify.playing != peekPlaying) { peekPlaying = Spotify.playing; peekAt = now; }               // Peek: it slides in when the song changes, or you pause or play, then away again
+        boolean want = preview || (c.npOn && (!c.npPeek || now - peekAt < PEEK_MS) && (Spotify.linked() || LocalMusic.active) && t != null && (Spotify.playing || now - pausedSince < hideAfter) && !AnimationManager.hidesHud() && mc.level != null);
         show += ((want ? 1f : 0f) - show) * Math.min(1f, dt * 8f);
         if (show < 0.01f || t == null) return;
-        if (!t.id().equals(lastId)) { lastId = t.id(); changedAt = now; }
         int W = g.guiWidth(); float k = c.npScale / 100f, e = show * show * (3 - 2 * show);
         float cx = W * c.npX, h = height(false) * k;
         float top = below(mc, W, cx, width() * k, c.npY) - (1f - e) * (h + 14);
         long pos = preview && Spotify.track == null ? (now / 10) % 200_000 : Spotify.position();
         draw(g, mc.font, cx, top, k, e, t, now, now - changedAt, pos, playing, dt, "", AlbumArt.ready && !(preview && Spotify.track == null), AlbumArt.accent());
     }
+    private static long peekAt; private static boolean peekPlaying; static final long PEEK_MS = 9000;
     static int width() { return 214; }
     /** How solid the glass is (Visuals > Music > Now Playing > Background), 0.2..0.7. */
     static float bg() { return StardropsConfig.get().npBg / 100f; }

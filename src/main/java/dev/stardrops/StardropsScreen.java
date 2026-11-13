@@ -2931,7 +2931,8 @@ public class StardropsScreen extends Screen {
             br.ctls.add(new Slider(30, 150, 10, () -> c.cosSkyBright, v -> c.cosSkyBright = (int) v, () -> c.cosSkyBright + "%").typed(1)); rows.add(br);
             rows.add(toggle(":cos_night:", "Only night", "Always there, day or night; it turns by the real clock, steady even if another mod changes the time", () -> c.cosOnlyNight, v -> c.cosOnlyNight = v));
             rows.add(toggle(":collection:", "Your constellations", "The stars you have lit in Achievements shine in the real sky, joined up", () -> c.cosCons, v -> c.cosCons = v));
-            // VISUALS_SKY_EXTRA
+            rows.add(toggle(":cos_night:", "Milky Way", "The faint band of the galaxy across the sky", () -> c.cosMilky, v -> c.cosMilky = v));
+            rows.add(toggle(":cosmos:", "Planets", "A ringed giant and a small red world", () -> c.cosPlanets, v -> c.cosPlanets = v));
         });
         rows.add(vLine(1, "shoot", ":cos_shoot:", "Shooting stars", "Now and then a shooting star crosses the night sky", () -> c.cosShooting, v -> c.cosShooting = v, false));
         rows.add(vLine(1, "aurora", ":cos_aurora:", "Aurora", "At night, curtains of green and violet light sway low in the north", () -> c.cosAurora, v -> c.cosAurora = v, false));
@@ -2969,10 +2970,10 @@ public class StardropsScreen extends Screen {
         for (int i = 0; i < InstrumentsHud.N; i++) { final int k = i;
             Row ln = vLine(2, "inst" + i, InstrumentsHud.ICONS[i], InstrumentsHud.NAMES[i], InstrumentsHud.SUBS[i], () -> c.instOn[k], v -> c.instOn[k] = v, true); rows.add(ln);
             vBody(ln, () -> { Row sz = row(0, ":size:", "Size", "How big it is on your screen", Ui.ACCENT); sz.ctls.add(new Slider(60, 200, 5, () -> c.instSize[k], v -> c.instSize[k] = (int) v, () -> c.instSize[k] + "%").typed(1)); rows.add(sz);
-                // VISUALS_HUD_EXTRA
             });
         }
-        rows.add(note("They fade out while a drop animation plays. /sd edit moves every HUD at once.", 0xFF8A93B0));
+        rows.add(toggle(":animations:", "Step aside for drops", "Fade out while a drop animation plays", () -> c.instAnimHide, v -> c.instAnimHide = v));
+        rows.add(note("/sd edit moves every HUD at once.", 0xFF8A93B0));
     }
     private void npOpts(StardropsConfig c) {
         if (!c.npOn) { rows.add(note("Switch it on to set it up.", 0xFF8A93B0)); return; }
@@ -2984,6 +2985,7 @@ public class StardropsScreen extends Screen {
         Row npo = row(0, ":glass:", "Background", "How see-through the card is: 20% lets the game show through, 70% is nearly solid", Ui.ACCENT);
         npo.ctls.add(new Slider(20, 70, 5, () -> c.npBg, v -> c.npBg = (int) v, () -> c.npBg + "%").typed(1)); rows.add(npo);
         rows.add(section("Behaviour"));
+        rows.add(toggle(":clock:", "Peek", "Only slides in when the song changes, or when you pause or play, then away again", () -> c.npPeek, v -> c.npPeek = v));
         rows.add(picker("When paused", "", new String[]{"Stays", "Hides after 8 s", "Hides at once"}, new String[]{"", "", ""},
             new String[]{":play:", ":clock:", ":switch:"}, new int[]{0xFF1ED760, 0xFFFFC857, 0xFF8A93B0}, null, 3, () -> c.npHidePaused, i -> c.npHidePaused = i));
         rows.add(note("It waits below boss bars and steps aside during drop animations.", 0xFF8A93B0));
@@ -3076,7 +3078,6 @@ public class StardropsScreen extends Screen {
         Row np = vLine(0, "np", ":disc:", "Now Playing", "The song you're playing, on your screen", () -> c.npOn, v -> c.npOn = v, true); rows.add(np); vBody(np, () -> npOpts(c));
         Row ly = vLine(0, "lyrics", ":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v, true); rows.add(ly); vBody(ly, () -> lyricsOpts(c));
         Row am = vLine(0, "amb", ":amb:", "Ambience", "The space around you in the album's colours, while a song plays", null, null, true); rows.add(am); vBody(am, () -> ambOpts(c));
-        // VISUALS_MUSIC_EXTRA
         Row lf = vLine(0, "files", ":music_file:", "Your files", LocalMusic.playingIndex() >= 0 ? "Playing" : LocalMusic.count() == 0 ? "Play your own MP4 and M4A music" : LocalMusic.count() + (LocalMusic.count() == 1 ? " song" : " songs"), null, null, true); rows.add(lf); vBody(lf, () -> localPage(c));
         Row sp = vLine(0, "spotify", ":spot:", "Spotify", Spotify.linked() ? "Linked" : "Not linked yet", null, null, true); rows.add(sp); vBody(sp, () -> spotifyOpts(c));
         if (!Spotify.linked() && LocalMusic.count() == 0) rows.add(note("Music starts with Spotify or your own files: open one of the two lines above.", 0xFF1ED760));

@@ -50,7 +50,7 @@ final class InstrumentsHud {
         StardropsConfig c = StardropsConfig.get(); Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null || !any()) { for (int[] b : BOX) b[2] = b[0]; return; }
         long now = System.currentTimeMillis(); float dt = Math.min(0.1f, (now - (lastFrame == 0 ? now : lastFrame)) / 1000f); lastFrame = now;
-        away += ((AnimationManager.isPlaying() && !preview ? 1f : 0f) - away) * Math.min(1f, dt * 6f);
+        away += ((AnimationManager.isPlaying() && !preview && c.instAnimHide ? 1f : 0f) - away) * Math.min(1f, dt * 6f);
         float a = 1f - away; int W = g.guiWidth(), H = g.guiHeight();
         long nt = System.nanoTime(); double px = mc.player.getX(), pz = mc.player.getZ();
         // speed: how far the last game tick moved you, times 20. (Measuring between frames jitters: the position only changes 20 times a second.)
