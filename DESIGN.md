@@ -855,3 +855,10 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - FlickerGuard (new, always on; Settings > Menu > Flicker guard): every frame (END_EXTRACTION, before the world draws) it copies two thin strips of the last finished frame (38% and 20% down, middle 40%) into a small ring of GPU buffers and reads them back a frame or two later (no stall). Fingerprint: of the last 12 frames, 8+ brightness steps of 12+/255 that keep reversing. Not watched while a screen is open, a drop animation or a sky moment plays.
 - On a hit it pauses every Stardrops group (Flicker.ALL) for 1.5 s. Still flickering: not Stardrops; everything back on, one chat line naming the usual suspects, 10 min cool-down. Gone: the groups come back one at a time (sky, auras, names, HUD, slide, ticks), 1.5 s each; the one that brings it back stays off until restart and chat names it ("tell the author"). Logged to the game log either way.
 - Standing rule kept: any future flicker is caught and switched off by the mod itself within seconds, with the cause named, instead of waiting for a report.
+
+## 13 Nov, 22:35: "opening the menu > visuals drop my fps to 10"
+- Counted on the bench (every fill the menu sends, 640x360): Visuals sent ~21k pieces against ~18k on Home; at the author's size about 7.5k were the page's background aurora alone (a 2 px block per row of every 2 px column).
+- The aurora is now one soft gradient column every 2 px (fillGradient, ~1 piece per column): Visuals sends ~14k, fewer than Home.
+- The sky picture in the Cosmos door/preview is still drawn by the computer, but at most 5 times a second, and less when one picture takes long (never more than ~2.5% of the time).
+- Your files (LocalMusic.songs) looks at the music folder on a side thread every 5 s instead of in the frame (it was asked every frame by the Music door's count).
+- Rule: the menu's background scenes stay cheap: a few hundred pieces at most, gradients instead of pixel blocks.

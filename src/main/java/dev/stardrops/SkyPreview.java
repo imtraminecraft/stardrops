@@ -20,7 +20,7 @@ final class SkyPreview {
     static final int TW = 320, TH = 112; static float YAW = -55f, PITCH = 38f, GAIN = 1.8f;
     private static final Identifier[] ID = {Identifier.fromNamespaceAndPath("stardrops", "sky_preview_0"), Identifier.fromNamespaceAndPath("stardrops", "sky_preview_1")};
     private static final DynamicTexture[] TEX = new DynamicTexture[2]; private static final long[] AT = new long[2]; private static final float[] ASP = new float[2];
-    private static boolean failed;
+    private static boolean failed; private static double cost = -1; private static long gap = 200;
     private static final float[] acc = new float[TW * TH * 3];
     private static float[] vp = new float[4096 * 3]; private static int[] vc = new int[4096]; private static int vn;
 
@@ -30,7 +30,8 @@ final class SkyPreview {
         try {
             long now = System.currentTimeMillis(); float asp = w / (float) h;
             if (TEX[slot] == null) { TEX[slot] = new DynamicTexture(() -> "stardrops sky preview", TW, TH, true); Minecraft.getInstance().getTextureManager().register(ID[slot], TEX[slot]); AT[slot] = 0; }
-            if (now - AT[slot] > 125 || Math.abs(ASP[slot] - asp) > 0.01f) { AT[slot] = now; ASP[slot] = asp; paint(TEX[slot], now, asp); }
+            if (now - AT[slot] > gap || Math.abs(ASP[slot] - asp) > 0.05f) { AT[slot] = now; ASP[slot] = asp; long t0 = System.nanoTime(); paint(TEX[slot], now, asp);
+                double ms = (System.nanoTime() - t0) / 1e6; cost = cost < 0 ? ms : cost * 0.8 + ms * 0.2; gap = (long) Math.max(200, Math.min(1000, cost * 40)); }   // drawn by the computer: at most 5 times a second, less on a slow one (never more than 2.5% of the time)
             Gfx.push(g); Gfx.translate(g, x, y); g.pose().scale(w / (float) TW, h / (float) TH);
             g.blit(RenderPipelines.GUI_TEXTURED, ID[slot], 0, 0, 0f, 0f, TW, TH, TW, TH, TW, TH, 0xFFFFFFFF);
             Gfx.pop(g);

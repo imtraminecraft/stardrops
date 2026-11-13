@@ -42,7 +42,13 @@ final class LocalMusic {
     private static volatile long posMs; private static volatile int serial;
 
     static Path dir() { return DataFiles.dir().resolve("music"); }
-    static List<Song> songs() { if (System.currentTimeMillis() - scannedAt > 5000) scan(); return songs; }
+    private static volatile boolean scanning;
+    /** The songs found so far. The folder is looked at again every 5 s on a side thread, never while the game draws a frame. */
+    static List<Song> songs() {
+        if (!scanning && System.currentTimeMillis() - scannedAt > 5000) { scanning = true; scannedAt = System.currentTimeMillis();
+            Thread t = new Thread(() -> { try { scan(); } finally { scanning = false; } }, "Stardrops music scan"); t.setDaemon(true); t.start(); }
+        return songs;
+    }
     static int count() { return songs().size(); }
     static int playingIndex() { return active ? index : -1; }
     static boolean paused() { return paused; }

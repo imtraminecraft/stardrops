@@ -4367,7 +4367,7 @@ public class StardropsScreen extends Screen {
                         for (int q = 0; q < 18; q++) { float f = q / 18f; g.fill(Math.round(hx - f * 46), Math.round(hy - f * 20), Math.round(hx - f * 46) + 1, Math.round(hy - f * 20) + 1, Gfx.argb(Math.round(al * 0.7f * (1f - f) * (float) Math.sin(Math.PI * v)), q < 3 ? 0xFFF0E0 : 0xFF7AD9)); } } }
                 case 3 -> { for (int c = 0; c < w; c += 2) { float wv = (float) Math.sin(c * 0.035f + tm * 0.6f) * 0.5f + 0.5f, wv2 = (float) Math.sin(c * 0.013f - tm * 0.35f) * 0.5f + 0.5f;   // an aurora along the bottom
                         int top = Math.round(y + h - 18 - 40 * wv * wv2), col = Canvas.mix(0xFF40E0A0, 0xFF8A5AFF, wv2) & 0xFFFFFF;
-                        for (int yy = top; yy < y + h - 4; yy += 2) { float f = (yy - top) / (float) Math.max(1, y + h - 4 - top); g.fill(x + c, yy, x + c + 2, yy + 2, Gfx.argb(Math.round(al * 0.4f * (1f - f) * (0.4f + 0.6f * wv)), col)); } } }
+                        if (top < y + h - 4) g.fillGradient(x + c, top, x + c + 2, y + h - 4, Gfx.argb(Math.round(al * 0.4f * (0.4f + 0.6f * wv)), col), Gfx.argb(0, col)); } }   // one soft column each (was a 2 px block per row: thousands of pieces, the Visuals page ran at 10 FPS)
                 default -> { int[][] cs = {{70, 30}, {120, 55}, {175, 40}, {230, 70}, {275, 50}, {320, 85}};       // a constellation drawn faintly across the page
                     for (int i = 0; i < cs.length; i++) { int sx = x + w - 340 + cs[i][0], sy = y + h - 120 + cs[i][1]; float tw = 0.6f + 0.4f * (float) Math.sin(tm * 1.3f + i);
                         g.fill(sx - 1, sy, sx + 2, sy + 1, Gfx.argb(Math.round(al * 0.6f * tw), 0xC8D8FF)); g.fill(sx, sy - 1, sx + 1, sy + 2, Gfx.argb(Math.round(al * 0.6f * tw), 0xC8D8FF));
