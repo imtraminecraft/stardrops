@@ -17,7 +17,7 @@ import org.joml.Vector4f;
  */
 final class SkyPreview {
     private SkyPreview() {}
-    static final int TW = 320, TH = 112; static float YAW = -15f, PITCH = 25f, GAIN = 1.8f;
+    static final int TW = 320, TH = 112; static float YAW = -55f, PITCH = 38f, GAIN = 1.8f;
     private static final Identifier[] ID = {Identifier.fromNamespaceAndPath("stardrops", "sky_preview_0"), Identifier.fromNamespaceAndPath("stardrops", "sky_preview_1")};
     private static final DynamicTexture[] TEX = new DynamicTexture[2]; private static final long[] AT = new long[2]; private static final float[] ASP = new float[2];
     private static boolean failed;
@@ -50,9 +50,9 @@ final class SkyPreview {
         SkyBox.make0();
         float t = (now % 3_600_000L) / 1000f, yaw = YAW + 14f * (float) Math.sin(t * 0.05f);
         Matrix4f pv = new Matrix4f().perspective((float) Math.toRadians(62), asp, 0.05f, 10f).rotateX((float) Math.toRadians(-PITCH)).rotateY((float) Math.toRadians(yaw))
-                .rotateZ(0.35f).rotateX((float) (0.6 * Math.PI * 2));             // a fixed turn, looking where the Milky Way, the ringed planet and the aurora meet
+                .rotate(SkyBox.rot(0.6f));             // a fixed turn, looking where the Milky Way, the ringed planet and the aurora meet
         float keepS = SkyBox.minS, kt = SkyBox.drawTurn; boolean km = SkyBox.milky, kp = SkyBox.planets, kd = SkyBox.deep, kc = SkyBox.comet;
-        SkyBox.minS = 0.75f * (float) Math.toRadians(62) / TH; SkyBox.milky = c.cosMilky; SkyBox.planets = c.cosPlanets; SkyBox.deep = c.cosDeep; SkyBox.comet = c.cosComet; SkyBox.drawTurn = 0.6f;
+        SkyBox.minS = 0.3f * (float) Math.toRadians(62) / TH; SkyBox.milky = c.cosMilky; SkyBox.planets = c.cosPlanets; SkyBox.deep = c.cosDeep; SkyBox.comet = c.cosComet; SkyBox.drawTurn = 0.6f;
         vn = 0;
         try { SkyBox.draw(SkyBox.guard(SkyPreview::v), t, Math.max(0.3f, c.cosSkyBright / 100f), c.cosCons ? Codex.skyFigures() : null, c.cosShooting, c.cosAurora); }
         finally { SkyBox.minS = keepS; SkyBox.milky = km; SkyBox.planets = kp; SkyBox.deep = kd; SkyBox.comet = kc; SkyBox.drawTurn = kt; }

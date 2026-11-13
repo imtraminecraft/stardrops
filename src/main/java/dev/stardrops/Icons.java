@@ -36,7 +36,7 @@ final class Icons {
         if (hash >= 0) { try { tint = 0xFF000000 | Integer.parseInt(name.substring(hash + 1), 16); } catch (Exception ignored) { } name = name.substring(0, hash); }
         scanOverrides();
         int[][] ov = OVR.get(name);
-        if (ov != null) { blit(g, ov[ov.length == 1 || now == 2400L ? 0 : (int) ((now / FRAME_MS) % ov.length)], x, y); return; }
+        if (ov != null) { int[] o = optical(key); blit(g, ov[ov.length == 1 || now == 2400L ? 0 : (int) ((now / FRAME_MS) % ov.length)], x + o[0], y + o[1]); return; }      // every drawn icon sits where it LOOKS centred (optical)
         if (name.equals("coin")) { ItemIcons.draw(g, "@COIN", null, x + 8, y + 8, 1f); return; }       // the Hypixel coin head, never a drawn disc
         if (name.equals("griffin_pet")) { if (ItemIcons.hasPixels("GRIFFIN;5")) { ItemIcons.draw(g, "GRIFFIN;5", null, x + 8, y + 8, 1.15f); return; } ItemIcons.prefetch("GRIFFIN;5"); name = "griffin"; }      // the pet's own head (a feather until it loads)
         if (name.startsWith("mob_") && ItemIcons.hasPixels("MOB_" + name.substring(4))) { ItemIcons.draw(g, "MOB_" + name.substring(4), null, x + 8, y + 8, 1.15f); return; }      // the creature's own 3D head (the pixel icon shows until it has loaded)
@@ -50,9 +50,41 @@ final class Icons {
         if (name.equals("sparkle") || Cosmetics.byId(name) != null) { Cosmetics.drawIcon(g, name, x, y, now); return; }      // the one suffix we have: shaded, six frames
         int frame = now == 2400L ? 0 : (int) ((now / FRAME_MS) % IconArt.FRAMES);
         int[] px = frameOf(name, tint & 0xFFFFFF, frame);
-        if (px != null) { blit(g, px, x, y); return; }
+        if (px != null) { int[] o = optical(key); blit(g, px, x + o[0], y + o[1]); return; }
         if (credit(g, name, x, y, now)) return;
         placeholder(g, name, tint, x, y, now);
+    }
+
+    /**
+     * Draws a 16 x 16 icon so that it LOOKS centred on cx, cy, not just sits in the middle of its square. A picture whose weight leans
+     * to one side (a play triangle, a bell, a note) is shifted by where its ink actually is: half the middle of its visible box, half the
+     * centre of its mass, which is how the eye judges the middle. Items and heads are drawn centred as they are.
+     */
+    static void drawCentered(GuiGraphicsExtractor g, String key, int cx, int cy, long now) {
+        draw(g, key, cx - 8, cy - 8, now);                                                     // (draw itself applies the optical shift)
+    }
+    private static final java.util.Map<String, int[]> OPT = new java.util.HashMap<>();
+    /** The shift that moves an icon's visual middle onto its square's middle, worked out once from its first frame. */
+    static int[] optical(String key) {
+        int[] o = OPT.get(key); if (o != null) return o;
+        int[] px = null;
+        try {
+            String name = nameOf(key); int hash = name.indexOf('#'); if (hash >= 0) name = name.substring(0, hash);
+            int[][] ov = OVR.get(name);
+            px = ov != null ? ov[0] : frameOf(name, 0, 0);
+        } catch (Exception ignored) { }
+        o = new int[]{0, 0};
+        if (px != null && px.length == 256) {
+            int x0 = 16, y0 = 16, x1 = -1, y1 = -1; double sw = 0, sx = 0, sy = 0;
+            for (int i = 0; i < 256; i++) { int al = px[i] >>> 24; if (al < 40) continue; int x = i & 15, y = i >> 4;
+                x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); sw += al; sx += al * (x + 0.5); sy += al * (y + 0.5); }
+            if (x1 >= 0 && sw > 0) {
+                double vx = 0.5 * ((x0 + x1 + 1) / 2.0) + 0.5 * (sx / sw), vy = 0.5 * ((y0 + y1 + 1) / 2.0) + 0.5 * (sy / sw);
+                o[0] = (int) Math.max(-3, Math.min(3, Math.round(8 - vx))); o[1] = (int) Math.max(-3, Math.min(3, Math.round(8 - vy)));
+            }
+        }
+        if (!cacheStale) OPT.put(key, o);
+        return o;
     }
 
     // ---- your own icons: config/stardrops/icons/<name>.png. A 16 px wide picture; 16 tall = one still picture, 128 tall = the 8 animation frames stacked top to bottom.
@@ -63,7 +95,7 @@ final class Icons {
     static java.nio.file.Path iconDir() { return DataFiles.art("icons"); }
     /** Looks for edited icon pictures once a second, on a background thread: file I/O never runs on the render thread (it caused a small hitch every second). */
     private static void scanOverrides() {
-        if (cacheStale) { cacheStale = false; CACHE.clear(); }
+        if (cacheStale) { cacheStale = false; CACHE.clear(); OPT.clear(); }
         long nw = System.currentTimeMillis();
         if (scanning || nw - ovrScan < 1000L) return; ovrScan = nw; scanning = true;
         java.util.concurrent.CompletableFuture.runAsync(() -> { try { scanNow(); } finally { scanning = false; } });

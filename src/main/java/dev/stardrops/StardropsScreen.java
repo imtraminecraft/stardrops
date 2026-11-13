@@ -43,7 +43,24 @@ public class StardropsScreen extends Screen {
     private int[] adminBtn() { int[] c = cosBtn(); return new int[]{c[0], c[1] - 28, c[2], c[3] - 28}; }          // admin only: just above the Cosmetics button
     private void openCos() { if (!hiddenTab(tab)) prevTab = tab; tab = Tab.COSMETICS; query = ""; clearSearch(); scroll = 0; sideScroll = 0; cosAt = System.currentTimeMillis(); tabChanged = cosAt; selY = Float.NaN; }
     private void closeCos() { tab = hiddenTab(prevTab) ? Tab.HOME : prevTab; scroll = 0; selY = Float.NaN; tabChanged = System.currentTimeMillis(); }
-    private static int vi(int ord) { return switch (Tab.values()[ord]) { case HOME -> 0; case DROPS -> 1; case ANIMATIONS -> 2; case SOUNDS -> 3; case CHAT -> 4; case VISUALS -> 5; default -> 0; }; }          // the sidebar list: Settings sits pinned at the bottom, Cosmetics and Resources have their own doors
+    private static int vi(int ord) { return switch (Tab.values()[ord]) { case HOME -> 0; case DROPS -> 1; case ANIMATIONS, SOUNDS, CHAT -> 2; case VISUALS -> 3; default -> 0; }; }      // the sidebar: Home; BROWSE Drop Library; CUSTOMIZE Drop effects (Animations, Sounds and Chat folded into one), Visuals, Cosmetics; Settings pinned at the foot
+    /** Animations, Sounds and Chat are one sidebar entry, "Drop effects", with the three as tabs at the top of the page. */
+    private static boolean fx(Tab t) { return t == Tab.ANIMATIONS || t == Tab.SOUNDS || t == Tab.CHAT; }
+    private static Tab lastFx = Tab.ANIMATIONS;
+    private static final Tab[] FX_TABS = {Tab.ANIMATIONS, Tab.SOUNDS, Tab.CHAT};
+    private final int[][] fxSeg = new int[3][];
+    /** The sidebar's group labels take this much room; the list starts this far under the top of the window. */
+    private static final int LBL = 12, NAV_TOP = 44;
+    private int slotY(int v) { return v * tp() + (v >= 1 ? LBL : 0) + (v >= 2 ? LBL : 0); }
+    /** The Cosmetics entry under Visuals (Cosmetics opens its own window). */
+    private int[] cosNav() { int y = py + NAV_TOP - sideScroll + slotY(4) + (tab != Tab.GENERAL ? Math.round(subExp * subH() * subs().length) + srcExtra() : 0); return new int[]{px + 8, y, px + sw - 6, y + tabBoxH()}; }
+    /** Switches between Animations, Sounds and Chat, keeping the category open where the two share them. */
+    private void goFx(Tab to) {
+        if (to == tab) { return; }
+        boolean keep = (tab == Tab.ANIMATIONS || tab == Tab.SOUNDS) && (to == Tab.ANIMATIONS || to == Tab.SOUNDS);
+        if (keep) subSel[to.ordinal()] = subSel[tab.ordinal()]; else { dropSrc = null; dropSrcName = null; }
+        tab = to; scroll = 0; waveKey = null; SoundFx.stopPreviews(); tabChanged = System.currentTimeMillis(); open.removeIf(o -> o.startsWith("dd_"));
+    }          // the sidebar list: Settings sits pinned at the bottom, Cosmetics and Resources have their own doors
     private static int tabCol(Tab t) { return TAB_COL[t.ordinal()]; }
     private static int subCol(Tab t) { return Canvas.mix(tabCol(t), 0xFFFFFFFF, 0.5f); }
     private static final String[] CHANNELS = {"PARTY", "COOP", "ALL", "OFF"};
@@ -274,6 +291,8 @@ public class StardropsScreen extends Screen {
         boolean arrow, open;
         EditBox field; String fieldBtn; int btnX0, btnX1; boolean phBtns;
         int dropRank;                  // a Drop Library row: the drop's rank (2 and up plays RNG unless you pick Normal)
+        int v2;                        // the Drop Library's own rows: 1 a drop, 2 the "Every drop here" bar, 3 the column names, 4 the page's header
+        String mob = "", odds = ""; int oddsCol; boolean rngRow, hair; List<String> pills; StardropsConfig.DropCfg burst;
         boolean dropCols, dropPrev;              // section header that labels the Animation / Preview / Chat Alert columns
         int cell;                      // > 0: every control sits centred in its own column of this width
         boolean pVert; String[] pLabels, pIcons, pSubs; int pTh = 27, pColsForce, pTop = 22; int[] pColors; boolean[] pWip; int pCols; IntSupplier pSel; IntConsumer pSet; java.util.function.IntPredicate pOn; boolean[] pLock; String[] pTips, pFx, pIds, pSetId; int[] pRar, pBg; Runnable[] pAct; boolean pFontTiles;      // PICKER rows: the tiles (pOn: which are switched on, pLock: which are locked)
@@ -395,7 +414,7 @@ public class StardropsScreen extends Screen {
         addRenderableWidget(thrField); thrField.setVisible(false);
         searchField = new EditBox(font, 0, 0, 120, 14, Component.literal("search"));
         searchField.setMaxLength(30); searchField.setBordered(false);
-        searchField.setHint(Component.literal("Search  (Ctrl+F)"));
+        searchField.setHint(Component.literal(""));
         searchField.setValue(query);
         searchField.setResponder(v -> { query = v; scroll = 0; sideScroll = 0; if (cosWin() && !v.isBlank()) closeCos(); });
         addRenderableWidget(searchField);
@@ -1569,14 +1588,14 @@ public class StardropsScreen extends Screen {
 
     private void tabIcon(GuiGraphicsExtractor g, Tab t, int x, int y, long now, boolean lively) {
         switch (t) {
-            case DROPS -> Icons.draw(g, "dropped", x, y, now);
-            case HOME -> Icons.draw(g, "home", x, y, now);
-            case ANIMATIONS -> Icons.draw(g, "animations", x, y, now);
-            case SOUNDS -> Icons.draw(g, "sounds", x, y, now);
-            case CHAT -> Icons.draw(g, "chat", x, y, now);
-            case VISUALS -> Icons.draw(g, "visuals", x, y, now);
-            case GENERAL -> Icons.draw(g, "settings", x, y, now);
-            case COSMETICS -> Icons.draw(g, "sparkle", x, y, now);
+            case DROPS -> Icons.drawCentered(g, "dropped", x + 8, y + 8, now);              // centred by eye, not by the square (Icons.optical)
+            case HOME -> Icons.drawCentered(g, "home", x + 8, y + 8, now);
+            case ANIMATIONS -> Icons.drawCentered(g, "animations", x + 8, y + 8, now);
+            case SOUNDS -> Icons.drawCentered(g, "sounds", x + 8, y + 8, now);
+            case CHAT -> Icons.drawCentered(g, "chat", x + 8, y + 8, now);
+            case VISUALS -> Icons.drawCentered(g, "visuals", x + 8, y + 8, now);
+            case GENERAL -> Icons.drawCentered(g, "settings", x + 8, y + 8, now);
+            case COSMETICS -> Icons.drawCentered(g, "sparkle", x + 8, y + 8, now);
             default -> Gfx.item(g, t.icon, x, y);
         }
     }
@@ -2391,6 +2410,76 @@ public class StardropsScreen extends Screen {
             StardropsConfig.save(); return true;
         }
     }
+    /** When a drop was last made RNG (the row bursts into sparkles for a moment). */
+    private static final Map<Object, Long> RNG_AT = new java.util.IdentityHashMap<>();
+    /** A small four-point star (the font has none). */
+    private static void star4(GuiGraphicsExtractor g, int x, int y, int col) { g.fill(x - 3, y, x + 4, y + 1, col); g.fill(x, y - 3, x + 1, y + 4, col); g.fill(x - 1, y - 1, x + 2, y + 2, col); }
+    private static final int GOLD = 0xFFFFC857, GOLD_T = 0xFFFFE7A8, GRN = 0xFF5BD38A;
+    /**
+     * WHAT PLAYS: the preview and the animation joined into one control, so the play button plays exactly what the button beside it
+     * picks. Pointing at the play half opens it into "Watch it"; pointing at a Normal animation offers the upgrade ("Make it RNG"),
+     * and a click makes it so. Right click steps back.
+     */
+    private class Plays extends Ctl {
+        final IntSupplier get; final IntConsumer set; final Runnable play; final Object burstKey; boolean pad;
+        Plays(IntSupplier get, IntConsumer set, Runnable play, Object burstKey) { this.get = get; this.set = set; this.play = play; this.burstKey = burstKey; }
+        /** No play button, but keep its room, so this lines up with the rows under it. */
+        Plays pad() { pad = true; return this; }
+        int width() { return 98; }
+        boolean overPlay(double mx) { return play != null && mx < x0 + 17; }
+        void draw(GuiGraphicsExtractor g, int y, int h, boolean hover) {
+            int v = get.getAsInt(), ty = y + (h - 14) / 2, w = x1 - x0; boolean rng = v == 2, off = v == 3, mixed = v < 0;
+            boolean hp = hover && overPlay(lastMx), ha = hover && !hp;
+            float kp = play == null ? 0f : anim("plp|" + key, hp ? 1f : 0f, 26f), ka = anim("pla|" + key, ha ? 1f : 0f, 30f);
+            int pw = play == null ? (pad ? 16 : 0) : Math.round(16 + kp * 44), ax = x0 + pw + (play == null && !pad ? 0 : 1), aw = x1 - ax;
+            if (play != null) {                                                                  // the play half
+                int pc = Canvas.mix(rng ? 0xFF4A3610 : 0xFF1C2050, 0xFF2E8A58, kp);
+                rnd(g, x0, ty, pw, 14, 4, pc);
+                if (kp > 0.5f) { NebulaTex.glow(g, x0 + pw / 2f, ty + 7f, pw * 0.7f, 10, Gfx.argb(Math.round(110 * kp), 0x5BD38A)); Gfx.text(g, font, Gfx.fit(font, "\u25B6 Watch it", pw - 6), x0 + 5, ty + 3, 0xFFFFFFFF); }
+                else Gfx.text(g, font, "\u25B6", x0 + 6, ty + 3, rng ? GOLD : 0xFFA9ADD8);          // a triangle's weight sits left of its box: one pixel right looks centred
+            }
+            if (aw < 12) return;
+            int col = rng ? GOLD : off ? 0xFF4A4F70 : mixed ? 0xFF6C70A2 : 0xFF4F6BFF;
+            if (ka > 0.5f && v == 1) {                                                              // pointing at a Normal one: it offers the upgrade
+                NebulaTex.glow(g, ax + aw / 2f, ty + 7f, aw * 0.65f, 11, Gfx.argb(Math.round(130 * ka), 0xFFC857));
+                rnd(g, ax, ty, aw, 14, 4, 0xFF5A4012); g.fill(ax + 3, ty + 13, ax + aw - 3, ty + 14, GOLD);
+                Gfx.text(g, font, Gfx.fit(font, "Make it RNG", aw - 16), ax + 5, ty + 3, 0xFFFFF1C8); star4(g, ax + aw - 8, ty + 7, GOLD_T);
+                return;
+            }
+            rnd(g, ax, ty, aw, 14, 4, Canvas.mix(0xFF101230, col, (rng ? 0.35f : 0.28f) + ka * 0.12f)); g.fill(ax + 3, ty + 13, ax + aw - 3, ty + 14, Gfx.argb(180, col & 0xFFFFFF));
+            if (rng) {
+                Gfx.text(g, font, "RNG", ax + 5, ty + 3, GOLD_T); int sx = ax + 5 + Gfx.w(font, "RNG") + 6;
+                float tw = STILL ? 1f : 0.7f + 0.3f * (float) Math.sin(fxNow / 240.0 + x0);
+                star4(g, sx, ty + 7, Canvas.mix(GOLD, 0xFFFFFFFF, tw * 0.5f));
+                Gfx.text(g, font, Gfx.fit(font, ka > 0.5f ? "\u2192 Off" : "jackpot", ax + aw - sx - 8), sx + 6, ty + 3, ka > 0.5f ? 0xFFC8B890 : GOLD_T);
+            } else {
+                String lb = mixed ? "Mixed" : off ? (ka > 0.5f ? "\u2192 Normal" : "Off") : "Normal";
+                Gfx.text(g, font, Gfx.fit(font, lb, aw - 16), ax + 5, ty + 3, off || mixed ? 0xFFA9ADD8 : 0xFFDDE4FF);
+                for (int i = 0; i < 3; i++) g.fill(ax + aw - 10 + i, ty + 5 + i, ax + aw - 5 - i, ty + 6 + i, Gfx.argb(255, col & 0xFFFFFF));      // a little chevron: it changes
+            }
+        }
+        boolean click(double mx, int button) {
+            if (overPlay(mx)) { if (button == 0) play.run(); return true; }
+            int v = get.getAsInt(), nx = v < 1 ? 1 : button == 1 ? (v == 1 ? 3 : v - 1) : (v == 3 ? 1 : v + 1);
+            set.accept(nx); if (nx == 2 && burstKey != null) RNG_AT.put(burstKey, System.currentTimeMillis());
+            StardropsConfig.save(); return true;
+        }
+    }
+    /** CHAT: a switch. On, it says so: "brag on". */
+    private class ChatSw extends Ctl {
+        final BooleanSupplier get; final Consumer<Boolean> set;
+        ChatSw(BooleanSupplier get, Consumer<Boolean> set) { this.get = get; this.set = set; }
+        int width() { return 30; }
+        void draw(GuiGraphicsExtractor g, int y, int h, boolean hover) {
+            boolean on = get.getAsBoolean(); float v = anim("csw|" + key, on ? 1f : 0f, 26f), hv = anim("csh|" + key, hover ? 1f : 0f, 40f);
+            int tx = x0 + 4, ty = y + (h - 11) / 2 - (on ? 3 : 0) + Math.round((1f - v) * 0f);
+            rnd(g, tx, ty, 22, 11, 5, Canvas.mix(Canvas.mix(0xFF262850, 0xFF2E8A58, v), 0xFFFFFFFF, hv * 0.1f));
+            int kx = tx + 1 + Math.round(v * 11); rnd(g, kx, ty + 1, 9, 9, 4, Canvas.mix(0xFF8A8EB8, 0xFFFFFFFF, Math.max(v, hv * 0.5f)));
+            if (v > 0.5f) { Gfx.push(g); Gfx.translate(g, x0 + 15 - Gfx.w(font, "brag on") * 0.25f, ty + 12); Gfx.scale(g, 0.5f); Gfx.text(g, font, "brag on", 0, 0, GRN); Gfx.pop(g); }
+            else if (hv > 0.5f) { Gfx.push(g); Gfx.translate(g, x0 + 15 - Gfx.w(font, "brag?") * 0.25f, ty + 13); Gfx.scale(g, 0.5f); Gfx.text(g, font, "brag?", 0, 0, 0xFF8A8EB8); Gfx.pop(g); }
+        }
+        boolean click(double mx, int button) { if (button == 0) { set.accept(!get.getAsBoolean()); StardropsConfig.save(); } return true; }
+    }
     /** Takes a column of a drop row without drawing anything (the switch-all row has no Preview button). */
     private class Gap extends Ctl {
         int width() { return 0; }
@@ -2400,6 +2489,7 @@ public class StardropsScreen extends Screen {
     // ---- build the rows of the open page
 
     private void build() {
+        qaSrcName = null; qaSrcCfgs = null;
         rows.clear(); sliderSeq = 0; srcList.clear(); srcWip.clear();
         searching = false;
         if (query.isBlank()) { buildTab(tab); filterSub(); }
@@ -2505,7 +2595,7 @@ public class StardropsScreen extends Screen {
 
     private void relayout() {
         int y = lt - scroll;
-        for (Row r : rows) { r.y = y; y += r.h + (r.kind == SECTION ? 1 : r.pickLabels != null ? 0 : 3); layout(r); }
+        for (Row r : rows) { r.y = y; y += r.h + (r.v2 == 1 || r.v2 == 3 ? 0 : r.kind == SECTION ? 1 : r.pickLabels != null ? 0 : 3); layout(r); }
         totalH = y + scroll - lt;
     }
 
@@ -2544,7 +2634,7 @@ public class StardropsScreen extends Screen {
     private void dropsPage(StardropsConfig c) {
         if (searching) {                                                    // search finds single drops anywhere
             for (Categories.Cat cat : Categories.ALL) if (!cat.wip()) for (DropData.Source s : cat.sources()) for (DropData.Drop d : s.drops) {
-                Row r = dropRow(s, d, c); r.sub = srcName(s) + (r.sub.isEmpty() ? "" : "  ·  " + r.sub); rows.add(r);
+                Row r = dropRow(s, d, c); r.mob = srcName(s) + (r.mob.isEmpty() ? "" : "  \u00B7  " + r.mob); r.sub = r.mob + "  \u00B7  " + r.sub; rows.add(r);
             }
             return;
         }
@@ -2578,7 +2668,7 @@ public class StardropsScreen extends Screen {
         if (open == null && Categories.single(grp) && !srcs.isEmpty()) open = srcs.get(0);       // the burrow, a crop list, the Table: one page, it opens straight away
         if (open == null) { dropsGroup(cat, grp, srcs, c); return; }
         boolean single = Categories.single(grp);
-        if (single) { rows.add(backRow(cat.name(), "Back to all the " + cat.name() + " pages", cat.color(), () -> openPage(curSub(), null, null))); int tot = 0; for (DropData.Source ts : srcs) tot += ts.drops.size(); rows.add(hero(grp.icon(), grp.name(), tot + (tot == 1 ? " Drop" : " Drops") + " listed", grp.color())); if (grp.id().equals("treasure")) treasureSettings(rows, c); }
+        if (single) { rows.add(backRow(cat.name(), "Back to all the " + cat.name() + " pages", cat.color(), () -> openPage(curSub(), null, null))); if (grp.id().equals("treasure")) treasureSettings(rows, c); }
         final Categories.Group fg = grp;
         dropsSource(cat, fg, open, c, single);
     }
@@ -2619,20 +2709,32 @@ public class StardropsScreen extends Screen {
     private void dropsSource(Categories.Cat cat, Categories.Group grp, DropData.Source s, StardropsConfig c, boolean single) {
         String nm = srcName(s);
         StardropsConfig.SourceCfg sc = c.source(s.id);
-        if (!single) { rows.add(backRow(grp.name(), "Back to all the " + grp.name(), grp.color(), () -> openPage(curSub(), grp.id(), grp.name()))); rows.add(hero(srcIcon(s), nm, s.drops.size() + " drops", s.color())); }
-        boolean live = isSlayerSrc(s);                                                        // only animated pages get a Preview column
-        Row cols = section(""); cols.dropCols = true; cols.dropPrev = live; cols.h = 14; rows.add(cols);
+        if (!single) rows.add(backRow(grp.name(), "Back to all the " + grp.name(), grp.color(), () -> openPage(curSub(), grp.id(), grp.name())));
         AnimAll aa = new AnimAll(); List<StardropsConfig.DropCfg> all = new ArrayList<>();
         for (DropData.Drop d : s.drops) { StardropsConfig.DropCfg dc = c.drop(s.id, d.name); StardropsConfig.initDrop(dc, Math.max(0, d.rank)); aa.cfgs.add(dc); all.add(dc); }
-        Row mr = row(0, ":dropped:", "All drops", "Set every drop of this page at once", s.color()); mr.cell = CELL;
-        if (live) mr.ctls.add(new Gap()); mr.ctls.add(aa);
-        mr.ctls.add(tog(() -> { for (StardropsConfig.DropCfg d : all) if (!d.announce) return false; return !all.isEmpty(); }, v -> { for (StardropsConfig.DropCfg d : all) d.announce = v; StardropsConfig.save(); }, 0xFFD98A1F));
+        qaSrcName = single ? grp.name() : nm; qaSrcCfgs = all;
+        int nRng = 0, nChat = 0; java.util.LinkedHashSet<String> mobs = new java.util.LinkedHashSet<>();
+        for (StardropsConfig.DropCfg dc : all) { if (dc.anim == 2) nRng++; if (dc.announce) nChat++; }
+        for (DropData.Drop d : s.drops) if (d.mob != null && !d.mob.isBlank()) mobs.add(mobName(d.mob));
+        Row hd = row(0, single ? grp.icon() : srcIcon(s), single ? grp.name() : nm, String.join(", ", mobs), s.color()); hd.v2 = 4; hd.h = mobs.isEmpty() ? 20 : 30; hd.noSearch = true;           // the header: what this is, how many, and who drops them
+        hd.pills = List.of(s.drops.size() + "|drops|" + 0xFFA9ADD8, nRng + "|RNG|" + GOLD, nChat + "|in chat|" + GRN); rows.add(hd);
+        Row mr = row(0, null, "Every drop here", "changes all " + all.size() + " at once", s.color()); mr.v2 = 2; mr.h = 26; mr.noSearch = true;
+        mr.ctls.add(new Plays(aa::common, v -> { for (StardropsConfig.DropCfg d : all) StardropsConfig.setAnim(d, v); if (v == 2) for (StardropsConfig.DropCfg d : all) RNG_AT.put(d, System.currentTimeMillis()); }, null, null).pad());
+        mr.ctls.add(new ChatSw(() -> { for (StardropsConfig.DropCfg d : all) if (!d.announce) return false; return !all.isEmpty(); }, v -> { for (StardropsConfig.DropCfg d : all) d.announce = v; }));
         rows.add(mr);
-        for (DropData.Drop d : s.drops) rows.add(dropRow(s, d, c));
+        Row cols = row(0, null, "", "", s.color()); cols.v2 = 3; cols.h = 13; cols.noSearch = true; cols.ctls.add(new Gap() { int width() { return 98; } }); cols.ctls.add(new Gap() { int width() { return 30; } }); rows.add(cols);
+        boolean prevNormal = false;
+        for (DropData.Drop d : s.drops) { Row dr = dropRow(s, d, c); dr.hair = prevNormal && !dr.rngRow; prevNormal = !dr.rngRow; rows.add(dr); }
         if (s == TreasureData.SOURCE) rows.add(note("The chance is per burrow you dig. Creature burrows are the other 75%.", Ui.DIM));
         if (!AnimationManager.isSlayer(grp.id())) animWip(nm);
     }
 
+    /** "barbarian_duke" -> "Barbarian Duke". */
+    private static String mobName(String id) {
+        if (id == null || id.isBlank()) return ""; if (id.contains(" ")) return id;
+        StringBuilder b = new StringBuilder(); for (String w : id.split("_")) { if (w.isEmpty()) continue; if (b.length() > 0) b.append(' '); b.append(Character.toUpperCase(w.charAt(0))).append(w.substring(1)); }
+        return b.toString();
+    }
     private static boolean isSlayerSrc(DropData.Source s) { return AnimationManager.isSlayer(DropListener.groupOf(s)); }      // a source whose drops play the star scene (it gets Preview buttons)
     /** One drop: a Preview button (animated pages only), its animation and its chat alert. */
     private Row dropRow(DropData.Source s, DropData.Drop d, StardropsConfig c) {
@@ -2641,9 +2743,11 @@ public class StardropsScreen extends Screen {
         Row dr = row(0, d.icon, d.name, d.chance.isEmpty() ? "chance unknown" : d.chance, s.color());
         dr.iconId = s == TreasureData.SOURCE && !TreasureData.headArt(d.id) ? null : d.id; dr.subColor = d.chance.isEmpty() ? Ui.DIM : Ui.odds(d.odds);
         dr.cell = CELL; dr.dcfg = dc; dr.dropRank = Math.max(0, d.rank);
-        if (isSlayerSrc(s)) dr.ctls.add(new Btn("▶", GREEN, () -> play(() -> DropListener.playDrop(s, d))));      // Preview: only where there is an animation to show
-        dr.ctls.add(new AnimBtn(dc));
-        dr.ctls.add(tog(() -> dc.announce, v -> { dc.announce = v; StardropsConfig.save(); }, 0xFFD98A1F));
+        dr.v2 = 1; dr.h = 24; dr.cell = 0; dr.mob = d.mob == null ? "" : mobName(d.mob); dr.odds = d.chance.isEmpty() ? "chance unknown" : d.chance; dr.oddsCol = dr.subColor; dr.burst = dc;
+        Runnable pv = isSlayerSrc(s) ? () -> play(() -> DropListener.playDrop(s, d)) : null;          // Preview: only where there is an animation to show
+        dr.ctls.add(new Plays(() -> Math.max(1, Math.min(3, dc.anim)), v -> StardropsConfig.setAnim(dc, v), pv, dc));
+        dr.ctls.add(new ChatSw(() -> dc.announce, v -> dc.announce = v));
+        dr.rngRow = dc.anim == 2;
         return dr;
     }
 
@@ -2882,6 +2986,175 @@ public class StardropsScreen extends Screen {
         if (room == 1) return new int[]{(c.cosNight ? 1 : 0) + (c.cosShooting ? 1 : 0) + (c.cosAurora ? 1 : 0) + (c.cosMeteor ? 1 : 0), 4};
         return new int[]{c.instHide ? 0 : InstrumentsHud.count(), InstrumentsHud.N}; }
     private int[] doorBox(Row r, int i) { int w = (r.w - 8) / 3; return new int[]{r.x + i * (w + 4), r.y, w, r.h}; }
+    /** The Drop Library's rows (see Row.v2). */
+    private void drawV2(GuiGraphicsExtractor g, Row r, int mx, int my) {
+        long now = System.currentTimeMillis();
+        boolean hov = mx >= r.x && mx < r.x + r.w && my >= r.y && my < r.y + r.h && my >= lt && my < lb;
+        if (r.v2 == 4) {                                                                       // the header: icon, name, the counts as pills, then who drops them
+            if (Icons.has(r.icon)) Icons.drawCentered(g, r.icon, r.x + 10, r.y + 10, now); else if (r.icon != null) Gfx.item(g, r.icon, r.x + 2, r.y + 2);
+            Gfx.text(g, font, r.title, r.x + 24, r.y + 6, Ui.TEXT);
+            int px0 = r.x + 32 + Gfx.w(font, r.title);
+            for (String p : r.pills) { String[] q = p.split("\\|"); int nw = Gfx.w(font, q[0]), lw = Gfx.w(font, q[1]), bw = nw + lw + 12; if (px0 + bw > r.x + r.w) break;
+                rnd(g, px0, r.y + 3, bw, 13, 4, 0xFF1A1C48); Gfx.text(g, font, q[0], px0 + 5, r.y + 6, Integer.parseInt(q[2])); Gfx.text(g, font, q[1], px0 + 8 + nw, r.y + 6, 0xFFA9ADD8); px0 += bw + 3; }
+            if (!r.sub.isEmpty()) Gfx.text(g, font, Gfx.fit(font, r.sub, r.w - 26), r.x + 24, r.y + 19, 0xFF6C70A2);
+            return;
+        }
+        if (r.v2 == 3) {                                                                       // the column names
+            int dim = 0xFF6C70A2; Gfx.text(g, font, "Drop", r.x + 28, r.y + 2, dim);
+            if (r.ctls.size() == 2) { Gfx.text(g, font, "What plays", r.ctls.get(0).x0 + 2, r.y + 2, dim); Gfx.textCentered(g, font, "Chat", (r.ctls.get(1).x0 + r.ctls.get(1).x1) / 2, r.y + 2, dim); }
+            g.fill(r.x, r.y + r.h - 2, r.x + r.w, r.y + r.h - 1, 0xFF24275A);
+            return;
+        }
+        if (r.v2 == 2) {                                                                       // Every drop here: one bar that sets them all
+            rnd(g, r.x, r.y, r.w, r.h, 6, hov ? 0xF01A1C4A : 0xD914163C);
+            Gfx.text(g, font, r.title, r.x + 8, r.y + 4, 0xFFA9ADD8); Gfx.text(g, font, r.sub, r.x + 8, r.y + 14, 0xFF6C70A2);
+        } else {                                                                               // one drop
+            float hv = anim("v2|" + tab + r.title, hov ? 1f : 0f, 40f);
+            int ctl0 = r.ctls.isEmpty() ? r.x + r.w : r.ctls.get(0).x0;
+            if (r.rngRow) {                                                                    // RNG: warm gold light along the row, a gold edge, sparkles in the empty space
+                int seg = 12;
+                for (int k = 0; k < seg; k++) { float u = k / (float) seg; int x0 = r.x + r.w * k / seg, x1 = r.x + r.w * (k + 1) / seg;
+                    g.fill(x0, r.y, x1, r.y + r.h, Gfx.argb(Math.round(255 * (0.13f + 0.13f * (1 - u) + 0.05f * hv)), Canvas.mix(0xFF5A3A10, 0xFF2A1E48, u) & 0xFFFFFF)); }
+                g.fill(r.x, r.y, r.x + r.w, r.y + 1, Gfx.argb(150, 0xFFC857)); g.fill(r.x, r.y + r.h - 1, r.x + r.w, r.y + r.h, Gfx.argb(90, 0xFFC857)); g.fill(r.x, r.y + 2, r.x + 2, r.y + r.h - 2, GOLD);
+                int nameEnd = r.x + 34 + Math.max(Gfx.w(font, r.title), Gfx.w(font, r.mob + " \u00B7 " + r.odds)), room = ctl0 - 10 - nameEnd;
+                if (room > 20) for (int k = 0; k < 6; k++) { float ph = STILL ? 0.5f : ((fxNow / 1400f) + k * 0.19f) % 1f, al = (float) Math.sin(ph * Math.PI);
+                    int sx = nameEnd + 6 + (int) ((k * 37 + r.title.length() * 11) % Math.max(1, room - 10)), sy = r.y + 4 + (k * 7 + r.title.length()) % (r.h - 8);
+                    int sc = Gfx.argb(Math.round(220 * al), 0xFFF4C8); g.fill(sx, sy - 1, sx + 1, sy + 2, sc); g.fill(sx - 1, sy, sx + 2, sy + 1, sc); }
+            } else {
+                if (r.hair) g.fill(r.x + 28, r.y, r.x + r.w, r.y + 1, 0x991A1C46);
+                if (hv > 0.02f) { rnd(g, r.x, r.y + 1, r.w, r.h - 1, 4, Gfx.argb(Math.round(255 * hv), Ui.ROW_HOVER & 0xFFFFFF)); g.fill(r.x, r.y + 5, r.x + 2, r.y + r.h - 4, Gfx.argb(Math.round(255 * hv), r.accent & 0xFFFFFF)); }
+            }
+            if (flashRow != null && flashRow.equals(r.title) && now - flashAt < 1600) { float u = (now - flashAt) / 1600f; rndOut(g, r.x, r.y + 1, r.w, r.h - 1, 4, Gfx.argb(Math.round(230 * (1 - u)), Ui.ACCENT & 0xFFFFFF)); rnd(g, r.x, r.y + 1, r.w, r.h - 1, 4, Gfx.argb(Math.round(60 * (1 - u)), Ui.ACCENT & 0xFFFFFF)); }      // Quick actions brought you here
+            Long ba = r.burst == null ? null : RNG_AT.get(r.burst);                             // just made RNG: a burst of gold from the row
+            if (ba != null && now - ba < 900) { float u = (now - ba) / 900f; int bx = r.ctls.isEmpty() ? r.x + r.w / 2 : (r.ctls.get(0).x0 + r.ctls.get(0).x1) / 2 + 8, by = r.y + r.h / 2;
+                NebulaTex.glow(g, bx, by, 30 + 60 * u, 10 + 10 * u, Gfx.argb(Math.round(150 * (1 - u)), 0xFFC857));
+                for (int k = 0; k < 10; k++) { double an = k * Math.PI / 5 + 0.3; float d = 6 + 34 * u; star4(g, bx + (int) (Math.cos(an) * d * 1.6), by + (int) (Math.sin(an) * d * 0.5), Gfx.argb(Math.round(255 * (1 - u)), 0xFFE7A8)); } }
+            int slot = r.rngRow ? 0xFF3A2A10 : 0xFF0E1030;                                      // the item, in its own slot (glowing gold for RNG)
+            if (r.rngRow) NebulaTex.glow(g, r.x + 14f, r.y + r.h / 2f, 15, 15, Gfx.argb(130, 0xFFC857));
+            rnd(g, r.x + 5, r.y + 3, 18, 18, 4, slot);
+            int ix = r.x + 14, iy = r.y + 12;
+            if (r.spriteId != null && ItemIcons.hasPixels(r.spriteId)) ItemIcons.draw(g, r.spriteId, null, ix, iy, 1f);
+            else if (r.iconId != null) ItemIcons.draw(g, r.iconId, r.icon, ix, iy, 1f);
+            else if (Icons.has(r.icon)) Icons.drawCentered(g, r.icon, ix, iy, now);
+            else if (r.icon != null) Gfx.item(g, r.icon, ix - 8, iy - 8);
+            int tx = r.x + 28, lim = ctl0 - 6 - tx;
+            Gfx.text(g, font, Gfx.fit(font, r.title, lim), tx, r.y + 4, r.rngRow ? 0xFFFFF1C8 : Ui.TEXT);
+            String mob = r.mob.isEmpty() ? "" : r.mob + "  \u00B7  ";
+            if (!mob.isEmpty()) { String mf = Gfx.fit(font, r.mob, Math.max(10, lim - Gfx.w(font, r.odds) - 14)); Gfx.text(g, font, mf, tx, r.y + 14, r.rngRow ? 0xFFC8A86A : 0xFF6C70A2); int ox = tx + Gfx.w(font, mf);
+                Gfx.text(g, font, "\u00B7", ox + 3, r.y + 14, 0xFF6C70A2); Gfx.text(g, font, Gfx.fit(font, r.odds, Math.max(10, tx + lim - ox - 10)), ox + 10, r.y + 14, r.oddsCol); }
+            else Gfx.text(g, font, Gfx.fit(font, r.odds, lim), tx, r.y + 14, r.oddsCol);
+        }
+        int ci = 0;
+        for (Ctl c : r.ctls) { c.key = tab + r.title + "|v2|" + (ci++); c.draw(g, r.y, r.h, mx >= c.x0 && mx < c.x1 && my >= r.y && my < r.y + r.h && my >= lt && my < lb); }
+    }
+
+    // ------------------------------------------------------------------ Quick actions: search and commands in one box (the search box, Ctrl F or /)
+    private boolean qaOpen; private String qaText = ""; private int qaSel; private long qaAt;
+    private String qaSrcName; private List<StardropsConfig.DropCfg> qaSrcCfgs;
+    private String qaJump; private int qaJumpTries;
+    private final List<int[]> qaHits = new ArrayList<>(); private int[] qaBox;
+    private record QA(String icon, String iconId, String title, String sub, int col, Runnable run, int group) {}
+    private int[] searchBox() { return new int[]{cx + cw - 156, py + 11, cx + cw, py + 27}; }
+    private void openQa() { qaOpen = true; qaText = ""; qaSel = 0; qaAt = System.currentTimeMillis(); searchField.setFocused(false); setFocused(null); }
+    /** A small magnifying glass, drawn. */
+    private static void lens(GuiGraphicsExtractor g, int x, int y, int col) {
+        g.fill(x - 3, y - 4, x + 1, y - 3, col); g.fill(x - 3, y + 1, x + 1, y + 2, col); g.fill(x - 4, y - 3, x - 3, y + 1, col); g.fill(x + 1, y - 3, x + 2, y + 1, col);
+        g.fill(x + 1, y + 1, x + 3, y + 3, col); g.fill(x + 2, y + 2, x + 4, y + 4, col);
+    }
+    private static boolean qaMatch(String q, String hay) { if (q.isEmpty()) return true; hay = hay.toLowerCase(Locale.ROOT); for (String w : q.split("\\s+")) if (!w.isEmpty() && !hay.contains(w)) return false; return true; }
+    private void goPage(Tab t, int sub) { query = ""; clearSearch(); dropSrc = null; dropSrcName = null; tab = t; subSel[t.ordinal()] = sub; scroll = 0; sideScroll = 0; tabChanged = System.currentTimeMillis(); open.removeIf(o -> o.startsWith("dd_")); }
+    /** Everything Quick actions offers for what you have typed: actions first, then pages, then drops. */
+    private List<QA> qaItems() {
+        String q = qaText.trim().toLowerCase(Locale.ROOT); StardropsConfig c = StardropsConfig.get();
+        List<QA> act = new ArrayList<>(), pg = new ArrayList<>(), dr = new ArrayList<>();
+        int rngT = AnimationManager.typeIndex("rng"), norT = AnimationManager.typeIndex("normal");
+        act.add(new QA(":raredrops:", null, "Test an RNG drop", "plays the full jackpot scene", GOLD, () -> play(() -> DropListener.playSample("slayer", rngT, false)), 0));
+        act.add(new QA(":play:", null, "Test a normal drop", "meteorites, then your item", 0xFF6C86FF, () -> play(() -> DropListener.playSample("slayer", norT, false)), 0));
+        if (qaSrcName != null && qaSrcCfgs != null) { List<StardropsConfig.DropCfg> l = qaSrcCfgs; String nm = qaSrcName;
+            act.add(new QA(":raredrops:", null, "Make every " + nm + " drop RNG", l.size() + " drops on this page", GOLD, () -> { long t0 = System.currentTimeMillis(); for (StardropsConfig.DropCfg d : l) { StardropsConfig.setAnim(d, 2); RNG_AT.put(d, t0); } StardropsConfig.save(); toast("Every " + nm + " drop plays RNG now", GOLD); }, 0));
+            act.add(new QA(":chat:", null, "Brag about every " + nm + " drop", "chat alert on for all " + l.size(), GRN, () -> { for (StardropsConfig.DropCfg d : l) d.announce = true; StardropsConfig.save(); toast("Chat alerts on for every " + nm + " drop", GRN); }, 0)); }
+        act.add(new QA(":animations:", null, c.masterAnimate ? "Turn drop animations off" : "Turn drop animations on", "every drop", 0xFFFF72C6, () -> { c.masterAnimate = !c.masterAnimate; StardropsConfig.save(); }, 0));
+        act.add(new QA(":chat:", null, c.masterAnnounce ? "Turn chat alerts off" : "Turn chat alerts on", "rare drops in party or co-op chat", 0xFF7BE05A, () -> { c.masterAnnounce = !c.masterAnnounce; StardropsConfig.save(); }, 0));
+        act.add(new QA(":sounds:", null, c.sound ? "Mute drop sounds" : "Turn drop sounds on", "the sounds of every animation", 0xFF56D8FF, () -> { c.sound = !c.sound; StardropsConfig.save(); }, 0));
+        act.add(new QA(":cosmos:", null, "Try a meteor", "a falling star over your game", 0xFF9B7BFF, () -> play(() -> CosmosHud.try_(false)), 0));
+        act.add(new QA(":cosmos:", null, "Try a meteor shower", "the sky's big moment", 0xFF9B7BFF, () -> play(() -> CosmosHud.try_(true)), 0));
+        act.add(new QA(":collection:", null, "Open Achievements", "your ledger of rare drops", 0xFFE8B84A, () -> Codex.open(achBtn(), -1), 0));
+        act.add(new QA(":cosmetics:", null, "Open Cosmetics", "name icons, effects and auras", 0xFFC77DFF, this::openCos, 0));
+        act.removeIf(a -> !qaMatch(q, a.title() + " " + a.sub()));
+        if (!q.isEmpty()) {
+            for (Tab t : Tab.values()) { if (t == Tab.COSMETICS) continue; String tl = t == Tab.GENERAL ? "Settings" : t.label;
+                if (qaMatch(q, tl + " " + (fx(t) ? "drop effects" : ""))) pg.add(new QA(null, null, tl, fx(t) ? "Drop effects" : "Page", tabCol(t), () -> goPage(t, -1), 1));
+                List<SubPage> sl = subList(t); for (int k = 0; k < sl.size(); k++) { final int kk = k; if (qaMatch(q, sl.get(k).name() + " " + tl)) pg.add(new QA(sl.get(k).icon(), null, sl.get(k).name(), tl, sl.get(k).color(), () -> goPage(t, kk), 1)); } }
+            outer:
+            for (int ci = 0; ci < Categories.ALL.size(); ci++) { Categories.Cat cat = Categories.ALL.get(ci); if (cat.wip()) continue; final int cidx = ci;
+                for (Categories.Group gr : cat.groups()) { if (gr.wip()) continue; for (DropData.Source so : cat.sources(gr.id())) for (DropData.Drop d : so.drops) {
+                    if (!qaMatch(q, d.name)) continue;
+                    StardropsConfig.DropCfg dc = c.drop(so.id, d.name); String plays = dc.anim == 2 ? "plays RNG" : dc.anim == 3 ? "off" : "plays Normal";
+                    String key = gr.id() + "/" + so.id, pname = Categories.single(gr) ? gr.name() : srcName(so), dn = d.name;
+                    dr.add(new QA(d.icon, so == TreasureData.SOURCE && !TreasureData.headArt(d.id) ? null : d.id, d.name, pname + "  \u00B7  " + plays, dc.anim == 2 ? GOLD : so.color(),
+                        () -> { goPage(Tab.DROPS, cidx); dropSrc = key; dropSrcName = pname; qaJump = dn; qaJumpTries = 0; }, 2));
+                    if (dr.size() >= 60) break outer; } } }
+            dr.sort(java.util.Comparator.comparingInt(a -> { String t = a.title().toLowerCase(Locale.ROOT); return t.startsWith(q) ? 0 : (" " + t).contains(" " + q) ? 1 : 2; }));      // names that start with what you typed come first
+            if (dr.size() > 4) dr.subList(4, dr.size()).clear();
+        }
+        List<QA> out = new ArrayList<>(); out.addAll(act.subList(0, Math.min(q.isEmpty() ? 5 : 4, act.size()))); out.addAll(pg.subList(0, Math.min(3, pg.size()))); out.addAll(dr);
+        return out;
+    }
+    /** After Quick actions opened a drop's page: scroll to the drop and light it up. */
+    private void jumpTo() {
+        if (++qaJumpTries > 30) { qaJump = null; return; }
+        for (Row r : rows) if (r.v2 == 1 && r.title.equals(qaJump)) { int want = scroll + (r.y - lt) - 40; if (Math.abs(want - scroll) > 2) { scroll = Math.max(0, want); dirty = true; return; } flashRow = qaJump; flashAt = System.currentTimeMillis(); qaJump = null; return; }
+    }
+    private String flashRow; private long flashAt;
+    private void qaClick(double mx, double my, int button) {
+        if (qaBox != null && !in2(mx, my, qaBox)) { qaOpen = false; return; }
+        if (button != 0) return;
+        List<QA> it = qaItems();
+        for (int[] h : qaHits) if (mx >= h[0] && mx < h[2] && my >= h[1] && my < h[3] && h[4] < it.size()) { qaOpen = false; it.get(h[4]).run().run(); return; }
+    }
+    private void drawQa(GuiGraphicsExtractor g, int mx, int my, long now) {
+        try { g.nextStratum(); } catch (Throwable ignored) { }                                           // above the menu's own words
+        List<QA> it = qaItems(); qaSel = Math.max(0, Math.min(Math.max(0, it.size() - 1), qaSel));
+        float k = StardropsConfig.get().menuAnimated ? ease(Math.min(1f, (now - qaAt) / 160f)) : 1f;
+        rnd(g, px, py, pw, ph, WIN_R, Gfx.argb(Math.round(140 * k), 0x020210));                                  // the menu dims behind it
+        int mw = Math.min(310, pw - 40), rowH = 20, lblH = 12;
+        int hgt = 30 + 18; int lastG = -1; for (QA a : it) { if (a.group() != lastG) { hgt += lblH; lastG = a.group(); } hgt += a.group() == 2 ? 17 : rowH + 1; } if (it.isEmpty()) hgt += 22;
+        int mx0 = px + (pw - mw) / 2, my0 = py + 40 - Math.round((1f - k) * 8); qaBox = new int[]{mx0, my0, mx0 + mw, my0 + hgt};
+        NebulaTex.glow(g, mx0 + mw / 2f, my0 + hgt / 2f, mw * 0.75f, hgt * 0.8f, Gfx.argb(Math.round(150 * k), 0x000000));
+        NebulaTex.glow(g, mx0 + mw / 2f, my0, mw * 0.5f, 26, Gfx.argb(Math.round(60 * k), Ui.ACCENT & 0xFFFFFF));
+        rnd(g, mx0, my0, mw, hgt, 8, Gfx.argb(Math.round(248 * k), 0x10112C)); rndOut(g, mx0, my0, mw, hgt, 8, Gfx.argb(Math.round(200 * k), 0x2C2A66));
+        for (int i = 8; i < mw - 8; i++) g.fill(mx0 + i, my0, mx0 + i + 1, my0 + 1, Gfx.argb(Math.round(170 * k), 0x8A7AFF));
+        lens(g, mx0 + 12, my0 + 12, 0xFFFFFFFF);                                                                // the input line
+        String shown = qaText.isEmpty() ? "Type a drop, a page or what to do" : qaText;
+        Gfx.text(g, font, Gfx.fit(font, shown, mw - 50), mx0 + 22, my0 + 8, qaText.isEmpty() ? 0xFF6C70A2 : Ui.TEXT);
+        if ((now / 500) % 2 == 0) { int cx0 = mx0 + 22 + (qaText.isEmpty() ? 0 : Gfx.w(font, Gfx.fit(font, qaText, mw - 50))); g.fill(cx0, my0 + 6, cx0 + 1, my0 + 17, Ui.ACCENT); }
+        Gfx.push(g); Gfx.translate(g, mx0 + mw - 18, my0 + 9); Gfx.scale(g, 0.6f); Gfx.text(g, font, "esc", 0, 0, 0xFF6C70A2); Gfx.pop(g);
+        g.fill(mx0 + 6, my0 + 23, mx0 + mw - 6, my0 + 24, 0xFF24275A);
+        int yy = my0 + 28; lastG = -1; qaHits.clear();
+        if (it.isEmpty()) { Gfx.text(g, font, "Nothing here. Tab searches every page.", mx0 + 12, yy + 6, 0xFF6C70A2); yy += 22; }
+        for (int i = 0; i < it.size(); i++) { QA a = it.get(i);
+            if (a.group() != lastG) { lastG = a.group(); Gfx.push(g); Gfx.translate(g, mx0 + 10, yy + 2); Gfx.scale(g, 0.6f); Gfx.text(g, font, a.group() == 0 ? "Q U I C K   A C T I O N S" : a.group() == 1 ? "P A G E S" : "D R O P S", 0, 0, 0xFF5A5E92); Gfx.pop(g); yy += lblH; }
+            int h = a.group() == 2 ? 16 : rowH; boolean hov = mx >= mx0 + 5 && mx < mx0 + mw - 5 && my >= yy - 1 && my < yy + h;
+            if (hov && (Math.abs(mx - lastQaMx) + Math.abs(my - lastQaMy)) > 0) qaSel = i;
+            boolean on = i == qaSel;
+            if (on) { rnd(g, mx0 + 5, yy - 1, mw - 10, h + 1, 5, 0xFF2A2766); g.fill(mx0 + 5, yy + 3, mx0 + 7, yy + h - 3, a.col()); }
+            int ic = mx0 + 19, icy = yy + h / 2;
+            if (a.group() == 2) { rnd(g, ic - 7, icy - 7, 14, 14, 3, 0xFF0E1030); if (a.iconId() != null) ItemIcons.draw(g, a.iconId(), a.icon(), ic, icy, 0.75f); else if (a.icon() != null) { Gfx.push(g); Gfx.translate(g, ic - 6, icy - 6); Gfx.scale(g, 0.75f); Gfx.item(g, a.icon(), 0, 0); Gfx.pop(g); } }
+            else { rnd(g, ic - 8, icy - 8, 17, 17, 4, Gfx.argb(on ? 70 : 40, a.col() & 0xFFFFFF)); if (a.icon() != null && Icons.has(a.icon())) Icons.drawCentered(g, a.icon(), ic, icy, on ? now : 2400L); else g.fill(ic - 2, icy - 2, ic + 2, icy + 2, a.col()); }
+            int tx = mx0 + 31, room = mw - 31 - (on ? 40 : 12);
+            if (a.group() == 2) { Gfx.text(g, font, Gfx.fit(font, a.title(), room / 2 + 30), tx, yy + 4, on ? 0xFFFFFFFF : Ui.TEXT); int tw = Gfx.w(font, Gfx.fit(font, a.title(), room / 2 + 30));
+                Gfx.text(g, font, Gfx.fit(font, a.sub(), room - tw - 8), tx + tw + 8, yy + 4, a.col() == GOLD ? 0xFFC8A86A : 0xFF6C70A2); }
+            else { Gfx.text(g, font, Gfx.fit(font, a.title(), room), tx, yy + 2, on ? 0xFFFFFFFF : Ui.TEXT); Gfx.push(g); Gfx.translate(g, tx, yy + 12); Gfx.scale(g, 0.6f); Gfx.text(g, font, a.sub(), 0, 0, 0xFF8A8EC0); Gfx.pop(g); }
+            if (on) { Gfx.push(g); Gfx.translate(g, mx0 + mw - 34, yy + h / 2 - 2); Gfx.scale(g, 0.6f); Gfx.text(g, font, "Enter", 0, 0, a.col()); Gfx.pop(g); }
+            qaHits.add(new int[]{mx0 + 5, yy - 1, mx0 + mw - 5, yy + h, i});
+            yy += h + (a.group() == 2 ? 1 : 1);
+        }
+        lastQaMx = mx; lastQaMy = my;
+        g.fill(mx0 + 6, my0 + hgt - 15, mx0 + mw - 6, my0 + hgt - 14, 0xFF24275A);
+        Gfx.push(g); Gfx.translate(g, mx0 + 10, my0 + hgt - 10); Gfx.scale(g, 0.6f); Gfx.text(g, font, "\u2191\u2193 move      Enter run      Tab search every page", 0, 0, 0xFF6C70A2); Gfx.pop(g);
+    }
+    private int lastQaMx = -1, lastQaMy = -1;
+
     private void drawDoors(GuiGraphicsExtractor g, Row r, int mx, int my) {
         long now = System.currentTimeMillis();
         for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); int x = b[0], y = b[1], w = b[2], h = b[3]; boolean hv = mx >= x && mx < x + w && my >= Math.max(y, lt) && my < Math.min(y + h, lb) && popup == null;
@@ -3229,8 +3502,8 @@ public class StardropsScreen extends Screen {
 
                 rows.add(section("Menu"));                                           // the page filter keys on this header: without it the Menu page came up empty
                 rows.add(section("Look"));
-                Row tr = row(0, ":glass:", "Menu translucency", "0% is solid, higher lets the game show through", Ui.ACCENT);
-                tr.ctls.add(new Slider(0, 70, 5, () -> c.menuTranslucency, v -> c.menuTranslucency = (int) v, () -> c.menuTranslucency + "%").typed(1));
+                Row tr = row(0, ":glass:", "Opacity", "100% is solid; lower lets the game seep through the menu", Ui.ACCENT);
+                tr.ctls.add(new Slider(30, 100, 5, () -> 100 - c.menuTranslucency, v -> c.menuTranslucency = 100 - (int) v, () -> (100 - c.menuTranslucency) + "%").typed(1));
                 rows.add(tr);
                 if (c.uiFont >= Fonts.NAMES.length) c.uiFont = 0;
                 rows.add(toggle(":anim_menu:", "Animated menu", "Springy open, page transitions and glowing hovers", () -> c.menuAnimated, v -> c.menuAnimated = v));
@@ -3393,12 +3666,12 @@ public class StardropsScreen extends Screen {
     /** The pinned Settings block at the bottom of the sidebar: a line, then the Settings tab (its pages open upwards). */
     private int pinTop() { return py + ph - 29 - (tab == Tab.GENERAL ? Math.round(subExp * SUBH * subs().length) + 2 : 0); }
     private int sideBottom() { return query.isBlank() ? pinTop() - 2 : py + ph - 4; }
-    private int sideMax() { if (!query.isBlank()) return Math.max(0, searchSideH - (ph - 70 - 8)); return Math.max(0, 7 * tp() + 4 + srcExtra() + (tab == Tab.GENERAL ? 0 : Math.round(subExp * subH() * subs().length)) - (sideBottom() - (py + 70) - 4)); }
+    private int sideMax() { if (!query.isBlank()) return Math.max(0, searchSideH - (ph - 70 - 8)); return Math.max(0, slotY(4) + tp() + 4 + srcExtra() + (tab == Tab.GENERAL ? 0 : Math.round(subExp * subH() * subs().length)) - (sideBottom() - (py + NAV_TOP) - 4)); }
     private boolean inSide(double mx, double my) { return !cosWin() && mx >= px && mx < px + sw && my >= py + 42 && my < py + ph - 4; }
     private int[] tabBox(int i) {
         Tab ti = Tab.values()[i];
         if (ti == Tab.GENERAL) return new int[]{px + 8, py + ph - 26, px + sw - 6, py + ph - 4};
-        int y = (hiddenTab(ti) ? -1000 : py + 70 - sideScroll + vi(i) * tp()) + (tab != Tab.GENERAL && i > tab.ordinal() ? Math.round(subExp * subH() * subs().length) + srcExtra() : 0);
+        int y = (hiddenTab(ti) ? -1000 : py + NAV_TOP - sideScroll + slotY(vi(i))) + (tab != Tab.GENERAL && vi(i) > vi(tab.ordinal()) ? Math.round(subExp * subH() * subs().length) + srcExtra() : 0);
         return new int[]{px + 8, y, px + sw - 6, y + tabBoxH()};
     }
     private int[] srcBox(int j) { int[] b = subBox(curSub()); int y = b[1] + subH() + j * srcH(); return new int[]{px + 26, y, px + sw - 6, y + srcH() - 1}; }
@@ -3438,7 +3711,7 @@ public class StardropsScreen extends Screen {
         if (codexStar != null && width > 0) { Codex.openAt(achBtn(), codexStar); codexStar = null; }
         if (Codex.covering()) { codexOverlay(g, mx0, my0); return; }                          // the sky covers everything: skip drawing the whole menu underneath (the big lag)
         final boolean bookUp = Codex.open;
-        final int mx = editor != 0 || bookUp ? -9999 : mx0, my = editor != 0 || bookUp ? -9999 : my0;       // an open editor (or the Collection) sits on top: nothing behind it lights up
+        final int mx = editor != 0 || bookUp || qaOpen ? -9999 : mx0, my = editor != 0 || bookUp || qaOpen ? -9999 : my0;       // an open editor (or the Collection) sits on top: nothing behind it lights up
         formatField.setVisible(false); addField.setVisible(false); adminField.setVisible(false); thrField.setVisible(false); tokenField.setVisible(false); spotifyField.setVisible(false);
         searchField.setVisible(false); numShow = false; lastMx = mx; mouseX = mx0; mouseY = my0;
         if (dragCtl instanceof Slider ls && ls.live) {   // dragging a size slider: show the scene resizing live
@@ -3485,14 +3758,14 @@ public class StardropsScreen extends Screen {
         float zoom = closeAt > 0 ? 0.9f + 0.1f * intro : 0.84f + 0.16f * backOut(openLin);                    // springs open (a little past full size, then settles), shrinks away on Esc
         if (cosWin()) zoom *= 0.9f + 0.1f * ease(Math.min(1f, (now - cosAt) / 300f));                  // the Cosmetics window opens outwards from the menu                                    // the whole menu grows into place (and shrinks away on Esc)
         Gfx.push(g); Gfx.translate(g, px + pw / 2f, py + ph / 2f); Gfx.scale(g, zoom); Gfx.translate(g, -(px + pw / 2f), -(py + ph / 2f));
-        pill(g, px, py, pw, ph, Ui.PANEL);
+        for (int sh = 4; sh >= 1; sh--) rnd(g, px - sh, py - sh + 2, pw + sh * 2, ph + sh * 2, WIN_R + sh, Gfx.argb(Math.round(26 * intro / sh), 0x000000));   // a soft shadow lifts the window off the game
+        rnd(g, px, py, pw, ph, WIN_R, soft(Ui.PANEL));                                             // the window: round, and as see-through as Settings > Menu > Opacity says
         spaceBack(g, px, py, pw, ph, now);                                                         // the night sky inside the panel
-        if (!cosWin()) { g.fill(px + 1, py + 2, px + sw, py + ph - 1, soft(Ui.PANEL2)); g.fill(px + sw, py + 4, px + sw + 1, py + ph - 4, Ui.BORDER); }
-        g.fill(px + 2, py + 1, px + pw - 2, py + 38, 0x08FFFFFF);                                   // a faint lighter band behind the header
-        rout(g, px, py, pw, ph, Ui.BORDER);
-        g.fill(px + 3, py, px + pw - 3, py + 1, Ui.HAIR);                                          // a thin gold hairline along the top edge, with a slow light passing over it
+        if (!cosWin()) { rnd(g, px + 4, py + 4, sw - 4, ph - 8, 6, Gfx.argb(Math.round(150 * TR + 40), 0x08091C)); }   // the sidebar: a darker inset well
+        rndOut(g, px, py, pw, ph, WIN_R, Ui.BORDER);
+        for (int i = WIN_R; i < pw - WIN_R; i++) g.fill(px + i, py, px + i + 1, py + 1, Gfx.argb(Math.round(120 + 60 * (float) Math.sin(i * 0.02f)), 0x6A5AE0));   // a soft light along the top edge
         if (animOn) { int sx = px + Math.round(((now % 6000L) / 6000f) * (pw + 120)) - 60;
-            for (int k = -30; k <= 30; k += 2) { int x = sx + k; if (x > px + 2 && x < px + pw - 4) g.fill(x, py, x + 2, py + 1, Gfx.argb(Math.round(200 * (1f - Math.abs(k) / 31f)), Ui.ACCENT & 0xFFFFFF)); } }
+            for (int k = -30; k <= 30; k += 2) { int x = sx + k; if (x > px + WIN_R && x < px + pw - WIN_R - 2) g.fill(x, py, x + 2, py + 1, Gfx.argb(Math.round(200 * (1f - Math.abs(k) / 31f)), Ui.ACCENT & 0xFFFFFF)); } }
 
         if (!cosWin()) {
         // brand
@@ -3516,15 +3789,6 @@ public class StardropsScreen extends Screen {
             }
         }
         Gfx.text(g, font, "v" + StardropsMod.VERSION + "  \u00B7  " + StardropsMod.CHANNEL, px + 40, py + 22, Ui.DIM);
-        if (Spotify.linked() && !cosWin() && query.isBlank()) {                                 // linked to Spotify: a small chip in the sidebar under the logo, its dot breathing while music plays (not while searching: the results list sits there)
-            String sl = "Spotify Linked"; int lw2 = Gfx.w(font, sl) + 16, lx = px + (sw - lw2) / 2, ly = py + 50 - sideScroll;
-            if (ly >= py + 40) {
-                pill(g, lx, ly, lw2, 13, Canvas.mix(Ui.PANEL2, 0xFF1ED760, 0.14f)); rout(g, lx, ly, lw2, 13, 0x661ED760);
-                float br = Spotify.playing && !STILL ? 0.5f + 0.5f * (float) Math.sin(now / 260.0) : 1f;
-                g.fill(lx + 4, ly + 4, lx + 8, ly + 8, Gfx.argb(Math.round(140 + 115 * br), 0x1ED760));
-                Gfx.text(g, font, sl, lx + 11, ly + 3, 0xFF8AF0B0);
-            }
-        }
         }
         if (!cosWin()) {
         if (!query.isBlank()) drawSearchSide(g, mx, my, now);
@@ -3543,19 +3807,43 @@ public class StardropsScreen extends Screen {
         String[] sn = subs();
         for (int pass = 0; pass < 2; pass++) {                                     // pass 0: the scrolling list. pass 1: Settings, pinned under a line at the bottom
         if (pass == 0) g.enableScissor(px + 4, py + 42, px + sw, sideBottom()); else g.enableScissor(px + 4, pinTop() - 1, px + sw, py + ph - 4);
-        pill(g, px + 8, sy, sw - 14, tabBoxH(), Canvas.mix(Ui.ROW, Ui.ACCENT, 0.07f));
-        g.fill(px + 8, sy + 3, px + 10, sy + tabBoxH() - 3, Ui.ACCENT);
+        if (fx(tab)) lastFx = tab;
+        rnd(g, px + 8, sy, sw - 14, tabBoxH(), 5, 0xFF232262);                                    // the open entry: a lit plate and a bar in its own colour
+        g.fill(px + 8, sy + 5, px + 10, sy + tabBoxH() - 5, tabAcc);
+        if (pass == 0) {                                                                           // the group labels
+            int[] lb1 = tabBox(Tab.DROPS.ordinal()), lb2 = tabBox(Tab.ANIMATIONS.ordinal());
+            for (int q = 0; q < 2; q++) { int ly = (q == 0 ? lb1 : lb2)[1] - LBL + 3; Gfx.push(g); Gfx.translate(g, px + 14, ly); Gfx.scale(g, 0.6f); Gfx.text(g, font, q == 0 ? "B R O W S E" : "C U S T O M I Z E", 0, 0, 0xFF5A5E92); Gfx.pop(g); }
+            int[] cb = cosNav(); boolean ch = mx >= cb[0] && mx < cb[2] && my >= cb[1] && my < cb[3] && my < sideBottom();       // Cosmetics: opens its own window
+            float chv = anim("tab|cos", ch ? 1f : 0f, 48f); int cc = 0xFFC77DFF;
+            if (chv > 0.01f) rnd(g, cb[0], cb[1], cb[2] - cb[0], cb[3] - cb[1], 5, Gfx.argb(Math.round(255 * chv), Ui.ROW_HOVER & 0xFFFFFF));
+            rnd(g, cb[0] + 5, cb[1] + 2, 18, 18, 4, Gfx.argb(Math.round(255 * (0.16f + 0.1f * chv)), cc & 0xFFFFFF));
+            Icons.drawCentered(g, ":cosmetics:", cb[0] + 14, cb[1] + 11, ch ? now : 2400L);
+            Gfx.text(g, font, "Cosmetics", cb[0] + 28 + Math.round(chv * 2), cb[1] + 7, Canvas.mix(Canvas.mix(Ui.DIM, cc, 0.2f), Ui.TEXT, 0.35f + chv * 0.6f));
+        }
         for (int i = 0; i < Tab.values().length; i++) {
-            Tab t = Tab.values()[i]; if (hiddenTab(t) || (t == Tab.GENERAL) != (pass == 1)) continue; int[] b = tabBox(i);
-            boolean act = t == tab, hov = mx >= b[0] && mx < b[2] && my >= b[1] && my < b[3];
+            Tab t = Tab.values()[i]; if (hiddenTab(t) || (t == Tab.GENERAL) != (pass == 1) || t == Tab.SOUNDS || t == Tab.CHAT) continue; int[] b = tabBox(i);
+            boolean act = t == tab || (t == Tab.ANIMATIONS && fx(tab)), hov = mx >= b[0] && mx < b[2] && my >= b[1] && my < b[3];
             float hv = anim("tab|" + i, hov && !act ? 1f : 0f, 48f);
             float tin = !animOn || born == 0L ? 1f : ease(((now - born) / 1000f - 0.08f - vi(i) * 0.045f) / 0.3f);        // the tabs slide in one after the other
             Gfx.push(g); Gfx.translate(g, Math.round((1f - tin) * -22f + hv * 2f), 0);
-            if (hv > 0.01f) pill(g, b[0], b[1], b[2] - b[0], b[3] - b[1], Canvas.mix(Ui.PANEL2, Ui.ROW_HOVER, hv));
+            if (hv > 0.01f) rnd(g, b[0], b[1], b[2] - b[0], b[3] - b[1], 5, Gfx.argb(Math.round(255 * hv), Ui.ROW_HOVER & 0xFFFFFF));
             int dx = 0;
-            iconBack(g, b[0] + 14 + dx, b[1] + 11 + toff, 9, act, tabCol(t));
-            tabIcon(g, t, b[0] + 6 + dx, b[1] + 3 + toff, act && cfg.menuIcons ? now : 2400L, act);   // only the open page's icon moves
-            Gfx.text(g, font, t.label, b[0] + 28 + dx, b[1] + 7 + toff, act ? Ui.TEXT : Canvas.mix(Canvas.mix(Ui.DIM, tabCol(t), 0.2f), Ui.TEXT, hv * 0.6f));
+            rnd(g, b[0] + 5, b[1] + 2 + toff, 18, 18, 4, Gfx.argb(Math.round(255 * (act ? 0.35f : 0.16f + 0.1f * hv)), tabCol(t) & 0xFFFFFF));     // the icon sits on a soft tile of its own colour (brighter when open)
+            tabIcon(g, t, b[0] + 6 + dx, b[1] + 3 + toff, (act || hv > 0.5f) && cfg.menuIcons ? now : 2400L, act);   // only the open (or pointed at) page's icon moves
+            int nameCol = act ? 0xFFFFFFFF : Canvas.mix(Canvas.mix(Ui.DIM, tabCol(t), 0.2f), Ui.TEXT, 0.35f + hv * 0.6f);
+            if (t == Tab.ANIMATIONS) {                                                             // Drop effects: the three it holds, in small letters under its name
+                Gfx.text(g, font, "Drop effects", b[0] + 28 + dx, b[1] + 3 + toff, nameCol);
+                Gfx.push(g); Gfx.translate(g, b[0] + 28 + dx, b[1] + 13 + toff); Gfx.scale(g, 0.6f); int sx0 = 0;
+                for (int q = 0; q < 3; q++) { String nm = FX_TABS[q].label; boolean on = tab == FX_TABS[q];
+                    Gfx.text(g, font, nm, sx0, 0, on ? tabCol(FX_TABS[q]) : 0xFF6C70A2); sx0 += Gfx.w(font, nm);
+                    if (q < 2) { Gfx.text(g, font, " \u00B7 ", sx0, 0, 0xFF4A4E80); sx0 += Gfx.w(font, " \u00B7 "); } }
+                Gfx.pop(g);
+            } else Gfx.text(g, font, t.label, b[0] + 28 + dx, b[1] + 7 + toff, nameCol);
+            if (t == Tab.GENERAL && Spotify.linked()) {                                            // the foot: Spotify's status beside Settings, its dot breathing while music plays
+                float br = Spotify.playing && !STILL ? 0.5f + 0.5f * (float) Math.sin(now / 260.0) : 1f; String sl = "Spotify"; int slw = Gfx.w(font, sl);
+                Gfx.push(g); Gfx.translate(g, b[2] - 4 - slw * 0.7f, b[1] + 8 + toff); Gfx.scale(g, 0.7f); Gfx.text(g, font, sl, 0, 0, 0xFF8FE0B0); Gfx.pop(g);
+                int dx0 = Math.round(b[2] - 10 - slw * 0.7f); rnd(g, dx0, b[1] + 8 + toff, 5, 5, 2, Gfx.argb(Math.round(150 + 105 * br), 0x1ED760));
+            }
             Gfx.pop(g);
         }
 
@@ -3630,7 +3918,20 @@ public class StardropsScreen extends Screen {
             LaunchPad.draw(g, font, b[0], b[1], w, h, on, fly, mv, hv, pulse, now, STILL);
         }
         // page header
-        Gfx.text(g, font, Gfx.fit(font, pageTitle(), cw - 134), cx, py + 9, Ui.TEXT);                      // the title alone: no line of words under it
+        if (fx(tab) && query.isBlank() && !cosWin()) {                                                    // Drop effects: Animations, Sounds and Chat as tabs, then where you are
+            int sx = cx - 1, sy0 = py + 6; int tot = 4; for (Tab ft : FX_TABS) tot += Gfx.w(font, ft.label) + 14;
+            rnd(g, sx, sy0, tot, 18, 6, 0xFF14163C);
+            int xx = sx + 2;
+            for (int q = 0; q < 3; q++) { Tab ft = FX_TABS[q]; int w0 = Gfx.w(font, ft.label) + 14; fxSeg[q] = new int[]{xx, sy0 + 2, xx + w0, sy0 + 16};
+                boolean on = ft == tab, hv0 = !on && in2(mx, my, fxSeg[q]); float k = anim("fxseg|" + q, on ? 1f : hv0 ? 0.35f : 0f, 30f);
+                if (k > 0.01f) rnd(g, xx, sy0 + 2, w0, 14, 4, Gfx.argb(Math.round(255 * k), Canvas.mix(0xFF232262, tabCol(ft), 0.28f) & 0xFFFFFF));
+                if (on) g.fill(xx + 4, sy0 + 15, xx + w0 - 4, sy0 + 16, tabCol(ft));
+                Gfx.text(g, font, ft.label, xx + 7, sy0 + 5, on ? 0xFFFFFFFF : Canvas.mix(0xFF8A8EC0, 0xFFFFFFFF, k));
+                xx += w0; }
+            String rest = pageTitle(); int cut = rest.indexOf("  >  "); rest = cut >= 0 ? rest.substring(cut + 5).replace("  >  ", "  \u203A  ") : "";
+            if (!rest.isEmpty()) Gfx.text(g, font, Gfx.fit(font, "\u203A  " + rest, cw - 166 - tot - 8), sx + tot + 7, py + 11, Ui.SUB);
+        } else
+        Gfx.text(g, font, Gfx.fit(font, pageTitle(), cw - 164), cx, py + 9, Ui.TEXT);                      // the title alone: no line of words under it
         hdrBackBox = null;
         if (hdrBack != null) {                                                                           // the back button, right under the title
             String bt = "Back to " + hdrBackLabel; int bw = Math.min(cw - 140, 22 + Gfx.w(font, bt)); hdrBackBox = new int[]{cx - 2, py + 21, bw, 15};
@@ -3669,6 +3970,7 @@ public class StardropsScreen extends Screen {
             if (r.kind == VPREV) { drawPrev(g, r, mx, my); continue; }
             if (r.kind == CHATPREV) { drawChatPrev(g, r); continue; }
             if (r.kind == COSPREV) { drawCosPreview(g, r); continue; }
+            if (r.v2 > 0) { drawV2(g, r, mx, my); continue; }
             if (r.kind == HERO) {                                                   // the page's header, compact: its icon, name, a line of words, and a counter on the right
                 pill(g, r.x, r.y, r.w, r.h, Ui.ROW); long nw = System.currentTimeMillis(); g.fill(r.x + 1, r.y + 4, r.x + 3, r.y + r.h - 4, r.accent);
                 if (Icons.has(r.icon)) Icons.draw(g, r.icon, r.x + 8, r.y + 7, nw); else if (r.icon != null) Gfx.item(g, r.icon, r.x + 8, r.y + 7);
@@ -3764,9 +4066,16 @@ public class StardropsScreen extends Screen {
         drawPopup(g, mx, my);
 
         if (!cosWin()) {                                                                 // Cosmetics and Achievements have no search
-            searchField.setBordered(false); searchField.setVisible(true); searchField.setX(cx + cw - 118); searchField.setY(py + 14); searchField.setWidth(112);
-            pill(g, cx + cw - 124, py + 11, 124, 16, searchField.isFocused() ? Canvas.mix(Ui.PANEL2, Ui.ACCENT, 0.25f) : Ui.PANEL2);
-            if (searchField.isFocused()) rout(g, cx + cw - 124, py + 11, 124, 16, Gfx.argb(190, Ui.ACCENT & 0xFFFFFF));
+            int[] sb = searchBox(); boolean sh = in2(mx, my, sb), sf = searchField.isFocused() || qaOpen;
+            searchField.setBordered(false); searchField.setVisible(true); searchField.setX(sb[0] + 17); searchField.setY(sb[1] + 4); searchField.setWidth(sb[2] - sb[0] - 20);
+            rnd(g, sb[0], sb[1], sb[2] - sb[0], 16, 8, sf ? 0xFF26285E : sh ? 0xFF14163E : 0xFF0A0B20);
+            if (sf || sh) rndOut(g, sb[0], sb[1], sb[2] - sb[0], 16, 8, Gfx.argb(sf ? 190 : 90, Ui.ACCENT & 0xFFFFFF));
+            lens(g, sb[0] + 8, sb[1] + 8, sf ? 0xFFFFFFFF : 0xFFA9ADD8);
+            if (query.isEmpty() && !searchField.isFocused()) {                                         // the hint: it does more than search
+                Gfx.text(g, font, Gfx.fit(font, "Search or do anything", sb[2] - sb[0] - 39), sb[0] + 17, sb[1] + 4, 0xFF6C70A2);
+                int kw = Gfx.w(font, "Ctrl F") / 2 + 6; rnd(g, sb[2] - kw - 4, sb[1] + 3, kw, 10, 3, 0xFF1A1C44);
+                Gfx.push(g); Gfx.translate(g, sb[2] - kw - 1, sb[1] + 6); Gfx.scale(g, 0.5f); Gfx.text(g, font, "Ctrl F", 0, 0, 0xFFA9ADD8); Gfx.pop(g);
+            }
             searchField.extractRenderState(g, mx, my, delta);
         } else searchField.setFocused(false);
 
@@ -3832,7 +4141,7 @@ public class StardropsScreen extends Screen {
                 if (ah) { int w = Gfx.w(font, "Admin Panel") + 8; int x0 = Math.max(2, ab[0]), ty = ab[1] - 16; pill(g, x0, ty, w, 13, 0xFF0D0F16); rout(g, x0, ty, w, 13, Ui.BORDER); Gfx.text(g, font, "Admin Panel", x0 + 4, ty + 3, Ui.TEXT); }
             }
         }
-        if (intro < 1f) pill(g, px, py, pw, ph, Gfx.argb(Math.round((1f - intro) * 150), 0x0C0E14));
+        if (intro < 1f) rnd(g, px, py, pw, ph, WIN_R, Gfx.argb(Math.round((1f - intro) * 150), 0x0C0E14));
         Gfx.pop(g);
         AnimationManager.tickSounds();
         drawDock(g, mx, my, intro, now);
@@ -3843,6 +4152,8 @@ public class StardropsScreen extends Screen {
         if (adminHome && !adminOpen) drawAdminHome(g, mx0, my0);
         if (adminOpen) drawAdmin(g, mx0, my0);
         if (Codex.open) codexOverlay(g, mx0, my0);
+        if (qaOpen) drawQa(g, mx0, my0, now);
+        if (qaJump != null) jumpTo();
         drawToast(g, now);
         if (editor == 0 && !adminHome && !adminOpen && !Codex.open) drawX(g, mainClose(), in(mx0, my0, mainClose()), "mx");          // the book covers the menu: its close button is the seal
         drawEditor(g, mx0, my0);
@@ -3916,7 +4227,9 @@ public class StardropsScreen extends Screen {
      *  shooting star now and then, and brass ticks at the corners like an astrolabe's rim. */
     private void spaceBack(GuiGraphicsExtractor g, int x, int y, int w, int h, long now) {
         int a = Math.round(255 * TR); boolean animOn = StardropsConfig.get().menuAnimated;
-        g.enableScissor(x + 1, y + 1, x + w - 1, y + h - 1);
+        int R = WIN_R;
+        for (int band = 0; band < 3; band++) {                                                                // the round window: drawn in three bands so the corners stay round
+        if (band == 0) g.enableScissor(x + R, y + 1, x + w - R, y + R); else if (band == 1) g.enableScissor(x + 1, y + R, x + w - 1, y + h - R); else g.enableScissor(x + R, y + h - R, x + w - R, y + h - 1);
         NebulaTex.draw(g, x, y, w, h, Gfx.argb(Math.round(a * 0.42f), 0xFFFFFF));
         g.fill(x, y, x + w, y + h, Gfx.argb(Math.round(a * 0.35f), Ui.PANEL & 0xFFFFFF));                 // keep it dark under the words
         NebulaTex.glow(g, x + w * 0.78f, y + h * 0.3f, w * 0.4f, h * 0.45f, Gfx.argb(Math.round(a * 0.16f), Ui.ACCENT2 & 0xFFFFFF));   // nebula: pink and violet clouds
@@ -3932,10 +4245,25 @@ public class StardropsScreen extends Screen {
                 for (int k = 0; k < 14; k++) { float q = k / 14f; g.fill(Math.round(hx - q * 40), Math.round(hy - q * 10), Math.round(hx - q * 40) + 1, Math.round(hy - q * 10) + 1, Gfx.argb(Math.round(a * (1f - q) * (float) Math.sin(Math.PI * u)), 0xFFFFFF)); } }
         }
         g.disableScissor();
-        int tc = Gfx.argb(Math.round(a * 0.8f), Ui.ACCENT & 0xFFFFFF);
-        for (int[] cn : new int[][]{{x + 3, y + 3, 1, 1}, {x + w - 4, y + 3, -1, 1}, {x + 3, y + h - 4, 1, -1}, {x + w - 4, y + h - 4, -1, -1}}) {
-            for (int i = 0; i < 4; i++) { g.fill(cn[0] + cn[2] * (4 + i * 4), cn[1], cn[0] + cn[2] * (4 + i * 4) + 1, cn[1] + cn[3] * (i % 2 == 0 ? 3 : 2), tc); g.fill(cn[0], cn[1] + cn[3] * (4 + i * 4), cn[0] + cn[2] * (i % 2 == 0 ? 3 : 2), cn[1] + cn[3] * (4 + i * 4) + 1, tc); }
         }
+    }
+    /** The window's corner radius. */
+    static final int WIN_R = 10;
+    /** A rounded rectangle with true round corners of radius r (pill only cuts a few pixels). */
+    private static void rnd(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, int c) {
+        r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+        for (int j = 0; j < r; j++) { float dy = r - j - 0.5f; int in = Math.round(r - (float) Math.sqrt(Math.max(0, r * r - dy * dy))); g.fill(x + in, y + j, x + w - in, y + j + 1, c); g.fill(x + in, y + h - 1 - j, x + w - in, y + h - j, c); }
+        g.fill(x, y + r, x + w, y + h - r, c);
+    }
+    /** The outline of rnd. */
+    private static void rndOut(GuiGraphicsExtractor g, int x, int y, int w, int h, int r, int c) {
+        r = Math.max(0, Math.min(r, Math.min(w, h) / 2)); int prev = r;
+        for (int j = 0; j < r; j++) { float dy = r - j - 0.5f; int in = Math.round(r - (float) Math.sqrt(Math.max(0, r * r - dy * dy))); int a0 = Math.min(in, prev), a1 = Math.max(in, prev);
+            if (j == 0) { g.fill(x + in, y, x + w - in, y + 1, c); g.fill(x + in, y + h - 1, x + w - in, y + h, c); }
+            else { g.fill(x + a0, y + j, x + Math.max(a0 + 1, a1), y + j + 1, c); g.fill(x + w - Math.max(a0 + 1, a1), y + j, x + w - a0, y + j + 1, c);
+                   g.fill(x + a0, y + h - 1 - j, x + Math.max(a0 + 1, a1), y + h - j, c); g.fill(x + w - Math.max(a0 + 1, a1), y + h - 1 - j, x + w - a0, y + h - j, c); }
+            prev = in; }
+        g.fill(x, y + r, x + 1, y + h - r, c); g.fill(x + w - 1, y + r, x + w, y + h - r, c);
     }
 
     /** A strip of hazard tape: a bar of stripes along the top and bottom (each a picture, not a pile of rectangles), with the words on a plate. */
@@ -3995,6 +4323,8 @@ public class StardropsScreen extends Screen {
                 return true;
             }
         }
+        if (qaOpen) { qaClick(event.x(), event.y(), event.button()); return true; }
+        if (event.button() == 0 && !cosWin() && editor == 0 && query.isEmpty() && in2(event.x(), event.y(), searchBox())) { openQa(); return true; }      // the search box opens Quick actions
         if (super.mouseClicked(event, doubleClick)) return true;
         double mx = event.x(), my = event.y(); int button = event.button();
         if (button == 0 && mx >= px && mx < px + 14 && my >= py && my < py + 12) {                  // the hidden button, in the very corner of the menu
@@ -4035,11 +4365,17 @@ public class StardropsScreen extends Screen {
             }
         } else
         for (int i = 0; i < Tab.values().length; i++) {
-            if (hiddenTab(Tab.values()[i])) continue;
+            if (hiddenTab(Tab.values()[i]) || Tab.values()[i] == Tab.SOUNDS || Tab.values()[i] == Tab.CHAT) continue;
             int[] b = tabBox(i);
             if (i != Tab.GENERAL.ordinal() && my >= sideBottom()) continue;
+            if (Tab.values()[i] == Tab.ANIMATIONS && inSide(mx, my) && mx >= b[0] && mx < b[2] && my >= b[1] && my < b[3]) {       // Drop effects: back to the one you had open
+                if (fx(tab)) { if (subSel[tab.ordinal()] >= 0 || dropSrc != null) { dropSrc = null; dropSrcName = null; subSel[tab.ordinal()] = -1; scroll = 0; tabChanged = System.currentTimeMillis(); } return true; }
+                dropSrc = null; dropSrcName = null; tab = lastFx; subSel[tab.ordinal()] = -1; scroll = 0; tabChanged = System.currentTimeMillis(); open.removeIf(o -> o.startsWith("dd_")); return true;
+            }
             if (inSide(mx, my) && mx >= b[0] && mx < b[2] && my >= b[1] && my < b[3]) { dropSrc = null; dropSrcName = null; if (tab != Tab.values()[i]) { tabChanged = System.currentTimeMillis(); } tab = Tab.values()[i]; subSel[tab.ordinal()] = -1; scroll = 0; open.removeIf(o -> o.startsWith("dd_")); return true; }
         }
+        if (button == 0 && query.isBlank() && !cosWin() && inSide(mx, my) && my < sideBottom() && in2(mx, my, cosNav())) { openCos(); return true; }
+        if (button == 0 && query.isBlank() && fx(tab)) for (int q = 0; q < 3; q++) if (fxSeg[q] != null && in2(mx, my, fxSeg[q])) { goFx(FX_TABS[q]); return true; }
         if (srcTab() && srcExp > 0.9f && query.isBlank()) {
             for (int j = 0; j < srcList.size(); j++) {
                 int[] b = srcBox(j);
@@ -4124,8 +4460,22 @@ public class StardropsScreen extends Screen {
         return true;
     }
 
+    @Override public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
+        if (qaOpen) { if (event.isAllowedChatCharacter() && qaText.length() < 40) { qaText += event.codepointAsString(); qaSel = 0; } return true; }
+        return super.charTyped(event);
+    }
     @Override public boolean keyPressed(KeyEvent event) { dirty = true;
         int key = event.key();
+        if (qaOpen) {                                                                        // Quick actions has the keyboard
+            List<QA> it = qaItems();
+            if (key == 256) { qaOpen = false; return true; }
+            if (key == 264) { qaSel = it.isEmpty() ? 0 : (qaSel + 1) % it.size(); return true; }
+            if (key == 265) { qaSel = it.isEmpty() ? 0 : (qaSel - 1 + it.size()) % it.size(); return true; }
+            if (key == 259) { if (!qaText.isEmpty()) { qaText = qaText.substring(0, qaText.offsetByCodePoints(qaText.length(), -1)); qaSel = 0; } return true; }
+            if (key == 257 || key == 335) { if (!it.isEmpty()) { QA a = it.get(Math.max(0, Math.min(it.size() - 1, qaSel))); qaOpen = false; a.run().run(); } return true; }
+            if (key == 258) { String t = qaText; qaOpen = false; query = t; searchField.setValue(t); searchField.setFocused(true); setFocused(searchField); scroll = 0; return true; }      // Tab: the full search, as a page
+            return true;
+        }
         if (Codex.open) return Codex.key(key);
         if (adminOpen) { if (key == 256) adminOpen = false; return true; }
         if (adminHome) { if (key == 256) { adminHome = false; adminField.setFocused(false); return true; } if (adminField.isFocused() && (key == 257 || key == 335)) { openAdmin(); return true; } return super.keyPressed(event); }
@@ -4146,7 +4496,7 @@ public class StardropsScreen extends Screen {
         boolean anyField = searchField.isFocused() || formatField.isFocused() || addField.isFocused() || numField.isFocused() || adminField.isFocused() || thrField.isFocused() || tokenField.isFocused() || spotifyField.isFocused();
         if (!anyField && !cosWin()) {                                                       // shortcuts: Backspace goes back a page, Ctrl+F or / jumps to the search box
             if (key == 259 && hdrBack != null) { hdrBack.run(); return true; }
-            if ((key == 70 && event.hasControlDownWithQuirk()) || key == 47) { searchField.setFocused(true); setFocused(searchField); return true; }
+            if ((key == 70 && event.hasControlDownWithQuirk()) || key == 47) { openQa(); return true; }
         }
         if (key == 256 && cosWin()) { closeCos(); return true; }
         if (key == 256 && fc.menuAnimated) { if (closeAt == 0L) closeAt = System.currentTimeMillis(); return true; }      // Esc fades the menu out first

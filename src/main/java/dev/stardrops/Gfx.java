@@ -23,7 +23,9 @@ public final class Gfx {
     public static ItemStack stack(String name) {
         return STACKS.computeIfAbsent(name, n -> new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.withDefaultNamespace(n))));
     }
-    public static void item(GuiGraphicsExtractor g, String name, int x, int y) { g.item(stack(name), x, y); }
+    /** The test bench has no item registry: items are drawn as plain tiles there. */
+    static boolean noItems;
+    public static void item(GuiGraphicsExtractor g, String name, int x, int y) { if (noItems) { g.fill(x + 2, y + 2, x + 14, y + 14, 0xFF8A6A4A); g.fill(x + 4, y + 4, x + 12, y + 12, 0xFFC89A5A); return; } g.item(stack(name), x, y); }
 
     /** The font of the mod's own menu (Settings > Menu). */
     public static int uiFont;

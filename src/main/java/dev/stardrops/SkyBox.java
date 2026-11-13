@@ -132,13 +132,18 @@ final class SkyBox {
             if (turnD < 0 || Math.abs(diff) > 0.02) turnD = want;
             else { double rate = c.cosOnlyNight ? 1.0 / 5400 : 1.0 / 1200; turnD += Math.max(0, Math.min(3 * rate, rate + diff / 8.0)) * dtS; }
             turnD -= Math.floor(turnD); float turn = (float) turnD; drawTurn = turn;
-            ps.mulPose(new Quaternionf().rotateZ(0.35f).rotateX(turn * 6.2831853f));                // the whole sky turns, on a tilted axis
+            ps.mulPose(rot(turn));                                                                      // the whole sky turns round the zenith (a hair tilted): what hangs above stays above all night
             final float nightF = night;
             ctx.submitNodeCollector().submitCustomGeometry(ps, SKY, (pose, buf) -> { Q q = guard((x, y, z, col) -> buf.addVertex(pose, x * Rr, y * Rr, z * Rr).setColor(col)); draw(q, t, nightF, figs, shoot, aur); });
             ps.popPose();
         } catch (Throwable e) { broken = true; System.err.println("[Stardrops] sky box failed, using screen stars: " + e); }
     }
     /** The smallest half-size, in sky units, that still covers about one and a half screen pixels (0 on the bench). */
+    /** The sky's turn: round the point straight overhead, tilted a hair. Turning on a sideways axis carried the constellations and the
+     *  planets under the horizon for half of every night (you had to look into the void to see them); turning round the zenith keeps
+     *  everything at its height, so whatever hangs above the horizon stays up there. */
+    static final float TILT = 0.1f;
+    static Quaternionf rot(float turn) { return new Quaternionf().rotateZ(TILT).rotateY(turn * 6.2831853f); }
     static float minS; static boolean milky = true, planets = true, deep = true, comet = true;
     /** The turn the sky is drawn at (the aurora is held still against it). */
     static float drawTurn;
@@ -178,7 +183,7 @@ final class SkyBox {
     }
     private static Vector3f at(double az, double alt) { return new Vector3f((float) (Math.cos(alt) * Math.cos(az)), (float) Math.sin(alt), (float) (Math.cos(alt) * Math.sin(az))); }
     /** Where each constellation hangs (azimuth, altitude in degrees) and how big it is drawn (radians per sky unit). */
-    private static final float[][] CON_AT = {{0, 62}, {70, 30}, {140, 38}, {205, 26}, {255, 46}, {310, 34}, {30, -20}, {180, -28}};
+    private static final float[][] CON_AT = {{0, 58}, {45, 34}, {95, 46}, {150, 36}, {200, 52}, {250, 34}, {300, 44}, {340, 74}};
     private static final float CON_K = 1.9f;
 
     static void draw(Q q, float t, float night, float[][][] figs, boolean shoot, boolean aur) {
@@ -196,8 +201,8 @@ final class SkyBox {
                     q.v(d.x - a.x * L, d.y - a.y * L, d.z - a.z * L, c0); q.v(d.x + o.x * w, d.y + o.y * w, d.z + o.z * w, c1); q.v(d.x + a.x * L, d.y + a.y * L, d.z + a.z * L, c0); q.v(d.x - o.x * w, d.y - o.y * w, d.z - o.z * w, c1); }
             }
         }
-        if (planets) { planet(q, at(0.9, 0.62), 0.07f, 15, 0xE8B07A, 0x9A5A48, true, -0.4f, night);    // a ringed giant and a small red world
-        planet(q, at(3.9, 0.35), 0.028f, 9, 0xE87A5A, 0x8A3A2A, false, 0f, night); }
+        if (planets) { planet(q, at(0.9, 0.78), 0.07f, 15, 0xE8B07A, 0x9A5A48, true, -0.4f, night);    // a ringed giant and a small red world
+        planet(q, at(3.9, 0.6), 0.028f, 9, 0xE87A5A, 0x8A3A2A, false, 0f, night); }
         if (figs != null) for (int c = 0; c < figs.length && c < CON_AT.length; c++) {                 // your constellations
             float[][] f = figs[c]; if (f == null || f.length == 0) continue;
             Vector3f ctr = at(Math.toRadians(CON_AT[c][0]), Math.toRadians(CON_AT[c][1])); Vector3f cu = new Vector3f(), cv = new Vector3f(); basis(ctr, cu, cv);
@@ -242,7 +247,7 @@ final class SkyBox {
             }
         }
         if (aur) {                                                                                      // aurora: curtains of light low over the northern horizon, held still while the stars turn
-            org.joml.Matrix3f fix = new org.joml.Matrix3f().rotateX((float) (-drawTurn * Math.PI * 2)).rotateZ(-0.35f);
+            org.joml.Matrix3f fix = new org.joml.Matrix3f().rotateY((float) (-drawTurn * Math.PI * 2)).rotateZ(-TILT);
             Vector3f p0 = new Vector3f(), p1 = new Vector3f(), m0 = new Vector3f(), m1 = new Vector3f(), q0 = new Vector3f(), q1 = new Vector3f();
             for (int b = 0; b < 2; b++) for (int k = 0; k < 64; k++) {
                 double az0 = Math.toRadians(-60 + k * 1.9 + b * 6), az1 = Math.toRadians(-60 + (k + 1) * 1.9 + b * 6);

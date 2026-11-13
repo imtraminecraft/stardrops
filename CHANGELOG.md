@@ -1,6 +1,11 @@
 # Changelog
 
 ## 0.9.0
+- New menu look: a rounded window with an Opacity setting, a tidier sidebar in groups (Browse, Customize), and Animations, Sounds and Chat together as Drop effects.
+- Drop Library pages: a clear header with counts, one bar to change every drop, and rows that show what plays and whether you brag in chat. Point at Normal to make it RNG; RNG drops shine gold.
+- Quick actions: click the search box or press Ctrl F to test a drop, switch things on or off, jump to a page or find any drop.
+- Icons look centred, not just measured centred.
+- Night sky: constellations and planets stay above the horizon all night.
 - Mob Drops show the right creature for every drop (checked against the drop tables), and a new Diamond Goblin.
 - Smooth animations with Gnetum installed.
 - The menu: compact page headers and Quick switches on every tab; real live previews (your Now Playing card, the real night sky); HUDs has no preview.

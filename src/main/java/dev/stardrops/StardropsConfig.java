@@ -110,7 +110,7 @@ public class StardropsConfig {
 
     // ------------------------------------------------------------------ the menu
     public int previewAt = 1;                // live preview dock: 0 top, 1 bottom, 2 off
-    public int menuTranslucency = 25;        // 0 = solid menu .. 70 = see-through
+    public int menuTranslucency = 10;        // 0 = solid menu .. 70 = see-through
     public boolean menuIcons = true;         // sidebar and row icons move
     public boolean menuAnimated = true;      // menu slides in, pages fade, accent bar flows
     public int uiFont = 0, textFont = 0;
