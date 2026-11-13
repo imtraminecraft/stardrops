@@ -89,7 +89,7 @@ final class SkyBox {
     // ------------------------------------------------------------------ drawing
     interface Q { void v(float x, float y, float z, int argb); }
     private static int argb(float a, int rgb) { return Math.round(Math.max(0f, Math.min(1f, a)) * 255) << 24 | (rgb & 0xFFFFFF); }
-    private static float turnS = -1f; private static long lastTurnAt;
+    private static double turnD = -1; private static long lastTurnAt;
     private static long nextShoot; private static final float[][] shoots = new float[3][]; private static final java.util.Random R = new java.util.Random();
 
     static void submit(LevelRenderContext ctx) {
@@ -112,12 +112,15 @@ final class SkyBox {
             }
             PoseStack ps = ctx.poseStack(); ps.pushPose();
             float want = c.cosOnlyNight ? (now % 5_400_000L) / 5_400_000f : day;                    // Only night: it turns by the real clock (once in 90 minutes), so a mod that changes the time cannot make it jump
-            // The game's clock moves in ticks and the server corrects it now and then, so following it directly makes the sky step and
-            // shudder. The sky glides after it instead (a big jump, like /time set or joining a world, is taken at once).
-            float dtS = lastTurnAt == 0 ? 1f : Math.min(1f, (now - lastTurnAt) / 1000f); lastTurnAt = now;
-            float diff = want - turnS; diff -= Math.round(diff);
-            if (turnS < 0f || Math.abs(diff) > 0.02f) turnS = want; else turnS += diff * Math.min(1f, dtS * 2.5f);
-            turnS -= (float) Math.floor(turnS); float turn = turnS;
+            // The sky never follows the game's clock directly. On Hypixel the clock is often stopped and set by the server about once a
+            // second, so it moves in jumps (and sometimes back): following it made the sky step and twitch. Instead the sky turns at the
+            // steady speed of a Minecraft day (20 minutes) on its own and is only nudged, slowly, toward the game's time; it never turns
+            // backwards, and only a big jump (/time set, a new world) is taken at once.
+            double dtS = lastTurnAt == 0 ? 0 : Math.min(0.25, (now - lastTurnAt) / 1000.0); lastTurnAt = now;
+            double diff = want - turnD; diff -= Math.round(diff);
+            if (turnD < 0 || Math.abs(diff) > 0.02) turnD = want;
+            else { double rate = c.cosOnlyNight ? 1.0 / 5400 : 1.0 / 1200; turnD += Math.max(0, Math.min(3 * rate, rate + diff / 8.0)) * dtS; }
+            turnD -= Math.floor(turnD); float turn = (float) turnD;
             ps.mulPose(new Quaternionf().rotateZ(0.35f).rotateX(turn * 6.2831853f));                // the whole sky turns, on a tilted axis
             final float nightF = night;
             ctx.submitNodeCollector().submitCustomGeometry(ps, SKY, (pose, buf) -> { Q q = (x, y, z, col) -> buf.addVertex(pose, x * Rr, y * Rr, z * Rr).setColor(col); draw(q, t, nightF, figs, shoot, aur); });
