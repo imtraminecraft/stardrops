@@ -54,7 +54,7 @@ final class SkyPreview {
         float keepS = SkyBox.minS, kt = SkyBox.drawTurn; boolean km = SkyBox.milky, kp = SkyBox.planets, kd = SkyBox.deep, kc = SkyBox.comet;
         SkyBox.minS = 0.75f * (float) Math.toRadians(62) / TH; SkyBox.milky = c.cosMilky; SkyBox.planets = c.cosPlanets; SkyBox.deep = c.cosDeep; SkyBox.comet = c.cosComet; SkyBox.drawTurn = 0.6f;
         vn = 0;
-        try { SkyBox.draw(SkyPreview::v, t, Math.max(0.3f, c.cosSkyBright / 100f), c.cosCons ? Codex.skyFigures() : null, c.cosShooting, c.cosAurora); }
+        try { SkyBox.draw(SkyBox.guard(SkyPreview::v), t, Math.max(0.3f, c.cosSkyBright / 100f), c.cosCons ? Codex.skyFigures() : null, c.cosShooting, c.cosAurora); }
         finally { SkyBox.minS = keepS; SkyBox.milky = km; SkyBox.planets = kp; SkyBox.deep = kd; SkyBox.comet = kc; SkyBox.drawTurn = kt; }
         java.util.Arrays.fill(acc, 0f);
         float[][] p = new float[4][3];

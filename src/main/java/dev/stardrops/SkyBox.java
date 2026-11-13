@@ -57,6 +57,7 @@ final class SkyBox {
     /** The Milky Way runs along the great circle perpendicular to this. */
     private static final Vector3f BAND_N = new Vector3f(0.35f, 0.55f, 0.76f).normalize();
     private static void basis(Vector3f d, Vector3f u, Vector3f v) {
+        if (!Float.isFinite(d.x + d.y + d.z) || d.lengthSquared() < 1e-12f) { u.set(1, 0, 0); v.set(0, 0, 1); return; }
         Vector3f a = Math.abs(d.y) < 0.9f ? new Vector3f(0, 1, 0) : new Vector3f(1, 0, 0);
         d.cross(a, u).normalize(); d.cross(u, v).normalize();
     }
@@ -133,7 +134,7 @@ final class SkyBox {
             turnD -= Math.floor(turnD); float turn = (float) turnD; drawTurn = turn;
             ps.mulPose(new Quaternionf().rotateZ(0.35f).rotateX(turn * 6.2831853f));                // the whole sky turns, on a tilted axis
             final float nightF = night;
-            ctx.submitNodeCollector().submitCustomGeometry(ps, SKY, (pose, buf) -> { Q q = (x, y, z, col) -> buf.addVertex(pose, x * Rr, y * Rr, z * Rr).setColor(col); draw(q, t, nightF, figs, shoot, aur); });
+            ctx.submitNodeCollector().submitCustomGeometry(ps, SKY, (pose, buf) -> { Q q = guard((x, y, z, col) -> buf.addVertex(pose, x * Rr, y * Rr, z * Rr).setColor(col)); draw(q, t, nightF, figs, shoot, aur); });
             ps.popPose();
         } catch (Throwable e) { broken = true; System.err.println("[Stardrops] sky box failed, using screen stars: " + e); }
     }
@@ -157,9 +158,22 @@ final class SkyBox {
             q.v(d.x, d.y, d.z, ci); q.v(d.x, d.y, d.z, ci); q.v(d.x + u.x * c0 + v.x * s0, d.y + u.y * c0 + v.y * s0, d.z + u.z * c0 + v.z * s0, co); q.v(d.x + u.x * c1 + v.x * s1, d.y + u.y * c1 + v.y * s1, d.z + u.z * c1 + v.z * s1, co);
         }
     }
+    /**
+     * Passes on whole quads only, and only when all four corners are real numbers. A corner that is not (a line between two stars in
+     * the same spot gives a direction of length 0, which normalises to NaN) makes the graphics card draw a huge triangle across the
+     * screen for a frame: the sky flashes white. Such a quad is dropped.
+     */
+    static Q guard(Q out) {
+        float[] b = new float[12]; int[] c = new int[4]; int[] n = {0};
+        return (x, y, z, col) -> { int i = n[0]; b[i * 3] = x; b[i * 3 + 1] = y; b[i * 3 + 2] = z; c[i] = col; n[0] = i + 1;
+            if (i < 3) return; n[0] = 0;
+            for (float v : b) if (!Float.isFinite(v) || Math.abs(v) > 4f) return;                   // every sky point is on the unit sphere (a little off for glints)
+            for (int k = 0; k < 4; k++) out.v(b[k * 3], b[k * 3 + 1], b[k * 3 + 2], c[k]); };
+    }
     private static void line(Q q, Vector3f a, Vector3f b, float w, int ca, int cb) {
+        if (a.distanceSquared(b) < 1e-10f) return;                                                    // two stars in the same spot: no line
         if (w < minS * 0.8f) { float m = minS * 0.8f, k = w / m; ca = Math.round((ca >>> 24) * k) << 24 | (ca & 0xFFFFFF); cb = Math.round((cb >>> 24) * k) << 24 | (cb & 0xFFFFFF); w = m; }
-        Vector3f side = new Vector3f(b).sub(a).cross(a).normalize().mul(w);
+        Vector3f side = new Vector3f(b).sub(a).cross(a); if (side.lengthSquared() < 1e-14f) return; side.normalize().mul(w);
         q.v(a.x + side.x, a.y + side.y, a.z + side.z, ca); q.v(b.x + side.x, b.y + side.y, b.z + side.z, cb); q.v(b.x - side.x, b.y - side.y, b.z - side.z, cb); q.v(a.x - side.x, a.y - side.y, a.z - side.z, ca);
     }
     private static Vector3f at(double az, double alt) { return new Vector3f((float) (Math.cos(alt) * Math.cos(az)), (float) Math.sin(alt), (float) (Math.cos(alt) * Math.sin(az))); }
