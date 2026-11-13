@@ -74,22 +74,24 @@ final class NowPlayingHud {
     private static void glass(GuiGraphicsExtractor g, Font font, int w, int h, float e, Spotify.Track t, long now, long since, long pos, boolean playing, String lyric, boolean art, int acc) {
         int a = Math.round(255 * e); float op = bg();
         float warp = 0f;                                                                                            // (no warp streaks: the voyage pans instead)
-        NebulaTex.glow(g, w / 2f, h / 2f + 6, w * 0.58f, h * 0.9f, Gfx.argb(Math.round(120 * e * op), 0x000000));
+        NebulaTex.glow(g, w / 2f, h / 2f + 9, w * 0.6f, h * 0.95f, Gfx.argb(Math.round(150 * e), 0x000000));          // depth: it floats above the game, its shadow falling below
+        round(g, 2, 3, w - 4, h, Gfx.argb(Math.round(70 * e), 0x000000));
         round(g, 0, 0, w, h, Gfx.argb(Math.round((70 + 100 * op) * e), 0x2C2A66));
         round(g, 1, 1, w - 2, h - 2, Gfx.argb(Math.round(255 * e * op), 0x0B0C26));
         NebulaTex.glow(g, w * 0.82f, h * 0.35f, w * 0.3f, h * 0.7f, Gfx.argb(Math.round(26 * e), PINK));            // faint nebula behind the glass
         NebulaTex.glow(g, w * 0.55f, h * 0.9f, w * 0.35f, h * 0.5f, Gfx.argb(Math.round(22 * e), V));
         float drift = (now % 3_600_000L) / 1000f;
-        for (int i = 0; i < 26; i++) {                                                            // stars drifting past (streaks while warping)
-            float sp = 3f + 9f * hash(i * 7), x = 3 + ((hash(i * 13) * (w - 6) - drift * sp * (1f + warp * 30f)) % (w - 6) + (w - 6)) % (w - 6), y = 3 + hash(i * 29) * (h - 6);
-            float tw = 0.4f + 0.6f * Math.abs((float) Math.sin(drift * (1 + hash(i)) + i)), len = 1 + warp * 18 * (0.5f + hash(i * 3));
-            len = Math.min(len, w - 3 - x); if (len < 1) continue;
-            Gfx.push(g); Gfx.translate(g, x, y); g.pose().scale(len, 1f); g.fill(0, 0, 1, 1, Gfx.argb(Math.round(a * (0.25f + 0.35f * tw + 0.3f * warp)), i % 6 == 0 ? 0xD8C8FF : STAR)); Gfx.pop(g);
-        }
-        g.fill(4, 1, w - 4, 2, Gfx.argb(Math.round(26 * e), 0xFFFFFF));
-        // far behind everything: a huge world rising out of the corner, a few brighter stars, a comet now and then
-        float gx = w - 30 + (float) Math.sin(drift * 0.05f) * 3, gy = h + 14;
-        cap(g, gx, gy, 34, w, h, Gfx.argb(Math.round(34 * e), Ritual.mixc(acc, V, 0.5f))); cap(g, gx - 5, gy - 4, 30, w, h, Gfx.argb(Math.round(16 * e), 0xFFFFFF));
+        stars(g, w, h, a, drift, 0);                                                              // the far stars, behind the world
+        // far behind: a huge world rising out of the corner, lit from the upper left (a thin bright rim, a dark body, a soft atmosphere)
+        float gx = w - 30 + (float) Math.sin(drift * 0.05f) * 3, gy = h + 14; int wc = Ritual.mixc(acc, V, 0.5f);
+        cap(g, gx, gy, 36, w, h, Gfx.argb(Math.round(18 * e), wc));
+        cap(g, gx, gy, 34, w, h, Gfx.argb(Math.round(80 * e), Ritual.mixc(wc, 0xFFFFFF, 0.35f)));
+        cap(g, gx + 2.5f, gy + 3f, 33, w, h, Gfx.argb(Math.round(225 * e * Math.max(0.6f, op)), Ritual.mixc(wc, 0x07081A, 0.78f)));
+        cap(g, gx + 6f, gy + 7f, 30, w, h, Gfx.argb(Math.round(60 * e), 0x000000));                 // its night side
+        stars(g, w, h, a, drift, 1); stars(g, w, h, a, drift, 2);                                 // the nearer stars pass in front of it, faster
+        // a bevel: light along the top of the glass, shade along the bottom
+        for (int j = 0; j < 7; j++) g.fill(3, 2 + j, w - 3, 3 + j, Gfx.argb(Math.round(16 * e * (1f - j / 7f)), 0xFFFFFF));
+        for (int j = 0; j < 9; j++) g.fill(3, h - 3 - j, w - 3, h - 2 - j, Gfx.argb(Math.round(55 * e * (1f - j / 9f)), 0x000000));
         float[][] cst = {{0.36f, 0.14f}, {0.44f, 0.3f}, {0.53f, 0.2f}, {0.6f, 0.36f}, {0.7f, 0.16f}};
         for (int i = 0; i < cst.length; i++) {
             float px = cst[i][0] * w, py = cst[i][1] * h; g.fill(Math.round(px), Math.round(py), Math.round(px) + 1, Math.round(py) + 1, Gfx.argb(Math.round(a * (0.35f + 0.25f * (float) Math.sin(drift * 1.3f + i * 1.9f))), 0xFFFFFF));
@@ -105,6 +107,8 @@ final class NowPlayingHud {
         for (int k = 0; k < 2; k++) for (int q = -3; q <= 3; q++) { double an = spinA + k * Math.PI + q * 0.11; dot(g, vx + (float) Math.cos(an) * (vr - 2.5f), ocy + (float) Math.sin(an) * (vr - 2.5f), Gfx.argb(Math.round(a * 0.45f * (1f - Math.abs(q) / 4f)), 0xFFFFFF)); }
         NebulaTex.glow(g, ocx, ocy + 2, as * 0.7f, as * 0.7f, Gfx.argb(Math.round(e * 140), 0x000000));
         NebulaTex.glow(g, ocx, ocy, as * 0.62f, as * 0.62f, Gfx.argb(Math.round(e * 60), V));
+        g.fill(ax + 2, ay + 3, ax + as + 2, ay + as + 3, Gfx.argb(Math.round(110 * e), 0x000000));           // the cover's own shadow: it sits above the glass
+        g.fill(ax + 1, ay + as + 3, ax + as + 3, ay + as + 4, Gfx.argb(Math.round(45 * e), 0x000000));
         float flip = Math.min(1f, since / 400f), sx = Math.abs((float) Math.cos(Math.PI * 0.5 * (1f - flip)));
         Gfx.push(g); Gfx.translate(g, ax + as / 2f, ay); Gfx.scale(g, Math.max(0.02f, sx), 1f); Gfx.translate(g, -as / 2f, 0);
         cover(g, font, 0, 0, as, a, art, acc);
@@ -113,6 +117,7 @@ final class NowPlayingHud {
         if (!playing) { g.fill(0, 0, as, as, Gfx.argb(Math.round(130 * e), 0x000000)); g.fill(as / 2 - 5, as / 2 - 6, as / 2 - 2, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); g.fill(as / 2 + 2, as / 2 - 6, as / 2 + 5, as / 2 + 6, Gfx.argb(a, 0xFFFFFF)); }
         Gfx.pop(g);
         rout1(g, ax - 1, ay - 1, as + 2, as + 2, Gfx.argb(Math.round(a * 0.55f), V));
+        g.fill(ax, ay, ax + as, ay + 1, Gfx.argb(Math.round(a * 0.35f), 0xFFFFFF)); g.fill(ax, ay + 1, ax + 1, ay + as, Gfx.argb(Math.round(a * 0.18f), 0xFFFFFF));   // light catches its top and left edges
         if (!behind) { disc(g, mx, my, 2.2f, Gfx.argb(a, 0xE8E4FF)); NebulaTex.glow(g, mx, my, 4, 4, Gfx.argb(Math.round(a * 0.3f), 0xFFFFFF)); }
         // the words
         float in = ease(Math.min(1f, Math.max(0f, since - 250) / 380f)), sl = (1f - in) * 14; int tx = 58, eqW = 16, tw = w - tx - eqW - 10;
@@ -221,6 +226,19 @@ final class NowPlayingHud {
     /** The rocket turned to ang (0 = flying right). */
     private static void flyer(GuiGraphicsExtractor g, float x, float y, float ang, int a, long now, boolean firing, float boost) {
         Gfx.push(g); Gfx.translate(g, x, y); if (ang != 0f) Gfx.rotate(g, ang); rocket(g, 0, 0, a, now, firing, boost); Gfx.pop(g);
+    }
+    /** One layer of drifting stars: 0 far (faint, slow, tiny), 1 middle, 2 near (bright, quick, some two pixels with a glint). */
+    private static void stars(GuiGraphicsExtractor g, int w, int h, int a, float drift, int layer) {
+        int n = layer == 0 ? 22 : layer == 1 ? 12 : 6; float sp0 = layer == 0 ? 1.5f : layer == 1 ? 5f : 13f, al = layer == 0 ? 0.35f : layer == 1 ? 0.6f : 0.9f;
+        for (int i = 0; i < n; i++) {
+            int sd = i * 31 + layer * 977; float sp = sp0 * (0.8f + 0.5f * hash(sd + 7));
+            float x = 3 + ((hash(sd + 13) * (w - 6) - drift * sp) % (w - 6) + (w - 6)) % (w - 6), y = 3 + hash(sd + 29) * (h - 6);
+            float tw = 0.5f + 0.5f * Math.abs((float) Math.sin(drift * (1 + hash(sd)) + i));
+            int col = Gfx.argb(Math.round(a * al * (0.55f + 0.45f * tw)), i % 5 == 0 ? 0xD8C8FF : STAR), sz = layer == 2 && i % 2 == 0 ? 2 : 1;
+            int ix = Math.round(x), iy = Math.round(y); if (ix + sz > w - 3) continue;
+            g.fill(ix, iy, ix + sz, iy + sz, col);
+            if (layer == 2 && sz == 2) { int gl = Gfx.argb(Math.round(a * 0.25f * tw), 0xFFFFFF); g.fill(ix - 1, iy, ix, iy + 2, gl); g.fill(ix + 2, iy, ix + 3, iy + 2, gl); g.fill(ix, iy - 1, ix + 2, iy, gl); g.fill(ix, iy + 2, ix + 2, iy + 3, gl); }
+        }
     }
     /** A disc cut off at the card's edges (the big world behind the glass must not spill out of it). */
     private static void cap(GuiGraphicsExtractor g, float cx, float cy, float r, int w, int h, int col) {
