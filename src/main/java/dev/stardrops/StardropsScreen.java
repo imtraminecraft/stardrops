@@ -2923,7 +2923,7 @@ public class StardropsScreen extends Screen {
     }
     /** Visuals > Cosmos: the sky around you while you play. */
     private void cosmosPage(StardropsConfig c) {
-        if (!searching) rows.add(vPrev(1, c.cosMeteor ? new String[]{"Try a meteor", "Try a shower"} : new String[0], new Runnable[]{() -> { onClose(); CosmosHud.meteor(false); }, () -> { onClose(); CosmosHud.meteor(true); }}));
+        if (!searching) rows.add(vPrev(1, c.cosMeteor ? new String[]{"Try a meteor", "Try a shower"} : new String[0], new Runnable[]{() -> play(() -> CosmosHud.try_(false)), () -> play(() -> CosmosHud.try_(true))}));
         Row ns = vLine(1, "night", ":cos_night:", "Night sky", "A real sky in your world: stars, the Milky Way and planets, behind the hills and trees", () -> c.cosNight, v -> c.cosNight = v, true); rows.add(ns);
         vBody(ns, () -> {
             if (!c.cosNight) { rows.add(note("Switch it on to set it up.", 0xFF8A93B0)); return; }

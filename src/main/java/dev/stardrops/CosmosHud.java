@@ -24,6 +24,10 @@ final class CosmosHud {
         if (!StardropsConfig.get().cosMeteor) return; long now = System.currentTimeMillis();
         synchronized (MOMENTS) { MOMENTS.removeIf(m -> now - m[0] > SHOWER_MS); if (MOMENTS.size() >= 6) return; MOMENTS.add(new long[]{now, rng ? 1 : 0, R.nextInt(1000)}); }
     }
+    /** The menu's Try buttons: plays even when Drop moments are switched off, so you can see what it would look like. */
+    static void try_(boolean rng) { long now = System.currentTimeMillis(); synchronized (MOMENTS) { MOMENTS.add(new long[]{now + 350, rng ? 1 : 0, R.nextInt(1000)}); } }      // (a moment after the menu has gone)
+    /** A meteor or a shower is still burning (the menu waits for it before coming back). */
+    static boolean momentPlaying() { long now = System.currentTimeMillis(); synchronized (MOMENTS) { for (long[] m : MOMENTS) if (now - m[0] < (m[1] == 1 ? SHOWER_MS : ONE_MS)) return true; } return false; }
     private static final java.util.List<long[]> MOMENTS = new java.util.ArrayList<>();          // {start ms, 1 = shower, seed}
     private static final int ONE_MS = 1500, SHOWER_MS = 3400;
 
@@ -33,7 +37,7 @@ final class CosmosHud {
         long now = System.currentTimeMillis(); float dt = Math.min(0.1f, (now - (lastFrame == 0 ? now : lastFrame)) / 1000f); lastFrame = now;
         away += ((AnimationManager.isPlaying() ? 1f : 0f) - away) * Math.min(1f, dt * 6f);
         int W = g.guiWidth(), H = g.guiHeight();
-        synchronized (MOMENTS) { for (int i = 0; i < MOMENTS.size(); i++) { long[] m = MOMENTS.get(i); long age = now - m[0]; meteorSeed = (int) m[2];
+        synchronized (MOMENTS) { for (int i = 0; i < MOMENTS.size(); i++) { long[] m = MOMENTS.get(i); long age = now - m[0]; if (age < 0) continue; meteorSeed = (int) m[2];
             if (m[1] == 1) { if (age < SHOWER_MS) shower(g, W, H, age / 1000f); } else if (age < ONE_MS) oneMeteor(g, W, H, age / (float) ONE_MS); } }
         if (SkyBox.on() || !(c.cosShooting || c.cosNight || c.cosAurora)) return;                 // the sky box draws the sky in the world; what follows is only its stand-in
         long ticks = mc.level.getOverworldClockTime(); float day = (ticks % 24000L) / 24000f;
@@ -54,29 +58,30 @@ final class CosmosHud {
         if (u <= 0 || u >= 1 || fade < 0.01f) return;
         float dx = x1 - x0, dy = y1 - y0, len = (float) Math.sqrt(dx * dx + dy * dy), nx = dx / len, ny = dy / len, hx = x0 + dx * u, hy = y0 + dy * u, t = (System.currentTimeMillis() % 100000L) / 1000f;
         float a = Math.min(1f, u * 8f) * Math.min(1f, (1f - u) * 5f) * fade, tail = Math.min(len * u, 170f * k);
-        for (int i = 13; i >= 1; i--) {                                                                // smoke, then flame: far to near
-            float q = i / 13f, px = hx - nx * tail * q, py = hy - ny * tail * q, wob = (float) Math.sin(t * 22 + i * 1.3f + seed) * 2.2f * k * q;
+        boolean lite = k < 1.5f; int ns = lite ? 5 : 13, nf = lite ? 7 : 15, nc = lite ? 6 : 12;                 // the small ones of a shower: fewer pieces, the same look at their size
+        for (int i = ns; i >= 1; i--) {                                                                // smoke, then flame: far to near
+            float q = i / (float) ns, px = hx - nx * tail * q, py = hy - ny * tail * q, wob = (float) Math.sin(t * 22 + i * 1.3f + seed) * 2.2f * k * q;
             NebulaTex.glow(g, px - ny * wob, py + nx * wob - q * 5f * k, (6f + 10f * q) * k, (6f + 10f * q) * k, Gfx.argb(Math.round(70 * a * (1f - q)), 0x1A1418));
         }
-        for (int i = 15; i >= 0; i--) {
-            float q = i / 15f, px = hx - nx * tail * q * 0.85f, py = hy - ny * tail * q * 0.85f, wob = (float) Math.sin(t * 31 + i * 1.7f + seed) * 1.6f * k * q, r = (5f + 13f * (1f - q) * (1f - q)) * k;
+        for (int i = nf; i >= 0; i--) {
+            float q = i / (float) nf, px = hx - nx * tail * q * 0.85f, py = hy - ny * tail * q * 0.85f, wob = (float) Math.sin(t * 31 + i * 1.7f + seed) * 1.6f * k * q, r = (5f + 13f * (1f - q) * (1f - q)) * k;
             int col = q < 0.18f ? Ritual.mixc(0xFFFFFF, hot, q / 0.18f) : Ritual.mixc(hot, flame, Math.min(1f, (q - 0.18f) / 0.5f));
-            NebulaTex.glow(g, px - ny * wob, py + nx * wob, r * 1.5f, r * 1.5f, Gfx.argb(Math.round(200 * a * (1f - q * 0.85f)), col)); if (i < 7) NebulaTex.glow(g, px, py, r * 0.7f, r * 0.7f, Gfx.argb(Math.round(220 * a * (1f - q)), 0xFFFFFF));
+            NebulaTex.glow(g, px - ny * wob, py + nx * wob, r * 1.5f, r * 1.5f, Gfx.argb(Math.round(200 * a * (1f - q * 0.85f)), col)); if (i < (lite ? 2 : 7)) NebulaTex.glow(g, px, py, r * 0.7f, r * 0.7f, Gfx.argb(Math.round(220 * a * (1f - q)), 0xFFFFFF));
         }
-        { float ang = (float) Math.atan2(ny, nx), seg = tail * 0.7f / 12f;                                  // the white-hot line down the middle: 12 solid pieces along the path
+        { float ang = (float) Math.atan2(ny, nx), seg = tail * 0.7f / nc;                                  // the white-hot line down the middle: 12 solid pieces along the path
           Gfx.push(g); Gfx.translate(g, hx, hy); Gfx.rotate(g, ang);
-          for (int i = 0; i < 12; i++) { float q = i / 12f; float w = Math.max(1f, 3.6f * k * (1f - q)); Gfx.push(g); Gfx.translate(g, -seg * (i + 1), -w / 2f); Gfx.scale(g, seg + 0.6f, w);
+          for (int i = 0; i < nc; i++) { float q = i / (float) nc; float w = Math.max(1f, 3.6f * k * (1f - q)); Gfx.push(g); Gfx.translate(g, -seg * (i + 1), -w / 2f); Gfx.scale(g, seg + 0.6f, w);
               g.fill(0, 0, 1, 1, Gfx.argb(Math.round(235 * a * (1f - q)), q < 0.35f ? 0xFFFFFF : hot)); Gfx.pop(g); }
           Gfx.pop(g); }
-        for (int i = 0; i < 9; i++) {                                                                 // sparks shed behind it, falling
+        for (int i = 0; i < (lite ? 4 : 9); i++) {                                                    // sparks shed behind it, falling
             float life = ((u * 5f + rnd(seed * 7 + i * 13)) % 1f), back = (0.1f + 0.9f * rnd(seed + i * 5)) * tail * 0.8f, sp = (rnd(seed * 3 + i * 11) - 0.5f) * 26f * k * life;
             float px = hx - nx * back - ny * sp, py = hy - ny * back + nx * sp + life * life * 16f * k; int w = life < 0.5f && i % 3 == 0 ? 2 : 1;
             g.fill(Math.round(px), Math.round(py), Math.round(px) + w, Math.round(py) + w, Gfx.argb(Math.round(240 * a * (1f - life)), i % 2 == 0 ? 0xFFFFFF : hot));
         }
-        NebulaTex.glow(g, hx, hy, 60f * k, 60f * k, Gfx.argb(Math.round(120 * a), flame)); NebulaTex.glow(g, hx, hy, 30f * k, 30f * k, Gfx.argb(Math.round(240 * a), hot)); NebulaTex.glow(g, hx, hy, 14f * k, 14f * k, Gfx.argb(Math.round(255 * a), 0xFFFFFF));
+        if (!lite) NebulaTex.glow(g, hx, hy, 60f * k, 60f * k, Gfx.argb(Math.round(120 * a), flame)); NebulaTex.glow(g, hx, hy, 30f * k, 30f * k, Gfx.argb(Math.round(240 * a), hot)); NebulaTex.glow(g, hx, hy, 14f * k, 14f * k, Gfx.argb(Math.round(255 * a), 0xFFFFFF));
         int ps = Math.max(1, Math.round(1.6f * k)), ox = Math.round(hx) - ps * 5 / 2, oy = Math.round(hy) - ps * 5 / 2;                 // the rock itself, in big pixels
         for (int j = 0; j < 5; j++) for (int i = 0; i < 5; i++) { int m = ROCK[(j + seed) % 5][i]; if (m == 0) continue; g.fill(ox + i * ps, oy + j * ps, ox + (i + 1) * ps, oy + (j + 1) * ps, Gfx.argb(Math.round(255 * a), m == 1 ? 0x6A4630 : m == 2 ? 0xFFB060 : 0xFFFFFF)); }
-        for (int i = 0; i < 4; i++) { float gl = 0.5f + 0.5f * (float) Math.sin(t * 12 + i * 2); float L = (10f + 6f * gl) * k; int c0 = Gfx.argb(Math.round(200 * a * gl), 0xFFFFFF);      // a glint on the head
+        for (int i = 0; i < (lite ? 0 : 4); i++) { float gl = 0.5f + 0.5f * (float) Math.sin(t * 12 + i * 2); float L = (10f + 6f * gl) * k; int c0 = Gfx.argb(Math.round(200 * a * gl), 0xFFFFFF);      // a glint on the head
             if (i < 2) g.fill(Math.round(hx - L), Math.round(hy), Math.round(hx + L), Math.round(hy) + 1, c0); else g.fill(Math.round(hx), Math.round(hy - L), Math.round(hx) + 1, Math.round(hy + L), c0); }
     }
     /** A drop: one big meteorite burns across the top of the screen, lighting the edge it comes from. */
@@ -90,7 +95,7 @@ final class CosmosHud {
     private static void shower(GuiGraphicsExtractor g, int W, int H, float t) {
         float fl = Math.max(0f, 1f - t / 0.5f); if (fl > 0) { NebulaTex.glow(g, W * 0.5f, 0, W * 0.8f, H * 0.6f, Gfx.argb(Math.round(95 * fl), 0xFFD24A)); g.fill(0, 0, W, H, Gfx.argb(Math.round(26 * fl * fl), 0xFFF4D0)); }
         float glow = (float) Math.sin(Math.PI * Math.min(1f, t / (SHOWER_MS / 1000f))); NebulaTex.glow(g, W * 0.5f, -H * 0.05f, W * 0.75f, H * 0.28f, Gfx.argb(Math.round(40 * glow), 0xFF9AD0));
-        boolean left = meteorSeed % 2 == 0; int n = 16;
+        boolean left = meteorSeed % 2 == 0; int n = 13;
         for (int i = 0; i < n; i++) {
             int sd = meteorSeed + i * 37; boolean big = i % 5 == 0; float start = i == 0 ? 0.05f : 0.1f + rnd(sd) * 2.1f, dur = big ? 1.15f : 0.75f + 0.3f * rnd(sd + 1), u = (t - start) / dur;
             if (u <= 0 || u >= 1) continue;

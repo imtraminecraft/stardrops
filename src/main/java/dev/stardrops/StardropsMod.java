@@ -97,7 +97,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
             for (int i = 3; i < 5; i++) if (music[i] != null) while (music[i].consumeClick()) Lyrics.nudge(mc, i == 3 ? 100 : -100);   // the words a little earlier / later, for this song
             if (openMenu) { openMenu = false; mc.setScreenAndShow(new StardropsScreen()); }
             if (openEdit) { openEdit = false; mc.setScreenAndShow(new HudEditScreen(null, HudEditScreen.ALL)); }   // /sd edit   // 26.2: setScreenAndShow
-            if (reopenMenu && !AnimationManager.isPlaying()) { reopenMenu = false; mc.setScreenAndShow(new StardropsScreen()); }
+            if (reopenMenu && !AnimationManager.isPlaying() && !CosmosHud.momentPlaying()) { reopenMenu = false; mc.setScreenAndShow(new StardropsScreen()); }
             if (Flicker.on(Flicker.TICKS)) DropListener.tick(mc);
             if (Flicker.on(Flicker.AURAS)) AuraWorld.tick(mc);
             if (Flicker.on(Flicker.TICKS)) { Playtime.tick(mc); Spotify.tick(); }
