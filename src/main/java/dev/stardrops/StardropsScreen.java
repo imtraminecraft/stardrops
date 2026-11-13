@@ -1092,6 +1092,11 @@ public class StardropsScreen extends Screen {
         String[] heads = {"NAME ICON", "NAME EFFECT", "AURA"}, subs = {"A little icon after your name.", "Your name in its colour and white.", "Particles around your character."};
         int[] accents = {0xFFFFC857, 0xFFFF9AC8, 0xFF8FD0FF};
         // --- sets: the rarest first
+        if (query.isBlank()) { StardropsConfig c = StardropsConfig.get();
+            quick(new String[]{"My icon", "Others' icons", "My name effect", "Others' effects", "My aura", "Others' auras"}, new String[]{":cos_suffix:", ":cos_suffix:", ":cos_name:", ":cos_name:", ":cos_aura:", ":cos_aura:"},
+                new BooleanSupplier[]{() -> c.selfSuffix, () -> c.othersSuffix, () -> c.selfName, () -> c.othersName, () -> c.selfAura, () -> c.othersAura},
+                v -> { c.selfSuffix = v; CosmeticData.changed(); }, v -> { c.othersSuffix = v; CosmeticData.changed(); }, v -> { c.selfName = v; CosmeticData.changed(); },
+                v -> { c.othersName = v; CosmeticData.changed(); }, v -> { c.selfAura = v; CosmeticData.changed(); }, v -> { c.othersAura = v; CosmeticData.changed(); }); }
         int ownedSets = 0; for (CosmeticData.SetDef sd : CosmeticData.SETS) if (CosmeticData.unlocked(CosmeticData.members(sd).get(0))) ownedSets++;
         rows.add(catHeader("SETS", "A name icon and a name effect that go together, and an aura for most.", ownedSets + " / " + CosmeticData.SETS.size(), 0xFFC77DFF));
         List<Object> st = new ArrayList<>(); for (int r2 = 4; r2 >= 0; r2--) for (CosmeticData.SetDef sd : CosmeticData.SETS) if (sd.rarity() == r2) st.add(sd);
@@ -2316,7 +2321,7 @@ public class StardropsScreen extends Screen {
     // ---- small row builders
 
     private Row hero(String icon, String title, String sub, int accent) {
-        Row h = row(0, icon, title, sub, accent); h.kind = HERO; h.h = 84; h.noSearch = true; return h;
+        Row h = row(0, icon, title, sub, accent); h.kind = HERO; h.h = 30; h.noSearch = true; return h;      // compact: one line, like the Visuals page
     }
     private void wipPanel(String icon, String title, String sub) {
         Row wp = row(0, icon, title, sub, Ui.DIM); wp.kind = PANEL; wp.h = 150; wp.noSearch = true; rows.add(wp);
@@ -2478,7 +2483,7 @@ public class StardropsScreen extends Screen {
             if (r.cell > 0) avail -= r.cell * r.ctls.size(); else for (Ctl c : r.ctls) avail -= c.width() + 8;
             if (avail > 70 && Gfx.w(font, r.sub) > avail) { r.wrapSub = true; r.subW = avail; r.h = Math.max(r.h, 19 + 11 * wrap(r.sub, avail).size()); }
         }
-        for (Row r : rows) if (r.kind == HERO) r.h = Math.max(r.h, 76 + 11 * wrap(r.sub, cw - 60).size());      // the words always fit inside the card
+        for (Row r : rows) if (r.kind == HERO) r.h = 30;
         if (landing() && query.isBlank()) scroll = 0;
         relayout();
         if (landing() && query.isBlank()) {                                // main pages never scroll: the tiles get a little shorter until everything fits
@@ -2523,6 +2528,9 @@ public class StardropsScreen extends Screen {
     private void homePage(StardropsConfig c) {
         if (!landing()) { resourcesPage(); return; }
         rows.add(hero(":stardrops:", "Stardrops", "Every rare drop becomes a short animation you design yourself: how it looks, how it sounds and what your party reads in chat.", Ui.ACCENT));
+        quick(new String[]{"Animations", "Chat alerts", "Sounds", "Now Playing", "Night sky", "My cosmetics"}, new String[]{":animations:", ":chat:", ":sounds:", ":disc:", ":cos_night:", ":cosmetics:"},
+            new BooleanSupplier[]{() -> c.masterAnimate, () -> c.masterAnnounce, () -> c.sound, () -> c.npOn, () -> c.cosNight, () -> c.selfSuffix || c.selfName || c.selfAura},
+            v -> c.masterAnimate = v, v -> c.masterAnnounce = v, v -> c.sound = v, v -> c.npOn = v, v -> c.cosNight = v, v -> { c.selfSuffix = c.selfName = c.selfAura = v; CosmeticData.changed(); });
         UpdateCheck.check(false);
         rows.add(section("Updates"));
         Row ur = new Row(); ur.kind = UPDATE; ur.h = 36; ur.noSearch = true; rows.add(ur);
@@ -2544,6 +2552,10 @@ public class StardropsScreen extends Screen {
             Row lib = hero(":dropped:", "Drop Library", "Every drop, sorted by where it comes from. Open a category and choose the animation each drop plays and whether it is announced in chat.", Ui.ACCENT);
             int tracked = 0; for (Categories.Cat k : Categories.ALL) if (!k.wip()) for (Categories.Group g : k.groups()) if (!g.wip()) for (DropData.Source so : k.sources(g.id())) tracked += so.drops.size();
             lib.badge = tracked + "|Tracked Drops"; rows.add(lib);
+            quick(new String[]{"Animations", "Chat alerts", "Epic drops play RNG", "Sounds"}, new String[]{":animations:", ":chat:", ":raredrops:", ":sounds:"},
+                new BooleanSupplier[]{() -> c.masterAnimate, () -> c.masterAnnounce, () -> c.epicEffects, () -> c.sound},
+                v -> c.masterAnimate = v, v -> c.masterAnnounce = v, v -> c.epicEffects = v, v -> c.sound = v);
+            rows.add(section("Categories"));
             rows.add(catTiles());
             return;
         }
@@ -2656,6 +2668,9 @@ public class StardropsScreen extends Screen {
     private void animationsLanding(StardropsConfig c) {
         if (searching || "@changes".equals(dropSrc)) { animationChanges(c); return; }                  // (search also looks inside it)
         rows.add(hero(":animations:", "Animations", "Set the looks every animation shares, then open a category.", Ui.ACCENT));
+        quick(new String[]{"Animations", "Show the price", "Show the odds", "Show Magic Find", "Item bobs", "Bar line"}, new String[]{":animations:", ":coin:", ":dice:", ":stats:", ":play:", ":bars:"},
+            new BooleanSupplier[]{() -> c.masterAnimate, () -> c.showPrice, () -> c.showOdds, () -> c.showMagicFind, () -> c.itemBob, () -> c.barLine},
+            v -> c.masterAnimate = v, v -> c.showPrice = v, v -> c.showOdds = v, v -> c.showMagicFind = v, v -> c.itemBob = v, v -> c.barLine = v);
         int fxOn = 0; for (int i = 0; i < FX_N; i++) if (c.fx(i)) fxOn++;
         Row ac = row(0, ":settings:", "Animation Changes", "Bars, text, item, position and size  \u00B7  " + fxOn + " text effects on", Ui.ACCENT);
         ac.click = () -> openPage(-1, "@changes", "Animation Changes"); rows.add(ac);
@@ -2758,6 +2773,7 @@ public class StardropsScreen extends Screen {
     private void soundsLanding(StardropsConfig c) {
         if (searching || "@settings".equals(dropSrc)) { soundSettings(c); return; }
         rows.add(hero(":sounds:", "Sounds", "Edit each sound based on what you want. Open a category to hear and change its sounds.", Ui.ACCENT));
+        quick(new String[]{"Sounds", "Stardrops sounds"}, new String[]{":sounds:", ":snd_burst:"}, new BooleanSupplier[]{() -> c.sound, () -> c.customSounds}, v -> c.sound = v, v -> c.customSounds = v);
         Row ss = row(0, ":settings:", "Sound Settings", (c.sound ? "On" : "Off") + "  \u00B7  volume " + c.volume + "%  \u00B7  " + (c.customSounds ? "Stardrops sounds" : "Minecraft sounds"), Ui.ACCENT);
         ss.click = () -> openPage(-1, "@settings", "Sound Settings"); rows.add(ss);
         rows.add(section("Categories"));
@@ -2917,6 +2933,15 @@ public class StardropsScreen extends Screen {
     private void vBody(Row head, Runnable fill) { if (!head.open) return; int n = rows.size(); fill.run(); for (int i = rows.size() - 1; i >= n; i--) { Row q = rows.get(i); if (q.kind == SECTION) rows.remove(i); else if (q.kind == NORMAL && q.pickLabels == null) q.indent = 1; } }
     private void arrange() { minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.ALL)); }
 
+    /** A page's quick switches: its most used on/off switches, two to a line (the same look as the Visuals page). */
+    @SuppressWarnings("unchecked")
+    private void quick(String[] labels, String[] icons, BooleanSupplier[] get, Consumer<Boolean>... set) {
+        rows.add(section("Quick switches"));
+        Row q = new Row(); q.kind = VQUICK; q.noSearch = true; q.h = ((labels.length + 1) / 2) * 22 - 2;
+        q.qLabels = labels; q.qIcons = icons; q.qGet = get; q.qSet = set; q.qTog = new Tog[labels.length];
+        for (int i = 0; i < labels.length; i++) q.qTog[i] = sw(get[i], set[i]);
+        rows.add(q);
+    }
     private void visualsHub(StardropsConfig c) {
         Row d = new Row(); d.kind = VDOORS; d.h = 112; d.noSearch = true; rows.add(d);
         rows.add(section("Quick switches"));
@@ -3110,6 +3135,8 @@ public class StardropsScreen extends Screen {
 
     private void chatLanding(StardropsConfig c) {
         rows.add(hero(":chat:", "Chat", "Tell people about the rare drop you just got. Pick where the messages go, what they say and which drops are announced.", Ui.ACCENT));
+        quick(new String[]{"Chat alerts", "RNG also in public"}, new String[]{":bell:", ":chan_public:"}, new BooleanSupplier[]{() -> c.masterAnnounce, () -> c.alsoAll}, v -> c.masterAnnounce = v, v -> c.alsoAll = v);
+        rows.add(section("Pages"));
         int on = 0, all = 0;                                                                              // how many drops announce, for the tile and the status
         for (Categories.Cat cat : Categories.ALL) if (!cat.wip()) for (Categories.Group gr : cat.groups()) for (DropData.Source src : cat.sources(gr.id())) for (DropData.Drop d : src.drops) { StardropsConfig.DropCfg dc = c.drop(src.id, d.name); StardropsConfig.initDrop(dc, Math.max(0, d.rank)); all++; if (dc.announce) on++; }
         boolean off = c.channel.equals("OFF");
@@ -3186,7 +3213,12 @@ public class StardropsScreen extends Screen {
     // ---- Settings
 
     private void settingsLanding() {
+        StardropsConfig c = StardropsConfig.get();
         rows.add(hero(":settings:", "Settings", "Change how the menu looks, your cosmetics, where prices come from and how the drop data loads.", Ui.ACCENT));
+        quick(new String[]{"Animated menu", "Animated icons", "Pop-up notices", "Calm cosmetics", "Bazaar prices", "Auction prices"}, new String[]{":anim_menu:", ":anim_icons:", ":bell:", ":cos_aura:", ":bazaar:", ":coin:"},
+            new BooleanSupplier[]{() -> c.menuAnimated, () -> c.menuIcons, () -> c.popups, () -> c.cosCalm, () -> c.useBazaar, () -> c.useAuctions},
+            v -> c.menuAnimated = v, v -> c.menuIcons = v, v -> c.popups = v, v -> { c.cosCalm = v; CosmeticData.changed(); }, v -> c.useBazaar = v, v -> c.useAuctions = v);
+        rows.add(section("Pages"));
         String[] lb = {"Menu", "Cosmetics", "Prices", "Drop Data"}, sb = {"How the menu looks", "Shown to you and others", "Where prices come from", "Your drops and the whole library"}, ic = {":menu:", ":cosmetics:", ":coin:", ":refresh:"};
         int[] co = {0xFFB0B6C2, 0xFFC77DFF, 0xFFFFC857, 0xFF56D8FF};
         rows.add(picker("", "", lb, sb, ic, co, null, 2, () -> -1, i -> openPage(i, null, null)));
@@ -3637,6 +3669,17 @@ public class StardropsScreen extends Screen {
             if (r.kind == VPREV) { drawPrev(g, r, mx, my); continue; }
             if (r.kind == CHATPREV) { drawChatPrev(g, r); continue; }
             if (r.kind == COSPREV) { drawCosPreview(g, r); continue; }
+            if (r.kind == HERO) {                                                   // the page's header, compact: its icon, name, a line of words, and a counter on the right
+                pill(g, r.x, r.y, r.w, r.h, Ui.ROW); long nw = System.currentTimeMillis(); g.fill(r.x + 1, r.y + 4, r.x + 3, r.y + r.h - 4, r.accent);
+                if (Icons.has(r.icon)) Icons.draw(g, r.icon, r.x + 8, r.y + 7, nw); else if (r.icon != null) Gfx.item(g, r.icon, r.x + 8, r.y + 7);
+                int bw = 0;
+                if (r.badge != null) { String[] bp = r.badge.split("\\|"); int nw0 = Gfx.w(font, bp[0]); bw = nw0 + Gfx.w(font, bp[1]) + 19; int bx = r.x + r.w - bw - 8, by = r.y + 8;
+                    pill(g, bx, by, bw, 15, Canvas.mix(Ui.PANEL2, Ui.ACCENT, 0.12f)); rout(g, bx, by, bw, 15, Gfx.argb(110, Ui.ACCENT & 0xFFFFFF));
+                    Gfx.text(g, font, bp[0], bx + 7, by + 4, 0xFFFFC857); Gfx.text(g, font, bp[1], bx + 12 + nw0, by + 4, Ui.SUB); }
+                Gfx.text(g, font, r.title, r.x + 30, r.y + 5, Ui.TEXT);
+                marquee(g, r.sub, r.x + 30, r.y + 17, Math.max(40, r.w - 40 - bw - (bw > 0 ? 12 : 0)), Ui.SUB);
+                continue;
+            }
             if (r.kind == PANEL || r.kind == HERO) {                                // a centred banner (HERO: just icon, title, words) or a construction site for a page that is not built yet
                 pill(g, r.x, r.y, r.w, r.h, r.kind == PANEL ? 0xFF06071A : Ui.ROW);
                 int mid = r.x + r.w / 2; long nw = System.currentTimeMillis(); float sec = (nw % 3600000L) / 1000f;
