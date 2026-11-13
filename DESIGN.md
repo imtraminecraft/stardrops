@@ -862,3 +862,12 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - The sky picture in the Cosmos door/preview is still drawn by the computer, but at most 5 times a second, and less when one picture takes long (never more than ~2.5% of the time).
 - Your files (LocalMusic.songs) looks at the music folder on a side thread every 5 s instead of in the frame (it was asked every frame by the Music door's count).
 - Rule: the menu's background scenes stay cheap: a few hundred pieces at most, gradients instead of pixel blocks.
+
+## 14 Nov, 03:04: menu and Catalog tidy-up (PREVIEW sent, waiting for the author's yes before the jar ships)
+- Author: "Update the mod menu to be more organized and unique. Make sure icons do not have a background like it does now." / "Update the Catalog to be more organized and more clean. Right now theres many sub menus that look really ugly." / "Add back the chance to drop the items at the bottom of the drops, and exclude drops that do not have a drop chance." / "make a preview before pushing".
+- Icons have no background anywhere: no tile behind sidebar icons, no box behind the mark (the planet floats), no boxes behind the outside buttons (community, Cosmetics, Achievements: a soft light only).
+- Sidebar: the Catalog and Drop effects no longer unfold a tree (sideSubs() is empty for them). In its place a short trail under the open entry shows only where you are (Mob Drops > Locations > Crimson Isle > Ashfang), each step clickable (buildTrail/drawTrail/clickTrail). Visuals and Settings keep their short lists. The open entry is a light that fades to the right (navPlate).
+- Catalog pages: the tall centred card is gone; a compact header (head(): icon, name, counts as pills, one line) and the tiles right under it. Category tiles are three across and say only "370 drops".
+- Mob Drops is ONE page: a Slayers / Locations switch with the bosses or places directly under it (mobDropsPage, mobView). "@loc" and "slayer" still work as page keys and just set the switch.
+- Drop rows show the chance under the name again (the line had been swallowed by a comment); a drop with no known chance shows no line and its name sits centred. OPEN QUESTION to the author: hide only the line, or leave such drops out of the list?
+- Still to build from the same message: cooler drop animation text, Mythological dig animations (mob slash / chest), new achievements loading screen and menu. The Now Playing preview item is left for another model (author's note).
