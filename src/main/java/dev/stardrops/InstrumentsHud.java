@@ -57,7 +57,7 @@ final class InstrumentsHud {
         double ddx = px - mc.player.xo, ddz = pz - mc.player.zo; float v = (float) Math.sqrt(ddx * ddx + ddz * ddz) * 20f;
         if (v < 200f) speed += (v - speed) * Math.min(1f, dt * 5f); if (speed < 0.05f) speed = 0f; lt = nt; lx = px; lz = pz;
         for (int i = 0; i < N; i++) {
-            if (!c.instOn[i]) { BOX[i][2] = BOX[i][0]; continue; }
+            if (!c.instOn[i] || (c.instHide && !preview)) { BOX[i][2] = BOX[i][0]; continue; }
             float k = c.instSize[i] / 100f; int w = Math.round(SIZE[i][0] * k), h = Math.round(SIZE[i][1] * k);
             int x = Math.max(0, Math.min(W - w, Math.round(c.instX[i] * W))), y = Math.max(0, Math.min(H - h, Math.round(c.instY[i] * H)));
             BOX[i][0] = x; BOX[i][1] = y; BOX[i][2] = x + w; BOX[i][3] = y + h;

@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 
 /**
  * Now Playing (Visuals > Now Playing), placed wherever you drag it (Visuals > Move HUD): one clean glass card. The cover on the left (it
- * flips in when the song changes and dims under a pause sign when you pause), the title and artists, and a thin time bar along the bottom with the time on either side. A small equalizer sits top right. It takes its accent from the
+ * flips in when the song changes and dims under a pause sign when you pause), the title and artists (two as "A & B", more as the first and a "+n" pill), the time under the voyage. A small equalizer sits top right. It takes its accent from the
  * album (in soft, cool colours), slides away when nothing is playing, waits under boss bars and hides during RNG animations.
  */
 final class NowPlayingHud {
@@ -119,7 +119,7 @@ final class NowPlayingHud {
         boolean mine = t.id().startsWith("local:");
         small(g, font, playing ? (mine ? "YOUR MUSIC" : "NOW PLAYING") : "PAUSED", tx + sl * 0.4f, 8, 0.55f, Gfx.argb(Math.round(a * 0.85f * in), mine ? 0x8AF0C0 : 0xA89CE8));
         Gfx.txt(g, font, marquee(font, t.name(), tw, since), Math.round(tx + sl), 15, Gfx.argb(Math.round(a * in), 0xFFFFFF), true);
-        small(g, font, cut(font, t.artists(), tw / 0.8f), tx + sl * 0.6f, 26, 0.8f, Gfx.argb(Math.round(a * 0.75f * in), 0xB9B6E6));
+        artists(g, font, t.artists(), tx + sl * 0.6f, 26, tw, Math.round(a * in));
         int ex = w - eqW - 7, ey = 15;                                                            // the signal: five bars, violet into pink
         for (int i = 0; i < 5; i++) {
             float amp = playing ? 0.2f + 0.8f * Math.abs((float) Math.sin(now / (150.0 + i * 37) + i * 1.7) * (float) Math.sin(now / (380.0 + i * 53) + i * 0.6)) : 0.08f;
@@ -128,11 +128,25 @@ final class NowPlayingHud {
         }
         String left = "-" + mmss(Math.max(0, t.durationMs() - pos)); small(g, font, left, w - 7 - font.width(left) * 0.5f, 19, 0.5f, Gfx.argb(Math.round(a * 0.6f), 0xB9B6E6));   // what is left, under the signal
         course(g, font, w, h, tx, a, t, now, since, pos, playing, warp);
-        float pf = Math.min(1f, pos / (float) Math.max(1, t.durationMs())); int bw = w - 12, fillW = Math.round(bw * pf);                  // a hairline of progress along the bottom edge, in the album's colour
-        g.fill(6, h - 2, 6 + bw, h - 1, Gfx.argb(Math.round(a * 0.12f), 0xFFFFFF)); g.fill(6, h - 2, 6 + fillW, h - 1, Gfx.argb(Math.round(a * 0.85f), Ritual.mixc(acc, 0xFFFFFF, 0.2f)));
-        g.fill(6 + fillW - 1, h - 3, 6 + fillW + 1, h, Gfx.argb(a, 0xFFFFFF)); NebulaTex.glow(g, 6 + fillW, h - 1.5f, 5, 3, Gfx.argb(Math.round(a * 0.5f), acc));
     }
 
+    /**
+     * The artists. One: as it is. Two that fit: "A & B". Otherwise the first artist, and a small pill with how many more
+     * ("+2"), so a long list never ends in a cut-off word.
+     */
+    private static void artists(GuiGraphicsExtractor g, Font f, String all, float x, float y, int maxW, int a) {
+        int col = Gfx.argb(Math.round(a * 0.75f), 0xB9B6E6); float k = 0.8f, room = maxW / k;
+        String[] p = all.split(", "); 
+        if (p.length == 1) { small(g, f, cut(f, all, room), x, y, k, col); return; }
+        String two = p[0] + " & " + p[1];
+        if (p.length == 2 && f.width(two) <= room) { small(g, f, two, x, y, k, col); return; }
+        String more = "+" + (p.length - 1); float pw = f.width(more) * 0.6f + 6;
+        String first = cut(f, p[0], room - (pw + 4) / k); float fw = f.width(first) * k;
+        small(g, f, first, x, y, k, col);
+        int bx = Math.round(x + fw + 4), by = Math.round(y - 1);
+        round(g, bx, by, Math.round(pw), 8, Gfx.argb(Math.round(a * 0.35f), 0x6A5AC8));
+        small(g, f, more, bx + 3, by + 2, 0.6f, Gfx.argb(Math.round(a * 0.9f), 0xE8E4FF));
+    }
     /*
      * The voyage. Every song is a world (picked from the track's id): the rocket sets off from the last song's world on the left and
      * flies an arc, up and over, to this song's world on the right. Ahead of it the course is dotted; behind it, a fading trail. In
@@ -145,11 +159,11 @@ final class NowPlayingHud {
     private static void course(GuiGraphicsExtractor g, Font font, int w, int h, int tx, int a, Spotify.Track t, long now, long since, long pos, boolean playing, float warp) {
         if (!t.id().equals(curId)) { prev2Id = prevId == null ? t.id() + "~" : prevId; prevId = curId == null ? t.id() + "*" : curId; curId = t.id(); }
         long dur = Math.max(1, t.durationMs()); float f = Math.min(1f, pos / (float) dur), spin = (now % 3_600_000L) / 1000f;
-        int yb = h - 11; float x0 = tx + 7, x1 = w - 17, D = x1 - x0, r0 = 5f, r1 = 6.5f;
+        int yb = h - 12; float x0 = tx + 7, x1 = w - 17, D = x1 - x0, r0 = 5f, r1 = 6.5f;
         float pan = since < PAN ? ease(since / (float) PAN) : 1f, off = (1f - pan) * D;
         float dx = x0 + off, dX = x1 + off, ox = x0 - D + off;                                     // the departure, the destination, the one left behind
         // the arc: from just off the departure world, up and over, to just short of the destination
-        float sx = dx + r0 + 2, sy = yb - 3, ex = dX - r1 - 3, ey = yb - 3, cxp = (sx + ex) / 2f, cyp = yb - 27;
+        float sx = dx + r0 + 2, sy = yb - 3, ex = dX - r1 - 3, ey = yb - 3, cxp = (sx + ex) / 2f, cyp = yb - 15;                     // a low arc: its top stays under the artist line
         float show = Math.max(0f, Math.min(1f, (since - PAN * 0.7f) / 400f));                   // the course appears once the pan settles
         float end = Math.max(0f, Math.min(1f, 1f - (dur - pos) / 3000f)), orbit = ease(end);
         float tail = Math.max(0f, f - 0.3f);
@@ -182,8 +196,8 @@ final class NowPlayingHud {
         Worlds.draw(g, dX, yb, r1, Math.round(a * edge(dX, tx, w)), seed(curId), spin);
         if (!behind) flyer(g, rx, ry, ang, a, now, firing, leave < 1f && leave > 0f ? 1.8f : 1f);
         // the time, small, inside the arc (the card ends right under the worlds)
-        String tm = mmss(pos) + "  /  " + mmss(dur); float tw2 = font.width(tm) * 0.55f;
-        small(g, font, tm, (sx + ex) / 2f - tw2 / 2f, yb - 5, 0.55f, Gfx.argb(Math.round(a * 0.6f), 0xFFFFFF));
+        String tm = mmss(pos) + "  /  " + mmss(dur); float tw2 = font.width(tm) * 0.55f;          // the time, small, under the middle of the arc
+        small(g, font, tm, (sx + ex) / 2f - tw2 / 2f, yb + 3, 0.55f, Gfx.argb(Math.round(a * 0.6f), 0xFFFFFF));
     }
     private static float edge(float x, int tx, int w) { return Math.max(0f, Math.min(1f, Math.min((x - (tx - 6)) / 12f, (w - 3 - x) / 10f))); }
     private static float bz(float p0, float p1, float p2, float u) { float v = 1f - u; return v * v * p0 + 2 * v * u * p1 + u * u * p2; }

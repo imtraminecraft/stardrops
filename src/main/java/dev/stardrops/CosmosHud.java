@@ -15,11 +15,16 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 final class CosmosHud {
     private CosmosHud() {}
 
-    private static long nextShoot, shootAt = -99999, meteorAt = -99999; private static float shootY, shootDir, away; private static long lastFrame; private static boolean showerNow; private static int meteorSeed;
+    private static long nextShoot, shootAt = -99999; private static float shootY, shootDir, away; private static long lastFrame; private static int meteorSeed;
     private static final java.util.Random R = new java.util.Random();
 
     /** A drop just landed: one meteor for a drop, a shower for an RNG drop. */
-    static void meteor(boolean rng) { if (StardropsConfig.get().cosMeteor) { long now = System.currentTimeMillis(); if (!rng && showerNow && now - meteorAt < SHOWER_MS) return; meteorAt = now; showerNow = rng; meteorSeed = R.nextInt(1000); } }
+    /** Every moment runs to its end: a new drop adds its own meteor (or shower) and never restarts one already burning. A meteor during a shower just joins it. */
+    static void meteor(boolean rng) {
+        if (!StardropsConfig.get().cosMeteor) return; long now = System.currentTimeMillis();
+        synchronized (MOMENTS) { MOMENTS.removeIf(m -> now - m[0] > SHOWER_MS); if (MOMENTS.size() >= 6) return; MOMENTS.add(new long[]{now, rng ? 1 : 0, R.nextInt(1000)}); }
+    }
+    private static final java.util.List<long[]> MOMENTS = new java.util.ArrayList<>();          // {start ms, 1 = shower, seed}
     private static final int ONE_MS = 1500, SHOWER_MS = 3400;
 
     static void render(GuiGraphicsExtractor g) {
@@ -28,7 +33,8 @@ final class CosmosHud {
         long now = System.currentTimeMillis(); float dt = Math.min(0.1f, (now - (lastFrame == 0 ? now : lastFrame)) / 1000f); lastFrame = now;
         away += ((AnimationManager.isPlaying() ? 1f : 0f) - away) * Math.min(1f, dt * 6f);
         int W = g.guiWidth(), H = g.guiHeight();
-        if (now - meteorAt < (showerNow ? SHOWER_MS : ONE_MS)) { if (showerNow) shower(g, W, H, (now - meteorAt) / 1000f); else oneMeteor(g, W, H, (now - meteorAt) / (float) ONE_MS); }
+        synchronized (MOMENTS) { for (int i = 0; i < MOMENTS.size(); i++) { long[] m = MOMENTS.get(i); long age = now - m[0]; meteorSeed = (int) m[2];
+            if (m[1] == 1) { if (age < SHOWER_MS) shower(g, W, H, age / 1000f); } else if (age < ONE_MS) oneMeteor(g, W, H, age / (float) ONE_MS); } }
         if (SkyBox.on() || !(c.cosShooting || c.cosNight || c.cosAurora)) return;                 // the sky box draws the sky in the world; what follows is only its stand-in
         long ticks = mc.level.getOverworldClockTime(); float day = (ticks % 24000L) / 24000f;
         boolean dark = mc.level.isDarkOutside(); float night = nightness(day);

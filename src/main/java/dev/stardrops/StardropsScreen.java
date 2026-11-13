@@ -252,7 +252,7 @@ public class StardropsScreen extends Screen {
         }
     }
 
-    private static final int NORMAL = 0, SECTION = 1, BANNER = 2, NOTE = 3, PREVIEW = 4, TEXT = 5, PANEL = 6, HERO = 7, TIP = 8, CHATPREV = 9, PICKER = 11, COSPREV = 12, CAT = 13, SHOWBAR = 14, UPDATE = 16;
+    private static final int NORMAL = 0, SECTION = 1, BANNER = 2, NOTE = 3, PREVIEW = 4, TEXT = 5, PANEL = 6, HERO = 7, TIP = 8, CHATPREV = 9, PICKER = 11, COSPREV = 12, CAT = 13, SHOWBAR = 14, UPDATE = 16, VDOORS = 17, VQUICK = 18, VPREV = 19;
     private class Row {
         String fkey;                                                      // set on folding rows: lets the Show > All tile open or close them all
 
@@ -270,6 +270,7 @@ public class StardropsScreen extends Screen {
         List<Ctl> ctls = new ArrayList<>();
         Runnable backGo; String backLabel;      // a back button: it moves up into the page header instead of taking a row
         Runnable click;                // clicking the row body
+        int vRoom; String[] vBtn, qLabels, qIcons; Runnable[] vAct; BooleanSupplier[] qGet; Consumer<Boolean>[] qSet; Tog[] qTog;      // Visuals: the doors, quick switches and live preview rows
         boolean arrow, open;
         EditBox field; String fieldBtn; int btnX0, btnX1; boolean phBtns;
         int dropRank;                  // a Drop Library row: the drop's rank (2 and up plays RNG unless you pick Normal)
@@ -2275,7 +2276,7 @@ public class StardropsScreen extends Screen {
             case DROPS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // WIP tag = its animation is being remade; the page still opens
             case ANIMATIONS, SOUNDS -> { for (Categories.Cat c : Categories.ALL) l.add(new SubPage(c.name(), c.icon(), c.color(), locked(c))); }   // being remade: only Mob Drops is open
             case CHAT -> { l.add(new SubPage("Message & Channel", ":format:", 0xFFFFC857, false)); l.add(new SubPage("Chat Enabled", ":bell:", 0xFF7BE05A, false)); }
-            case VISUALS -> { l.add(new SubPage("Music", ":note:", 0xFF1ED760, false)); l.add(new SubPage("Cosmos", ":cosmos:", 0xFF9B7BFF, false)); l.add(new SubPage("Instruments", ":instruments:", 0xFFFFD27A, false)); }
+            case VISUALS -> { l.add(new SubPage("Music", ":note:", 0xFF1ED760, false)); l.add(new SubPage("Cosmos", ":cosmos:", 0xFF9B7BFF, false)); l.add(new SubPage("HUDs", ":instruments:", 0xFFFFD27A, false)); }
             case GENERAL -> {
                 l.add(new SubPage("Menu", ":menu:", 0xFFB0B6C2, false)); l.add(new SubPage("Cosmetics", ":cosmetics:", 0xFFC77DFF, false));
                 l.add(new SubPage("Prices", ":coin:", 0xFFFFC857, false)); l.add(new SubPage("Drop Data", ":refresh:", 0xFF56D8FF, false));
@@ -2486,6 +2487,7 @@ public class StardropsScreen extends Screen {
                 for (int pass = 0; pass < 26 && totalH > viewH; pass++) {
                     boolean ch = false;
                     for (Row r : rows) if (r.pLabels != null && r.pTh > (r.pVert ? 44 : r.pSubs != null ? 31 : 27)) { r.pTh -= 1; fit(r); ch = true; }
+                    for (Row r : rows) if (r.kind == VDOORS && r.h > 86) { r.h -= 2; ch = true; }
                     if (!ch) break;
                     relayout();
                 }
@@ -2806,24 +2808,135 @@ public class StardropsScreen extends Screen {
     // ---- Chat
 
     // ---- Visuals: Now Playing, Lyrics, Spotify
+    // ---- Visuals: a landing page with three doors (Music, Cosmos, HUDs); inside a room, a live preview and one slim line per feature.
+    // Only the line you click opens to show its options (vOpen: which one, per room), so a page never shows more than one feature's settings.
+    private static final String[] vOpen = {"", "", ""};
+    private static final String[] V_NAME = {"Music", "Cosmos", "HUDs"}, V_ICON = {":note:", ":cosmos:", ":instruments:"}, V_SUB = {"Now Playing, lyrics, ambience", "The sky and drop moments", "Clock, compass, Y level..."};
+    private static final int[] V_COL = {0xFF1ED760, 0xFF9B7BFF, 0xFFFFD27A};
+    private static float vr(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }
+    private static void vDot(GuiGraphicsExtractor g, float x, float y, int col) { int qx = Math.round(x), qy = Math.round(y); g.fill(qx, qy, qx + 1, qy + 1, col); }
+    private static void vLineTo(GuiGraphicsExtractor g, float x0, float y0, float x1, float y1, int col) { int n = (int) Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (int i = 0; i <= n; i++) { float u = n == 0 ? 0 : i / (float) n; vDot(g, x0 + (x1 - x0) * u, y0 + (y1 - y0) * u, col); } }
+    private static void vDisc(GuiGraphicsExtractor g, int mx0, int my0, int rad, int col) { for (int j = -rad; j <= rad; j++) { int hw = (int) Math.round(Math.sqrt(rad * rad - j * j)); g.fill(mx0 - hw, my0 + j, mx0 + hw + 1, my0 + j + 1, col); } }
+    private void vText(GuiGraphicsExtractor g, String t, int x, int y, float k, int col) { Gfx.push(g); Gfx.translate(g, x, y); Gfx.scale(g, k); Gfx.txt(g, font, t, 0, 0, col, false); Gfx.pop(g); }
+    /** A little night sky: twinkling stars, one constellation, a shooting star every few seconds. */
+    private static void miniSky(GuiGraphicsExtractor g, int x, int y, int w, int h, int seed, long now, float dim) {
+        g.fill(x, y, x + w, y + h, 0xFF05061A); NebulaTex.glow(g, x + w * 0.7f, y + h * 0.4f, w * 0.5f, h * 0.7f, Gfx.argb(Math.round(60 * dim), 0x9B7BFF));
+        int n = Math.min(160, w * h / 55);
+        for (int i = 0; i < n; i++) { float tw = STILL ? 1f : 0.65f + 0.35f * (float) Math.sin(now / 420.0 + i * 1.7); vDot(g, x + 1 + vr(seed + i * 3) * (w - 2), y + 1 + vr(seed + i * 5 + 1) * (h - 2), Gfx.argb(Math.round((70 + 150 * vr(seed + i * 7)) * tw * dim), 0xFFFFFF)); }
+        float[][] cn = {{0.14f, 0.70f}, {0.27f, 0.42f}, {0.42f, 0.55f}, {0.55f, 0.28f}, {0.42f, 0.55f}, {0.50f, 0.80f}};
+        for (int i = 0; i + 1 < cn.length; i++) vLineTo(g, x + cn[i][0] * w, y + cn[i][1] * h, x + cn[i + 1][0] * w, y + cn[i + 1][1] * h, Gfx.argb(Math.round(190 * dim), 0xBFA8FF));
+        for (float[] q : cn) { NebulaTex.glow(g, x + q[0] * w, y + q[1] * h, 4, 4, Gfx.argb(Math.round(170 * dim), 0xD8C8FF)); vDot(g, x + q[0] * w, y + q[1] * h, Gfx.argb(Math.round(255 * dim), 0xFFFFFF)); }
+        float ph0 = STILL ? 0.35f : (now % 4200L) / 4200f;
+        if (ph0 < 0.5f) { float u = ph0 / 0.5f, hx = x + w * (0.95f - 0.45f * u), hy = y + h * (0.08f + 0.5f * u); for (int i = 0; i < 12; i++) vDot(g, hx + i * 1.6f, hy - i * 0.9f, Gfx.argb(Math.round(255 * (1f - i / 12f) * dim), i < 2 ? 0xFFFFFF : 0xFFC870)); }
+    }
+    /** A little Now Playing card: the cover, the song's name when one plays, a moving equalizer. */
+    private void miniMusic(GuiGraphicsExtractor g, int x, int y, int w, int h, long now) {
+        g.fill(x, y, x + w, y + h, 0xFF05061A);
+        int kw = Math.min(w - 12, 150), kh = 26, kx = x + (w - kw) / 2, ky = y + (h - kh) / 2; pill(g, kx, ky, kw, kh, Ui.ROW);
+        for (int j = 0; j < 18; j++) g.fill(kx + 4, ky + 4 + j, kx + 22, ky + 5 + j, Canvas.mix(0xFFFF7AD9, 0xFF9B7BFF, j / 18f)); vDisc(g, kx + 13, ky + 13, 4, 0xFFFFF0C8);
+        Spotify.Track tr = Spotify.track;
+        if (tr != null && kw > 90) vText(g, Gfx.fit(font, tr.name(), Math.round((kw - 46) / 0.75f)), kx + 27, ky + 5, 0.75f, Ui.TEXT); else g.fill(kx + 27, ky + 6, kx + kw - 16, ky + 8, Ui.TEXT);
+        g.fill(kx + 27, ky + 13, kx + kw - 30, ky + 14, Ui.DIM);
+        float pr = tr == null ? 0.4f : Math.max(0f, Math.min(1f, Spotify.position() / (float) Math.max(1, tr.durationMs())));
+        g.fill(kx + 27, ky + 19, kx + kw - 5, ky + 20, 0x66B9B6E6); g.fill(kx + 27, ky + 19, kx + 27 + Math.round((kw - 32) * pr), ky + 20, 0xFFFF7AD9);
+        for (int i = 0; i < 5; i++) { int bh = 2 + Math.round((STILL || !Spotify.playing ? vr(i * 13 + 4) : 0.5f + 0.5f * (float) Math.sin(now / 130.0 + i * 1.9)) * 6); g.fill(kx + kw - 13 + i * 2, ky + 12 - bh, kx + kw - 12 + i * 2, ky + 12, 0xFFFF7AD9); }
+    }
+    /** A little HUD: a compass that follows where you really face, and your real Y level. */
+    private void miniHuds(GuiGraphicsExtractor g, int x, int y, int w, int h, long now) {
+        miniSky(g, x, y, w, h, 77, now, 0.5f);
+        int mx0 = x + w / 3, my0 = y + h / 2, rad = Math.max(8, Math.min(15, h / 2 - 6)); vDisc(g, mx0, my0, rad, Ui.ROW);
+        for (int i = 0; i < 36; i++) { double t = Math.PI * 2 * i / 36; vDot(g, mx0 + (float) Math.cos(t) * rad, my0 + (float) Math.sin(t) * rad, 0xFF9B7BFF); }
+        for (int i = 0; i < 12; i++) { double t = Math.PI * 2 * i / 12; vDot(g, mx0 + (float) Math.cos(t) * (rad - 3), my0 + (float) Math.sin(t) * (rad - 3), i % 3 == 0 ? 0xFFFFC870 : 0xCCB9B6E6); }
+        var pl = net.minecraft.client.Minecraft.getInstance().player;
+        double yaw = pl == null ? now / 2600.0 : Math.toRadians(pl.getYRot()); float nx = (float) -Math.sin(yaw), ny = (float) Math.cos(yaw);      // north is up; the red needle is where you face
+        vLineTo(g, mx0, my0, mx0 + nx * (rad - 5), my0 + ny * (rad - 5), 0xFFFF6B6B); vLineTo(g, mx0, my0, mx0 - nx * (rad - 8), my0 - ny * (rad - 8), 0xCCFFFFFF);
+        int bx = x + w - 36, by = y + 6, bh = h - 12; if (bx > mx0 + rad + 2) { pill(g, bx, by, 28, bh, Ui.ROW); for (int i = 0; i * 6 + 6 < bh; i++) g.fill(bx + 3, by + 4 + i * 6, bx + (i % 2 == 0 ? 8 : 6), by + 5 + i * 6, 0xCCB9B6E6);
+            g.fill(bx + 2, by + bh / 2, bx + 26, by + bh / 2 + 1, 0xFFFF7AD9); vText(g, "Y " + (pl == null ? 71 : (int) Math.floor(pl.getY())), bx + 10, by + bh / 2 - 7, 0.6f, Ui.TEXT); }
+    }
+    private void mini(GuiGraphicsExtractor g, int room, int x, int y, int w, int h, long now) { g.enableScissor(x, Math.max(y, lt), x + w, Math.min(y + h, lb)); if (room == 0) miniMusic(g, x, y, w, h, now); else if (room == 1) miniSky(g, x, y, w, h, 5, now, 1f); else miniHuds(g, x, y, w, h, now); g.disableScissor(); }
+    private int[] vCount(int room) { StardropsConfig c = StardropsConfig.get();
+        if (room == 0) return new int[]{(c.npOn ? 1 : 0) + (c.lyricsOn ? 1 : 0) + (c.ambGlow || c.ambBars || c.ambNotes || c.ambWave ? 1 : 0) + (Spotify.linked() || LocalMusic.count() > 0 ? 1 : 0), 4};
+        if (room == 1) return new int[]{(c.cosNight ? 1 : 0) + (c.cosShooting ? 1 : 0) + (c.cosAurora ? 1 : 0) + (c.cosMeteor ? 1 : 0), 4};
+        return new int[]{c.instHide ? 0 : InstrumentsHud.count(), InstrumentsHud.N}; }
+    private int[] doorBox(Row r, int i) { int w = (r.w - 8) / 3; return new int[]{r.x + i * (w + 4), r.y, w, r.h}; }
+    private void drawDoors(GuiGraphicsExtractor g, Row r, int mx, int my) {
+        long now = System.currentTimeMillis();
+        for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); int x = b[0], y = b[1], w = b[2], h = b[3]; boolean hv = mx >= x && mx < x + w && my >= Math.max(y, lt) && my < Math.min(y + h, lb) && popup == null;
+            float k = anim("vdoor" + i, hv ? 1f : 0f, 40f); int col = V_COL[i];
+            holoTile(g, x, y, w, h, col, k, false, hv, i * 31 + 7, now);
+            int ph2 = h - 50; pill(g, x + 3, y + 3, w - 6, ph2, 0xFF05061A); mini(g, i, x + 4, y + 4, w - 8, ph2 - 2, now); rout(g, x + 3, y + 3, w - 6, ph2, Gfx.argb(Math.round(70 + 150 * k), col & 0xFFFFFF));
+            Icons.draw(g, V_ICON[i], x + 5, y + ph2 + 6, now); Gfx.text(g, font, V_NAME[i], x + 24, y + ph2 + 10, Canvas.mix(Ui.TEXT, 0xFFFFFFFF, k));
+            vText(g, Gfx.fit(font, V_SUB[i], Math.round((w - 12) / 0.75f)), x + 6, y + ph2 + 25, 0.75f, Ui.DIM);
+            int[] n = vCount(i); int dw = Math.min(5, Math.max(3, (w - 70) / Math.max(1, n[1])));
+            for (int q = 0; q < n[1]; q++) g.fill(x + 6 + q * dw, y + h - 11, x + 6 + q * dw + dw - 2, y + h - 8, q < n[0] ? 0xFF62E6A8 : 0xFF2A2C5E);
+            vText(g, n[0] == 0 ? "Off" : n[0] + " of " + n[1] + " on", x + 9 + n[1] * dw, y + h - 12, 0.75f, Ui.SUB);
+            chevron(g, x + w - 9 + Math.round(k * 2), y + h - 10, 0, Canvas.mix(Ui.DIM, 0xFFFFC870, k));
+            if (k > 0.02f) g.fill(x + 3, y + h - 3, x + 3 + Math.round((w - 6) * k), y + h - 2, 0xFFFFC870); }
+    }
+    private int[] quickBox(Row r, int i) { int w = (r.w - 4) / 2; return new int[]{r.x + (i % 2) * (w + 4), r.y + (i / 2) * 22, w, 20}; }
+    private void drawQuick(GuiGraphicsExtractor g, Row r, int mx, int my) {
+        long now = System.currentTimeMillis();
+        for (int i = 0; i < r.qLabels.length; i++) { int[] b = quickBox(r, i); boolean on = r.qGet[i].getAsBoolean(), hv = mx >= b[0] && mx < b[0] + b[2] && my >= Math.max(b[1], lt) && my < Math.min(b[1] + b[3], lb) && popup == null;
+            float k = anim("vq" + i, hv ? 1f : 0f, 48f);
+            pill(g, b[0], b[1], b[2], b[3], Canvas.mix(Ui.ROW, Ui.ROW_HOVER, k)); g.fill(b[0] + 1, b[1] + 3, b[0] + 3, b[1] + b[3] - 3, on ? Ui.ACCENT : 0xFF1E2050);
+            Icons.draw(g, r.qIcons[i], b[0] + 6, b[1] + 2, now); Gfx.text(g, font, Gfx.fit(font, r.qLabels[i], b[2] - 74), b[0] + 26, b[1] + 6, on ? Ui.TEXT : Ui.SUB);
+            Tog t = r.qTog[i]; t.x1 = b[0] + b[2] - 5; t.x0 = t.x1 - t.width(); t.key = "vq" + i; t.draw(g, b[1], b[3], hv); }
+    }
+    private int[] prevBtn(Row r, int i) { int x = r.x + r.w - 5; for (int q = r.vBtn.length - 1; q >= i; q--) { int w = Gfx.w(font, r.vBtn[q]) + 12; x -= w; if (q == i) return new int[]{x, r.y + r.h - 19, w, 14}; x -= 4; } return new int[4]; }
+    private void drawPrev(GuiGraphicsExtractor g, Row r, int mx, int my) {
+        long now = System.currentTimeMillis();
+        pill(g, r.x, r.y, r.w, r.h, 0xFF05061A); mini(g, r.vRoom, r.x + 1, r.y + 1, r.w - 2, r.h - 2, now); rout(g, r.x, r.y, r.w, r.h, Gfx.argb(110, V_COL[r.vRoom] & 0xFFFFFF));
+        vText(g, "LIVE PREVIEW", r.x + 6, r.y + 5, 0.6f, 0xE6FFC870);
+        for (int i = 0; i < r.vBtn.length; i++) { int[] b = prevBtn(r, i); boolean hv = mx >= b[0] && mx < b[0] + b[2] && my >= b[1] && my < b[1] + b[3] && my >= lt && my < lb; float k = anim("vpb" + r.vRoom + i, hv ? 1f : 0f, 48f);
+            pill(g, b[0], b[1], b[2], b[3], Canvas.mix(0xFF181A44, V_COL[r.vRoom], 0.2f + 0.3f * k)); rout(g, b[0], b[1], b[2], b[3], Gfx.argb(Math.round(110 + 120 * k), V_COL[r.vRoom] & 0xFFFFFF)); Gfx.textCentered(g, font, r.vBtn[i], b[0] + b[2] / 2, b[1] + 3, Ui.TEXT); }
+    }
+    private boolean clickVisual(Row r, double mx, double my) {
+        if (r.kind == VDOORS) { for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); if (mx >= b[0] && mx < b[0] + b[2]) { openPage(i, null, null); return true; } } return true; }
+        if (r.kind == VQUICK) { for (int i = 0; i < r.qLabels.length; i++) { int[] b = quickBox(r, i); if (mx >= b[0] && mx < b[0] + b[2] && my >= b[1] && my < b[1] + b[3]) { r.qSet[i].accept(!r.qGet[i].getAsBoolean()); return true; } } return true; }
+        for (int i = 0; i < r.vBtn.length; i++) { int[] b = prevBtn(r, i); if (mx >= b[0] && mx < b[0] + b[2] && my >= b[1] && my < b[1] + b[3]) { r.vAct[i].run(); return true; } }
+        return true;
+    }
+    private Row vPrev(int room, String[] btn, Runnable[] act) { Row r = new Row(); r.kind = VPREV; r.h = 50; r.vRoom = room; r.vBtn = btn; r.vAct = act; r.noSearch = true; return r; }
+    /** One slim line of a room: the feature's name, its switch, and (when it has options) an arrow that opens them under it. */
+    private Row vLine(int room, String key, String icon, String title, String sub, BooleanSupplier get, Consumer<Boolean> set, boolean opts) {
+        Row r = row(0, icon, title, "", V_COL[room]); r.h = 22;
+        if (get != null) r.ctls.add(sw(get, set));
+        if (opts) { r.arrow = true; r.open = searching || key.equals(vOpen[room]); final boolean was = r.open; r.click = () -> vOpen[room] = was ? "" : key; r.fkey = "v_" + key; }
+        else if (get != null) r.click = () -> set.accept(!get.getAsBoolean());
+        if (r.open || searching || !opts) { r.sub = sub; if (!sub.isEmpty()) r.h = 28; }
+        return r;
+    }
+    /** The open feature's options: set a step in, without section headings. */
+    private void vBody(Row head, Runnable fill) { if (!head.open) return; int n = rows.size(); fill.run(); for (int i = rows.size() - 1; i >= n; i--) { Row q = rows.get(i); if (q.kind == SECTION) rows.remove(i); else if (q.kind == NORMAL && q.pickLabels == null) q.indent = 1; } }
+    private void arrange() { minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.ALL)); }
+
+    private void visualsHub(StardropsConfig c) {
+        Row d = new Row(); d.kind = VDOORS; d.h = 112; d.noSearch = true; rows.add(d);
+        rows.add(section("Quick switches"));
+        Row q = new Row(); q.kind = VQUICK; q.noSearch = true; q.h = 64;
+        q.qLabels = new String[]{"Now Playing", "Night sky", "Lyrics", "Drop moments", "Shooting stars", "All HUDs"}; q.qIcons = new String[]{":disc:", ":cos_night:", ":note:", ":cos_meteor:", ":cos_shoot:", ":instruments:"};
+        q.qGet = new BooleanSupplier[]{() -> c.npOn, () -> c.cosNight, () -> c.lyricsOn, () -> c.cosMeteor, () -> c.cosShooting, () -> !c.instHide};
+        q.qSet = new java.util.ArrayList<Consumer<Boolean>>(List.of(v -> c.npOn = v, v -> c.cosNight = v, v -> c.lyricsOn = v, v -> c.cosMeteor = v, v -> c.cosShooting = v, v -> c.instHide = !v)).toArray(new Consumer[0]);
+        q.qTog = new Tog[6]; for (int i = 0; i < 6; i++) q.qTog[i] = sw(q.qGet[i], q.qSet[i]);
+        rows.add(q);
+        Row mv = row(0, ":move:", "Arrange my screen", "Move and size every HUD piece in one place", 0xFFFFD27A); mv.ctls.add(new Btn("Arrange", 0xFFE8A93A, this::arrange)); mv.click = this::arrange; rows.add(mv);
+    }
     /** Visuals > Cosmos: the sky around you while you play. */
     private void cosmosPage(StardropsConfig c) {
-        rows.add(note("The sky around you while you play. The night sky is a real sky in your world; the moments burn across your screen.", 0xFF9B7BFF));
-        rows.add(section("Night sky"));
-        rows.add(toggle(":cos_night:", "Night sky", "At night your world's sky fills with stars, the Milky Way and planets, behind the hills and trees", () -> c.cosNight, v -> c.cosNight = v));
-        if (c.cosNight) {
-            rows.add(toggle(":cos_night:", "Only night", "The night sky is always there, day or night, and turns by the real clock (steady even if another mod changes the time)", () -> c.cosOnlyNight, v -> c.cosOnlyNight = v));
-            rows.add(toggle(":collection:", "Your constellations", "The stars you have lit in Achievements shine in the real sky, joined up", () -> c.cosCons, v -> c.cosCons = v));
+        if (!searching) rows.add(vPrev(1, c.cosMeteor ? new String[]{"Try a meteor", "Try a shower"} : new String[0], new Runnable[]{() -> { onClose(); CosmosHud.meteor(false); }, () -> { onClose(); CosmosHud.meteor(true); }}));
+        Row ns = vLine(1, "night", ":cos_night:", "Night sky", "A real sky in your world: stars, the Milky Way and planets, behind the hills and trees", () -> c.cosNight, v -> c.cosNight = v, true); rows.add(ns);
+        vBody(ns, () -> {
+            if (!c.cosNight) { rows.add(note("Switch it on to set it up.", 0xFF8A93B0)); return; }
             Row br = row(0, ":size:", "Brightness", "How bright the night sky is", Ui.ACCENT);
             br.ctls.add(new Slider(30, 150, 10, () -> c.cosSkyBright, v -> c.cosSkyBright = (int) v, () -> c.cosSkyBright + "%").typed(1)); rows.add(br);
-        }
-        rows.add(toggle(":cos_shoot:", "Shooting stars", "Now and then a shooting star crosses the night sky", () -> c.cosShooting, v -> c.cosShooting = v));
-        rows.add(toggle(":cos_aurora:", "Aurora", "At night, curtains of green and violet light sway low in the north", () -> c.cosAurora, v -> c.cosAurora = v));
+            rows.add(toggle(":cos_night:", "Only night", "Always there, day or night; it turns by the real clock, steady even if another mod changes the time", () -> c.cosOnlyNight, v -> c.cosOnlyNight = v));
+            rows.add(toggle(":collection:", "Your constellations", "The stars you have lit in Achievements shine in the real sky, joined up", () -> c.cosCons, v -> c.cosCons = v));
+            // VISUALS_SKY_EXTRA
+        });
+        rows.add(vLine(1, "shoot", ":cos_shoot:", "Shooting stars", "Now and then a shooting star crosses the night sky", () -> c.cosShooting, v -> c.cosShooting = v, false));
+        rows.add(vLine(1, "aurora", ":cos_aurora:", "Aurora", "At night, curtains of green and violet light sway low in the north", () -> c.cosAurora, v -> c.cosAurora = v, false));
+        rows.add(vLine(1, "meteor", ":cos_meteor:", "Drop moments", "A meteor burns across your screen when a drop lands; an RNG drop brings a whole shower", () -> c.cosMeteor, v -> c.cosMeteor = v, false));
         if (!SkyBox.on()) rows.add(note("The sky box could not start on this game version, so the stars are drawn over the top of your screen instead.", 0xFFFFC857));
-        rows.add(section("Moments"));
-        rows.add(toggle(":cos_meteor:", "Drop moments", "The moment a drop lands, one meteor burns across your screen. An RNG drop brings a whole meteor shower", () -> c.cosMeteor, v -> c.cosMeteor = v));
-        if (c.cosMeteor) { Row tr = row(0, ":play:", "Try them", "See what each one looks like", 0xFFFFD27A);
-            tr.ctls.add(new Btn("Meteor", 0xFF9B7BFF, () -> { onClose(); CosmosHud.meteor(false); })); tr.ctls.add(new Btn("Shower", 0xFFE8A93A, () -> { onClose(); CosmosHud.meteor(true); })); rows.add(tr); }
     }
     /** Visuals > Music > Your files: your own MP4 / M4A music, played by the mod. */
     private void localPage(StardropsConfig c) {
@@ -2849,100 +2962,84 @@ public class StardropsScreen extends Screen {
             Row r = row(0, i == cur ? ":note:" : ":music_file:", sg.title(), (sg.artist().isEmpty() ? "" : sg.artist() + "  \u00B7  ") + (d > 0 ? d / 60 + ":" + String.format("%02d", d % 60) : sg.file().getFileName().toString()), i == cur ? 0xFF8AF0C0 : Ui.ACCENT);
             r.ctls.add(new Btn(i == cur ? "Playing" : "Play", i == cur ? 0xFF2E9A6A : Ui.ROW_HOVER, () -> { LocalMusic.play(k); })); rows.add(r); }
     }
-    /** Visuals > Instruments: little flight instruments for the HUD. */
+    /** Visuals > HUDs: little pieces for your screen. */
     private void instrumentsPage(StardropsConfig c) {
-        rows.add(note("Small flight instruments for your HUD. Switch on the ones you like, then drag them where you want and scroll to size them.", 0xFFFFD27A));
-        if (InstrumentsHud.any()) { Row mv = row(0, ":move:", "Place them", "Drag each one anywhere on the screen, scroll over it to resize", 0xFFFFD27A);
-            mv.ctls.add(new Btn("Move instruments", 0xFFE8A93A, () -> minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.INSTRUMENTS)))); rows.add(mv); }
-        rows.add(section("Instruments"));
-        for (int i = 0; i < InstrumentsHud.N; i++) { final int k = i; rows.add(toggle(InstrumentsHud.ICONS[i], InstrumentsHud.NAMES[i], InstrumentsHud.SUBS[i], () -> c.instOn[k], v -> c.instOn[k] = v)); }
+        if (!searching) rows.add(vPrev(2, new String[]{"Arrange my screen"}, new Runnable[]{this::arrange}));
+        if (c.instHide) { Row hd = row(0, ":instruments:", "All HUDs are hidden", "Your choices are kept", 0xFFFFC857); hd.ctls.add(new Btn("Show them", 0xFFE8A93A, () -> c.instHide = false)); hd.noSearch = true; rows.add(hd); }
+        for (int i = 0; i < InstrumentsHud.N; i++) { final int k = i;
+            Row ln = vLine(2, "inst" + i, InstrumentsHud.ICONS[i], InstrumentsHud.NAMES[i], InstrumentsHud.SUBS[i], () -> c.instOn[k], v -> c.instOn[k] = v, true); rows.add(ln);
+            vBody(ln, () -> { Row sz = row(0, ":size:", "Size", "How big it is on your screen", Ui.ACCENT); sz.ctls.add(new Slider(60, 200, 5, () -> c.instSize[k], v -> c.instSize[k] = (int) v, () -> c.instSize[k] + "%").typed(1)); rows.add(sz);
+                // VISUALS_HUD_EXTRA
+            });
+        }
         rows.add(note("They fade out while a drop animation plays. /sd edit moves every HUD at once.", 0xFF8A93B0));
     }
-    private void visualsPage(StardropsConfig c) {
+    private void npOpts(StardropsConfig c) {
+        if (!c.npOn) { rows.add(note("Switch it on to set it up.", 0xFF8A93B0)); return; }
+        rows.add(section("Place"));
+        Row mv = row(0, ":move:", "Position", "Drag it anywhere on the screen, scroll to resize", 0xFF1ED760);
+        mv.ctls.add(new Btn("Move HUD", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this)))); rows.add(mv);
+        Row nps = row(0, ":size:", "Size", "How big it is", Ui.ACCENT);
+        nps.ctls.add(new Slider(60, 160, 5, () -> c.npScale, v -> c.npScale = (int) v, () -> c.npScale + "%").typed(1)); rows.add(nps);
+        Row npo = row(0, ":glass:", "Background", "How see-through the card is: 20% lets the game show through, 70% is nearly solid", Ui.ACCENT);
+        npo.ctls.add(new Slider(20, 70, 5, () -> c.npBg, v -> c.npBg = (int) v, () -> c.npBg + "%").typed(1)); rows.add(npo);
+        rows.add(section("Behaviour"));
+        rows.add(picker("When paused", "", new String[]{"Stays", "Hides after 8 s", "Hides at once"}, new String[]{"", "", ""},
+            new String[]{":play:", ":clock:", ":switch:"}, new int[]{0xFF1ED760, 0xFFFFC857, 0xFF8A93B0}, null, 3, () -> c.npHidePaused, i -> c.npHidePaused = i));
+        rows.add(note("It waits below boss bars and steps aside during drop animations.", 0xFF8A93B0));
+        return;
+    }
+    private void lyricsOpts(StardropsConfig c) {
         String[] wheres = {"Starlight", "Constellation", "Drift", "Sung line"};
-        int ambOn = (c.ambGlow ? 1 : 0) + (c.ambBars ? 1 : 0) + (c.ambNotes ? 1 : 0) + (c.ambWave ? 1 : 0);
-        if (searching || landing()) {
-            rows.add(hero(":visuals:", "Visuals", "How Stardrops looks while you play: your music on screen, and the sky around you.", 0xFF9B7BFF));
-            int cosOn = (c.cosShooting ? 1 : 0) + (c.cosNight ? 1 : 0) + (c.cosMeteor ? 1 : 0) + (c.cosAurora ? 1 : 0), insOn = InstrumentsHud.count();
-            rows.add(picker("", "", new String[]{"Music", "Cosmos", "Instruments"}, new String[]{Spotify.linked() || LocalMusic.count() > 0 ? (c.npOn ? "Now Playing on" : "Ready") : "Spotify or your own files", cosOn == 0 ? "Off" : cosOn + " of 4 on", insOn == 0 ? "Off" : insOn + " of " + InstrumentsHud.N + " on"},
-                new String[]{":note:", ":cosmos:", ":instruments:"}, new int[]{0xFF1ED760, 0xFF9B7BFF, 0xFFFFD27A}, null, 3, () -> -1, i -> openPage(i, null, null)));
-            if (!Spotify.linked()) rows.add(note("Music starts with Spotify: link it once and everything there comes alive.", 0xFF1ED760));
-            return;
-        }
-        if (curSub() == 1) { cosmosPage(c); return; }
-        if (curSub() == 2) { instrumentsPage(c); return; }
-        // Music: Now Playing, Lyrics, Ambience and Spotify, picked here
-        String[] lb = {"Now Playing", "Lyrics", "Ambience", "Spotify", "Your files"};
-        String[] sb = {c.npOn ? "On \u00B7 " + c.npScale + "%" : "Off", c.lyricsOn ? wheres[c.lyricsStyle] : "Off", ambOn == 0 ? "Off" : ambOn + " of 4 on", Spotify.linked() ? "Linked" : "Not linked yet", LocalMusic.playingIndex() >= 0 ? "Playing" : LocalMusic.count() == 0 ? "MP4 and M4A" : LocalMusic.count() + (LocalMusic.count() == 1 ? " song" : " songs")};
-        rows.add(picker("", "", lb, sb, new String[]{":disc:", ":note:", ":amb:", ":spot:", ":music_file:"}, new int[]{0xFF1ED760, 0xFFFFC8A0, 0xFFB48CFF, 0xFF1DB954, 0xFF8AF0C0}, null, 5, () -> musicSel, i -> { musicSel = i; scroll = 0; }));
-        int ms = musicSel;
-        if (ms == 4) { localPage(c); return; }
-        if (ms == 0) {
-            rows.add(toggle(":disc:", "Now Playing", "The song you're playing, on your screen", () -> c.npOn, v -> c.npOn = v));
-            if (!c.npOn) return;
+        if (!c.lyricsOn) { rows.add(note(Lyrics.status.isEmpty() ? "Switch it on to set it up." : Lyrics.status, 0xFF8A93B0)); return; }
+        rows.add(section("Style"));
+        rows.add(picker("", "", wheres, new String[]{"Each word is born from a star", "Stars over the words, joined like a star chart", "Lines drift up through the dark", "One line, docked to Now Playing"},
+            new String[]{":sty_pop:", ":sty_kara:", ":sty_scroll:", ":sty_sung:"}, new int[]{0xFFEEF2FF, 0xFFB4A0FF, 0xFF8AB4FF, 0xFF4FC3FF}, null, 4, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
+        if (c.lyricsStyle == LyricsHud.SUNG) {
             rows.add(section("Place"));
-            Row mv = row(0, ":move:", "Position", "Drag it anywhere on the screen, scroll to resize", 0xFF1ED760);
-            mv.ctls.add(new Btn("Move HUD", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this)))); rows.add(mv);
-            Row nps = row(0, ":size:", "Size", "How big it is", Ui.ACCENT);
-            nps.ctls.add(new Slider(60, 160, 5, () -> c.npScale, v -> c.npScale = (int) v, () -> c.npScale + "%").typed(1)); rows.add(nps);
-            Row npo = row(0, ":glass:", "Background", "How see-through the card is: 20% lets the game show through, 70% is nearly solid", Ui.ACCENT);
-            npo.ctls.add(new Slider(20, 70, 5, () -> c.npBg, v -> c.npBg = (int) v, () -> c.npBg + "%").typed(1)); rows.add(npo);
-            rows.add(section("Behaviour"));
-            rows.add(picker("When paused", "", new String[]{"Stays", "Hides after 8 s", "Hides at once"}, new String[]{"", "", ""},
-                new String[]{":play:", ":clock:", ":switch:"}, new int[]{0xFF1ED760, 0xFFFFC857, 0xFF8A93B0}, null, 3, () -> c.npHidePaused, i -> c.npHidePaused = i));
-            rows.add(note("It waits below boss bars and steps aside during drop animations.", 0xFF8A93B0));
-            return;
+            Row nl = row(0, ":lyr_dock:", "Docked", "Above or below the Now Playing card", 0xFF4FC3FF);
+            nl.ctls.add(new Dock(() -> c.npLine, i -> c.npLine = i)); rows.add(nl);
+            if (!c.npOn) rows.add(note("Turn on Now Playing to see it: the line rides on its card.", 0xFFFFC857));
+        } else {
+            rows.add(section("Place"));
+            Row lm = row(0, ":move:", "Position", "Drag them anywhere, scroll to resize", 0xFFFFC8A0);
+            lm.ctls.add(new Btn("Move them", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.LINE)))); rows.add(lm);
+            Row ls = row(0, ":size:", "Size", "How big the words are", Ui.ACCENT);
+            ls.ctls.add(new Slider(60, 160, 5, () -> c.lyricsSize, v -> c.lyricsSize = (int) v, () -> c.lyricsSize + "%").typed(1)); rows.add(ls);
+            if (c.lyricsStyle != LyricsHud.SCROLL) rows.add(toggle(":format:", "Next line", "The coming line, faintly below", () -> c.lyricsNext, v -> c.lyricsNext = v));          // (Scroll always shows what comes next)
+            rows.add(toggle(":lyr_prev:", "Previous line", "Keep the line just sung in view", () -> c.lyricsPrev, v -> c.lyricsPrev = v));
         }
-        if (ms == 1) {
-            rows.add(toggle(":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v));
-            if (!c.lyricsOn) { if (!Lyrics.status.isEmpty()) rows.add(note(Lyrics.status, 0xFF8A93B0)); return; }
-            rows.add(section("Style"));
-            rows.add(picker("", "", wheres, new String[]{"Each word is born from a star", "Stars over the words, joined like a star chart", "Lines drift up through the dark", "One line, docked to Now Playing"},
-                new String[]{":sty_pop:", ":sty_kara:", ":sty_scroll:", ":sty_sung:"}, new int[]{0xFFEEF2FF, 0xFFB4A0FF, 0xFF8AB4FF, 0xFF4FC3FF}, null, 4, () -> c.lyricsStyle, i -> c.lyricsStyle = i));
-            if (c.lyricsStyle == LyricsHud.SUNG) {
-                rows.add(section("Place"));
-                Row nl = row(0, ":lyr_dock:", "Docked", "Above or below the Now Playing card", 0xFF4FC3FF);
-                nl.ctls.add(new Dock(() -> c.npLine, i -> c.npLine = i)); rows.add(nl);
-                if (!c.npOn) rows.add(note("Turn on Now Playing to see it: the line rides on its card.", 0xFFFFC857));
-            } else {
-                rows.add(section("Place"));
-                Row lm = row(0, ":move:", "Position", "Drag them anywhere, scroll to resize", 0xFFFFC8A0);
-                lm.ctls.add(new Btn("Move them", 0xFF1DB954, () -> minecraft.setScreenAndShow(new HudEditScreen(this, HudEditScreen.LINE)))); rows.add(lm);
-                Row ls = row(0, ":size:", "Size", "How big the words are", Ui.ACCENT);
-                ls.ctls.add(new Slider(60, 160, 5, () -> c.lyricsSize, v -> c.lyricsSize = (int) v, () -> c.lyricsSize + "%").typed(1)); rows.add(ls);
-                if (c.lyricsStyle != LyricsHud.SCROLL) rows.add(toggle(":format:", "Next line", "The coming line, faintly below", () -> c.lyricsNext, v -> c.lyricsNext = v));          // (Scroll always shows what comes next)
-                rows.add(toggle(":lyr_prev:", "Previous line", "Keep the line just sung in view", () -> c.lyricsPrev, v -> c.lyricsPrev = v));
-            }
-            rows.add(section("Extras"));
-            rows.add(toggle(":lyr_timing:", "Comet countdown", "A comet crosses under the words until the next line", () -> c.lyricsBar, v -> c.lyricsBar = v));
-            if (c.lyricsStyle != LyricsHud.SUNG) {
-                rows.add(toggle(":lyr_burst:", "Stardust", "A shimmer of stardust when a new line arrives", () -> c.lyricsStars, v -> c.lyricsStars = v));
-                rows.add(toggle(":amb_glow:", "Nebula glow", "A soft nebula behind the words, tinted by the album", () -> c.lyricsGlow, v -> c.lyricsGlow = v));
-                rows.add(toggle(":format:", "Backdrop", "A dark shade behind the words, so they read anywhere", () -> c.lyricsShade, v -> c.lyricsShade = v));
-            }
-            rows.add(toggle(":lyr_intro:", "Song intro", "A hyperspace arrival: the title decodes in, then it jumps to lightspeed", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
-            Row off = row(0, ":lyr_timing:", "Timing", "Words early or late? Nudge them", Ui.ACCENT);
-            off.ctls.add(new Slider(-1500, 1500, 50, () -> c.lyricsOffset, v -> c.lyricsOffset = (int) v, () -> (c.lyricsOffset > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", c.lyricsOffset / 1000.0))); rows.add(off);
-            Spotify.Track st = Spotify.track;
-            if (st != null) {                                                                  // a fix just for the song playing now (the Lyrics earlier / later keys change it too)
-                String sid = st.id(); java.util.function.IntSupplier so = () -> c.songOffset == null ? 0 : c.songOffset.getOrDefault(sid, 0);
-                Row ts = row(0, ":lyr_timing:", "This song", "Only for " + st.name() + ". Keys: Lyrics earlier / later", Ui.ACCENT);
-                ts.ctls.add(new Slider(-3000, 3000, 50, () -> so.getAsInt(), v -> { if (c.songOffset == null) c.songOffset = new java.util.LinkedHashMap<>(); if ((int) v == 0) c.songOffset.remove(sid); else c.songOffset.put(sid, (int) v); }, () -> (so.getAsInt() > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", so.getAsInt() / 1000.0))); rows.add(ts);
-            }
-            rows.add(note(Lyrics.status.isEmpty() ? "The words take the album cover's colour and step aside during drop animations." : Lyrics.status, 0xFF8A93B0));
-            return;
+        rows.add(section("Extras"));
+        rows.add(toggle(":lyr_timing:", "Comet countdown", "A comet crosses under the words until the next line", () -> c.lyricsBar, v -> c.lyricsBar = v));
+        if (c.lyricsStyle != LyricsHud.SUNG) {
+            rows.add(toggle(":lyr_burst:", "Stardust", "A shimmer of stardust when a new line arrives", () -> c.lyricsStars, v -> c.lyricsStars = v));
+            rows.add(toggle(":amb_glow:", "Nebula glow", "A soft nebula behind the words, tinted by the album", () -> c.lyricsGlow, v -> c.lyricsGlow = v));
+            rows.add(toggle(":format:", "Backdrop", "A dark shade behind the words, so they read anywhere", () -> c.lyricsShade, v -> c.lyricsShade = v));
         }
-        if (ms == 2) {
-            rows.add(note("The space around you, in the album's colours, only while a song plays. Everything fades away during drop animations.", 0xFFB48CFF));
-            rows.add(section("Screen"));
-            rows.add(toggle(":amb_glow:", "Nebula", "Clouds of nebula drift along the edges of your screen", () -> c.ambGlow, v -> c.ambGlow = v));
-            if (c.ambGlow) { Row gs = row(0, ":amb_strength:", "Nebula strength", "How bright the clouds are", Ui.ACCENT); gs.ctls.add(new Slider(10, 100, 5, () -> c.ambGlowStrength, v -> c.ambGlowStrength = (int) v, () -> c.ambGlowStrength + "%").typed(1)); rows.add(gs); }
-            rows.add(toggle(":amb_viz:", "Star equalizer", "Columns of stars rise and fall to the beat beside your hotbar", () -> c.ambBars, v -> c.ambBars = v));
-            rows.add(toggle(":amb_notes:", "Comets", "Little comets curve up beside your hotbar and burst into sparks", () -> c.ambNotes, v -> c.ambNotes = v));
-            rows.add(section("Moments"));
-            rows.add(toggle(":amb_wave:", "Supernova", "A flash and a ring of light burst across the screen when a new song starts", () -> c.ambWave, v -> c.ambWave = v));
-            return;
+        rows.add(toggle(":lyr_intro:", "Song intro", "A hyperspace arrival: the title decodes in, then it jumps to lightspeed", () -> c.lyricsIntro, v -> c.lyricsIntro = v));
+        Row off = row(0, ":lyr_timing:", "Timing", "Words early or late? Nudge them", Ui.ACCENT);
+        off.ctls.add(new Slider(-1500, 1500, 50, () -> c.lyricsOffset, v -> c.lyricsOffset = (int) v, () -> (c.lyricsOffset > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", c.lyricsOffset / 1000.0))); rows.add(off);
+        Spotify.Track st = Spotify.track;
+        if (st != null) {                                                                  // a fix just for the song playing now (the Lyrics earlier / later keys change it too)
+            String sid = st.id(); java.util.function.IntSupplier so = () -> c.songOffset == null ? 0 : c.songOffset.getOrDefault(sid, 0);
+            Row ts = row(0, ":lyr_timing:", "This song", "Only for " + st.name() + ". Keys: Lyrics earlier / later", Ui.ACCENT);
+            ts.ctls.add(new Slider(-3000, 3000, 50, () -> so.getAsInt(), v -> { if (c.songOffset == null) c.songOffset = new java.util.LinkedHashMap<>(); if ((int) v == 0) c.songOffset.remove(sid); else c.songOffset.put(sid, (int) v); }, () -> (so.getAsInt() > 0 ? "+" : "") + String.format(java.util.Locale.ROOT, "%.2f s", so.getAsInt() / 1000.0))); rows.add(ts);
         }
+        rows.add(note(Lyrics.status.isEmpty() ? "The words take the album cover's colour and step aside during drop animations." : Lyrics.status, 0xFF8A93B0));
+        return;
+    }
+    private void ambOpts(StardropsConfig c) {
+        rows.add(note("The space around you, in the album's colours, only while a song plays. Everything fades away during drop animations.", 0xFFB48CFF));
+        rows.add(section("Screen"));
+        rows.add(toggle(":amb_glow:", "Nebula", "Clouds of nebula drift along the edges of your screen", () -> c.ambGlow, v -> c.ambGlow = v));
+        if (c.ambGlow) { Row gs = row(0, ":amb_strength:", "Nebula strength", "How bright the clouds are", Ui.ACCENT); gs.ctls.add(new Slider(10, 100, 5, () -> c.ambGlowStrength, v -> c.ambGlowStrength = (int) v, () -> c.ambGlowStrength + "%").typed(1)); rows.add(gs); }
+        rows.add(toggle(":amb_viz:", "Star equalizer", "Columns of stars rise and fall to the beat beside your hotbar", () -> c.ambBars, v -> c.ambBars = v));
+        rows.add(toggle(":amb_notes:", "Comets", "Little comets curve up beside your hotbar and burst into sparks", () -> c.ambNotes, v -> c.ambNotes = v));
+        rows.add(section("Moments"));
+        rows.add(toggle(":amb_wave:", "Supernova", "A flash and a ring of light burst across the screen when a new song starts", () -> c.ambWave, v -> c.ambWave = v));
+        return;
+    }
+    private void spotifyOpts(StardropsConfig c) {
         Row lk = row(0, ":sounds:", Spotify.linked() ? "Linked to Spotify" : "Log in with Spotify", Spotify.status.isEmpty() ? (Spotify.linked() ? "Ready" : "Opens your browser once") : Spotify.status, 0xFF1ED760);
         if (Spotify.linked()) lk.ctls.add(new Btn("Unlink", Ui.ROW_HOVER, () -> { Spotify.logout(); toast("Spotify unlinked.", 0xFF8A93B0); }));
         else lk.ctls.add(new Btn("Log in", 0xFF1DB954, () -> Spotify.login(m -> toast(m, 0xFF1ED760))));
@@ -2972,6 +3069,26 @@ public class StardropsScreen extends Screen {
             rows.add(mr);
         }
         rows.add(note("Set them in Options > Controls > Key Binds > Stardrops: Music. They need Spotify Premium; if you linked before these existed, unlink and log in again once.", 0xFF8A93B0));
+    }
+    /** Visuals > Music. */
+    private void musicRoom(StardropsConfig c) {
+        if (!searching) rows.add(vPrev(0, new String[]{"Arrange my screen"}, new Runnable[]{this::arrange}));
+        Row np = vLine(0, "np", ":disc:", "Now Playing", "The song you're playing, on your screen", () -> c.npOn, v -> c.npOn = v, true); rows.add(np); vBody(np, () -> npOpts(c));
+        Row ly = vLine(0, "lyrics", ":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v, true); rows.add(ly); vBody(ly, () -> lyricsOpts(c));
+        Row am = vLine(0, "amb", ":amb:", "Ambience", "The space around you in the album's colours, while a song plays", null, null, true); rows.add(am); vBody(am, () -> ambOpts(c));
+        // VISUALS_MUSIC_EXTRA
+        Row lf = vLine(0, "files", ":music_file:", "Your files", LocalMusic.playingIndex() >= 0 ? "Playing" : LocalMusic.count() == 0 ? "Play your own MP4 and M4A music" : LocalMusic.count() + (LocalMusic.count() == 1 ? " song" : " songs"), null, null, true); rows.add(lf); vBody(lf, () -> localPage(c));
+        Row sp = vLine(0, "spotify", ":spot:", "Spotify", Spotify.linked() ? "Linked" : "Not linked yet", null, null, true); rows.add(sp); vBody(sp, () -> spotifyOpts(c));
+        if (!Spotify.linked() && LocalMusic.count() == 0) rows.add(note("Music starts with Spotify or your own files: open one of the two lines above.", 0xFF1ED760));
+    }
+    private void visualsPage(StardropsConfig c) {
+        if (searching) { musicRoom(c); cosmosPage(c); instrumentsPage(c); return; }
+        if (landing()) {
+            if (query.isBlank()) { visualsHub(c); return; }
+            rows.add(picker("", "", V_NAME, V_SUB, V_ICON, V_COL, null, 3, () -> -1, i -> openPage(i, null, null)));
+            return;
+        }
+        if (curSub() == 1) cosmosPage(c); else if (curSub() == 2) instrumentsPage(c); else musicRoom(c);
     }
 
     private void chatPage(StardropsConfig c) {
@@ -3504,6 +3621,9 @@ public class StardropsScreen extends Screen {
             if (r.kind == PREVIEW) { drawPositionPreview(g, r); continue; }
             if (r.kind == PICKER) { drawPicker(g, r, mx, my); continue; }
             if (r.kind == CAT) { drawCat(g, r); continue; }
+            if (r.kind == VDOORS) { drawDoors(g, r, mx, my); continue; }
+            if (r.kind == VQUICK) { drawQuick(g, r, mx, my); continue; }
+            if (r.kind == VPREV) { drawPrev(g, r, mx, my); continue; }
             if (r.kind == CHATPREV) { drawChatPrev(g, r); continue; }
             if (r.kind == COSPREV) { drawCosPreview(g, r); continue; }
             if (r.kind == PANEL || r.kind == HERO) {                                // a centred banner (HERO: just icon, title, words) or a construction site for a page that is not built yet
@@ -3911,6 +4031,7 @@ public class StardropsScreen extends Screen {
                 }
                 return true;
             }
+            if ((r.kind == VDOORS || r.kind == VQUICK || r.kind == VPREV) && button == 0 && mx >= r.x && mx < r.x + r.w && my >= r.y && my < r.y + r.h) return clickVisual(r, mx, my);
             if ((r.kind != NORMAL && r.kind != TIP) || r.locked || my < r.y || my >= r.y + r.h || mx < r.x || mx >= r.x + r.w) continue;
             for (Ctl c : r.ctls) if (mx >= c.x0 && mx <= c.x1) {
                 if (c.click(mx, button)) { if (c instanceof Slider) dragCtl = c; return true; }

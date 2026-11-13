@@ -146,6 +146,7 @@ public class StardropsConfig {
     static int lyricsShift() { StardropsConfig c = get(); Spotify.Track t = Spotify.track; Integer s = t == null || c.songOffset == null ? null : c.songOffset.get(t.id()); return c.lyricsOffset + (s == null ? 0 : s); }
     public boolean cosShooting = true, cosShootNight = true, cosClock = false /* before Instruments: moved to instOn[0] on load */, cosNight = true, cosAurora = false, cosMeteor = true;   // Visuals > Cosmos
     // Visuals > Instruments (InstrumentsHud): which are on, where each sits (its top-left as a fraction of the screen) and its size in percent
+    public boolean instHide = false;   // "All HUDs" off: every HUD piece hidden, the choices kept
     public boolean[] instOn = new boolean[InstrumentsHud.N]; public float[] instX = new float[InstrumentsHud.N], instY = new float[InstrumentsHud.N]; public int[] instSize = new int[InstrumentsHud.N];
     public int localVolume = 70, localMode = 0;                       // Visuals > Music > Your files: volume in percent; 0 in order, 1 shuffle, 2 repeat one
     public boolean cosCons = true, cosOnlyNight = false; public int cosSkyBright = 100;     // the night sky box: your lit constellations in it, how bright it is (percent)

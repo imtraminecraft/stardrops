@@ -89,6 +89,7 @@ final class SkyBox {
     // ------------------------------------------------------------------ drawing
     interface Q { void v(float x, float y, float z, int argb); }
     private static int argb(float a, int rgb) { return Math.round(Math.max(0f, Math.min(1f, a)) * 255) << 24 | (rgb & 0xFFFFFF); }
+    private static float turnS = -1f; private static long lastTurnAt;
     private static long nextShoot; private static final float[][] shoots = new float[3][]; private static final java.util.Random R = new java.util.Random();
 
     static void submit(LevelRenderContext ctx) {
@@ -100,6 +101,7 @@ final class SkyBox {
             float night = (c.cosOnlyNight ? 1f : CosmosHud.nightness(day) * (1f - mc.level.getRainLevel(1f))) * (c.cosSkyBright / 100f);   // Only night: always there, whatever the world's (or another mod's) clock says
             if (night < 0.02f) return;
             if (sDir == null) make();
+            minS = 0.75f * (float) Math.toRadians(mc.options.fov().get()) / Math.max(240, mc.getWindow().getHeight());   // one and a half pixels across
             final float Rr = Math.max(96f, mc.options.getEffectiveRenderDistance() * 16f * 2f);
             final long now = System.currentTimeMillis(); final float t = (now % 3_600_000L) / 1000f;
             final boolean cons = c.cosCons, shoot = c.cosShooting, aur = c.cosAurora; final float[][][] figs = cons ? Codex.skyFigures() : null;
@@ -108,14 +110,25 @@ final class SkyBox {
                 if (now >= nextShoot) { for (int i = 0; i < shoots.length; i++) if (shoots[i] == null || t - shoots[i][0] > 1.2f) { shoots[i] = new float[]{t, R.nextFloat() * 6.28f, 0.35f + R.nextFloat() * 0.8f, R.nextFloat() * 6.28f, 0.25f + R.nextFloat() * 0.3f}; break; } nextShoot = now + 4000 + R.nextInt(14000); }
             }
             PoseStack ps = ctx.poseStack(); ps.pushPose();
-            float turn = c.cosOnlyNight ? (now % 5_400_000L) / 5_400_000f : day;                    // Only night: it turns by the real clock (once in 90 minutes), so a mod that changes the time cannot make it jump
+            float want = c.cosOnlyNight ? (now % 5_400_000L) / 5_400_000f : day;                    // Only night: it turns by the real clock (once in 90 minutes), so a mod that changes the time cannot make it jump
+            // The game's clock moves in ticks and the server corrects it now and then, so following it directly makes the sky step and
+            // shudder. The sky glides after it instead (a big jump, like /time set or joining a world, is taken at once).
+            float dtS = lastTurnAt == 0 ? 1f : Math.min(1f, (now - lastTurnAt) / 1000f); lastTurnAt = now;
+            float diff = want - turnS; diff -= Math.round(diff);
+            if (turnS < 0f || Math.abs(diff) > 0.02f) turnS = want; else turnS += diff * Math.min(1f, dtS * 2.5f);
+            turnS -= (float) Math.floor(turnS); float turn = turnS;
             ps.mulPose(new Quaternionf().rotateZ(0.35f).rotateX(turn * 6.2831853f));                // the whole sky turns, on a tilted axis
             final float nightF = night;
             ctx.submitNodeCollector().submitCustomGeometry(ps, SKY, (pose, buf) -> { Q q = (x, y, z, col) -> buf.addVertex(pose, x * Rr, y * Rr, z * Rr).setColor(col); draw(q, t, nightF, figs, shoot, aur); });
             ps.popPose();
         } catch (Throwable e) { broken = true; System.err.println("[Stardrops] sky box failed, using screen stars: " + e); }
     }
+    /** The smallest half-size, in sky units, that still covers about one and a half screen pixels (0 on the bench). */
+    static float minS;
+    /** A star or line smaller than that is drawn at that size and dimmed to the same total light, so it never blinks in and out. */
+    private static int fit(float s, int col) { if (s >= minS) return col; float k = s / minS; return Math.round((col >>> 24) * k * k) << 24 | (col & 0xFFFFFF); }
     private static void quad(Q q, float cx, float cy, float cz, float ux, float uy, float uz, float vx, float vy, float vz, float s, int col) {
+        if (s < minS) { col = fit(s, col); s = minS; }
         q.v(cx - (ux + vx) * s, cy - (uy + vy) * s, cz - (uz + vz) * s, col); q.v(cx + (ux - vx) * s, cy + (uy - vy) * s, cz + (uz - vz) * s, col);
         q.v(cx + (ux + vx) * s, cy + (uy + vy) * s, cz + (uz + vz) * s, col); q.v(cx - (ux - vx) * s, cy - (uy - vy) * s, cz - (uz - vz) * s, col);
     }
@@ -128,6 +141,7 @@ final class SkyBox {
         }
     }
     private static void line(Q q, Vector3f a, Vector3f b, float w, int ca, int cb) {
+        if (w < minS * 0.8f) { float m = minS * 0.8f, k = w / m; ca = Math.round((ca >>> 24) * k) << 24 | (ca & 0xFFFFFF); cb = Math.round((cb >>> 24) * k) << 24 | (cb & 0xFFFFFF); w = m; }
         Vector3f side = new Vector3f(b).sub(a).cross(a).normalize().mul(w);
         q.v(a.x + side.x, a.y + side.y, a.z + side.z, ca); q.v(b.x + side.x, b.y + side.y, b.z + side.z, cb); q.v(b.x - side.x, b.y - side.y, b.z - side.z, cb); q.v(a.x - side.x, a.y - side.y, a.z - side.z, ca);
     }
