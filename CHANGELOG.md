@@ -1,6 +1,8 @@
 # Changelog
 
 ## 0.9.0
+- Mob Drops: browse by Slayers or by Location, with new animated icons for every place and each mob's own head.
+- Every location has its own world in the drop animation (Deep Caverns, Catacombs, Moonglade Marsh, Torrhus Canyon, Spooky Festival, Crystal Hollows and more), and every mob its own creature: skeletons, zombies, knights, slimes, witches, golems, the Shiny Pig, Galatea's crawlers, Nessie and the Loch Emperor, bats, creepers.
 - Mob Drops: every mob's rare drops, sorted by where it spawns (Hub, Spider's Den, The End, Crimson Isle, the Mines, the Park, Galatea, Spooky Festival, Catacombs) and by mob, with their chances. Rare drops play RNG by default.
 - Spotify shows as a small pop-up box at the top right of the menu.
 - The big centred page cards are back; the Quick switches are gone.

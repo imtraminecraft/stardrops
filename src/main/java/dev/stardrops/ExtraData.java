@@ -27,6 +27,7 @@ public final class ExtraData {
             }
             for (DropData.Source s : l) {
                 s.drops.sort(Comparator.comparingDouble(DropData::oneIn));
+                if (s.head != null && !s.head.isEmpty()) ItemIcons.mobSkin(s.id, s.head);           // its own head for its icon
                 m.computeIfAbsent(s.group == null || s.group.isEmpty() ? "mobs" : s.group, k -> new ArrayList<>()).add(s); all.add(s);
             }
         }

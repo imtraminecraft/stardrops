@@ -179,8 +179,11 @@ final class Ritual {
     static float sizeOf(int n) { return n <= 1 ? 1f : n == 2 ? 0.85f : n == 3 ? 0.76f : Math.max(0.5f, 2.6f / n); }
     static void end() { hold = 0f; slayerMode = false; itemOffs = new float[]{0f}; }
     /** The colour of each boss: zombie, spider, wolf, enderman, blaze, vampire. */
-    static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030, 0xFF6A2A, 0xC77DFF, 0x7FE8D8, 0xFF5A20, 0xFFB040, 0xFF7A20, 0xB070FF, 0x8AD8FF, 0x8AC8E8, 0xFF6A2A, 0x40E8A0, 0x6AE8F0};   // the six slayers, then the Crimson Isle, the End, the Mines
+    static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030, 0xFF6A2A, 0xC77DFF, 0x7FE8D8, 0xFF5A20, 0xFFB040, 0xFF7A20, 0xB070FF, 0x8AD8FF, 0x8AC8E8, 0xFF6A2A, 0x40E8A0, 0x6AE8F0,
+        0xE8E0C8, 0xFF4A2A, 0x7CD060, 0xC8D0E0, 0x40D86A, 0xFF4A3A, 0x60E080, 0xC8D8C8, 0xFFB0B0, 0xFFB040, 0x6AE8D8, 0xFF5A5A, 0x7AE860};   // the six slayers, the Crimson Isle, the End, the Mines, then the Mob Drops creatures (skeleton, wither skeleton, zombie, knight, slime, pigman, witch, golem, pig, crawler, serpent, bat, creeper)
     static boolean isSlayer(Anim a) { return AnimationManager.isSlayer(a.group); }
+    /** The mob a drop comes from (its "mob" in the data), or null. */
+    static String slMob(Anim a) { if (a.item != null && a.item.source != null) for (DropData.Drop d : a.item.source.drops) if (d.id.equals(a.item.id)) return d.mob; return null; }
     static int slTheme(Anim a) { int fixed = AnimationManager.starBoss(a.group); if (fixed >= 0) { int cr = -1; if (a.item != null && a.item.source != null) for (DropData.Drop d : a.item.source.drops) if (d.id.equals(a.item.id)) { cr = AnimationManager.creature(d.mob); break; } return cr >= 0 ? cr : fixed; }      // the drop's own creature (its "mob" in the data), else the group's
         return Math.floorMod(a.kind >= 0 ? a.kind : a.item != null && a.item.source != null ? SlayerData.theme(a.item.source.id) : 0, 6); }
 
@@ -303,7 +306,8 @@ final class Ritual {
                 float craterY = 1f - 2f * ((icy + 14 * ssz) - top) / Math.max(1f, bot - top);
                 float al = sm(t / 0.35f) * (1f - sm((t - (A + hd - 0.7f)) / 0.7f)) * (1f - 0.35f * sm((p - 0.8f) / 0.8f));
                 Slayer3D.submit(g, Math.round((CW / 2f - hw) * u) + sx, Math.round(top * u) + sy, Math.round((CW / 2f + hw) * u) + sx, Math.round(bot * u) + sy,
-                        t, A + hd, Math.floorMod(kind - 12, SL_ENERGY.length), type, SL_ENERGY[Math.floorMod(kind - 12, SL_ENERGY.length)], al, craterY);
+                        t, A + hd, Math.floorMod(kind - 12, SL_ENERGY.length), type, SL_ENERGY[Math.floorMod(kind - 12, SL_ENERGY.length)], al, craterY,
+                        AnimationManager.starWorld(a.group), AnimationManager.variant(slMob(a)));          // the creature in its own place: where the mob spawns
             }
             {
                 long nowMs = System.currentTimeMillis();

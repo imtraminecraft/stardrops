@@ -1,5 +1,5 @@
 {
- "v": 8,
+ "v": 9,
  "sources": [
   {
    "id": "crystal_nucleus",
@@ -387,7 +387,8 @@
      "chance": "1 in 100,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "b3666d1bdf4558b0d16990b241e8185cbf58c3e03c24d904544e8cc65b1c38d1"
   },
   {
    "id": "mobs_hub_golden_ghoul",
@@ -408,7 +409,8 @@
      "chance": "1 in 2,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "69be1cf0639c6b7db506686f26af222671ce52321e1c921b296933cd40ac4c62"
   },
   {
    "id": "mobs_hub_old_wolf",
@@ -449,7 +451,8 @@
      "chance": "1 in 100,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "d359537c15534f61c1cd886bc118774ed22280e7cdab6613870160aad4ca39"
   },
   {
    "id": "mobs_hub_shiny_pig",
@@ -520,7 +523,8 @@
      "chance": "1 in 2,079",
      "rank": 3
     }
-   ]
+   ],
+   "head": "621668ef7cb79dd9c22ce3d1f3f4cb6e2559893b6df4a469514e667c16aa4"
   },
   {
    "id": "mobs_hub_wolf",
@@ -551,7 +555,8 @@
      "chance": "1 in 333,333",
      "rank": 3
     }
-   ]
+   ],
+   "head": "69d1d3113ec43ac2961dd59f28175fb4718873c6c448dfca8722317d67"
   },
   {
    "id": "mobs_hub_zombie_villager",
@@ -572,7 +577,8 @@
      "chance": "1 in 50",
      "rank": 0
     }
-   ]
+   ],
+   "head": "e5e08a8776c1764c3fe6a6ddd412dfcb87f41331dad479ac96c21df4bf3ac89c"
   },
   {
    "id": "mobs_spider_arachne",
@@ -603,7 +609,8 @@
      "chance": "1 in 50",
      "rank": 0
     }
-   ]
+   ],
+   "head": "cd541541daaff50896cd258bdbdd4cf80c3ba816735726078bfe393927e57f1"
   },
   {
    "id": "mobs_spider_arachne_s_keeper",
@@ -654,7 +661,8 @@
      "chance": "1 in 40",
      "rank": 0
     }
-   ]
+   ],
+   "head": "cd541541daaff50896cd258bdbdd4cf80c3ba816735726078bfe393927e57f1"
   },
   {
    "id": "mobs_spider_broodmother",
@@ -705,7 +713,8 @@
      "chance": "1 in 12,500",
      "rank": 3
     }
-   ]
+   ],
+   "head": "cf0622b3998d42b34d5bc760bb2c83fdbc6e68fab05b7ea17b35097ed81190d6"
   },
   {
    "id": "mobs_spider_dasher_spider",
@@ -756,7 +765,8 @@
      "chance": "1 in 100,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "cd541541daaff50896cd258bdbdd4cf80c3ba816735726078bfe393927e57f1"
   },
   {
    "id": "mobs_spider_splitter_spider",
@@ -797,7 +807,8 @@
      "chance": "1 in 125,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "2acf69fc7af5497a1741891d1e5bf32b96ae0d6c0bbd3c14758ea44a03c57283"
   },
   {
    "id": "mobs_spider_weaver_spider",
@@ -848,7 +859,8 @@
      "chance": "1 in 100,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "921438f646dc04515967e8195ccc3d31e23b02f9aa0ac914edc2822f98394b86"
   },
   {
    "id": "dragon_enderman",
@@ -959,7 +971,8 @@
      "chance": "1 in 166,667",
      "rank": 3
     }
-   ]
+   ],
+   "head": "96c0b36d53fff69a49c7d6f3932f2b0fe948e032226d5e8045ec58408a36e951"
   },
   {
    "id": "dragon_obsidian_defender",
@@ -1041,7 +1054,8 @@
      "chance": "1 in 2,500",
      "rank": 3
     }
-   ]
+   ],
+   "head": "eb07594e2df273921a77c101d0bfdfa1115abed5b9b2029eb496ceba9bdbb4b3"
   },
   {
    "id": "dragon_voidling_fanatic",
@@ -1072,7 +1086,8 @@
      "chance": "1 in 142,857",
      "rank": 3
     }
-   ]
+   ],
+   "head": "e53b7bcd56f0b95f87dd79ed17636beb9d8346744014228ea2f6b110b148c1"
   },
   {
    "id": "dragon_zealot",
@@ -1114,7 +1129,8 @@
      "chance": "1 in 10,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "5774e86aa4cff792395b77add57b00bb1a102f8f0f0980f4d55b3d7aff1e6da9"
   },
   {
    "id": "mobs_deep_lapis_zombie",
@@ -1185,7 +1201,8 @@
      "chance": "1 in 10,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "e9f7979b25001087969d58c06e14d00b8dab57dab060b4c8b483c1b7f869940"
   },
   {
    "id": "mobs_deep_miner_skeleton",
@@ -1246,7 +1263,8 @@
      "chance": "1 in 10,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "836bbc4215cea1b6a484e893b116e73459ef36bffc622741e577e9493a41e6e"
   },
   {
    "id": "mobs_deep_miner_zombie",
@@ -1307,7 +1325,8 @@
      "chance": "1 in 10,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "d28d9ff54188a1afee65b94f3bfcce321c643a34590c14b192b2e3ec2f525d3"
   },
   {
    "id": "mobs_deep_redstone_pigman",
@@ -1338,7 +1357,8 @@
      "chance": "1 in 10,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "74e9c6e98582ffd8ff8feb3322cd1849c43fb16b158abb11ca7b42eda7743eb"
   },
   {
    "id": "mobs_deep_sneaky_creeper",
@@ -1359,7 +1379,8 @@
      "chance": "1 in 10,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "a68224cf8ed4c03b457bf49beb6f544193679268b8421b01ffce6d27b25ac32d"
   },
   {
    "id": "mobs_diamond_goblin",
@@ -1380,7 +1401,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "81d2116827a41a713660bb52c9ba3bc6dd038175afb74a473b85f0cf60ff70e2"
   },
   {
    "id": "mobs_ghost",
@@ -1431,7 +1453,8 @@
      "chance": "1 in 10,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "981977918a1180e0dec879e6bcd1aa39494977bb913be2ab01aff1db1fa4"
   },
   {
    "id": "mobs_glacite_bowman",
@@ -1502,7 +1525,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "d2a0057edd8e8480f0ea2a78c1ad88e401c4844f4458aeb4e33ac93a58b8c11a"
   },
   {
    "id": "mobs_glacite_mage",
@@ -1573,7 +1597,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "d2a0057edd8e8480f0ea2a78c1ad88e401c4844f4458aeb4e33ac93a58b8c11a"
   },
   {
    "id": "mobs_glacite_mutt",
@@ -1644,7 +1669,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "69d1d3113ec43ac2961dd59f28175fb4718873c6c448dfca8722317d67"
   },
   {
    "id": "mobs_glacite_walker",
@@ -1766,7 +1792,8 @@
      "chance": "1 in 333",
      "rank": 2
     }
-   ]
+   ],
+   "head": "172850906b7f0d952c0e508073cc439fd3374ccf5b889c06f7e8d90cc0cc255c"
   },
   {
    "id": "mobs_littlefoot",
@@ -1797,7 +1824,8 @@
      "chance": "1 in 500",
      "rank": 2
     }
-   ]
+   ],
+   "head": "6cce41cd32db68f699c281f83f20766c83c97fd49664eb8c7584b9f343d960d1"
   },
   {
    "id": "mobs_treasure_hoarder",
@@ -1828,7 +1856,8 @@
      "chance": "1 in 200",
      "rank": 2
     }
-   ]
+   ],
+   "head": "b2b12a814ced8af02cddf29a37e7f3011e430e8a18b38b706f27c6bd31650b65"
   },
   {
    "id": "mobs_hollows_automaton",
@@ -1899,7 +1928,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "22bcaceeb4162f400d44743315932ac820d3119ac8986a0161a726161ccc93fc"
   },
   {
    "id": "mobs_hollows_bal",
@@ -1960,7 +1990,8 @@
      "chance": "1 in 18,519",
      "rank": 3
     }
-   ]
+   ],
+   "head": "a1c97a06efde04d00287bf20416404ab2103e10f08623087e1b0c1264a1c0f0c"
   },
   {
    "id": "mobs_hollows_grunt",
@@ -1981,7 +2012,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "ef5e03b8de119f8589a808224cbea737f5dcf24235799b7378ac5bf06abf6dd4"
   },
   {
    "id": "mobs_park_howling_spirit",
@@ -2022,7 +2054,8 @@
      "chance": "1 in 100,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "69d1d3113ec43ac2961dd59f28175fb4718873c6c448dfca8722317d67"
   },
   {
    "id": "mobs_park_pack_spirit",
@@ -2063,7 +2096,8 @@
      "chance": "1 in 100,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "69d1d3113ec43ac2961dd59f28175fb4718873c6c448dfca8722317d67"
   },
   {
    "id": "mobs_park_soul_of_the_alpha",
@@ -2124,7 +2158,8 @@
      "chance": "1 in 100,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "d359537c15534f61c1cd886bc118774ed22280e7cdab6613870160aad4ca39"
   },
   {
    "id": "mobs_marsh_honeymite",
@@ -2145,7 +2180,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "32192070b09dd85f7660965a70474f628c877c07aff14df56f37bd61df2e08c2"
   },
   {
    "id": "mobs_marsh_nessie",
@@ -2186,7 +2222,8 @@
      "chance": "1 in 200",
      "rank": 2
     }
-   ]
+   ],
+   "head": "3d6c9f43510cb90d24493e07b7cf8ca9f54132d09a257f20b7048022e3b1b707"
   },
   {
    "id": "mobs_marsh_the_loch_emperor",
@@ -2237,7 +2274,8 @@
      "chance": "1 in 200",
      "rank": 2
     }
-   ]
+   ],
+   "head": "46c15b527e4872249c91797435521cb77651b567e57518304f5f131e49ded652"
   },
   {
    "id": "mobs_canyon_beeheemoth",
@@ -2258,7 +2296,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "7a9632c18bfe5bdb0205366b5b08ec1b2c9a968aa6cdb88bb7f83e8898e3aad0"
   },
   {
    "id": "mobs_canyon_brineling",
@@ -2279,7 +2318,8 @@
      "chance": "1 in 200",
      "rank": 2
     }
-   ]
+   ],
+   "head": "18ddf45f2a16e662c667541422cbbd944398b1a90c500b03308b1c99c10003d3"
   },
   {
    "id": "mobs_canyon_drybark",
@@ -2300,7 +2340,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "fbad692faf604509e8ce346be9798162c13696dbbe03eff7c6f442b29d14c776"
   },
   {
    "id": "mobs_canyon_giant_isopod",
@@ -2351,7 +2392,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "3fcb203b029aac4958407daf4072a01a353105162373ce7e559c669d78325bcb"
   },
   {
    "id": "mobs_canyon_pangolin",
@@ -2372,7 +2414,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "5380c1015a19a4b6f2f45c2bc78e878752eda2fc263a68da39876afdd0b049dd"
   },
   {
    "id": "mobs_canyon_puck",
@@ -2393,7 +2436,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "46902abbf5267e985e3e0d4eba0358093133441bb08cee44ed3136878d307af8"
   },
   {
    "id": "mobs_canyon_queen_ant",
@@ -2414,7 +2458,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "321fcf90d9090de8fd720cb2817a4dfdc2283e828fd44f8bfdc7ff9a8505cc"
   },
   {
    "id": "mobs_canyon_silkbreeze",
@@ -2455,7 +2500,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "2630c3171c4028544ff979ba87fa03102aacbc1e917ace9984d8ee51a9bbd5ba"
   },
   {
    "id": "mobs_canyon_torrid",
@@ -2496,7 +2542,8 @@
      "chance": "1 in 500",
      "rank": 2
     }
-   ]
+   ],
+   "head": "9da145254a59efce57186e6c99b64ba0e86803a4496cdbe8c96cc13dda71aa24"
   },
   {
    "id": "mobs_spooky_crazy_witch",
@@ -2517,7 +2564,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "fce6604157fc4ab5591e4bcf507a749918ee9c41e357d47376e0ee7342074c90"
   },
   {
    "id": "mobs_spooky_phantom_spirit",
@@ -2538,7 +2586,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "653b2f7c5e177bd67cead30d0ee53425c7684c975c8c2a5273a09ca49a1f6cdd"
   },
   {
    "id": "mobs_spooky_scary_jerry",
@@ -2559,7 +2608,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "df202dc24d15f7ce36e02fb4b3e8153b146ab9c1724aaa5d484c741da0eeb6fd"
   },
   {
    "id": "mobs_spooky_trick_or_treater",
@@ -2580,7 +2630,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "d7cbe061b445b88cb2df59accc8d2c1c12118fe0b2127e6e75813550adac67cf"
   },
   {
    "id": "mobs_spooky_wraith",
@@ -2601,7 +2652,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "aeabc3075cf41f38e6df1236b95caafcba1bee22c49d804b9427488c2f6e0efc"
   },
   {
    "id": "mobs_dungeon_bat",
@@ -2622,7 +2674,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "382fc3f71b41769376a9e92fe3adbaac3772b999b219c9d6b4680ba9983e527"
   },
   {
    "id": "mobs_dungeon_crypt_dreadlord",
@@ -2653,7 +2706,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "66f349270a3b851896cdad842f5eec6e140bd9119b75c074955c3be7865e27c7"
   },
   {
    "id": "mobs_dungeon_crypt_souleater",
@@ -2674,7 +2728,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "66f349270a3b851896cdad842f5eec6e140bd9119b75c074955c3be7865e27c7"
   },
   {
    "id": "mobs_dungeon_golem",
@@ -2695,7 +2750,8 @@
      "chance": "1 in 25",
      "rank": 0
     }
-   ]
+   ],
+   "head": "22bcaceeb4162f400d44743315932ac820d3119ac8986a0161a726161ccc93fc"
   },
   {
    "id": "mobs_dungeon_king_midas",
@@ -2716,7 +2772,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "62bca085750043503f5df9f7def824a2e3acfc27842bcd09d2b6695881e832f5"
   },
   {
    "id": "mobs_dungeon_scared_skeleton",
@@ -2737,7 +2794,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "88eb68a4d38e9f446b8e99275f160302f366ef10216abf948487e582512bd0f3"
   },
   {
    "id": "mobs_dungeon_shadow_assassin",
@@ -2758,7 +2816,8 @@
      "chance": "1 in 25",
      "rank": 0
     }
-   ]
+   ],
+   "head": "3399e00f404411e465d74388df132d51fe868ecf86f1c073faffa1d9172ec0f3"
   },
   {
    "id": "mobs_dungeon_skeleton_grunt",
@@ -2809,7 +2868,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "70471677b37ae842c2bd232e16eeb84d5a493231eecec072da38be3127dd5c8"
   },
   {
    "id": "mobs_dungeon_skeleton_master",
@@ -2870,7 +2930,8 @@
      "chance": "1 in 100",
      "rank": 2
     }
-   ]
+   ],
+   "head": "74e95e1b7dc82ba7845a68fc6a312f4cd90ee2f6cce26a68c88b04b1072d879"
   },
   {
    "id": "mobs_dungeon_skeleton_soldier",
@@ -2921,7 +2982,8 @@
      "chance": "1 in 25",
      "rank": 0
     }
-   ]
+   ],
+   "head": "219688e0c2f05aeb979d6a1b8c911957b7d3657e14b57af93c5ef6f6a59569dd"
   },
   {
    "id": "mobs_dungeon_skeletor",
@@ -2972,7 +3034,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "89d074ad9b9971879eb325bddff3675f7224856bd6d569fc8d483c133d73005d"
   },
   {
    "id": "mobs_dungeon_sniper",
@@ -3003,7 +3066,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "b18c071f080dba50a62a6263ff724edc157ce4fb4883cceff2491d5bbde830c1"
   },
   {
    "id": "mobs_dungeon_super_archer",
@@ -3054,7 +3118,8 @@
      "chance": "1 in 33.3",
      "rank": 0
     }
-   ]
+   ],
+   "head": "dcae6db0b59a64305076d966d8e7b9a97be46dae3a807714fa86d37848f6"
   },
   {
    "id": "mobs_dungeon_super_tank_zombie",
@@ -3125,7 +3190,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "b3666d1bdf4558b0d16990b241e8185cbf58c3e03c24d904544e8cc65b1c38d1"
   },
   {
    "id": "mobs_dungeon_tank_zombie",
@@ -3186,7 +3252,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "b3666d1bdf4558b0d16990b241e8185cbf58c3e03c24d904544e8cc65b1c38d1"
   },
   {
    "id": "mobs_dungeon_undead",
@@ -3207,7 +3274,8 @@
      "chance": "1 in 500",
      "rank": 2
     }
-   ]
+   ],
+   "head": "f4624a9a8c69ca204504abb043d47456cd9b09749a36357462303f276a229d4"
   },
   {
    "id": "mobs_dungeon_withermancer",
@@ -3228,7 +3296,8 @@
      "chance": "1 in 50",
      "rank": 0
     }
-   ]
+   ],
+   "head": "f5ec964645a8efac76be2f160d7c9956362f32b6517390c59c3085034f050cff"
   },
   {
    "id": "mobs_dungeon_zombie_commander",
@@ -3299,7 +3368,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "e3976ef4f9d68cfc0f24f6b313713a5f2abbcfff32a27c514c1392dfe619191e"
   },
   {
    "id": "mobs_dungeon_zombie_grunt",
@@ -3360,7 +3430,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "e3976ef4f9d68cfc0f24f6b313713a5f2abbcfff32a27c514c1392dfe619191e"
   },
   {
    "id": "mobs_dungeon_zombie_knight",
@@ -3431,7 +3502,8 @@
      "chance": "1 in 500",
      "rank": 2
     }
-   ]
+   ],
+   "head": "25d2f31ba162fe6272e831aed17f53213db6fa1c4cbe4fc827f3963cc98b9"
   },
   {
    "id": "mobs_dungeon_zombie_soldier",
@@ -3502,7 +3574,8 @@
      "chance": "1 in 1,000",
      "rank": 2
     }
-   ]
+   ],
+   "head": "e3976ef4f9d68cfc0f24f6b313713a5f2abbcfff32a27c514c1392dfe619191e"
   }
  ]
 }

@@ -297,7 +297,13 @@ final class Vox3D {
         new Theme(0x0C030E, 0x2A0A2A, 0x5A1236, 0x4A2A4A, 0x5A2050, 0x3A1E3A, 0x1A101E, 0xFFC8D8),   // Riftstalker: the Rift
         new Theme(0x100406, 0x34100A, 0x8A3410, 0x3A2A2E, 0x5A1A16, 0x2A1E22, 0x1E1618, 0xFFC890),   // Crimson Isle (6): blackstone and magma under a burning dusk
         new Theme(0x04030A, 0x100A22, 0x34185A, 0xD8D49A, 0xC8C48A, 0xA8A472, 0x1E1428, 0xE0D0FF),   // The End (7): end stone under a violet void
-        new Theme(0x040A10, 0x0C1E2A, 0x1E4A52, 0x6A7078, 0x7A8088, 0x4A4E56, 0x3A3E46, 0xD8FFF4)};  // The Mines (8): mithril-grey stone, a teal glow
+        new Theme(0x040A10, 0x0C1E2A, 0x1E4A52, 0x6A7078, 0x7A8088, 0x4A4E56, 0x3A3E46, 0xD8FFF4),   // The Mines (8): mithril-grey stone, a teal glow
+        new Theme(0x02040C, 0x081430, 0x183A6A, 0x4A4E58, 0x5A5E68, 0x3A3E48, 0x2A2E38, 0xC8D8FF),   // Deep Caverns (9): deep stone shot through with lapis, redstone and emerald
+        new Theme(0x040406, 0x101418, 0x2A3A30, 0x5A5E58, 0x6E726A, 0x44483E, 0x2E302C, 0xE8F0D8),   // Catacombs (10): stone bricks, moss, candlelight
+        new Theme(0x02080C, 0x0A2028, 0x1E5A54, 0x3A5A34, 0x4A6E3A, 0x3A3022, 0x2A3A30, 0xE8FFF0),   // Moonglade Marsh (11): mud and moss under a big moon, mist on the water
+        new Theme(0x100608, 0x3A1A14, 0xC8602A, 0xB86A3A, 0xC87A44, 0x8A4A2A, 0x6A3A24, 0xFFE0B0),   // Torrhus Canyon (12): banded terracotta under a burning sunset
+        new Theme(0x08040E, 0x22102A, 0x8A3A14, 0x4A3A22, 0x5A4428, 0x3A2A1A, 0x2A2220, 0xFFC060),   // Spooky Festival (13): an orange harvest moon, pumpkins, a purple night
+        new Theme(0x06030E, 0x1A0A30, 0x4A1A6A, 0x5A4E68, 0x6A5A78, 0x3E3448, 0x2A2236, 0xF0D8FF)};  // Crystal Hollows (14): violet rock and gemstone light
 
     /** A world point at a fixed place in the window: (sx, sy) in -1..1 of the window, d deep. */
     private static final Matrix4f invView = new Matrix4f(); private static Matrix4f invOf;
@@ -552,7 +558,7 @@ final class Vox3D {
         if (shatter && since < 0.5f) glow(F.add, x, 1f, z, 3f * (1f + since), energy, 0.7f * (1f - since / 0.5f));
         if (type == 0 && since > 0.3f) ash(since, x, z);
     }
-    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f, 1.5f, 1.0f, 1.3f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.6f, 1.2f, 1.1f};
+    static final float[] MOB_K = {1.5f, 1.8f, 2.1f, 1.2f, 1.5f, 1.45f, 1.5f, 1.0f, 1.3f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.4f, 1.6f, 1.2f, 1.1f, 1.4f, 1.3f, 1.4f, 1.4f, 1.4f, 1.3f, 1.1f, 1.6f, 1.5f, 1.2f, 1.35f, 1.6f, 1.5f};
     /** The boss's presence: a shadow under it, dark smoke at its feet, wisps of its energy spiralling up round it. */
     static void aura(float t, float x, float y, float z, float k, int energy, int boss) {
         disc(F.veil, x, 0.014f, z, 0.95f * k, 0x050508, 0.5f);
@@ -872,6 +878,126 @@ final class Vox3D {
         Vector3f c = M.transformPosition(new Vector3f(0, 14f, 0)); glow(F.add, c.x, c.y, c.z, 1.2f, 0x6AE8F0, 0.2f + 0.08f * (float) Math.sin(t * 6f));
         for (int i = 0; i < 4; i++) { float an = t * 2.5f + i * 1.57f; Vector3f q = M.transformPosition(new Vector3f((float) Math.cos(an) * 8f, 10f + 4f * (float) Math.sin(t * 3f + i), (float) Math.sin(an) * 8f)); glint(F.add, q.x, q.y, q.z, 0.2f, 0xC8FFFF, 0.8f); }
     }
+    // ------------------------------------------------------------------ the creatures of the new Mob Drops (13 Nov): one per kind of mob, each with its own look
+    /** A skeleton: thin bones, ribs you can see through, a bow in its hand. dark = a wither skeleton (black bones, a stone sword). */
+    static void skeleton(float t, float walk, boolean dark) {
+        int b0 = dark ? 0x2A2A2E : 0xD8D4C4, b1 = dark ? 0x141418 : 0xA8A494;
+        Skin bone = (f, u, v, w, h) -> mul(rnd(f * 7 + u * 13 + v * 5) < 0.2f ? b1 : b0, 0.88f + rnd(u * 3 + v * 11 + f) * 0.2f);
+        Skin rib = (f, u, v, w, h) -> v % 2 == 0 ? b1 : bone.at(f, u, v, w, h);
+        Skin head = (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8) { if (v == 4 && (u == 1 || u == 2 || u == 5 || u == 6)) return dark ? 0x02FF4A2A : 0x101010; if (v == 2 && u >= 2 && u <= 5) return u % 2 == 0 ? 0x101010 : b1; } return bone.at(f, u, v, w, h); };
+        for (int sd = -1; sd <= 1; sd += 2) { push(); M.translate(sd * 2f, 12f, 0f).rotateX(walk * 0.7f * sd); part(-1f, -12f, -1f, 1f, 0f, 1f, bone); pop(); }
+        part(-0.8f, 12f, -0.8f, 0.8f, 24f, 0.8f, bone);                                                 // the spine
+        part(-4f, 15f, -1.6f, 4f, 23f, 1.6f, rib);                                                       // the ribs
+        part(-3.5f, 11.5f, -1.2f, 3.5f, 13f, 1.2f, bone);                                                // the hips
+        for (int sd = -1; sd <= 1; sd += 2) { push(); M.translate(sd * 5f, 22f, 0f).rotateX(sd < 0 ? -1.4f + 0.08f * (float) Math.sin(t * 3f) : -walk * 0.6f); part(-1f, -11f, -1f, 1f, 1f, 1f, bone);
+            if (sd < 0 && !dark) { Skin wood = (f, u, v, w, h) -> mul(0x6A4A2A, 0.9f + rnd(u + v * 3) * 0.2f); part(-0.6f, -12f, -6f, 0.6f, -11f, 6f, wood); }   // its bow
+            if (sd > 0 && dark) { push(); M.translate(0, -11f, 0).rotateX(1.2f); part(-0.6f, -1f, -0.6f, 0.6f, 11f, 0.6f, (f, u, v, w, h) -> v < 2 ? 0x4A3020 : mul(0x7A7A80, 0.9f + rnd(u + v) * 0.2f)); pop(); }
+            pop(); }
+        push(); M.translate(0, 24f, 0).rotateY(0.15f * (float) Math.sin(t * 1.3f)); part(-4f, 0f, -4f, 4f, 8f, 4f, head); pop();
+        if (dark) { Vector3f c = M.transformPosition(new Vector3f(0, 28f, 3f)); glow(F.add, c.x, c.y, c.z, 0.7f, 0xFF4A2A, 0.25f); }
+    }
+    /** A zombie, arms out. col: its skin (green, or gold for a Golden Ghoul, blue for a Lapis Zombie). */
+    static void zombie(float t, float walk, int col, int shirt) {
+        Skin skin = cloth(col, 0.3f, 3), head = face8(skin, 0x101010, mul(col, 0.6f)), body = cloth(shirt, 0.25f, 7), legs = cloth(0x3A3A8A, 0.25f, 11);
+        humanoid(t, walk, true, head, body, skin, legs, false);
+    }
+    /** An armoured knight (a dungeon commander, King Midas in gold, the Obsidian Defender in black): plate armour, a sword raised. */
+    static void knight(float t, float walk, int plate) {
+        Skin pl = (f, u, v, w, h) -> { float n = rnd(f * 17 + u * 7 + v * 13 + 5); return (u == 0 || v == 0) ? mul(plate, 0.7f) : n < 0.12f ? mixc(plate, 0xFFFFFF, 0.5f) : mul(plate, 0.85f + n * 0.3f); };
+        Skin head = (f, u, v, w, h) -> f == 4 && w == 8 && h == 8 && v == 4 && u >= 1 && u <= 6 ? (u == 2 || u == 5 ? 0x02FF5030 : 0x101010) : pl.at(f, u, v, w, h);
+        humanoid(t, walk, false, head, pl, pl, pl, false);
+        part(-6.5f, 22f, -2.5f, -3.5f, 25f, 2.5f, pl); part(3.5f, 22f, -2.5f, 6.5f, 25f, 2.5f, pl);                  // pauldrons
+        push(); M.translate(6f, 12f, 3f).rotateX(-0.6f + 0.25f * (float) Math.sin(t * 2.2f)); part(-0.7f, 0f, -0.7f, 0.7f, 3f, 0.7f, (f, u, v, w, h) -> 0x4A3020);
+        part(-2f, 3f, -0.7f, 2f, 4f, 0.7f, (f, u, v, w, h) -> 0xC8A030); part(-0.8f, 4f, -0.4f, 0.8f, 18f, 0.4f, (f, u, v, w, h) -> mixc(0xE8E8F0, 0x9AA0B0, rnd(u + v * 5) * 0.4f)); pop();
+    }
+    /** A slime: a jelly cube that bounces, its core and eyes floating inside. */
+    static void slime(float t, float idle, int col) {
+        float b = (float) Math.abs(Math.sin(t * 3.2f)), sq = 1f - 0.18f * (1f - b);
+        push(); M.translate(0, b * 5f, 0); M.scale(1f / sq, sq, 1f / sq);
+        Skin core = (f, u, v, w, h) -> f == 4 && v == h - 3 && (u == 1 || u == w - 2) ? 0x101810 : mul(mixc(col, 0x000000, 0.35f), 0.9f + rnd(u + v * 3 + f) * 0.2f);
+        part(-8f, 0f, -8f, 8f, 16f, 8f, (f, u, v, w, h) -> { float n = rnd(f * 23 + u * 5 + v * 9); return (u == 0 || v == h - 1) ? mixc(col, 0xFFFFFF, 0.35f) : mul(col, 0.8f + n * 0.3f); });
+        part(-3f, 4f, 8f, 3f, 10f, 8.6f, core);                                                     // its core and eyes, seen through the jelly on its front
+        pop();
+        Vector3f c = M.transformPosition(new Vector3f(0, 8f + b * 5f, 0)); glow(F.add, c.x, c.y, c.z, 1.4f, col, 0.18f);
+    }
+    /** A pigman (the Redstone Pigman): pink with redstone glowing in its skin, a golden sword. */
+    static void pigman(float t, float walk) {
+        Skin skin = (f, u, v, w, h) -> { float n = rnd(f * 13 + u * 7 + v * 3); return n < 0.035f ? 0x02E86040 : n < 0.1f ? 0xC85A50 : mul(0xE89A8A, 0.85f + n * 0.3f); };
+        Skin head = (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8) { if (v == 4 && (u == 1 || u == 6)) return 0x02FF2020; if (v >= 1 && v <= 3 && u >= 2 && u <= 5) return (v == 2 && (u == 3 || u == 4)) ? 0x6A2A2A : 0xF0B0A8; } return skin.at(f, u, v, w, h); };
+        humanoid(t, walk, false, head, cloth(0x6A4A2A, 0.3f, 5), skin, cloth(0x5A3A22, 0.3f, 6), false);
+        push(); M.translate(6f, 12f, 2f).rotateX(-0.9f); part(-0.6f, 0f, -0.6f, 0.6f, 14f, 0.6f, (f, u, v, w, h) -> v < 3 ? 0x5A3A1A : 0x02FFD040); pop();
+        Vector3f c = M.transformPosition(new Vector3f(0, 18f, 0)); glow(F.add, c.x, c.y, c.z, 0.7f, 0xFF3020, 0.08f + 0.05f * (float) Math.sin(t * 5f));
+    }
+    /** A witch: a purple robe, a tall crooked hat, a glowing potion. */
+    static void witch(float t, float walk) {
+        Skin robe = cloth(0x4A2A5A, 0.3f, 3), skin = cloth(0xB08A70, 0.25f, 4);
+        Skin head = (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8) { if (v == 4 && (u == 2 || u == 5)) return 0x02A0FF40; if (v <= 3 && v >= 1 && (u == 3 || u == 4)) return 0x8A6A50; } return skin.at(f, u, v, w, h); };
+        humanoid(t, walk, false, head, robe, robe, robe, false);
+        Skin hat = cloth(0x1A1A22, 0.2f, 9);
+        push(); M.translate(0, 32f, 0); part(-6f, 0f, -6f, 6f, 1f, 6f, hat); M.rotateZ(0.12f * (float) Math.sin(t * 1.6f)); part(-3.5f, 1f, -3.5f, 3.5f, 5f, 3.5f, hat); part(-2f, 5f, -2f, 2f, 9f, 2f, hat); M.rotateX(-0.5f); part(-1f, 8f, -1f, 1f, 12f, 1f, hat); pop();
+        push(); M.translate(-6f, 12f, 3f); part(-1.5f, -3f, -1.5f, 1.5f, 1f, 1.5f, (f, u, v, w, h) -> v == h - 1 ? 0x0280FF90 : u == 1 && v == 2 ? 0xC8FFD0 : 0x3AA858); pop();
+        Vector3f c = M.transformPosition(new Vector3f(-6f, 11f, 3f)); glow(F.add, c.x, c.y, c.z, 0.3f, 0x40E060, 0.25f + 0.1f * (float) Math.sin(t * 6f));
+    }
+    /** A golem: huge, iron (or bark for a Drybark, stone for the dungeon's), long arms swinging, flowers or moss on it. */
+    static void golem(float t, float walk, int col, int moss) {
+        Skin body = (f, u, v, w, h) -> { float n = rnd(f * 19 + u * 7 + v * 13); return n < 0.12f ? moss : mul(col, 0.82f + n * 0.3f); };
+        Skin head = face8(body, 0x02FF5030, 0);
+        for (int sd = -1; sd <= 1; sd += 2) { push(); M.translate(sd * 3f, 13f, 0f).rotateX(walk * 0.4f * sd); part(-2.5f, -13f, -2.5f, 2.5f, 0f, 2.5f, body); pop(); }
+        part(-7f, 13f, -4f, 7f, 28f, 4f, body);
+        for (int sd = -1; sd <= 1; sd += 2) { push(); M.translate(sd * 9f, 27f, 0f).rotateX(-walk * 0.5f * sd + 0.1f * (float) Math.sin(t * 2f + sd)); part(-2f, -24f, -2f, 2f, 1f, 2f, body); pop(); }
+        push(); M.translate(0, 28f, 1f); part(-4f, 0f, -4f, 4f, 9f, 4f, head); part(-1f, 1f, 4f, 1f, 5f, 5.5f, body); pop();
+    }
+    /** A pig (the Shiny Pig glitters gold). */
+    static void pig(float t, float walk, boolean shiny) {
+        Skin pink = (f, u, v, w, h) -> mul(0xF0A8A8, 0.85f + rnd(f * 11 + u * 7 + v * 3) * 0.25f);
+        Skin face = (f, u, v, w, h) -> { if (f == 4 && w == 8 && h == 8 && v == 5 && (u == 1 || u == 6)) return 0x101010; return pink.at(f, u, v, w, h); };
+        for (int[] lg : new int[][]{{-3, -5}, {3, -5}, {-3, 5}, {3, 5}}) { push(); M.translate(lg[0], 6f, lg[1]).rotateX(walk * 0.8f * (lg[0] > 0 == lg[1] > 0 ? 1 : -1)); part(-2f, -6f, -2f, 2f, 0f, 2f, pink); pop(); }
+        part(-5f, 6f, -8f, 5f, 14f, 8f, pink);
+        push(); M.translate(0, 8f, 8f); part(-4f, 0f, 0f, 4f, 8f, 8f, face); part(-2f, 1f, 8f, 2f, 4f, 9f, (f, u, v, w, h) -> f == 4 && v == 1 && (u == 0 || u == 3) ? 0x6A2A2A : 0xF8B8B8); pop();
+        if (shiny) for (int i = 0; i < 6; i++) { float an = t * 2f + i * 1.05f; Vector3f q = M.transformPosition(new Vector3f((float) Math.cos(an) * 10f, 8f + 5f * (float) Math.sin(t * 3f + i), (float) Math.sin(an) * 10f)); glint(F.add, q.x, q.y, q.z, 0.22f, 0xFFE070, 0.9f); }
+    }
+    /** A crawler of Galatea (isopods, ants, pangolins, the Beeheemoth, Honeymites): a low segmented body on many legs, feelers waving. */
+    static void bug(float t, float walk, int col, int belly) {
+        Skin shell = (f, u, v, w, h) -> { float n = rnd(f * 23 + u * 5 + v * 9); return f == 2 && u % 3 == 0 ? mixc(col, 0xFFFFFF, 0.3f) : f == 3 ? belly : mul(col, 0.8f + n * 0.3f); };
+        Skin leg = (f, u, v, w, h) -> mul(mixc(col, 0x000000, 0.4f), 0.9f + rnd(u + v) * 0.2f);
+        float bob = 0.4f * (float) Math.sin(t * 6f);
+        for (int k = 0; k < 4; k++) { float z = 6f - k * 4.5f, wd = k == 0 ? 4.5f : 6f - k * 0.5f; push(); M.translate(0, 4f + bob * (k % 2 == 0 ? 1 : -1) * 0.3f, z).rotateX(0.05f * (float) Math.sin(t * 4 + k)); part(-wd, 0f, -2.4f, wd, 6f - k * 0.4f, 2.4f, shell); pop(); }
+        part(-3f, 4f, 8f, 3f, 9f, 12f, (f, u, v, w, h) -> f == 4 && v == 3 && (u == 1 || u == 4) ? 0x02FFF060 : shell.at(f, u, v, w, h));
+        for (int sd = -1; sd <= 1; sd += 2) { limb(sd * 1.5f, 8f, 12f, sd * 4f, 13f + 1.5f * (float) Math.sin(t * 5 + sd), 18f, 0.4f, leg);
+            for (int k = 0; k < 4; k++) { float z = 6f - k * 4.5f, sw = (float) Math.sin(t * 9f + k + (sd > 0 ? 3f : 0f)) * 1.5f; limb(sd * 4f, 5f, z, sd * 9f, 0.5f, z + sw, 0.6f, leg); } }
+    }
+    /** A great serpent of the marsh (Nessie, the Loch Emperor): a humped back, a long neck rising and swaying, a crowned head. */
+    static void serpent(float t, float idle, int col, boolean crown) {
+        Skin scale = (f, u, v, w, h) -> { float n = rnd(f * 31 + u * 7 + v * 13); return f == 3 ? mixc(col, 0xE8E0B0, 0.5f) : (u + v) % 4 == 0 ? mixc(col, 0xFFFFFF, 0.25f) : mul(col, 0.78f + n * 0.3f); };
+        for (int k = 0; k < 3; k++) { float z = -10f + k * 6f, hy = 2f + 3f * (float) Math.max(0, Math.sin(t * 1.6f + k * 1.4f)); part(-4f, hy - 3f, z - 3f, 4f, hy + 3f, z + 3f, scale); }   // the humps in the water
+        float sway = 0.3f * (float) Math.sin(t * 1.3f);
+        push(); M.translate(0, 2f, 6f);
+        for (int k = 0; k < 6; k++) { M.rotateX(-0.22f).rotateY(sway * 0.3f); part(-2.6f + k * 0.15f, 0f, -2.6f + k * 0.15f, 2.6f - k * 0.15f, 5f, 2.6f - k * 0.15f, scale); M.translate(0, 5f, 0); }
+        M.rotateX(1.0f); part(-3.5f, -1f, -3f, 3.5f, 4f, 7f, (f, u, v, w, h) -> f == 0 || f == 1 ? (v == 2 && u == w - 3 ? 0x02FFE040 : scale.at(f, u, v, w, h)) : scale.at(f, u, v, w, h));
+        if (crown) for (int k = -1; k <= 1; k++) part(k * 2.2f - 0.6f, 4f, -1f, k * 2.2f + 0.6f, 7f + (k == 0 ? 1.5f : 0f), 0.2f, (f, u, v, w, h) -> 0x02FFD040);
+        pop();
+        for (int i = 0; i < 8; i++) { float u = ((t * 0.5f + i / 8f) % 1f); Vector3f q = M.transformPosition(new Vector3f((rnd(i * 5) - 0.5f) * 20f, 0.5f, (rnd(i * 9) - 0.5f) * 20f)); ring(F.add, q.x, q.y, q.z, 0.2f + u * 0.8f, 0.04f, 0x9AE8FF, (1f - u) * 0.5f); }
+    }
+    /** A bat, wings beating, hanging in the air. */
+    static void bat(float t) {
+        Skin fur = cloth(0x3A2A20, 0.3f, 4), wing = (f, u, v, w, h) -> mul(0x241A16, 0.9f + rnd(u * 3 + v) * 0.2f);
+        push(); M.translate(0, 18f + 2f * (float) Math.sin(t * 3f), 0);
+        part(-3f, -3f, -2f, 3f, 4f, 2f, fur); part(-3f, 4f, -3f, 3f, 9f, 3f, (f, u, v, w, h) -> f == 4 && v == 2 && (u == 1 || u == 4) ? 0x02FF3030 : fur.at(f, u, v, w, h));
+        float fl = (float) Math.sin(t * 18f) * 0.9f;
+        for (int sd = -1; sd <= 1; sd += 2) { push(); M.translate(sd * 3f, 2f, 0).rotateZ(sd * fl); part(sd < 0 ? -12f : 0f, -1f, -0.4f, sd < 0 ? 0f : 12f, 4f, 0.4f, wing); pop(); }
+        pop();
+    }
+    /** A creeper (the Sneaky Creeper half fades from sight). */
+    static void creeper(float t, float walk, boolean sneaky) {
+        Skin skin = (f, u, v, w, h) -> { float n = rnd(f * 17 + u * 7 + v * 11); return n < 0.25f ? 0x2A7A2A : n < 0.5f ? 0x5AB050 : mul(0x4A9A40, 0.85f + n * 0.3f); };
+        String CF = "........" + ".XX..XX." + ".XX..XX." + "...XX..." + "..XXXX.." + "..XXXX.." + "..X..X.." + "........";
+        Skin head = (f, u, v, w, h) -> f == 4 && w == 8 && h == 8 && CF.charAt((h - 1 - v) * 8 + u) == 'X' ? 0x0A1A0A : skin.at(f, u, v, w, h);
+        for (int[] lg : new int[][]{{-2, -3}, {2, -3}, {-2, 3}, {2, 3}}) { push(); M.translate(lg[0], 6f, lg[1]).rotateX(walk * 0.7f * (lg[1] > 0 ? 1 : -1)); part(-2f, -6f, -2f, 2f, 0f, 2f, skin); pop(); }
+        float swell = 1f + 0.06f * (float) Math.max(0, Math.sin(t * 4f));
+        push(); M.translate(0, 6f, 0); M.scale(swell); part(-4f, 0f, -2f, 4f, 12f, 2f, skin); part(-4f, 12f, -4f, 4f, 20f, 4f, head); pop();
+        if (sneaky) { Vector3f c = M.transformPosition(new Vector3f(0, 14f, 0)); glow(F.add, c.x, c.y, c.z, 1.6f, 0x7AE860, 0.12f + 0.1f * (float) Math.sin(t * 2f)); }
+    }
+
     /** A special Zealot: an enderman carrying the frame a Summoning Eye sits in. */
     static void zealot(float t, float idle) {
         enderman(t, idle);
@@ -974,7 +1100,7 @@ final class Vox3D {
         } else if (boss == 4) {
             for (int i = 0; i < 40; i++) { float u = ((t * 0.25f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 11f + (float) Math.sin(t + i) * 0.4f, -1f + u * 7f, (rnd(i * 11) - 0.5f) * 7f, 0.05f, i % 2 == 0 ? 0xFFB040 : 0xFF6020, (1f - u) * 0.9f); }
         } else {
-            int col = boss == 1 ? 0xC8C8D8 : boss == 3 ? 0xD060FF : 0xFF4A8A;
+            int col = boss == 1 ? 0xC8C8D8 : boss == 3 ? 0xD060FF : boss == 8 || boss == 9 ? 0x8AB8FF : boss == 10 ? 0xB8C8A8 : boss == 11 ? 0x9AE8D8 : boss == 12 ? 0xFFB070 : boss == 13 ? 0xFF9A40 : boss == 14 ? 0xE08AFF : 0xFF4A8A;
             for (int i = 0; i < 30; i++) { float u = ((t * 0.15f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 11f + (float) Math.sin(t * 0.7f + i) * 0.5f, u * 6f, (rnd(i * 11) - 0.5f) * 7f, 0.05f, col, (1f - u) * 0.6f); }
         }
     }

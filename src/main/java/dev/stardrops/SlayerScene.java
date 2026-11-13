@@ -92,6 +92,7 @@ final class SlayerScene {
     // ------------------------------------------------------------------ the scene
     static void paint(float t, float A, int boss, int energy, int rc, boolean rng, boolean nod, float icx, float icy, float sz, float isc,
                       float itemA, float[] offs, float cy0, float bg) {
+        if (!Ritual.threeD) boss = Math.floorMod(boss, Math.min(SPR.length, SOIL.length));               // the flat stand-in scene only has the six slayers
         final float O = AnimationManager.SL_PIVOT; float p = t - O;
         int type = nod ? 0 : rng ? 2 : 1; float[] hits = HITS[type]; float last = hits[hits.length - 1];
         if (Ritual.threeD) {                                                                        // the 3D scene draws everything but the glow round the item

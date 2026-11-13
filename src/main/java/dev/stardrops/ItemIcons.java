@@ -588,6 +588,8 @@ public final class ItemIcons {
 
     /** Starts loading the item art now so it is ready by the time the item pops up. */
     public static void prefetch(String id) { get(id); }
+    /** A creature's head skin (texture hash), so "MOB_<id>" draws its head. */
+    static void mobSkin(String id, String hash) { synchronized (MOB_SKINS) { MOB_SKINS.put(id, hash); } }
     public static boolean ready(String id) { return get(id).ready; }
     /** True once the picture for this id has downloaded and has real pixels (a wiki picture, or a head). */
     public static boolean hasPixels(String id) { Icon ic = get(id); Cached d = ic.data; return ic.ready && d != null && (d.wikiPixels != null || d.face != null || d.heads != null); }

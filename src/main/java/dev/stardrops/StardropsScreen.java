@@ -2352,6 +2352,7 @@ public class StardropsScreen extends Screen {
     private static final java.util.Map<String, Boolean> SRC_ART = new java.util.HashMap<>();
     private static String srcIcon(DropData.Source s) {
         if (SRC_ART.computeIfAbsent(s.id, k -> IconArt.has("src_" + k))) return ":src_" + s.id + ":";                       // a picture of its own (the fishing spots)
+        if (s.head != null && !s.head.isEmpty()) { if (ItemIcons.hasPixels("MOB_" + s.id)) return ":mob_" + s.id + ":"; }          // a mob of the Mob Drops: its own head (its rarest drop until the head has loaded)
         if (s.group != null && !s.group.isEmpty() && !s.drops.isEmpty()) return ":it_" + s.drops.get(s.drops.size() - 1).id.toLowerCase(java.util.Locale.ROOT).replace(';', '~') + ":";      // fishing, Crimson, mobs: the rarest thing it carries
         return SlayerData.byId(s.id) == s ? ":boss_" + s.id + ":" : ":mob_" + s.id + ":";
     }
@@ -2652,12 +2653,9 @@ public class StardropsScreen extends Screen {
         Categories.Cat cat = curCat();
         if (cat.wip()) { wipPanel(cat.icon(), cat.name() + " drops", cat.blurb()); return; }
         // three levels: the category hub (Mythological Mobs / Treasure), a group page (the creatures), and one source page (a creature or the burrow)
-        for (Categories.Group gr : cat.groups()) {
-            srcList.add(new String[]{gr.id(), gr.name(), gr.icon(), String.valueOf(gr.color())}); if (gr.wip() || !AnimationManager.isSlayer(gr.id())) srcWip.add(gr.id());
-            boolean inGrp = dropSrc != null && (dropSrc.equals(gr.id()) || dropSrc.startsWith(gr.id() + "/"));          // a group's creatures show only once you are inside that group
-            if (Categories.hasSubs(gr) && inGrp) for (DropData.Source s : cat.sources(gr.id())) srcList.add(new String[]{gr.id() + "/" + s.id, srcName(s), srcIcon(s), String.valueOf(s.color()), "sub"});          // the creatures sit under Mythological Mobs
-        }
+        sideGroups(cat, true);
         String ds = dropSrc == null ? "" : dropSrc;
+        if (ds.equals("@loc")) { locationsPage(cat, "Every mob's rare drops, by where it spawns.", "drops"); return; }
         String gid = ds.contains("/") ? ds.substring(0, ds.indexOf('/')) : ds;
         Categories.Group grp = null; for (Categories.Group gr : cat.groups()) if (gr.id().equals(gid)) grp = gr;
         if (grp == null) { dropsCategory(cat, c); return; }
@@ -2676,6 +2674,16 @@ public class StardropsScreen extends Screen {
     /** The hub of a category: one tile per group (Mythological Mobs, Treasure). */
     private void dropsCategory(Categories.Cat cat, StardropsConfig c) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb(), cat.color()));
+        if (byLoc(cat)) {                                                                      // Mob Drops: the Slayers, or a Location
+            Categories.Group sl = null; int locN = 0, locMobs = 0, slD = 0; for (Categories.Group g : cat.groups()) { if (g.id().equals("slayer")) sl = g; else { locN++; locMobs += cat.sources(g.id()).size(); } }
+            if (sl != null) for (DropData.Source so : cat.sources("slayer")) slD += so.drops.size();
+            final Categories.Group slg = sl;
+            rows.add(section("Browse by"));
+            rows.add(picker("", "", new String[]{"Slayers", "Locations"}, new String[]{(sl == null ? 0 : cat.sources("slayer").size()) + " bosses \u00B7 " + slD + " drops", locN + " places \u00B7 " + locMobs + " mobs"},
+                new String[]{sl == null ? ":grp_slayers:" : sl.icon(), ":locations:"}, new int[]{0xFFFF5A5A, 0xFF7FE8D8}, null, 2, () -> -1,
+                i -> { if (i == 0 && slg != null) openPage(curSub(), slg.id(), slg.name()); else openPage(curSub(), "@loc", "Locations"); }));
+            return;
+        }
         rows.add(section("Pages"));
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n]; int[] co = new int[n]; String[] ic = new String[n]; boolean[] wp = new boolean[n];
         for (int i = 0; i < n; i++) {
@@ -2695,13 +2703,14 @@ public class StardropsScreen extends Screen {
     /** The colour of the Griffin pet rarity a creature first spawns for: Common, Uncommon, Rare, Epic, Legendary, Mythic. */
     private static final int[] PET_COL = {0xFFFFFFFF, 0xFF55FF55, 0xFF5577FF, 0xFFAA33DD, 0xFFFFAA00, 0xFFFF55FF};
     private void dropsGroup(Categories.Cat cat, Categories.Group grp, List<DropData.Source> srcs, StardropsConfig c) {
-        rows.add(backRow(cat.name(), "Back to all the " + cat.name() + " pages", cat.color(), () -> openPage(curSub(), null, null)));
+        if (isLoc(cat, grp)) rows.add(backRow("Locations", "Back to every location", 0xFF7FE8D8, () -> openPage(curSub(), "@loc", "Locations")));
+        else rows.add(backRow(cat.name(), "Back to all the " + cat.name() + " pages", cat.color(), () -> openPage(curSub(), null, null)));
         int total = 0; for (DropData.Source s : srcs) total += s.drops.size();
         rows.add(hero(grp.icon(), grp.name(), srcs.size() + (grp.id().equals("slayer") ? (srcs.size() == 1 ? " Boss" : " Bosses") : srcs.size() == 1 ? " Mob" : " Mobs") + " \u2022 " + total + (total == 1 ? " Drop" : " Drops") + " listed", grp.color()));
         if (grp.id().equals("myth")) mythSettings(rows, c);
         rows.add(section(grp.id().equals("slayer") ? "Bosses" : "Creatures"));
         int n = srcs.size(); String[] lb = new String[n], sb = new String[n], mi = new String[n]; int[] co = new int[n];
-        for (int i = 0; i < n; i++) { lb[i] = srcName(srcs.get(i)); sb[i] = srcs.get(i).drops.size() + " drops"; co[i] = grp.id().equals("myth") ? PET_COL[Math.max(0, Math.min(5, srcs.get(i).minPet))] : srcs.get(i).color(); mi[i] = srcIcon(srcs.get(i)); }
+        for (int i = 0; i < n; i++) { lb[i] = srcName(srcs.get(i)); sb[i] = srcs.get(i).drops.size() + (srcs.get(i).drops.size() == 1 ? " drop" : " drops"); co[i] = grp.id().equals("myth") ? PET_COL[Math.max(0, Math.min(5, srcs.get(i).minPet))] : srcs.get(i).color(); mi[i] = srcIcon(srcs.get(i)); }
         rows.add(picker("", "", lb, sb, mi, co, null, 3, () -> -1, i -> openPage(curSub(), grp.id() + "/" + srcs.get(i).id, lb[i])));
         if (!AnimationManager.isSlayer(grp.id())) animWip(grp.name());
     }
@@ -2730,6 +2739,34 @@ public class StardropsScreen extends Screen {
         if (!AnimationManager.isSlayer(grp.id())) animWip(nm);
     }
 
+    /** Mob Drops are sorted two ways: the Slayers, and Locations (every other group is a place where mobs spawn). */
+    private static boolean byLoc(Categories.Cat cat) { return cat.id().equals("bosses"); }
+    private static boolean isLoc(Categories.Cat cat, Categories.Group g) { return byLoc(cat) && !g.id().equals("slayer"); }
+    /** The sidebar list under the open category: its groups (Mob Drops: Slayers, then Locations with the places under it once opened). */
+    private void sideGroups(Categories.Cat cat, boolean mobs) {
+        String ds = dropSrc == null ? "" : dropSrc; boolean inLoc = ds.equals("@loc");
+        for (Categories.Group gr : cat.groups()) if (isLoc(cat, gr) && (ds.equals(gr.id()) || ds.startsWith(gr.id() + "/"))) inLoc = true;
+        for (Categories.Group gr : cat.groups()) {
+            if (isLoc(cat, gr)) continue;
+            srcList.add(new String[]{gr.id(), gr.name(), gr.icon(), String.valueOf(gr.color())}); if (gr.wip() || !AnimationManager.isSlayer(gr.id())) srcWip.add(gr.id());
+            boolean inGrp = ds.equals(gr.id()) || ds.startsWith(gr.id() + "/");          // a group's creatures show only once you are inside that group
+            if (mobs && Categories.hasSubs(gr) && inGrp) for (DropData.Source s : cat.sources(gr.id())) srcList.add(new String[]{gr.id() + "/" + s.id, srcName(s), srcIcon(s), String.valueOf(s.color()), "sub"});
+        }
+        if (!byLoc(cat)) return;
+        srcList.add(new String[]{"@loc", "Locations", ":locations:", String.valueOf(0xFF7FE8D8)});
+        if (inLoc) for (Categories.Group gr : cat.groups()) if (isLoc(cat, gr)) { srcList.add(new String[]{gr.id(), gr.name(), gr.icon(), String.valueOf(gr.color()), "sub"}); if (gr.wip() || !AnimationManager.isSlayer(gr.id())) srcWip.add(gr.id()); }
+    }
+    /** The Locations page: one tile for each place mobs spawn, with how many mobs and drops. */
+    private void locationsPage(Categories.Cat cat, String blurb, String what) {
+        rows.add(backRow(cat.name(), "Back to " + cat.name(), cat.color(), () -> openPage(curSub(), null, null)));
+        List<Categories.Group> locs = new ArrayList<>(); for (Categories.Group g : cat.groups()) if (isLoc(cat, g)) locs.add(g);
+        int mobs = 0, drops = 0; for (Categories.Group g : locs) for (DropData.Source so : cat.sources(g.id())) { mobs++; drops += so.drops.size(); }
+        rows.add(hero(":locations:", "Locations", blurb + "  " + locs.size() + " places \u2022 " + mobs + " mobs \u2022 " + drops + " drops", 0xFF7FE8D8));
+        int n = locs.size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n];
+        for (int i = 0; i < n; i++) { Categories.Group g = locs.get(i); int m = 0, d = 0; for (DropData.Source so : cat.sources(g.id())) { m++; d += so.drops.size(); }
+            lb[i] = g.name(); ic[i] = g.icon(); co[i] = g.color(); sb[i] = what.equals("drops") ? m + (m == 1 ? " mob \u00B7 " : " mobs \u00B7 ") + d + " drops" : what.equals("sounds") ? g.types().size() * SoundFx.SLOTS.length + " sounds" : m + (m == 1 ? " creature" : " creatures"); }
+        rows.add(picker("", "", lb, sb, ic, co, null, 3, () -> -1, i -> openPage(curSub(), locs.get(i).id(), lb[i])));
+    }
     /** "barbarian_duke" -> "Barbarian Duke". */
     private static String mobName(String id) {
         if (id == null || id.isBlank()) return ""; if (id.contains(" ")) return id;
@@ -2762,10 +2799,10 @@ public class StardropsScreen extends Screen {
         if (searching || landing()) { animationsLanding(c); return; }
         Categories.Cat cat = curCat();
         if (locked(cat)) { wipPanel(cat.icon(), cat.name() + " animations", cat.blurb()); return; }
-        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip() || !AnimationManager.isSlayer(gr0.id())) srcWip.add(gr0.id()); }
+        sideGroups(cat, false);
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
-        if (gr == null) { groupTiles(cat, "Open one to edit its animations."); return; }
+        if (gr == null) { if ("@loc".equals(dropSrc)) locationsPage(cat, "Each place has its own world; each mob its own creature.", "anim"); else groupTiles(cat, "Open one to edit its animations."); return; }
         if (!AnimationManager.isSlayer(gr.id())) { wipPanel(gr.icon(), gr.name(), "Being remade for Stardrops. Mob Drops are the first ones done."); return; }
         animationEditor(cat, gr, c);
     }
@@ -2797,6 +2834,14 @@ public class StardropsScreen extends Screen {
     /** The tiles of a category's animation groups ("Mythological Mobs", "Treasure"): each opens its editor. */
     private void groupTiles(Categories.Cat cat, String hint) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb() + " " + hint, cat.color()));
+        if (byLoc(cat)) {
+            Categories.Group sl = null; int locN = 0; for (Categories.Group g : cat.groups()) { if (g.id().equals("slayer")) sl = g; else locN++; }
+            final Categories.Group slg = sl;
+            rows.add(picker("", "", new String[]{"Slayers", "Locations"}, new String[]{sl == null ? "" : sl.types().size() + " animations", locN + " places, each its own world"},
+                new String[]{sl == null ? ":grp_slayers:" : sl.icon(), ":locations:"}, new int[]{0xFFFF5A5A, 0xFF7FE8D8}, null, 2, () -> -1,
+                i -> { if (i == 0 && slg != null) openPage(curSub(), slg.id(), slg.name()); else openPage(curSub(), "@loc", "Locations"); }));
+            return;
+        }
         int n = cat.groups().size(); String[] lb = new String[n], sb = new String[n], ic = new String[n]; int[] co = new int[n]; boolean[] wp = new boolean[n];
         for (int i = 0; i < n; i++) { Categories.Group g = cat.groups().get(i); boolean lock = g.wip() || !AnimationManager.isSlayer(g.id()); lb[i] = g.name(); sb[i] = g.types().size() + (tab == Tab.SOUNDS ? " animations \u00B7 " + g.types().size() * SoundFx.SLOTS.length + " sounds" : " animations"); ic[i] = g.icon(); co[i] = g.color(); wp[i] = lock; }   // being remade for Stardrops: only Slayer is open
         rows.add(picker("", "", lb, sb, ic, co, wp, 3, () -> -1, i -> openPage(curSub(), cat.groups().get(i).id(), lb[i])));
@@ -2812,7 +2857,7 @@ public class StardropsScreen extends Screen {
         Categories.Type ty = gr.types().get(ti);
         String key = gr.key(ty);
         StardropsConfig.AnimCfg a = c.anim(key);
-        rows.add(backRow(cat.name(), "Back to the " + cat.name() + " animations", cat.color(), () -> openPage(curSub(), null, null)));
+        rows.add(isLoc(cat, gr) ? backRow("Locations", "Back to every location", 0xFF7FE8D8, () -> openPage(curSub(), "@loc", "Locations")) : backRow(cat.name(), "Back to the " + cat.name() + " animations", cat.color(), () -> openPage(curSub(), null, null)));
         rows.add(typePicker(gr, c));
         rows.add(note(gr.id().equals("slayer") ? SLAYER_BLURB[Math.max(0, Math.min(2, AnimationManager.typeIndex(ty.id())))] : ty.blurb(), ty.color()));
         Row pl = row(0, ":play:", "Preview", "Plays it over the game, like a real drop", ty.color());
@@ -2867,10 +2912,10 @@ public class StardropsScreen extends Screen {
         if (searching || landing()) { soundsLanding(c); return; }
         Categories.Cat cat = curCat();
         if (locked(cat)) { wipPanel(cat.icon(), cat.name() + " sounds", cat.blurb()); return; }
-        for (Categories.Group gr0 : cat.groups()) { srcList.add(new String[]{gr0.id(), gr0.name(), gr0.icon(), String.valueOf(gr0.color())}); if (gr0.wip() || !AnimationManager.isSlayer(gr0.id())) srcWip.add(gr0.id()); }
+        sideGroups(cat, false);
         Categories.Group wg = wipGroup(cat); if (wg != null) { wipPanel(wg.icon(), wg.name(), ""); return; }
         Categories.Group gr = curGroup();
-        if (gr == null) { groupTiles(cat, "Open one to edit its sounds."); return; }
+        if (gr == null) { if ("@loc".equals(dropSrc)) locationsPage(cat, "The sounds of every place's scene.", "sounds"); else groupTiles(cat, "Open one to edit its sounds."); return; }
         if (!AnimationManager.isSlayer(gr.id())) { wipPanel(gr.icon(), gr.name() + " sounds", "Being remade for Stardrops along with its animation."); return; }
         soundEditor(cat, gr, c);
     }
@@ -2899,7 +2944,7 @@ public class StardropsScreen extends Screen {
         int ti = Math.max(0, Math.min(gr.types().size() - 1, edType));
         Categories.Type ty = gr.types().get(ti);
         final String scene = gr.key(ty);
-        rows.add(backRow(cat.name(), "Back to the " + cat.name() + " sounds", cat.color(), () -> openPage(curSub(), null, null)));
+        rows.add(isLoc(cat, gr) ? backRow("Locations", "Back to every location", 0xFF7FE8D8, () -> openPage(curSub(), "@loc", "Locations")) : backRow(cat.name(), "Back to the " + cat.name() + " sounds", cat.color(), () -> openPage(curSub(), null, null)));
         rows.add(typePicker(gr, c));
         if (!c.sound) { rows.add(note("Sounds are off. Turn them on from the Sounds page.", Ui.DIM)); return; }
         if (!c.customSounds) rows.add(note("The Stardrops sound set is off: every animation uses Minecraft's own sounds. Your picks for them are saved separately.", Ui.DIM));

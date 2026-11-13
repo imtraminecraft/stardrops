@@ -138,12 +138,52 @@ public final class AnimationManager {
     /** The groups that play the star scene (Star3D): the slayer bosses, and since 0.9 the rest of Mob Drops: the Crimson Isle, the End, the Mines. */
     static boolean isSlayer(String groupOrKey) { return groupOrKey != null && (groupOrKey.startsWith("slayer") || groupOrKey.startsWith("crimson") || groupOrKey.startsWith("dragon") || groupOrKey.startsWith("mobs")); }
     /** Which creature and world the star scene shows for a group that has only one (-1: a slayer boss, by its own theme). */
-    static int starBoss(String group) { return group.startsWith("crimson") ? 6 : group.startsWith("dragon") ? 7 : group.startsWith("mobs") ? 8 : -1; }
+    static int starBoss(String group) {
+        if (group == null) return -1;
+        return switch (group) {
+            case "mobs_hub" -> Star3D.ZOMBIE; case "mobs_spider" -> 1; case "mobs_deep" -> Star3D.ZOMBIE; case "mobs_hollows" -> 8; case "mobs_park" -> 2;
+            case "mobs_marsh" -> Star3D.SERPENT; case "mobs_canyon" -> Star3D.BUG; case "mobs_spooky" -> Star3D.WITCH; case "mobs_dungeon" -> Star3D.SKEL;
+            default -> group.startsWith("crimson") ? 6 : group.startsWith("dragon") ? 7 : group.startsWith("mobs") ? 8 : -1; };
+    }
+    /** The world a location's creatures stand in (Star3D.world), -1 = the creature's own. Each Mob Drops location has its own. */
+    static int starWorld(String group) {
+        if (group == null) return -1;
+        return switch (group) {
+            case "mobs_hub" -> 0; case "mobs_spider" -> 1; case "dragon" -> 7; case "crimson" -> 6; case "mobs_deep" -> 9; case "mobs" -> 8; case "mobs_hollows" -> 14;
+            case "mobs_park" -> 2; case "mobs_marsh" -> 11; case "mobs_canyon" -> 12; case "mobs_spooky" -> 13; case "mobs_dungeon" -> 10; default -> -1; };
+    }
+    /** A creature's colouring for this mob (Star3D.ZOMBIE_SKIN, KNIGHT_PLATE, GOLEM_COL, BUG_COL; serpent 1 = crowned). */
+    static int variant(String mob) {
+        return switch (mob == null ? "" : mob) {
+            case "golden_ghoul", "king_midas", "drybark" -> 1; case "lapis_zombie", "obsidian_defender", "golem" -> 2; case "undead", "zombie_grunt", "zombie_soldier", "tank_zombie", "super_tank_zombie", "crypt_dreadlord", "crypt_souleater", "shadow_assassin" -> 3;
+            case "zombie_villager", "scary_jerry", "trick_or_treater" -> 4;
+            case "queen_ant" -> 1; case "pangolin" -> 2; case "beeheemoth" -> 3; case "honeymite" -> 4; case "brineling" -> 5; case "torrid" -> 6; case "the_loch_emperor" -> 1;
+            default -> 0; };
+    }
     /** The creature named in a drop's "mob" (Star3D's creature numbers), or -1 if it names none we have. */
     static int creature(String mob) {
         return switch (mob == null ? "" : mob) {
             case "magma_boss" -> 6; case "dragon" -> 7; case "automaton" -> 8; case "bladesoul" -> Star3D.BLADESOUL; case "barbarian_duke" -> Star3D.DUKE; case "ashfang" -> Star3D.ASHFANG;
-            case "mage_outlaw" -> Star3D.MAGE; case "ghost" -> Star3D.GHOST; case "ice_walker" -> Star3D.WALKER; case "bal" -> Star3D.BAL; case "zealot" -> Star3D.ZEALOT; case "diamond_goblin" -> Star3D.GOBLIN; default -> -1; };
+            case "mage_outlaw" -> Star3D.MAGE; case "ghost" -> Star3D.GHOST; case "ice_walker" -> Star3D.WALKER; case "bal" -> Star3D.BAL; case "zealot" -> Star3D.ZEALOT; case "diamond_goblin" -> Star3D.GOBLIN;
+            // every mob of the Mob Drops locations, as the kind of creature it is
+            case "crypt_ghoul", "golden_ghoul", "zombie_villager", "lapis_zombie", "miner_zombie", "undead", "zombie_grunt", "zombie_soldier", "tank_zombie", "super_tank_zombie", "crypt_dreadlord", "crypt_souleater", "scary_jerry", "trick_or_treater" -> Star3D.ZOMBIE;
+            case "zombie_knight", "zombie_commander", "king_midas", "shadow_assassin", "obsidian_defender" -> Star3D.KNIGHT;
+            case "miner_skeleton", "skeleton_grunt", "skeleton_master", "skeleton_soldier", "skeletor", "sniper", "super_archer", "scared_skeleton" -> Star3D.SKEL;
+            case "wither_skeleton", "wither_spectre", "withermancer" -> Star3D.WSKEL;
+            case "old_wolf", "wolf", "howling_spirit", "pack_spirit", "soul_of_the_alpha", "glacite_mutt" -> 2;
+            case "arachne", "arachne_s_keeper", "broodmother", "dasher_spider", "splitter_spider", "weaver_spider" -> 1;
+            case "enderman", "voidling_extremist", "voidling_fanatic" -> 3;
+            case "blaze", "flare", "millennia_aged_blaze", "smoldering_blaze" -> 4;
+            case "magma_cube" -> 6;
+            case "emerald_slime" -> Star3D.SLIME; case "sneaky_creeper" -> Star3D.CREEPER; case "redstone_pigman" -> Star3D.PIGMAN; case "shiny_pig" -> Star3D.PIG;
+            case "goblin", "treasure_hoarder", "grunt", "puck" -> Star3D.GOBLIN;
+            case "glacite_bowman", "glacite_mage", "littlefoot" -> Star3D.WALKER;
+            case "honeymite", "beeheemoth", "giant_isopod", "pangolin", "queen_ant", "brineling", "torrid" -> Star3D.BUG;
+            case "nessie", "the_loch_emperor" -> Star3D.SERPENT;
+            case "drybark", "golem" -> Star3D.GOLEM;
+            case "silkbreeze", "phantom_spirit", "wraith" -> Star3D.GHOST;
+            case "crazy_witch" -> Star3D.WITCH; case "bat" -> Star3D.BAT;
+            default -> -1; };
     }
     static final float SL_PIVOT = 3.4f;
     static float animLen(String g, int type) { return isSlayer(g) ? (type == RNG ? 7f : type == NORMAL ? 6f : 5.5f) : animLen(type); }

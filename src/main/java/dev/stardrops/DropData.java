@@ -21,6 +21,8 @@ public final class DropData {
     /** Where drops come from: a creature, a chest, a table. */
     public static class Source {
         public String id = "", name = "", boss = "", icon = "nether_star", color = "#FFB300";
+        public String head = "";                     // Mob Drops: the mob's own head (a skin texture hash, from the bestiary)
+        public String area = "";                     // Mob Drops: where it spawns
         public String group = "";                    // the newer libraries (ExtraData): which animation group this source plays
         public int minPet = 0;                       // Mythological: the lowest Griffin pet rarity (0 Common .. 5 Mythic) this creature spawns for
         public Cube cube = new Cube();

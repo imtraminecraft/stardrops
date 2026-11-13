@@ -1,5 +1,5 @@
 {
- "v": 5,
+ "v": 6,
  "sources": [
   {
    "id": "crimson_ashfang",
@@ -40,7 +40,8 @@
      "chance": "1 in 200",
      "rank": 2
     }
-   ]
+   ],
+   "head": "3d2a5b4b109bd788edba0171d0aab8a55305ac2f56184df70a319cd488a36c3e"
   },
   {
    "id": "crimson_barbarian_duke_x",
@@ -81,7 +82,8 @@
      "chance": "1 in 200",
      "rank": 2
     }
-   ]
+   ],
+   "head": "fee9fc7c181e2f630f6b1af85d4951359cafcfa82ff5ea3bc283e0e6088c6e54"
   },
   {
    "id": "crimson_bladesoul",
@@ -122,7 +124,8 @@
      "chance": "1 in 200",
      "rank": 2
     }
-   ]
+   ],
+   "head": "7f5f3384384d7f03bf97a73099b0bafb72c538fc0415ac8613b664f87579a379"
   },
   {
    "id": "crimson_blaze",
@@ -183,7 +186,8 @@
      "chance": "1 in 2,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "b78ef2e4cf2c41a2d14bfde9caff10219f5b1bf5b35a49eb51c6467882cb5f0"
   },
   {
    "id": "crimson_flare",
@@ -204,7 +208,8 @@
      "chance": "1 in 20",
      "rank": 0
     }
-   ]
+   ],
+   "head": "b78ef2e4cf2c41a2d14bfde9caff10219f5b1bf5b35a49eb51c6467882cb5f0"
   },
   {
    "id": "crimson_magma_cube",
@@ -275,7 +280,8 @@
      "chance": "1 in 10,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "38957d5023c937c4c41aa2412d43410bda23cf79a9f6ab36b76fef2d7c429"
   },
   {
    "id": "crimson_millennia_aged_blaze",
@@ -316,7 +322,8 @@
      "chance": "1 in 6,250",
      "rank": 3
     }
-   ]
+   ],
+   "head": "b78ef2e4cf2c41a2d14bfde9caff10219f5b1bf5b35a49eb51c6467882cb5f0"
   },
   {
    "id": "crimson_smoldering_blaze",
@@ -347,7 +354,8 @@
      "chance": "1 in 6,250",
      "rank": 3
     }
-   ]
+   ],
+   "head": "b78ef2e4cf2c41a2d14bfde9caff10219f5b1bf5b35a49eb51c6467882cb5f0"
   },
   {
    "id": "crimson_wither_skeleton",
@@ -408,7 +416,8 @@
      "chance": "1 in 2,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "7953b6c68448e7e6b6bf8fb273d7203acd8e1be19e81481ead51f45de59a8"
   },
   {
    "id": "crimson_wither_spectre",
@@ -469,7 +478,8 @@
      "chance": "1 in 2,000",
      "rank": 3
     }
-   ]
+   ],
+   "head": "7f5f3384384d7f03bf97a73099b0bafb72c538fc0415ac8613b664f87579a379"
   },
   {
    "id": "crimson_mage_outlaw",
@@ -502,7 +512,8 @@
      "rank": 2,
      "flat": true
     }
-   ]
+   ],
+   "head": "ebec99b3a050fd277528407676366e20b92006ad88d14727a4d99eb8cb273b62"
   },
   {
    "id": "crimson_magma_boss",
@@ -555,7 +566,8 @@
      "rank": 2,
      "flat": true
     }
-   ]
+   ],
+   "head": "38957d5023c937c4c41aa2412d43410bda23cf79a9f6ab36b76fef2d7c429"
   }
  ]
 }

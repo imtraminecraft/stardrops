@@ -98,19 +98,20 @@ final class Slayer3D {
     }
 
     /** One frame of the scene, as the GUI hands it to the renderer. */
-    record State(float t, float animLen, int boss, int type, int energy, float alpha, float craterY, int x0, int y0, int x1, int y1,
+    record State(float t, float animLen, int boss, int type, int energy, float alpha, float craterY, int world, int variant, int x0, int y0, int x1, int y1,
                  float scale, org.joml.Matrix3x2f at, ScreenRectangle scissorArea, ScreenRectangle bounds) implements PictureInPictureRenderState {
         /** Where the GUI was drawing when the scene was queued: a menu preview draws it small inside its own little screen. */
         @Override public org.joml.Matrix3x2fc pose() { return at; }
     }
 
     /** Queue the scene into the box (gui coordinates). craterY: where the crater sits, -1 (bottom) .. 1 (top) of the box. */
-    static void submit(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, float t, float animLen, int boss, int type, int energy, float alpha, float craterY) {
+    static void submit(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, float t, float animLen, int boss, int type, int energy, float alpha, float craterY) { submit(g, x0, y0, x1, y1, t, animLen, boss, type, energy, alpha, craterY, -1, 0); }
+    static void submit(GuiGraphicsExtractor g, int x0, int y0, int x1, int y1, float t, float animLen, int boss, int type, int energy, float alpha, float craterY, int world, int variant) {
         if (x1 - x0 < 4 || y1 - y0 < 4 || alpha < 0.01f) return;
         org.joml.Matrix3x2f at = new org.joml.Matrix3x2f(g.pose()); ScreenRectangle sc = g.scissorStack.peek();          // the caller's place and clip (the menu previews scale and clip the scene)
         ScreenRectangle box = new ScreenRectangle(x0, y0, x1 - x0, y1 - y0).transformMaxBounds(at);
         if (sc != null) { box = sc.intersection(box); if (box == null) return; }
-        g.guiRenderState.addPicturesInPictureState(new State(t, animLen, boss, type, energy, alpha, craterY, x0, y0, x1, y1, 1f, at, sc, box));
+        g.guiRenderState.addPicturesInPictureState(new State(t, animLen, boss, type, energy, alpha, craterY, world, variant, x0, y0, x1, y1, 1f, at, sc, box));
     }
 
     // ------------------------------------------------------------------ the renderer
@@ -141,7 +142,7 @@ final class Slayer3D {
     /** One frame: our camera, then Vox3D's meshes, far to near. */
     static void render(State s, SubmitNodeCollector c, ProjectionMatrixBuffer pb) {
         float aspect = (s.x1() - s.x0()) / (float) (s.y1() - s.y0());
-        Vox3D.Frame f = Star3D.build(s.t(), s.animLen(), Math.floorMod(s.boss(), Star3D.CREATURES), s.type(), s.energy(), aspect, s.craterY(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne());
+        Vox3D.Frame f = Star3D.build(s.t(), s.animLen(), Math.floorMod(s.boss(), Star3D.CREATURES), s.type(), s.energy(), aspect, s.craterY(), RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(), s.world(), s.variant());
         RenderSystem.setProjectionMatrix(pb.getBuffer(f.proj), ProjectionType.PERSPECTIVE);
         RenderSystem.getModelViewStack().set(f.view);
         PoseStack ws = new PoseStack(), vs = new PoseStack(); vs.mulPose(new Matrix4f(f.view).invert());

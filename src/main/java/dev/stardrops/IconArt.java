@@ -390,6 +390,120 @@ final class IconArt {
                 glint(7, 2 + hov, 1, 0xFFFFFF, 0.5f + 0.5f * t);
                 glow(8, 4, 6, 0xB56BFF, 0.15f + 0.1f * t);
             }
+            // ---- the Mob Drops locations (13 Nov): one little scene of each place, each with its own loop
+            case "locations" -> {                                                            // Locations: a folded map, a red pin bouncing on it, a dotted trail
+                poly(new float[]{1, 5, 10, 15, 15, 10, 5, 1}, new float[]{4, 2, 4, 2, 13, 15, 13, 15}, 0xE8D8A8);
+                ln(5, 2, 5, 13, 0xB8A878); ln(10, 4, 10, 15, 0xC8B888);
+                rect(2, 9, 3, 2, 0x5AA048); rect(11, 6, 3, 3, 0x3A8AD8); px(7, 8, 0x5AA048);
+                for (int i = 0; i < 4; i++) px(3 + i * 2, 12 - i, 0xB04A3A);
+                int py = 3 - Math.round(2 * Math.abs(s)); ball(11.5f, py + 2.5f, 2.2f, 0xE83A3A); px(11, py + 5, 0x8A2A2A); px(12, py + 6, 0x8A2A2A);
+                outline();
+            }
+            case "loc_hub" -> {                                                              // the Hub: a cottage with a red roof, a lit window, smoke curling from the chimney, grass
+                rect(0, 13, 16, 3, 0x4E8A34); for (int x = 0; x < 16; x += 3) px(x, 13, 0x6EB040);
+                bev(3, 8, 10, 5, 0xC8A070); rect(4, 9, 8, 1, 0xB08A5A);
+                tri(1.5f, 8.5f, 8, 3, 14.5f, 8.5f, 0xC83A2A); ln(2, 8, 8, 3, 0xE85A3A);
+                rect(11, 3, 2, 4, 0x8A8A90);
+                int win = mix(0xFFC860, 0xFFF0B0, t); rect(5, 10, 2, 2, win); rect(9, 10, 2, 3, 0x6A4A2A); px(10, 11, 0xFFD040);
+                outline();
+                for (int i = 0; i < 3; i++) { float u = (f + i / 3f) % 1f; pxa(12 + Math.round(sn(u + i * 0.2f)), Math.round(2 - u * 3), 0xD8D8E0, 0.8f * (1f - u)); }
+                glow(6, 11, 3, 0xFFC860, 0.15f * t);
+            }
+            case "loc_spider" -> {                                                           // Spider's Den: a dark mountain cave hung with a web, a spider dropping on its thread
+                poly(new float[]{0, 6, 9, 16, 16, 0}, new float[]{14, 3, 6, 2, 16, 16}, 0x4A4450);
+                ball(8, 15, 5, 0x141018); rect(3, 14, 10, 2, 0x141018);
+                outline();
+                for (int k = 0; k <= 4; k++) { double an = k * Math.PI / 8; for (int r = 0; r <= 6; r++) pxa((int) Math.round(Math.cos(an) * r), (int) Math.round(Math.sin(an) * r), 0xE8E8F0, 0.75f); }   // a web in the corner
+                for (int r : new int[]{3, 5}) for (int k = 0; k <= 12; k++) { double an = k * Math.PI / 24; pxa((int) Math.round(Math.cos(an) * r), (int) Math.round(Math.sin(an) * r), 0xC8C8D8, 0.6f); }
+                float dy = 4 + 5 * (0.5f + 0.5f * s); ln(11, 0, 11, dy, 0xC8C8D0);
+                ball(11, dy + 1.5f, 1.6f, 0x241C1C); px(10, Math.round(dy + 1), 0xFF3030); px(12, Math.round(dy + 1), 0xFF3030);
+                for (int k = -1; k <= 1; k += 2) { px(11 + k * 2, Math.round(dy + 1), 0x3A2A2A); px(11 + k * 3, Math.round(dy + 2), 0x3A2A2A); }
+            }
+            case "loc_end" -> {                                                              // The End: a floating island of end stone, an obsidian pillar, its crystal turning and glowing
+                glow(8, 8, 8, 0x8A4AE0, 0.15f + 0.1f * t);
+                for (int i = 0; i < 5; i++) pxa((i * 7 + 2) % 16, (i * 5 + 1) % 7, 0xE8D8FF, 0.5f + 0.5f * sn(f + i * 0.2f));
+                poly(new float[]{1, 15, 12, 9, 6, 3}, new float[]{11, 11, 14, 15, 15, 13}, 0x9A9670);
+                rect(1, 10, 14, 2, 0xE8E4B0); rect(3, 12, 10, 1, 0xC8C490);
+                bev(6, 3, 4, 8, 0x241830); ln(7, 4, 7, 9, 0x3A2A50);
+                int cx = 8, cy = 2; int cc = mix(0xFF80F0, 0xFFFFFF, t);
+                px(cx, cy - 1, cc); px(cx - 1, cy, cc); px(cx + 1, cy, cc); px(cx, cy + 1, cc); px(cx, cy, 0xFFFFFF);
+                outline();
+                glow(8, 2, 3, 0xFF80F0, 0.35f + 0.3f * t);
+            }
+            case "loc_crimson" -> { return paint("grp_crimson", tint, f); }
+            case "loc_deep" -> {                                                             // Deep Caverns: a block of stone with lapis, redstone, emerald and diamond in it, a glint running across the ores
+                bev(1, 1, 14, 14, 0x5A5E68);
+                for (int j = 0; j < 3; j++) for (int i = 0; i < 3; i++) if ((i + j) % 2 == 0) rect(2 + i * 4 + (j % 2), 2 + j * 4, 3, 1, 0x4A4E58);
+                int[][] ores = {{3, 4, 0x2A5AD8}, {10, 3, 0xE02A2A}, {4, 10, 0x30D870}, {10, 10, 0x6AE8F0}};
+                for (int k = 0; k < 4; k++) { int[] o = ores[k]; float on = Math.max(0, 1 - Math.abs(f * 4 - k - 0.5f) * 1.6f); int col = mix(o[2], 0xFFFFFF, on * 0.6f);
+                    rect(o[0], o[1], 2, 2, col); px(o[0] + 2, o[1] + 1, col); px(o[0] - 1, o[1], dark(o[2], 0.2f)); if (on > 0.3f) glow(o[0] + 1, o[1] + 1, 3, o[2], on * 0.5f); }
+                outline();
+            }
+            case "loc_dwarven" -> {                                                          // Dwarven Mines: a mithril block, a pickaxe swinging into it, sparks
+                bev(4, 8, 10, 7, 0x5A8A90); rect(6, 10, 2, 2, 0x8AE8E0); rect(10, 12, 2, 1, 0x8AE8E0); px(8, 13, 0x8AE8E0);
+                float sw = 0.5f + 0.5f * sn(f); float a0 = -0.9f + sw * 0.9f;
+                float hx = 4, hy = 9;
+                ln(hx, hy, hx - 6 * (float) Math.sin(-a0), hy - 6 * (float) Math.cos(a0), 0x8A6A3A);
+                float tx = hx - 6 * (float) Math.sin(-a0), ty = hy - 6 * (float) Math.cos(a0);
+                ln(tx - 3, ty + 1, tx + 3, ty - 1, 0xC8D0D8); px(Math.round(tx - 3), Math.round(ty + 2), 0xC8D0D8); px(Math.round(tx + 3), Math.round(ty - 2), 0xC8D0D8);
+                outline();
+                if (sw < 0.25f) for (int k = 0; k < 4; k++) pxa(5 + k * 2, 7 - (k % 2) * 2, k % 2 == 0 ? 0xFFF0A0 : 0x8AE8E0, 1f - sw * 4);
+            }
+            case "loc_hollows" -> {                                                          // Crystal Hollows: a cluster of gem crystals in five colours, a shimmer climbing them
+                glow(8, 9, 7, 0xC040FF, 0.15f + 0.1f * t);
+                rect(2, 14, 12, 2, 0x4A3E5A);
+                int[][] cr = {{3, 8, 2, 0xFF5A40}, {5, 4, 3, 0xE040C0}, {8, 2, 3, 0x6A9AFF}, {11, 6, 2, 0x40E0A0}, {13, 10, 2, 0xFFC040}};
+                for (int k = 0; k < cr.length; k++) { int[] q = cr[k]; int h = 14 - q[1]; rect(q[0], q[1] + 1, q[2], h - 1, q[3]); for (int i = 0; i < q[2]; i++) px(q[0] + i, q[1] + (i == q[2] / 2 ? 0 : 1), lite(q[3], 0.3f)); rect(q[0], q[1] + 1, 1, h - 1, lite(q[3], 0.35f));
+                    float sh = (f * 14 + k * 3) % 14; int sy = 14 - Math.round(sh); if (sy > q[1] && sy < 14) px(q[0] + q[2] - 1, sy, 0xFFFFFF); }
+                outline();
+            }
+            case "loc_park" -> {                                                             // The Park: a birch and a spruce on a hill, leaves falling, a wolf howl moon
+                ball(13, 3, 2.2f, 0xF0F0D8);
+                rect(0, 13, 16, 3, 0x3E7A2A);
+                rect(4, 7, 2, 6, 0xE8E8E0); px(4, 9, 0x2A2A2A); px(5, 11, 0x2A2A2A);
+                ball(5, 5.5f, 3.6f, 0x6AB040);
+                tri(9, 13, 12, 3, 15, 13, 0x2A6A3A); tri(10, 9, 12, 2, 14, 9, 0x3A8A4A); rect(11, 12, 2, 2, 0x5A3E22);
+                outline();
+                for (int i = 0; i < 2; i++) { float u = (f + i * 0.5f) % 1f; px(Math.round(4 + i * 3 + sn(u * 2) * 1.5f), Math.round(7 + u * 6), i == 0 ? 0xC8D040 : 0x8AC040); }
+            }
+            case "loc_marsh" -> {                                                            // Moonglade Marsh: a big moon over still water, its reflection rippling, reeds and a lily pad
+                ball(8, 5, 3.6f, 0xE8F0D8); px(7, 4, 0xC8D0B8); px(9, 6, 0xC8D0B8);
+                rect(0, 10, 16, 6, 0x1E4A5A); rect(0, 10, 16, 1, 0x3A7A7A);
+                for (int y = 11; y < 15; y++) { int w = 5 - (y - 11); int off = Math.round(sn(f + y * 0.15f) * 1.2f); rect(8 - w / 2 + off, y, Math.max(1, w), 1, mix(0xC8E0D0, 0x3A7A7A, (y - 11) / 4f)); }
+                rect(2, 13, 3, 1, 0x4A9A3A); px(3, 12, 0x4A9A3A);
+                for (int k = 0; k < 3; k++) { int bx = 12 + k; float sw2 = sn(f + k * 0.3f) * 0.8f; ln(bx, 10, bx + sw2, 4 + k, 0x5A8A3A); px(Math.round(bx + sw2), 4 + k, 0x7A5A2A); }
+                outline();
+                glow(8, 5, 6, 0xC8F0E0, 0.12f + 0.08f * t);
+            }
+            case "loc_canyon" -> {                                                           // Torrhus Canyon: banded mesas under a low sun, a drop of honey falling
+                ball(8, 7, 4, 0xFFB050);
+                int[] band = {0xE8C08A, 0xA84A2A, 0xC86A3A, 0xD8905A};
+                for (int y = 8; y < 16; y++) for (int x = 0; x < 16; x++) { boolean mesa = (x < 6 && y >= 8) || (x > 10 && y >= 10) || y >= 13; if (mesa) px(x, y, band[(y / 2) % 4]); }
+                outline();
+                float u = f; int hy = 6 + Math.round(u * 7); px(8, hy, 0xFFC040); if (u > 0.85f) { px(7, 15, 0xFFC040); px(9, 15, 0xFFC040); }
+                glow(8, 7, 6, 0xFF8A3A, 0.15f + 0.1f * t);
+            }
+            case "loc_spooky" -> {                                                           // Spooky Festival: a jack o'lantern, its face flickering, a purple night round it
+                glow(8, 9, 7, 0x8A3AE0, 0.12f);
+                ball(8, 9.5f, 6, 0xE8801A); ln(5, 5, 5, 14, 0xC86010); ln(11, 5, 11, 14, 0xC86010);
+                rect(7, 2, 2, 3, 0x3A6A2A); px(9, 2, 0x5A9A3A);
+                float fl = 0.6f + 0.4f * (float) Math.abs(sn(f * 3)); int fc = mix(0xFF9A20, 0xFFF0A0, fl);
+                tri(4, 9, 6.5f, 6.5f, 7, 9, fc); tri(9, 9, 9.5f, 6.5f, 12, 9, fc);
+                rect(4, 11, 8, 2, fc); px(6, 13, fc); px(9, 13, fc); px(5, 11, 0xC86010); px(8, 12, 0xC86010); px(10, 11, 0xC86010);
+                outline();
+                glow(8, 10, 5, 0xFFC040, 0.2f * fl);
+            }
+            case "loc_catacombs" -> {                                                        // Catacombs: a skull on stone bricks, a candle beside it, its flame flickering
+                for (int y = 11; y < 16; y++) for (int x = 0; x < 16; x++) px(x, y, (y == 13 || (x + (y > 13 ? 4 : 0)) % 8 == 0) ? 0x3A3E38 : (x * 7 + y * 3) % 11 == 0 ? 0x4A6A3A : 0x6E726A);
+                ball(7, 7, 4.2f, 0xE0D8C0); rect(4, 9, 6, 3, 0xD0C8B0);
+                rect(4, 6, 2, 2, 0x1A1414); rect(8, 6, 2, 2, 0x1A1414); px(7, 9, 0x1A1414);
+                for (int x = 5; x < 10; x += 2) px(x, 11, 0x6A6458);
+                rect(13, 7, 2, 4, 0xE8E0C8);
+                outline();
+                float fl = 0.5f + 0.5f * sn(f * 2); px(13, 6, mix(0xFF8A20, 0xFFE07A, fl)); px(14, 5 - Math.round(fl), 0xFFE07A); px(13, 5, 0xFFC040);
+                glow(13.5f, 5, 4, 0xFFB040, 0.3f + 0.15f * fl);
+                pxa(5, 7, 0x9AE87A, 0.5f * t); pxa(9, 7, 0x9AE87A, 0.5f * t);
+            }
             case "grp_mines" -> {                                                            // Mines: a ghost of the Dwarven Mines drifting over a mithril block, its eyes glowing
                 bev(3, 11, 10, 5, 0x4A4C60); rect(5, 12, 2, 1, 0x4FCFBE); rect(9, 13, 3, 1, 0x4FCFBE); px(7, 14, 0x9AF4E8);
                 int b = Math.round(sn(f) * 1.2f);

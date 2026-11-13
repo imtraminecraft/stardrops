@@ -27,8 +27,10 @@ final class Star3D {
     static int done(float t) { int k = 0; for (float h : hits) if (t >= h) k++; return k; }
     static int starCol(int i, int energy) { return type == 2 ? (i == n - 1 ? 0xFFD24A : SlayerScene.TIER[Math.min(i, SlayerScene.TIER.length - 1)]) : type == 0 ? 0xDDE6FF : i == n - 1 ? mixc(energy, 0xFFFFFF, 0.3f) : 0xFFE9A0; }
 
-    static Frame build(float t, float A, int bossIn, int typeIn, int energy, float aspect, float pinY, boolean z01) {
-        boss = Math.floorMod(bossIn, CREATURES); world = boss < 9 ? boss : WORLD_OF[boss - 9]; type = typeIn; Vox3D.lastAspect = aspect; reseed(t); hits = SlayerScene.HITS[type]; n = hits.length; last = hits[n - 1];
+    static Frame build(float t, float A, int bossIn, int typeIn, int energy, float aspect, float pinY, boolean z01) { return build(t, A, bossIn, typeIn, energy, aspect, pinY, z01, -1, 0); }
+    /** worldIn: the place the creature stands in (the mob's spawn location; -1 = its own); variantIn: its colouring (see boss()). */
+    static Frame build(float t, float A, int bossIn, int typeIn, int energy, float aspect, float pinY, boolean z01, int worldIn, int variantIn) {
+        boss = Math.floorMod(bossIn, CREATURES); world = worldIn >= 0 && worldIn < THEMES.length ? worldIn : boss < 9 ? boss : WORLD_OF[boss - 9]; variant = variantIn; type = typeIn; Vox3D.lastAspect = aspect; reseed(t); hits = SlayerScene.HITS[type]; n = hits.length; last = hits[n - 1];
         F = new Frame(); tint = 0f; M = new Matrix4f(); STACK.clear(); mobMode = false; pass = 0; dyn = false; fovNow = FOV;
         float O = AnimationManager.SL_PIVOT, p = t - O;
 
@@ -240,6 +242,36 @@ final class Star3D {
                 case 1 -> n2 < 0.22f ? 0x4AA8A0 : n2 < 0.4f ? 0x3A7A80 : 0x5A8A90;
                 case 2 -> (u % (px / 2) == 0 || v % (px / 2) == 0) ? 0x44484E : 0x666A72;
                 default -> n2 < 0.05f ? 0x02E040A0 : n2 < 0.1f ? 0x0240E8D8 : n2 < 0.13f ? 0x02FFD040 : 0x4A4E56; };
+            case 9 -> c = switch (blk) {                                                            // Deep Caverns: deep stone with lapis, redstone and emerald ore
+                case 0 -> n2 < 0.08f ? 0x022A5AD8 : n2 < 0.12f ? 0x02E02A2A : n2 < 0.15f ? 0x0230D870 : n2 < 0.3f ? 0x3A3E48 : 0x4A4E58;
+                case 1 -> n2 < 0.3f ? 0x34383E : 0x42464E;
+                case 2 -> (u % (px / 2) == 0 || v % (px / 2) == 0) ? 0x2A2E34 : 0x3E424A;
+                default -> n2 < 0.2f ? 0x022A5AD8 : 0x2A3A6A; };
+            case 10 -> c = switch (blk) {                                                           // Catacombs: stone bricks, cracked and mossy
+                case 0 -> (v % (px / 2) == 0 || (u + (v / (px / 2)) * (px / 2)) % px == 0) ? 0x3E423C : n2 < 0.18f ? 0x4A6A3A : 0x6A6E66;
+                case 1 -> n2 < 0.25f ? 0x5A5E56 : 0x72766E;
+                case 2 -> n2 < 0.3f ? 0x3A4A30 : 0x4E5A44;
+                default -> n2 < 0.3f ? 0x2A2C28 : 0x44463E; };
+            case 11 -> c = switch (blk) {                                                           // Moonglade Marsh: mud, moss, still water
+                case 0 -> n2 < 0.25f ? 0x2A4A2A : n2 < 0.4f ? 0x4A6A34 : 0x3A5A30;
+                case 1 -> n2 < 0.3f ? 0x3A3022 : 0x4A3E2A;
+                case 2 -> n2 < 0.3f ? 0x1E4A5A : 0x2A6A6A;
+                default -> n2 < 0.2f ? 0x0240D8C8 : 0x1E3A40; };
+            case 12 -> c = switch (blk) {                                                           // Torrhus Canyon: banded terracotta, red sand
+                case 0 -> n2 < 0.3f ? 0xC87A44 : 0xB86A3A;
+                case 1 -> (v / Math.max(1, px / 4)) % 3 == 0 ? 0xE8C08A : (v / Math.max(1, px / 4)) % 3 == 1 ? 0xA84A2A : 0xC86A3A;
+                case 2 -> n2 < 0.3f ? 0x8A4A2A : 0x9A5A34;
+                default -> n2 < 0.15f ? 0x02FFC040 : 0x7A3A22; };
+            case 13 -> c = switch (blk) {                                                           // Spooky Festival: dark soil, dead grass, pumpkin patches
+                case 0 -> n2 < 0.12f ? 0xE8801A : n2 < 0.3f ? 0x4A4428 : 0x3A3420;
+                case 1 -> n2 < 0.3f ? 0x2E281C : 0x3A3224;
+                case 2 -> n2 < 0.2f ? 0x5A4A30 : 0x6A5A3A;
+                default -> n2 < 0.2f ? 0x02FF9A20 : 0x2A2218; };
+            case 14 -> c = switch (blk) {                                                           // Crystal Hollows: violet stone veined with gemstone
+                case 0 -> n2 < 0.06f ? 0x02E040C0 : n2 < 0.1f ? 0x02FFC040 : n2 < 0.14f ? 0x0240E0A0 : n2 < 0.35f ? 0x4A3E5A : 0x5A4E6A;
+                case 1 -> n2 < 0.3f ? 0x3E3448 : 0x4E4258;
+                case 2 -> (u % (px / 2) == 0 || v % (px / 2) == 0) ? 0x2E2638 : 0x4A3E58;
+                default -> n2 < 0.3f ? 0x02C040FF : 0x3A2E48; };
             default -> c = switch (blk) {                                                           // the Rift: purple nylium, mycelium, blackstone, crying obsidian
                 case 0 -> n2 < 0.2f ? 0x6A2A5A : 0x4A2A4A;
                 case 1 -> n2 < 0.25f ? 0x7A6A7A : 0x5E4E62;
@@ -329,7 +361,8 @@ final class Star3D {
         {"..XX..", ".XXXX.", "XXXXXX", "XXXXXX", "..XX..", "..XX..", "..XX.."},                                                                           // mushroom
         {"...X...", "..XXX..", "..XXX..", ".XXXXX.", ".XXXXX.", "XXXXXXX"}};                                                                              // crystal / rock
     static final int[][] SIL_SET = {{1, 0, 2, 0, 1, 2, 0}, {1, 7, 6, 7, 1, 6, 7}, {3, 3, 1, 3, 3, 7, 3}, {4, 7, 4, 4, 7, 4, 7}, {5, 4, 7, 4, 5, 4, 7}, {4, 1, 7, 6, 4, 7, 1},
-        {5, 4, 6, 4, 5, 7, 4}, {4, 4, 7, 4, 4, 7, 4}, {7, 5, 7, 4, 7, 7, 5}};
+        {5, 4, 6, 4, 5, 7, 4}, {4, 4, 7, 4, 4, 7, 4}, {7, 5, 7, 4, 7, 7, 5},
+        {7, 4, 7, 7, 4, 7, 7}, {5, 0, 2, 5, 0, 4, 2}, {3, 6, 1, 3, 6, 3, 1}, {4, 7, 4, 4, 7, 4, 7}, {1, 0, 6, 2, 1, 0, 6}, {7, 7, 4, 7, 7, 4, 7}};
     static void sprite(Mesh m, String[] s, float x, float y, float z, float ax, float az, float px, int col, int lit) {
         int H = s.length; for (int r = 0; r < H; r++) {
             String row = s[r]; float y0 = y + (H - 1 - r) * px, y1 = y0 + px; int W = row.length();
@@ -382,7 +415,7 @@ final class Star3D {
             }
         }
         // bats flapping across the dusk, red-eyed (graveyard, den, rift)
-        if (world == 0 || world == 1 || world == 5 || world == 8) {
+        if (world == 0 || world == 1 || world == 5 || world == 8 || world == 10 || world == 13) {
             String[] wUp = {"X.....X", "XX.X.XX", ".XXXXX.", "...X..."}, wDn = {"...X...", ".XXXXX.", "XX...XX", "X.....X"};
             int bc = argb(1f, 0x0A0608);
             for (int i = 0; i < 4; i++) {
@@ -519,6 +552,61 @@ final class Star3D {
                 glow(F.add, -0.99f, surf(-1.2f, 0.9f) + 0.8f, 0.9f, 0.7f, 0xFFC860, 0.4f);
                 burstUp(t, rise, new int[]{0x5E646C, 0x4AA8A0, 0x70767E});
             }
+            case 9 -> {                                                                           // Deep Caverns: ore pillars (lapis, redstone, emerald, diamond) glowing in the dark, a torch
+                int[] ores = {0x2A5AD8, 0xE02A2A, 0x30D870, 0x6AE8F0};
+                float[][] pl = {{-2.2f, -1.5f, 1.6f, 0}, {2.3f, -1.8f, 2.0f, 1}, {-1.2f, -2.7f, 2.4f, 2}, {2.8f, -0.4f, 1.1f, 3}, {-2.9f, -0.2f, 0.9f, 1}};
+                for (float[] q : pl) { final int oc = ores[(int) q[3]]; float gy = surf(q[0], q[1]);
+                    Skin ore = (f, u, v, w, hh) -> { float nz = rnd(f * 17 + u * 11 + v * 5 + (int) q[3] * 7); return nz < 0.16f ? 0x02000000 | oc : mul(0x4A4E58, 0.8f + nz * 0.35f); };
+                    push(); M.translate(q[0], gy, q[1]); box(-0.38f, 0f, -0.38f, 0.38f, q[2], 0.38f, ore, 8f, 0.03f); pop();
+                    glow(F.add, q[0], gy + q[2] * 0.6f, q[1], 0.9f, oc, 0.3f + 0.12f * (float) Math.sin(t * 2.2f + q[3] * 1.7f)); }
+                push(); M.translate(1.2f, surf(1.2f, 0.9f), 0.9f); box(-0.04f, 0f, -0.04f, 0.04f, 0.5f, 0.04f, noisy(0x5A4028, 0.14f, 9), 12f, 0.015f); pop(); Vox3D.fire(t, 1.2f, surf(1.2f, 0.9f) + 0.55f, 0.9f, 0.35f);
+                burstUp(t, rise, new int[]{0x4A4E58, 0x2A5AD8, 0x3A3E48});
+            }
+            case 10 -> {                                                                          // Catacombs: stone brick pillars with candles, a coffin, skulls, a sickly green glow
+                Skin brick = (f, u, v, w, hh) -> { boolean mortar = v % 3 == 0 || (u + (v / 3) * 2) % 5 == 0; float nz = rnd(u * 7 + v * 13 + f); return mortar ? 0x3A3E38 : nz < 0.15f ? 0x4A6A3A : mul(0x6E726A, 0.85f + nz * 0.3f); };
+                Skin bone = (f, u, v, w, hh) -> mul(0xD8D0B8, 0.85f + rnd(f * 5 + u * 3 + v * 11) * 0.2f);
+                Skin skull = (f, u, v, w, hh) -> f == 4 && ((v == 2 && (u == 1 || u == 3)) || (v == 0 && u == 2)) ? 0x1A1414 : bone.at(f, u, v, w, hh);
+                for (float[] q : new float[][]{{-2.1f, -1.6f, 2.2f}, {2.2f, -1.9f, 2.0f}}) { float gy = surf(q[0], q[1]); push(); M.translate(q[0], gy, q[1]); box(-0.42f, 0f, -0.42f, 0.42f, q[2], 0.42f, brick, 8f, 0.03f); box(-0.06f, q[2], -0.06f, 0.06f, q[2] + 0.22f, 0.06f, (f, u, v, w, hh) -> 0xE8E0C8, 12f, 0.01f); pop(); Vox3D.fire(t, q[0], gy + q[2] + 0.22f, q[1], 0.25f); }
+                push(); M.translate(-0.4f, surf(-0.4f, -1.6f), -1.6f).rotateY(0.2f); box(-0.75f, 0f, -0.3f, 0.75f, 0.42f, 0.3f, noisy(0x3A2A1E, 0.15f, 4), 10f, 0.02f); box(-0.8f, 0.42f, -0.34f, 0.8f, 0.5f, 0.34f, noisy(0x4A3424, 0.15f, 5), 10f, 0.02f); pop();
+                for (float[] b : new float[][]{{1.0f, 0.9f, -0.5f}, {-1.3f, 1.0f, 0.4f}, {1.6f, -0.3f, 0.9f}}) { push(); M.translate(b[0], surf(b[0], b[1]), b[1]).rotateY(b[2]); box(-0.12f, 0f, -0.12f, 0.12f, 0.2f, 0.12f, skull, 20f, 0.015f); pop(); }
+                for (int i = 0; i < 14; i++) { float u = ((t * 0.2f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 7f, u * 3f, (rnd(i * 11) - 0.5f) * 4f, 0.08f, 0x9AE87A, (1f - u) * 0.5f); }
+                burstUp(t, rise, new int[]{0x6E726A, 0x4A6A3A, 0x5A5E56});
+            }
+            case 11 -> {                                                                          // Moonglade Marsh: dark trees, still water round the creature, lily pads, reeds swaying, fireflies
+                Vox3D.tree(-2.2f, -1.8f, 1.6f, 31); Vox3D.tree(2.3f, -2.2f, 2.1f, 47);
+                disc(F.veil, 0, 0.03f, 0, 1.9f, 0x0A2A30, 0.75f); ring(F.add, 0, 0.04f, 0, 1.85f, 0.06f, 0x9AE8FF, 0.25f + 0.1f * (float) Math.sin(t * 1.5f));
+                Skin pad = (f, u, v, w, hh) -> mul(0x3A8A3A, 0.85f + rnd(u * 5 + v * 3 + f) * 0.3f), reed = (f, u, v, w, hh) -> v > hh - 3 ? 0x6A4A2A : 0x4A7A34;
+                for (float[] q : new float[][]{{1.2f, 0.6f}, {-1.0f, 0.9f}, {0.4f, -1.2f}, {-1.4f, -0.4f}}) { push(); M.translate(q[0], 0.05f, q[1]).rotateY(q[0] * 2f); box(-0.2f, 0f, -0.2f, 0.2f, 0.02f, 0.2f, pad, 20f, 0f); pop(); }
+                for (int k = 0; k < 7; k++) { float rx = -2.6f + k * 0.85f, rz = 1.6f + 0.3f * rnd(k * 3), sw = 0.12f * (float) Math.sin(t * 1.8f + k); push(); M.translate(rx, surf(rx, rz), rz).rotateZ(sw); box(-0.025f, 0f, -0.025f, 0.025f, 0.6f + 0.3f * rnd(k), 0.025f, reed, 30f, 0f); pop(); }
+                for (int i = 0; i < 16; i++) { float an = t * 0.4f + i * 0.8f; float bl = 0.5f + 0.5f * (float) Math.sin(t * 3f + i * 2.1f); glow(F.add, (float) Math.cos(an + i) * (1.5f + rnd(i) * 2f), 0.5f + rnd(i * 5) * 2.5f + 0.3f * (float) Math.sin(t + i), (float) Math.sin(an * 0.7f + i) * 1.8f - 0.5f, 0.07f, 0xD8FF6A, bl * 0.9f); }
+            }
+            case 12 -> {                                                                          // Torrhus Canyon: banded mesas, a honeycomb glowing amber, red dust in the wind
+                Skin band = (f, u, v, w, hh) -> { int b = v / 2 % 4; return mul(b == 0 ? 0xE8C08A : b == 1 ? 0xA84A2A : b == 2 ? 0xC86A3A : 0xD8905A, 0.88f + rnd(u * 7 + v * 3 + f) * 0.2f); };
+                for (float[] q : new float[][]{{-2.3f, -1.7f, 2.4f, 0.55f}, {2.4f, -2.0f, 1.8f, 0.5f}, {-1.4f, -2.9f, 3.0f, 0.7f}, {2.9f, -0.6f, 1.0f, 0.35f}}) { push(); M.translate(q[0], surf(q[0], q[1]), q[1]); box(-q[3], 0f, -q[3], q[3], q[2], q[3], band, 8f, 0.03f); pop(); }
+                Skin comb = (f, u, v, w, hh) -> (u + v) % 3 == 0 ? 0x8A5A10 : 0x02FFC040;
+                push(); M.translate(1.3f, surf(1.3f, 0.8f), 0.8f).rotateY(0.6f); box(-0.25f, 0f, -0.2f, 0.25f, 0.4f, 0.2f, comb, 14f, 0.02f); pop(); glow(F.add, 1.3f, surf(1.3f, 0.8f) + 0.25f, 0.8f, 0.8f, 0xFFB030, 0.35f);
+                for (int i = 0; i < 24; i++) { float u = ((t * 0.35f + rnd(i * 3)) % 1f); glow(F.add, -5f + u * 10f, 0.2f + rnd(i * 7) * 2.5f + 0.2f * (float) Math.sin(t * 2 + i), (rnd(i * 11) - 0.5f) * 5f, 0.05f, 0xE8905A, (float) Math.sin(Math.PI * u) * 0.6f); }
+                burstUp(t, rise, new int[]{0xC87A44, 0xA84A2A, 0xE8C08A});
+            }
+            case 13 -> {                                                                          // Spooky Festival: jack o'lanterns flickering, a dead tree, candles in the dark
+                Skin pump = (f, u, v, w, hh) -> { if (f == 4 && ((v == hh - 3 && (u == 1 || u == w - 2)) || (v == 2 && u > 0 && u < w - 1))) return 0x02FFD040; float nz = rnd(f * 7 + u * 13 + v * 5); return u % 3 == 0 ? 0xC86010 : mul(0xE8801A, 0.85f + nz * 0.25f); };
+                for (float[] q : new float[][]{{-1.6f, -1.2f, 0.3f, 0.3f}, {1.7f, -0.9f, -0.4f, 0.26f}, {-2.4f, 0.2f, 0.8f, 0.22f}, {2.5f, -2.1f, -0.2f, 0.34f}}) { float gy = surf(q[0], q[1]); push(); M.translate(q[0], gy, q[1]).rotateY(q[2]); box(-q[3], 0f, -q[3], q[3], q[3] * 1.6f, q[3], pump, 16f, 0.02f); box(-0.03f, q[3] * 1.6f, -0.03f, 0.03f, q[3] * 1.6f + 0.1f, 0.03f, (f, u, v, w, hh) -> 0x3A6A2A, 20f, 0f); pop();
+                    glow(F.add, q[0], gy + q[3], q[1] + q[3], 0.6f, 0xFF9A20, 0.35f + 0.2f * (float) Math.abs(Math.sin(t * 7f + q[0] * 3f))); }
+                Skin bark = (f, u, v, w, hh) -> mul(0x2A221E, 0.85f + rnd(u * 3 + v * 7 + f) * 0.3f);
+                push(); M.translate(-1.9f, surf(-1.9f, -2.4f), -2.4f); box(-0.15f, 0f, -0.15f, 0.15f, 2.4f, 0.15f, bark, 10f, 0.02f); M.translate(0, 1.6f, 0).rotateZ(-0.8f); box(-0.06f, 0f, -0.06f, 0.06f, 0.9f, 0.06f, bark, 10f, 0.02f); pop();
+                for (int i = 0; i < 12; i++) { float u = ((t * 0.25f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 7f, u * 4f, (rnd(i * 11) - 0.5f) * 4f, 0.06f, i % 2 == 0 ? 0xFF9A20 : 0xB060FF, (1f - u) * 0.7f); }
+                burstUp(t, rise, new int[]{0x3A3420, 0xE8801A, 0x4A4428});
+            }
+            case 14 -> {                                                                          // Crystal Hollows: towering gemstone crystals in five colours, glowing
+                int[] gems = {0xE040C0, 0xFFC040, 0x40E0A0, 0x6A9AFF, 0xFF5A40};
+                Skin rock = (f, u, v, w, hh) -> mul(0x4A3E5A, 0.8f + rnd(f * 17 + u * 11 + v * 5) * 0.35f);
+                float[][] cl = {{-2.2f, -1.5f, 1.4f, 0}, {2.3f, -1.8f, 1.7f, 1}, {-1.2f, -2.7f, 1.2f, 2}, {2.9f, -0.5f, 0.9f, 3}, {-2.9f, -0.2f, 0.8f, 4}};
+                for (float[] g : cl) { float gy = surf(g[0], g[1]); int gc = gems[(int) g[3]]; push(); M.translate(g[0], gy, g[1]); box(-0.45f, 0f, -0.4f, 0.45f, 0.25f, 0.4f, rock, 10f, 0.03f);
+                    for (int q = 0; q < 5; q++) { push(); M.translate((q - 2f) * 0.16f, 0.2f, (rnd(q + (int) g[3] * 5) - 0.5f) * 0.3f).rotateZ((q - 2f) * 0.22f).rotateX((rnd(q * 7 + (int) g[3]) - 0.5f) * 0.5f); float hh2 = g[2] * (0.5f + 0.6f * rnd(q * 5 + (int) g[3]));
+                        box(-0.09f, 0f, -0.09f, 0.09f, hh2, 0.09f, (f, u, v, w, hh) -> (u + v + f) % 3 == 0 ? 0x02000000 | mixc(gc, 0xFFFFFF, 0.5f) : 0x02000000 | gc, 6f, 0.02f); pop(); }
+                    pop(); glow(F.add, g[0], gy + 0.8f, g[1], 1.1f, gc, 0.35f + 0.15f * (float) Math.sin(t * 2f + g[3])); }
+                burstUp(t, rise, new int[]{0x4A3E5A, 0xE040C0, 0x5A4E6A});
+            }
             default -> {                                                                          // crying obsidian, a red rift it steps out of
                 Skin cry = (f, u, v, w, hh) -> { float nz = rnd(f * 31 + u * 7 + v * 13 + 99); return nz < 0.2f ? 0x8A2AD8 : mul(0x1A0E26, 0.8f + nz * 0.4f); };
                 for (float[] pl : new float[][]{{-1.9f, -1.5f, 1.3f}, {2.0f, -1.8f, 1.5f}}) { push(); M.translate(pl[0], surf(pl[0], pl[1]), pl[1]); box(-0.42f, 0f, -0.42f, 0.42f, pl[2], 0.42f, cry, 6f, 0.03f); pop(); }
@@ -590,6 +678,19 @@ final class Star3D {
                 case BAL -> Vox3D.magma(t, idle);
                 case ZEALOT -> Vox3D.zealot(t, idle);
                 case GOBLIN -> Vox3D.goblin(t, idle);
+                case SKEL -> Vox3D.skeleton(t, idle, false);
+                case WSKEL -> Vox3D.skeleton(t, idle, true);
+                case ZOMBIE -> Vox3D.zombie(t, idle, ZOMBIE_SKIN[Math.floorMod(variant, ZOMBIE_SKIN.length)], ZOMBIE_SHIRT[Math.floorMod(variant, ZOMBIE_SHIRT.length)]);
+                case KNIGHT -> Vox3D.knight(t, idle, KNIGHT_PLATE[Math.floorMod(variant, KNIGHT_PLATE.length)]);
+                case SLIME -> Vox3D.slime(t, idle, variant == 1 ? 0x7AD860 : 0x40D86A);
+                case PIGMAN -> Vox3D.pigman(t, idle);
+                case WITCH -> Vox3D.witch(t, idle);
+                case GOLEM -> Vox3D.golem(t, idle, GOLEM_COL[Math.floorMod(variant, GOLEM_COL.length)], GOLEM_MOSS[Math.floorMod(variant, GOLEM_MOSS.length)]);
+                case PIG -> Vox3D.pig(t, idle, true);
+                case BUG -> Vox3D.bug(t, idle, BUG_COL[Math.floorMod(variant, BUG_COL.length)], BUG_BELLY[Math.floorMod(variant, BUG_BELLY.length)]);
+                case SERPENT -> Vox3D.serpent(t, idle, variant == 1 ? 0x2A8A8A : 0x3A7A4A, variant == 1);
+                case BAT -> Vox3D.bat(t);
+                case CREEPER -> Vox3D.creeper(t, idle, true);
                 default -> humanoid(t, idle, false, VAMP_HEAD, VAMP_BODY, VAMP_ARM, VAMP_LEG, true);
             }
             pop(); burstD = -1f; tint = 0f; crumble = 0f; mobMode = false; clipY = -99f;
@@ -602,10 +703,20 @@ final class Star3D {
             glow(F.add, (float) Math.cos(an) * r, yy, (float) Math.sin(an) * r * 0.7f, 0.06f, type == 0 ? 0x9A9AA8 : i % 3 == 0 ? 0xFFFFFF : energy, (1f - u) * 0.9f);
         }
     }
-    static final float[] MOB_K_STAR = {1.4f, 1.5f, 1.85f, 0.85f, 1.4f, 1.35f, 1.45f, 1.0f, 1.2f, 1.3f, 1.35f, 1.25f, 1.35f, 1.4f, 1.4f, 1.75f, 0.85f, 1.05f};
+    static final float[] MOB_K_STAR = {1.4f, 1.5f, 1.85f, 0.85f, 1.4f, 1.35f, 1.45f, 1.0f, 1.2f, 1.3f, 1.35f, 1.25f, 1.35f, 1.4f, 1.4f, 1.75f, 0.85f, 1.05f,
+        1.35f, 1.3f, 1.35f, 1.3f, 1.5f, 1.35f, 1.25f, 1.05f, 1.6f, 1.35f, 1.5f, 1.6f, 1.45f};
     /** Creatures 9 and up stand in one of the first nine worlds: Bladesoul, Barbarian Duke X, Ashfang, the Mage Outlaw (Crimson Isle), a Ghost, an Ice Walker (the Mines), Bal (his lava), a special Zealot (the End). */
-    static final int BLADESOUL = 9, DUKE = 10, ASHFANG = 11, MAGE = 12, GHOST = 13, WALKER = 14, BAL = 15, ZEALOT = 16, GOBLIN = 17, CREATURES = 18;
-    static final int[] WORLD_OF = {6, 6, 6, 6, 8, 8, 6, 7, 8};          // the scenery each creature from 9 on stands in (Crimson Isle 6, the End 7, the Mines 8)
+    static final int BLADESOUL = 9, DUKE = 10, ASHFANG = 11, MAGE = 12, GHOST = 13, WALKER = 14, BAL = 15, ZEALOT = 16, GOBLIN = 17,
+        SKEL = 18, WSKEL = 19, ZOMBIE = 20, KNIGHT = 21, SLIME = 22, PIGMAN = 23, WITCH = 24, GOLEM = 25, PIG = 26, BUG = 27, SERPENT = 28, BAT = 29, CREEPER = 30, CREATURES = 31;
+    /** The scenery each creature from 9 on stands in when its location gives none (Crimson Isle 6, the End 7, the Mines 8, the Catacombs 10...). */
+    static final int[] WORLD_OF = {6, 6, 6, 6, 8, 8, 6, 7, 8, 10, 6, 0, 10, 9, 13, 2, 0, 12, 11, 10, 9};
+    /** The colourings (Row variant): zombies green, Golden Ghoul gold, Lapis Zombie blue, dungeon grey, villager; knights iron, King Midas gold, Obsidian Defender, Shadow Assassin;
+     *  golems iron, Drybark bark, dungeon stone; crawlers: isopod, ant, pangolin, bee, honeymite, brineling, torrid. */
+    static final int[] ZOMBIE_SKIN = {0x5A8A40, 0xD8B040, 0x3A5AB8, 0x8A9088, 0x6A8A50}, ZOMBIE_SHIRT = {0x2A9AA0, 0x8A6A20, 0x2A3A8A, 0x3A3A3A, 0x6A4A2A};
+    static final int[] KNIGHT_PLATE = {0xB8BCC8, 0xF0C040, 0x2A1E3A, 0x2A2236};
+    static final int[] GOLEM_COL = {0xD8D4CC, 0x6A4A2A, 0x7A7A72}, GOLEM_MOSS = {0x4A8A3A, 0x6AA040, 0x3A5A2A};
+    static final int[] BUG_COL = {0x6A7A8A, 0x8A3A22, 0xC09A6A, 0xE8C030, 0xE89A30, 0x3A9A9A, 0xE8602A}, BUG_BELLY = {0xC8C0B0, 0x5A2A1A, 0xE8D8B0, 0x1A1A1A, 0xFFE0A0, 0xA8E8E0, 0xFFC080};
+    static int variant;
     static int world;                                                            // the scenery, ground and sky (0..8); boss is the creature
     static void line(float x0, float y0, float x1, float y1, float z, int rgb, float a) {
         float dx = x1 - x0, dy = y1 - y0, l = (float) Math.sqrt(dx * dx + dy * dy); if (l < 1e-4f) return; float w = 0.025f, nx = -dy / l * w, ny = dx / l * w;
