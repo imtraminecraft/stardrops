@@ -302,5 +302,93 @@
         "stream": false
       }
     ]
+  },
+  "slr_rise_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_rise_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_approach_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_approach_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_strike_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_strike_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_dust_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_dust_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_none_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_none_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_barrage_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_barrage_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_reveal_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_reveal_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_close_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_close_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_shower_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_shower_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_jackpot_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_jackpot_d",
+        "stream": false
+      }
+    ]
+  },
+  "slr_glow_d": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_glow_d",
+        "stream": false
+      }
+    ]
   }
 }

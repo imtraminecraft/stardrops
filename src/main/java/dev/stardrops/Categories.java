@@ -85,7 +85,7 @@ final class Categories {
     static boolean hasSubs(Group g) { return g.id().equals("myth") || g.id().equals("slayer") || ExtraData.group(g.id()).size() > 1; }
 
     static final List<Cat> ALL = List.of(
-        new Cat("bosses", "Mob Drops", ":raredrops:", 0xFFFF5A5A, false, "Every mob's rare drops, sorted by where the mob spawns, then by the mob.", List.of(
+        new Cat("bosses", "Mob Drops", ":raredrops:", 0xFFFF5A5A, false, "Every mob's rare drops: browse the Slayers, or the Locations where mobs spawn.", List.of(
             new Group("slayer", "Slayers", ":grp_slayers:", 0xFFFF5A5A, "What plays when a slayer boss drops something.", SLAYER_TYPES),
             new Group("mobs_hub", "Hub", ":loc_hub:", 0xFF8FD0FF, "The Hub's graveyard, wolves and the Shiny Pig.", STAR_TYPES),
             new Group("mobs_spider", "Spider's Den", ":loc_spider:", 0xFFC46AFF, "Spiders, Arachne and her keepers.", STAR_TYPES),

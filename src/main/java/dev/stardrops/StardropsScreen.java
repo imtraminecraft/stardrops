@@ -19,7 +19,7 @@ import java.util.function.*;
 public class StardropsScreen extends Screen {
     private enum Tab {
         HOME("Home", "nether_star", "What Stardrops does, and what is new"),
-        DROPS("Drop Library", "chest", "Every drop, sorted by where it comes from"),
+        DROPS("Catalog", "chest", "Every drop, sorted by where it comes from"),
         ANIMATIONS("Animations", "firework_rocket", "Change how every drop looks and plays"),
         SOUNDS("Sounds", "note_block", "Volume and the sound of every moment"),
         CHAT("Chat", "writable_book", "Announce rare drops to your party or co-op"),
@@ -53,7 +53,7 @@ public class StardropsScreen extends Screen {
     private static final int LBL = 12, NAV_TOP = 44;
     private int slotY(int v) { return v * tp() + (v >= 1 ? LBL : 0) + (v >= 2 ? LBL : 0); }
     /** The Cosmetics entry under Visuals (Cosmetics opens its own window). */
-    private int[] cosNav() { int y = py + NAV_TOP - sideScroll + slotY(4) + (tab != Tab.GENERAL ? Math.round(subExp * subH() * subs().length) + srcExtra() : 0); return new int[]{px + 8, y, px + sw - 6, y + tabBoxH()}; }
+    private int[] cosNav() { int y = py + NAV_TOP - sideScroll + slotY(4) + (tab != Tab.GENERAL ? Math.round(subExp * subH() * sideSubs().length) + srcExtra() : 0); return new int[]{px + 8, y, px + sw - 6, y + tabBoxH()}; }
     /** Switches between Animations, Sounds and Chat, keeping the category open where the two share them. */
     private void goFx(Tab to) {
         if (to == tab) { return; }
@@ -2314,6 +2314,8 @@ public class StardropsScreen extends Screen {
     }
     private static String[] subNames(Tab t) { subList(t); return SUBNAMES.get(t); }
     private String[] subs() { return subNames(tab); }
+    /** The sub pages listed in the sidebar: Home's Resources page is reached from the Home page, not the sidebar. */
+    private String[] sideSubs() { return tab == Tab.HOME ? new String[0] : subs(); }
     private String subIcon(int k) { List<SubPage> l = subList(tab); return k >= 0 && k < l.size() ? l.get(k).icon() : ":note:"; }
     /** True on a tab's main page (no sub page chosen). */
     private boolean landing() { return subs().length > 0 && subSel[tab.ordinal()] < 0; }
@@ -2640,7 +2642,7 @@ public class StardropsScreen extends Screen {
             return;
         }
         if (landing()) {
-            Row lib = hero(":dropped:", "Drop Library", "Every drop, sorted by where it comes from. Open a category and choose the animation each drop plays and whether it is announced in chat.", Ui.ACCENT);
+            Row lib = hero(":dropped:", "Catalog", "Every drop, sorted by where it comes from. Open a category and choose the animation each drop plays and whether it is announced in chat.", Ui.ACCENT);
             int tracked = 0; for (Categories.Cat k : Categories.ALL) if (!k.wip()) for (Categories.Group g : k.groups()) if (!g.wip()) for (DropData.Source so : k.sources(g.id())) tracked += so.drops.size();
             lib.badge = tracked + "|Tracked Drops"; rows.add(lib);
             quick(new String[]{"Animations", "Chat alerts", "Epic drops play RNG", "Sounds"}, new String[]{":animations:", ":chat:", ":raredrops:", ":sounds:"},
@@ -2675,12 +2677,10 @@ public class StardropsScreen extends Screen {
     private void dropsCategory(Categories.Cat cat, StardropsConfig c) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb(), cat.color()));
         if (byLoc(cat)) {                                                                      // Mob Drops: the Slayers, or a Location
-            Categories.Group sl = null; int locN = 0, locMobs = 0, slD = 0; for (Categories.Group g : cat.groups()) { if (g.id().equals("slayer")) sl = g; else { locN++; locMobs += cat.sources(g.id()).size(); } }
-            if (sl != null) for (DropData.Source so : cat.sources("slayer")) slD += so.drops.size();
-            final Categories.Group slg = sl;
+            final Categories.Group slg = slayerGroup(cat);
             rows.add(section("Browse by"));
-            rows.add(picker("", "", new String[]{"Slayers", "Locations"}, new String[]{(sl == null ? 0 : cat.sources("slayer").size()) + " bosses \u00B7 " + slD + " drops", locN + " places \u00B7 " + locMobs + " mobs"},
-                new String[]{sl == null ? ":grp_slayers:" : sl.icon(), ":locations:"}, new int[]{0xFFFF5A5A, 0xFF7FE8D8}, null, 2, () -> -1,
+            rows.add(picker("", "", new String[]{"Slayers", "Locations"}, browseSubs(cat),
+                new String[]{slg == null ? ":grp_slayers:" : slg.icon(), ":locations:"}, new int[]{0xFFFF5A5A, 0xFF7FE8D8}, null, 2, () -> -1,
                 i -> { if (i == 0 && slg != null) openPage(curSub(), slg.id(), slg.name()); else openPage(curSub(), "@loc", "Locations"); }));
             return;
         }
@@ -2755,6 +2755,14 @@ public class StardropsScreen extends Screen {
         if (!byLoc(cat)) return;
         srcList.add(new String[]{"@loc", "Locations", ":locations:", String.valueOf(0xFF7FE8D8)});
         if (inLoc) for (Categories.Group gr : cat.groups()) if (isLoc(cat, gr)) { srcList.add(new String[]{gr.id(), gr.name(), gr.icon(), String.valueOf(gr.color()), "sub"}); if (gr.wip() || !AnimationManager.isSlayer(gr.id())) srcWip.add(gr.id()); }
+    }
+    private static Categories.Group slayerGroup(Categories.Cat cat) { for (Categories.Group g : cat.groups()) if (g.id().equals("slayer")) return g; return null; }
+    /** What the two Browse by buttons say, in the same words everywhere: how many, then how many drops. */
+    private static String[] browseSubs(Categories.Cat cat) {
+        int bosses = cat.sources("slayer").size(), slD = 0, locN = 0, locD = 0;
+        for (DropData.Source so : cat.sources("slayer")) slD += so.drops.size();
+        for (Categories.Group g : cat.groups()) if (!g.id().equals("slayer")) { locN++; for (DropData.Source so : cat.sources(g.id())) locD += so.drops.size(); }
+        return new String[]{bosses + " bosses \u00B7 " + slD + " drops", locN + " places \u00B7 " + locD + " drops"};
     }
     /** The Locations page: one tile for each place mobs spawn, with how many mobs and drops. */
     private void locationsPage(Categories.Cat cat, String blurb, String what) {
@@ -2835,9 +2843,9 @@ public class StardropsScreen extends Screen {
     private void groupTiles(Categories.Cat cat, String hint) {
         rows.add(hero(cat.icon(), cat.name(), cat.blurb() + " " + hint, cat.color()));
         if (byLoc(cat)) {
-            Categories.Group sl = null; int locN = 0; for (Categories.Group g : cat.groups()) { if (g.id().equals("slayer")) sl = g; else locN++; }
-            final Categories.Group slg = sl;
-            rows.add(picker("", "", new String[]{"Slayers", "Locations"}, new String[]{sl == null ? "" : sl.types().size() + " animations", locN + " places, each its own world"},
+            final Categories.Group slg = slayerGroup(cat), sl = slg;
+            rows.add(section("Browse by"));
+            rows.add(picker("", "", new String[]{"Slayers", "Locations"}, browseSubs(cat),
                 new String[]{sl == null ? ":grp_slayers:" : sl.icon(), ":locations:"}, new int[]{0xFFFF5A5A, 0xFF7FE8D8}, null, 2, () -> -1,
                 i -> { if (i == 0 && slg != null) openPage(curSub(), slg.id(), slg.name()); else openPage(curSub(), "@loc", "Locations"); }));
             return;
@@ -2906,7 +2914,7 @@ public class StardropsScreen extends Screen {
         Map.entry("jackpot", new String[]{"Jackpot", "Your drop appears in a pillar of gold"}),
         Map.entry("glow", new String[]{"Glow", "The glow around your drop"}));
     private static String slotName(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_NAMES[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[0]; }
-    private static String slotSub(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_SUBS[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[1] + "  \u00B7  3 takes"; }
+    private static String slotSub(String scene, int k) { return !AnimationManager.isSlayer(scene) ? SLOT_SUBS[k] : SL_SLOT.get(SoundFx.slayerFamily(scene, k))[1] + "  \u00B7  4 takes"; }
 
     private void soundsPage(StardropsConfig c) {
         if (searching || landing()) { soundsLanding(c); return; }
@@ -2977,7 +2985,7 @@ public class StardropsScreen extends Screen {
     // ---- Visuals: a landing page with three doors (Music, Cosmos, HUDs); inside a room, a live preview and one slim line per feature.
     // Only the line you click opens to show its options (vOpen: which one, per room), so a page never shows more than one feature's settings.
     private static final String[] vOpen = {"", "", ""};
-    private static final String[] V_NAME = {"Music", "Cosmos", "HUDs"}, V_ICON = {":note:", ":cosmos:", ":instruments:"}, V_SUB = {"Now Playing, lyrics, ambience", "The sky and drop moments", "Clock, compass, Y level..."};
+    private static final String[] V_NAME = {"Music", "Cosmos", "HUDs"}, V_ICON = {":note:", ":cosmos:", ":instruments:"}, V_SUB = {"Now Playing, lyrics, ambience", "The sky and drop moments", "8 HUDs: clocks, compass, speed"};
     private static final int[] V_COL = {0xFF1ED760, 0xFF9B7BFF, 0xFFFFD27A};
     private static float vr(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFF) / 65535f; }
     private static void vDot(GuiGraphicsExtractor g, float x, float y, int col) { int qx = Math.round(x), qy = Math.round(y); g.fill(qx, qy, qx + 1, qy + 1, col); }
@@ -3230,14 +3238,15 @@ public class StardropsScreen extends Screen {
     private void drawDoors(GuiGraphicsExtractor g, Row r, int mx, int my) {
         long now = System.currentTimeMillis();
         for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); int x = b[0], y = b[1], w = b[2], h = b[3]; boolean hv = mx >= x && mx < x + w && my >= Math.max(y, lt) && my < Math.min(y + h, lb) && popup == null;
-            float k = anim("vdoor" + i, hv ? 1f : 0f, 40f); int col = V_COL[i];
+            boolean sel = tab == Tab.VISUALS && !landing() && curSub() == i;                       // the open room's door stays lit
+            float k = anim("vdoor" + i, hv || sel ? 1f : 0f, 40f); int col = V_COL[i];
             holoTile(g, x, y, w, h, col, k, false, hv, i * 31 + 7, now);
             int ph2 = h - 50; pill(g, x + 3, y + 3, w - 6, ph2, 0xFF05061A); mini(g, i, true, x + 4, y + 4, w - 8, ph2 - 2, now); rout(g, x + 3, y + 3, w - 6, ph2, Gfx.argb(Math.round(70 + 150 * k), col & 0xFFFFFF));
             Icons.draw(g, V_ICON[i], x + 5, y + ph2 + 6, now); Gfx.text(g, font, V_NAME[i], x + 24, y + ph2 + 10, Canvas.mix(Ui.TEXT, 0xFFFFFFFF, k));
             vText(g, Gfx.fit(font, V_SUB[i], Math.round((w - 12) / 0.75f)), x + 6, y + ph2 + 25, 0.75f, Ui.DIM);
             int[] n = vCount(i); int dw = Math.min(5, Math.max(3, (w - 70) / Math.max(1, n[1])));
             for (int q = 0; q < n[1]; q++) g.fill(x + 6 + q * dw, y + h - 11, x + 6 + q * dw + dw - 2, y + h - 8, q < n[0] ? 0xFF62E6A8 : 0xFF2A2C5E);
-            vText(g, n[0] == 0 ? "Off" : n[0] + " of " + n[1] + " on", x + 9 + n[1] * dw, y + h - 12, 0.75f, Ui.SUB);
+            vText(g, i == 2 && StardropsConfig.get().instHide ? "Hidden" : n[0] == 0 ? "All off" : n[0] + " of " + n[1] + " on", x + 9 + n[1] * dw, y + h - 12, 0.75f, Ui.SUB);
             chevron(g, x + w - 9 + Math.round(k * 2), y + h - 10, 0, Canvas.mix(Ui.DIM, 0xFFFFC870, k));
             if (k > 0.02f) g.fill(x + 3, y + h - 3, x + 3 + Math.round((w - 6) * k), y + h - 2, 0xFFFFC870); }
     }
@@ -3259,7 +3268,7 @@ public class StardropsScreen extends Screen {
             pill(g, b[0], b[1], b[2], b[3], Canvas.mix(0xFF181A44, V_COL[r.vRoom], 0.2f + 0.3f * k)); rout(g, b[0], b[1], b[2], b[3], Gfx.argb(Math.round(110 + 120 * k), V_COL[r.vRoom] & 0xFFFFFF)); Gfx.textCentered(g, font, r.vBtn[i], b[0] + b[2] / 2, b[1] + 3, Ui.TEXT); }
     }
     private boolean clickVisual(Row r, double mx, double my) {
-        if (r.kind == VDOORS) { for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); if (mx >= b[0] && mx < b[0] + b[2]) { openPage(i, null, null); return true; } } return true; }
+        if (r.kind == VDOORS) { for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); if (mx >= b[0] && mx < b[0] + b[2]) { int keep = scroll; boolean shut = !landing() && curSub() == i; openPage(shut ? -1 : i, null, null); scroll = keep; return true; } } return true; }      // a door opens its settings under the doors (again: closes them)
         if (r.kind == VQUICK) { for (int i = 0; i < r.qLabels.length; i++) { int[] b = quickBox(r, i); if (mx >= b[0] && mx < b[0] + b[2] && my >= b[1] && my < b[1] + b[3]) { r.qSet[i].accept(!r.qGet[i].getAsBoolean()); return true; } } return true; }
         for (int i = 0; i < r.vBtn.length; i++) { int[] b = prevBtn(r, i); if (mx >= b[0] && mx < b[0] + b[2] && my >= b[1] && my < b[1] + b[3]) { r.vAct[i].run(); return true; } }
         return true;
@@ -3290,18 +3299,14 @@ public class StardropsScreen extends Screen {
     }
     private void visualsHub(StardropsConfig c) {
         Row d = new Row(); d.kind = VDOORS; d.h = 112; d.noSearch = true; rows.add(d);
-        rows.add(section("Quick switches"));
-        Row q = new Row(); q.kind = VQUICK; q.noSearch = true; q.h = 64;
-        q.qLabels = new String[]{"Now Playing", "Night sky", "Lyrics", "Drop moments", "Shooting stars", "All HUDs"}; q.qIcons = new String[]{":disc:", ":cos_night:", ":note:", ":cos_meteor:", ":cos_shoot:", ":instruments:"};
-        q.qGet = new BooleanSupplier[]{() -> c.npOn, () -> c.cosNight, () -> c.lyricsOn, () -> c.cosMeteor, () -> c.cosShooting, () -> !c.instHide};
-        q.qSet = new java.util.ArrayList<Consumer<Boolean>>(List.of(v -> c.npOn = v, v -> c.cosNight = v, v -> c.lyricsOn = v, v -> c.cosMeteor = v, v -> c.cosShooting = v, v -> c.instHide = !v)).toArray(new Consumer[0]);
-        q.qTog = new Tog[6]; for (int i = 0; i < 6; i++) q.qTog[i] = sw(q.qGet[i], q.qSet[i]);
-        rows.add(q);
-        Row mv = row(0, ":move:", "Arrange my screen", "Move and size every HUD piece in one place", 0xFFFFD27A); mv.ctls.add(new Btn("Arrange", 0xFFE8A93A, this::arrange)); mv.click = this::arrange; rows.add(mv);
+        if (landing()) { Row mv = row(0, ":move:", "Arrange my screen", "Move and size every HUD piece in one place", 0xFFFFD27A); mv.ctls.add(new Btn("Arrange", 0xFFE8A93A, this::arrange)); mv.click = this::arrange; rows.add(mv); }
+        else rows.add(section(V_NAME[curSub()]));                                                // the open room's settings follow, right under the doors
     }
     /** Visuals > Cosmos: the sky around you while you play. */
     private void cosmosPage(StardropsConfig c) {
-        if (!searching) rows.add(vPrev(1, c.cosMeteor ? new String[]{"Try a meteor", "Try a shower"} : new String[0], new Runnable[]{() -> play(() -> CosmosHud.try_(false)), () -> play(() -> CosmosHud.try_(true))}));
+        if (!searching && c.cosMeteor) {                                                       // (the live sky preview is gone: too squished to show the sky well) the drop moments can still be tried
+            Row tr = row(0, ":cos_meteor:", "Try a drop moment", "Plays it over your game, then brings you back here", 0xFF9B7BFF);
+            tr.ctls.add(new Btn("Meteor", 0xFF9B7BFF, () -> play(() -> CosmosHud.try_(false)))); tr.ctls.add(new Btn("Shower", 0xFF9B7BFF, () -> play(() -> CosmosHud.try_(true)))); tr.noSearch = true; rows.add(tr); }
         Row ns = vLine(1, "night", ":cos_night:", "Night sky", "A real sky in your world: stars, the Milky Way and planets, behind the hills and trees", () -> c.cosNight, v -> c.cosNight = v, true); rows.add(ns);
         vBody(ns, () -> {
             if (!c.cosNight) { rows.add(note("Switch it on to set it up.", 0xFF8A93B0)); return; }
@@ -3470,6 +3475,7 @@ public class StardropsScreen extends Screen {
             rows.add(picker("", "", V_NAME, V_SUB, V_ICON, V_COL, null, 3, () -> -1, i -> openPage(i, null, null)));
             return;
         }
+        if (query.isBlank()) visualsHub(c);                                                      // the three doors stay on top; the room opens below them
         if (curSub() == 1) cosmosPage(c); else if (curSub() == 2) instrumentsPage(c); else musicRoom(c);
     }
 
@@ -3737,22 +3743,22 @@ public class StardropsScreen extends Screen {
     private int srcExtra() { return srcTab() ? Math.round(srcExp * srcH() * srcList.size()) : 0; }
     private static final int SRCH = 14;
     /** The pinned Settings block at the bottom of the sidebar: a line, then the Settings tab (its pages open upwards). */
-    private int pinTop() { return py + ph - 29 - (tab == Tab.GENERAL ? Math.round(subExp * SUBH * subs().length) + 2 : 0); }
+    private int pinTop() { return py + ph - 29 - (tab == Tab.GENERAL ? Math.round(subExp * SUBH * sideSubs().length) + 2 : 0); }
     private int sideBottom() { return query.isBlank() ? pinTop() - 2 : py + ph - 4; }
-    private int sideMax() { if (!query.isBlank()) return Math.max(0, searchSideH - (ph - 70 - 8)); return Math.max(0, slotY(3) + tp() + 4 + srcExtra() + (tab == Tab.GENERAL ? 0 : Math.round(subExp * subH() * subs().length)) - (sideBottom() - (py + NAV_TOP) - 4)); }
+    private int sideMax() { if (!query.isBlank()) return Math.max(0, searchSideH - (ph - 70 - 8)); return Math.max(0, slotY(3) + tp() + 4 + srcExtra() + (tab == Tab.GENERAL ? 0 : Math.round(subExp * subH() * sideSubs().length)) - (sideBottom() - (py + NAV_TOP) - 4)); }
     private boolean inSide(double mx, double my) { return !cosWin() && mx >= px && mx < px + sw && my >= py + 42 && my < py + ph - 4; }
     private int[] tabBox(int i) {
         Tab ti = Tab.values()[i];
         if (ti == Tab.GENERAL) return new int[]{px + 8, py + ph - 26, px + sw - 6, py + ph - 4};
-        int y = (hiddenTab(ti) ? -1000 : py + NAV_TOP - sideScroll + slotY(vi(i))) + (tab != Tab.GENERAL && vi(i) > vi(tab.ordinal()) ? Math.round(subExp * subH() * subs().length) + srcExtra() : 0);
+        int y = (hiddenTab(ti) ? -1000 : py + NAV_TOP - sideScroll + slotY(vi(i))) + (tab != Tab.GENERAL && vi(i) > vi(tab.ordinal()) ? Math.round(subExp * subH() * sideSubs().length) + srcExtra() : 0);
         return new int[]{px + 8, y, px + sw - 6, y + tabBoxH()};
     }
     private int[] srcBox(int j) { int[] b = subBox(curSub()); int y = b[1] + subH() + j * srcH(); return new int[]{px + 26, y, px + sw - 6, y + srcH() - 1}; }
-    private int[] subBox(int k) { if (tab == Tab.GENERAL) { int y = py + ph - 27 - subs().length * SUBH + k * SUBH; return new int[]{px + 16, y, px + sw - 6, y + SUBH - 1}; } int y = tabBox(tab.ordinal())[1] + tabBoxH() + 3 + k * subH() + (srcTab() && k > curSub() ? srcExtra() : 0); return new int[]{px + 16, y, px + sw - 6, y + subH() - 1}; }
+    private int[] subBox(int k) { if (tab == Tab.GENERAL) { int y = py + ph - 27 - sideSubs().length * SUBH + k * SUBH; return new int[]{px + 16, y, px + sw - 6, y + SUBH - 1}; } int y = tabBox(tab.ordinal())[1] + tabBoxH() + 3 + k * subH() + (srcTab() && k > curSub() ? srcExtra() : 0); return new int[]{px + 16, y, px + sw - 6, y + subH() - 1}; }
 
     /** Keeps only the rows under the chosen sub heading (the headings themselves become the sidebar list). */
     private void filterSub() {
-        String[] names = subs();
+        String[] names = sideSubs();
         if (names.length == 0 || tab != Tab.GENERAL || (landing() && !searching)) return;
         int sel = curSub(), cur = -1;
         List<Row> keep = new ArrayList<>();
@@ -3842,7 +3848,7 @@ public class StardropsScreen extends Screen {
 
         if (!cosWin()) {
         // brand
-        g.blit(RenderPipelines.GUI_TEXTURED, ICON, px + 8, py + 8, 0f, 0f, 26, 26, 128, 128, 128, 128, 0xFFFFFFFF);
+        drawBrand(g, px + 8, py + 8, animOn ? now : 0L);
         // the name drops in letter by letter, bounces once, and stays still
         {
             float age = born == 0L || !animOn ? 99f : (now - born) / 1000f;
@@ -3874,10 +3880,10 @@ public class StardropsScreen extends Screen {
         if (Math.abs(want - selY) < 0.25f && Math.abs(selV) < 4f) { selY = want; selV = 0f; }
         int sy = Math.round(selY);
         tabAcc = Canvas.mix(tabAcc == 0 ? tabCol(tab) : tabAcc, tabCol(tab), animOn ? 0.2f : 1f);
-        subExp = anim("subExp", subs().length > 0 && query.isBlank() ? 1f : 0f, 40f);
+        subExp = anim("subExp", sideSubs().length > 0 && query.isBlank() ? 1f : 0f, 40f);
         srcExp = anim("srcExp", srcTab() && !onLanding() && !srcList.isEmpty() && query.isBlank() ? 1f : 0f, 30f);
         squeezeSide(); int toff = (tabBoxH() - 22) / 2;
-        String[] sn = subs();
+        String[] sn = sideSubs();
         for (int pass = 0; pass < 2; pass++) {                                     // pass 0: the scrolling list. pass 1: Settings, pinned under a line at the bottom
         if (pass == 0) g.enableScissor(px + 4, py + 42, px + sw, sideBottom()); else g.enableScissor(px + 4, pinTop() - 1, px + sw, py + ph - 4);
         if (fx(tab)) lastFx = tab;
@@ -4282,8 +4288,10 @@ public class StardropsScreen extends Screen {
         if (band == 0) g.enableScissor(x + R, y + 1, x + w - R, y + R); else if (band == 1) g.enableScissor(x + 1, y + R, x + w - 1, y + h - R); else g.enableScissor(x + R, y + h - R, x + w - R, y + h - 1);
         NebulaTex.draw(g, x, y, w, h, Gfx.argb(Math.round(a * 0.42f), 0xFFFFFF));
         g.fill(x, y, x + w, y + h, Gfx.argb(Math.round(a * 0.35f), Ui.PANEL & 0xFFFFFF));                 // keep it dark under the words
-        NebulaTex.glow(g, x + w * 0.78f, y + h * 0.3f, w * 0.4f, h * 0.45f, Gfx.argb(Math.round(a * 0.16f), Ui.ACCENT2 & 0xFFFFFF));   // nebula: pink and violet clouds
-        NebulaTex.glow(g, x + w * 0.35f, y + h * 0.8f, w * 0.45f, h * 0.4f, Gfx.argb(Math.round(a * 0.14f), Ui.ACCENT & 0xFFFFFF));
+        int[] bc = bgCols();                                                                                 // each main page has its own sky (bgScene)
+        NebulaTex.glow(g, x + w * 0.78f, y + h * 0.3f, w * 0.4f, h * 0.45f, Gfx.argb(Math.round(a * 0.16f), bc[0]));   // nebula clouds in the page's colours
+        NebulaTex.glow(g, x + w * 0.35f, y + h * 0.8f, w * 0.45f, h * 0.4f, Gfx.argb(Math.round(a * 0.14f), bc[1]));
+        bgScene(g, x, y, w, h, a, now, animOn);
         for (int i = 0; i < 46; i++) {
             int sx = x + 4 + (int) ((i * 2654435761L >>> 7) % Math.max(1, w - 8)), sy = y + 4 + (int) ((i * 40503L * 7919L >>> 5) % Math.max(1, h - 8));
             float tw = animOn ? 0.35f + 0.65f * Math.abs((float) Math.sin(now / (700.0 + (i % 7) * 230) + i)) : 0.7f;
@@ -4296,6 +4304,82 @@ public class StardropsScreen extends Screen {
         }
         g.disableScissor();
         }
+    }
+    /** The two nebula colours of each main page, eased from one page's to the next. */
+    private static final float[] BGC = {0, 0, 0, 0, 0, 0}; private static long bgAt;
+    private int[] bgCols() {
+        int[] want = switch (tab) { case HOME -> new int[]{0xFF7AD9, 0x8F7BFF}; case DROPS -> new int[]{0x4AC8E8, 0x3A6AFF}; case ANIMATIONS, SOUNDS, CHAT -> new int[]{0xFF5AB0, 0xFFB050};
+            case VISUALS -> new int[]{0x40E0A0, 0x8A5AFF}; case GENERAL -> new int[]{0x6A8AFF, 0x5AC8D8}; default -> new int[]{0xFF7AD9, 0x8F7BFF}; };
+        long now = System.currentTimeMillis(); float k = bgAt == 0 ? 1f : Math.min(1f, (now - bgAt) / 400f); bgAt = now;
+        int[] out = new int[2];
+        for (int q = 0; q < 2; q++) for (int ch = 0; ch < 3; ch++) { int idx = q * 3 + ch; float tv = (want[q] >> (16 - ch * 8)) & 255; BGC[idx] += (tv - BGC[idx]) * k; }
+        for (int q = 0; q < 2; q++) out[q] = (Math.round(BGC[q * 3]) << 16) | (Math.round(BGC[q * 3 + 1]) << 8) | Math.round(BGC[q * 3 + 2]);
+        return out;
+    }
+    /** Each main page's own faint scene behind everything: Home a planet rising, Catalog a ringed giant, Drop effects a meteor shower, Visuals an aurora, Settings a constellation. */
+    private void bgScene(GuiGraphicsExtractor g, int x, int y, int w, int h, int a, long now, boolean animOn) {
+        float tm = animOn ? now / 1000f : 0f;
+        for (int t = 0; t < 5; t++) {
+            boolean on = switch (t) { case 0 -> tab == Tab.HOME; case 1 -> tab == Tab.DROPS; case 2 -> fx(tab); case 3 -> tab == Tab.VISUALS; default -> tab == Tab.GENERAL; };
+            float k = anim("bgscene" + t, on ? 1f : 0f, 8f); if (k < 0.02f) continue; int al = Math.round(a * k);
+            switch (t) {
+                case 0 -> { float cx0 = x + w * 0.82f, cy0 = y + h * 1.25f, r = h * 0.5f;                    // a planet rising from the bottom corner, its rim lit
+                    NebulaTex.glow(g, cx0, cy0, r * 1.3f, r * 1.3f, Gfx.argb(Math.round(al * 0.4f), 0x8F7BFF));
+                    for (int i = 0; i < 160; i++) { double an = Math.PI + i * Math.PI / 160; float px0 = cx0 + (float) Math.cos(an) * r, py0 = cy0 + (float) Math.sin(an) * r; if (py0 < y || px0 > x + w) continue;
+                        g.fill(Math.round(px0), Math.round(py0), Math.round(px0) + 1, Math.round(py0) + 1, Gfx.argb(Math.round(al * 0.75f * (float) Math.sin(i * Math.PI / 160)), 0xFFC8F0)); } }
+                case 1 -> { float cx0 = x + w * 0.86f, cy0 = y + h * 0.8f, r = h * 0.1f;                     // a ringed giant low in the corner
+                    NebulaTex.glow(g, cx0, cy0, r * 2.2f, r * 2.2f, Gfx.argb(Math.round(al * 0.35f), 0x4AC8E8));
+                    for (int half = 0; half < 2; half++) {
+                        if (half == 1) for (int j = -Math.round(r); j <= Math.round(r); j++) { float wd = (float) Math.sqrt(Math.max(0, r * r - j * j)); float lit = 0.5f - j / (2 * r);         // the planet: banded, lit from above
+                            int band = (Math.floorMod(j, 7) < 2) ? 0x5AD8E8 : 0x2A7AA8; g.fill(Math.round(cx0 - wd), Math.round(cy0 + j), Math.round(cx0 + wd), Math.round(cy0 + j) + 1, Gfx.argb(Math.round(al * (0.25f + 0.35f * lit)), Canvas.mix(0xFF0E2A48, 0xFF000000 | band, lit) & 0xFFFFFF)); }
+                        for (int i = 0; i < 260; i++) { double an = i * Math.PI * 2 / 260; float ex = (float) Math.cos(an) * r * 2.2f, ey = (float) Math.sin(an) * r * 0.42f; if ((ey > 0) != (half == 1)) continue;
+                            float rx = ex * 0.95f - ey * 0.3f, ry = ex * 0.3f + ey * 0.95f; int col = half == 1 ? 0xC8F4FF : 0x6AB8D8;
+                            g.fill(Math.round(cx0 + rx), Math.round(cy0 + ry), Math.round(cx0 + rx) + 1, Math.round(cy0 + ry) + 1, Gfx.argb(Math.round(al * (half == 1 ? 0.7f : 0.35f)), col)); } } }
+                case 2 -> { for (int m = 0; m < 3; m++) { float u = ((tm / 2.6f) + m / 3f) % 1f; if (u > 0.35f) continue; float v = u / 0.35f;   // a meteor shower
+                        float hx = x + w * (0.25f + 0.25f * m) + v * w * 0.35f, hy = y + h * (0.05f + 0.1f * m) + v * h * 0.3f;
+                        for (int q = 0; q < 18; q++) { float f = q / 18f; g.fill(Math.round(hx - f * 46), Math.round(hy - f * 20), Math.round(hx - f * 46) + 1, Math.round(hy - f * 20) + 1, Gfx.argb(Math.round(al * 0.7f * (1f - f) * (float) Math.sin(Math.PI * v)), q < 3 ? 0xFFF0E0 : 0xFF7AD9)); } } }
+                case 3 -> { for (int c = 0; c < w; c += 2) { float wv = (float) Math.sin(c * 0.035f + tm * 0.6f) * 0.5f + 0.5f, wv2 = (float) Math.sin(c * 0.013f - tm * 0.35f) * 0.5f + 0.5f;   // an aurora along the bottom
+                        int top = Math.round(y + h - 18 - 40 * wv * wv2), col = Canvas.mix(0xFF40E0A0, 0xFF8A5AFF, wv2) & 0xFFFFFF;
+                        for (int yy = top; yy < y + h - 4; yy += 2) { float f = (yy - top) / (float) Math.max(1, y + h - 4 - top); g.fill(x + c, yy, x + c + 2, yy + 2, Gfx.argb(Math.round(al * 0.4f * (1f - f) * (0.4f + 0.6f * wv)), col)); } } }
+                default -> { int[][] cs = {{70, 30}, {120, 55}, {175, 40}, {230, 70}, {275, 50}, {320, 85}};       // a constellation drawn faintly across the page
+                    for (int i = 0; i < cs.length; i++) { int sx = x + w - 340 + cs[i][0], sy = y + h - 120 + cs[i][1]; float tw = 0.6f + 0.4f * (float) Math.sin(tm * 1.3f + i);
+                        g.fill(sx - 1, sy, sx + 2, sy + 1, Gfx.argb(Math.round(al * 0.6f * tw), 0xC8D8FF)); g.fill(sx, sy - 1, sx + 1, sy + 2, Gfx.argb(Math.round(al * 0.6f * tw), 0xC8D8FF));
+                        if (i > 0) { int ox = x + w - 340 + cs[i - 1][0], oy = y + h - 120 + cs[i - 1][1]; int n = Math.max(Math.abs(sx - ox), Math.abs(sy - oy));
+                            for (int q = 2; q < n - 1; q += 2) g.fill(ox + (sx - ox) * q / n, oy + (sy - oy) * q / n, ox + (sx - ox) * q / n + 1, oy + (sy - oy) * q / n + 1, Gfx.argb(Math.round(al * 0.45f), 0x9AB8FF)); } } }
+            }
+        }
+    }
+    /**
+     * The Stardrops mark (26 x 26, drawn pixel by pixel): a ringed planet in a violet night, stars twinkling, and every few seconds a
+     * star falls across the tile and drops onto the planet with a flash. The name is the picture: a star, dropping.
+     */
+    private static void drawBrand(GuiGraphicsExtractor g, int x, int y, long now) {
+        rnd(g, x, y, 26, 26, 6, 0xFF1A1440);
+        for (int j = 1; j < 25; j++) { int c = Canvas.mix(0xFF2A1A5A, 0xFF0E1640, j / 25f); int in = j < 4 ? 4 - j : j > 21 ? j - 21 : 0; g.fill(x + 1 + in, y + j, x + 25 - in, y + j + 1, c); }
+        int[][] st = {{5, 4}, {19, 3}, {22, 9}, {3, 11}, {13, 6}, {21, 19}};
+        for (int i = 0; i < st.length; i++) { float tw = 0.4f + 0.6f * (0.5f + 0.5f * (float) Math.sin(now / 420.0 + i * 1.9)); g.fill(x + st[i][0], y + st[i][1], x + st[i][0] + 1, y + st[i][1] + 1, Gfx.argb(Math.round(255 * tw), 0xE8E0FF)); }
+        float pcx = 10.5f, pcy = 16.5f, pr = 6.2f; float ph = (now % 3200L) / 3200f;
+        brandRing(g, x, y, pcx, pcy, false);                                                                   // the ring's far half, behind the planet
+        for (int j = -7; j <= 7; j++) for (int i = -7; i <= 7; i++) { float dx = i, dy = j; float d = (float) Math.sqrt(dx * dx + dy * dy); if (d > pr) continue;
+            float lit = Math.max(0f, Math.min(1f, 0.55f + (-dx * 0.55f - dy * 0.45f) / pr)); int band = (j + 7) % 4 == 0 ? 0xFFB06AE8 : 0xFF9A5AD8;
+            int c = Canvas.mix(Canvas.mix(0xFF3A1A6A, band, lit), 0xFFFFC8F0, Math.max(0f, lit - 0.8f) * 2f);
+            g.fill(Math.round(x + pcx + i), Math.round(y + pcy + j), Math.round(x + pcx + i) + 1, Math.round(y + pcy + j) + 1, c); }
+        brandRing(g, x, y, pcx, pcy, true);                                                                    // and its near half, in front
+        if (ph < 0.42f) {                                                                                      // the falling star
+            float u = ph / 0.42f, e = u * u; float hx = 23f - e * 11f, hy = 1f + e * 13f;
+            for (int k = 0; k < 7; k++) { float tx = hx + k * 1.1f, ty = hy - k * 1.3f; if (tx > 25 || ty < 1) break; g.fill(Math.round(x + tx), Math.round(y + ty), Math.round(x + tx) + 1, Math.round(y + ty) + 1, Gfx.argb(Math.round(230 * (1f - k / 7f)), k < 2 ? 0xFFF4C8 : 0xC8A0FF)); }
+            g.fill(Math.round(x + hx) - 1, Math.round(y + hy), Math.round(x + hx) + 2, Math.round(y + hy) + 1, 0xFFFFFFFF); g.fill(Math.round(x + hx), Math.round(y + hy) - 1, Math.round(x + hx) + 1, Math.round(y + hy) + 2, 0xFFFFFFFF);
+        } else if (ph < 0.62f) {                                                                               // it lands: a flash and a little four-point star
+            float u = (ph - 0.42f) / 0.2f; int a = Math.round(255 * (1f - u)); int fx = x + 12, fy = y + 14, r = 1 + Math.round(u * 3);
+            g.fill(fx - r, fy, fx + r + 1, fy + 1, Gfx.argb(a, 0xFFF4C8)); g.fill(fx, fy - r, fx + 1, fy + r + 1, Gfx.argb(a, 0xFFF4C8)); g.fill(fx - 1, fy - 1, fx + 2, fy + 2, Gfx.argb(a, 0xFFFFFF));
+        }
+        rndOut(g, x, y, 26, 26, 6, 0xFF4A3A8A);
+    }
+    private static void brandRing(GuiGraphicsExtractor g, int x, int y, float cx, float cy, boolean front) {
+        float tilt = -0.32f, cs = (float) Math.cos(tilt), sn = (float) Math.sin(tilt);
+        for (int k = 0; k < 64; k++) { double a = k * Math.PI * 2 / 64; float ex = (float) Math.cos(a) * 10.5f, ey = (float) Math.sin(a) * 2.6f; if ((ey > 0) != front) continue;
+            float rx = ex * cs - ey * sn, ry = ex * sn + ey * cs; int gx = Math.round(x + cx + rx), gy = Math.round(y + cy + ry);
+            g.fill(gx, gy, gx + 1, gy + 1, front ? 0xFFF4D0FF : 0xFFA070D0); }
     }
     /** The window's corner radius. */
     static final int WIN_R = 10;
@@ -4433,7 +4517,7 @@ public class StardropsScreen extends Screen {
             }
         }
         if (subExp > 0.9f && query.isBlank()) {
-            for (int k = 0; k < subs().length; k++) {
+            for (int k = 0; k < sideSubs().length; k++) {
                 int[] b = subBox(k);
                 if ((tab == Tab.GENERAL || my < sideBottom()) && inSide(mx, my) && mx >= b[0] && mx < b[2] && my >= b[1] && my < b[3]) { dropSrc = null; dropSrcName = null; waveKey = null; SoundFx.stopPreviews(); if (curSub() != k) tabChanged = System.currentTimeMillis(); subSel[tab.ordinal()] = k; scroll = 0; open.removeIf(o -> o.startsWith("dd_")); return true; }
             }

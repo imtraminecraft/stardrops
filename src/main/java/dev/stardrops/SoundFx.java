@@ -36,10 +36,14 @@ public final class SoundFx {
     /** The Slayer sound families (one per moment) and the names of their three takes. */
     static final String[] SL_FAM = {"rise", "approach", "strike", "dust", "none", "barrage", "reveal", "close", "shower", "jackpot", "glow"};
     private static final String[][] SL_TAKES = {
-        {"Awakening", "War horn", "From the abyss"}, {"War drums", "The roar", "Heart of the planet"}, {"Thunderbolt", "Meteorite", "Falling star"},
-        {"Ash", "Crumble", "Last breath"}, {"Two notes", "Cello", "Hollow"}, {"Bombardment", "Rain of fire", "Orchestra"},
-        {"Triumph", "Glass bells", "Starlight"}, {"Rest", "Echo", "One bell"}, {"Ascension", "Gacha roll", "Titan"},
-        {"Coronation", "Heaven's gate", "Supernova"}, {"Afterglow", "Halo", "Music box"}};
+        {"Awakening", "War horn", "From the abyss", "Launch"}, {"War drums", "The roar", "Heart of the planet", "Signal acquired"}, {"Thunderbolt", "Meteorite", "Falling star", "Re-entry"},
+        {"Ash", "Crumble", "Last breath", "Static"}, {"Two notes", "Cello", "Hollow", "Silence of space"}, {"Bombardment", "Rain of fire", "Orchestra", "Meteor field"},
+        {"Triumph", "Glass bells", "Starlight", "Discovery"}, {"Rest", "Echo", "One bell", "Drift"}, {"Ascension", "Gacha roll", "Titan", "Star rain"},
+        {"Coronation", "Heaven's gate", "Supernova", "First light"}, {"Afterglow", "Halo", "Music box", "Nebula"}};
+    /** The takes of each moment: a, b, c the epic set, d VOYAGER (tools/make_voyager_sounds.py), the space and exploration set every Mob Drops scene plays by default. */
+    static final String TAKES = "abcd";
+    /** Every Mob Drops scene group: the Slayers and every Location. */
+    static final String[] MOB_GROUPS = {"slayer", "crimson", "dragon", "mobs", "mobs_hub", "mobs_spider", "mobs_deep", "mobs_hollows", "mobs_park", "mobs_marsh", "mobs_canyon", "mobs_spooky", "mobs_dungeon"};
     private static final SoundEvent[] SL_VAN = {SoundEvents.ZOMBIE_AMBIENT, SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.SAND_BREAK,
         SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.AMETHYST_BLOCK_RESONATE,
         SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundEvents.BEACON_AMBIENT};
@@ -51,7 +55,7 @@ public final class SoundFx {
         int k = java.util.Arrays.asList(SLOTS).indexOf(slot);
         if (!AnimationManager.isSlayer(scene) || !StardropsConfig.get().customSounds || k < 0) return choices();
         List<String> l = new ArrayList<>(); l.add(NONE); String f = slayerFamily(scene, k);
-        for (char v : "abc".toCharArray()) l.add("slr_" + f + "_" + v);
+        for (char v : TAKES.toCharArray()) l.add("slr_" + f + "_" + v);
         return l;
     }
     private static Fx reg(String name, String label, SoundEvent vanilla, float vol) { Fx f = new Fx(name, label, vanilla, vol, true); ALL.put(name, f); return f; }
@@ -67,6 +71,7 @@ public final class SoundFx {
         // Slayer: five moments, three takes of each (tools/make_slayer_sounds.py: the epic set, drums, horns, choir, big halls)
         for (int f = 0; f < SL_FAM.length; f++) for (int v = 0; v < 3; v++)
             reg("slr_" + SL_FAM[f] + "_" + "abc".charAt(v), SL_TAKES[f][v], SL_VAN[f], 0.85f);
+        for (int f = 0; f < SL_FAM.length; f++) reg("slr_" + SL_FAM[f] + "_d", SL_TAKES[f][3], SL_VAN[f], 0.85f);          // VOYAGER
         reg("sky_open", "Achievements: open", SoundEvents.AMETHYST_BLOCK_CHIME, 0.7f);              // the achievements sky
         reg("sky_close", "Achievements: close", SoundEvents.AMETHYST_BLOCK_HIT, 0.6f);
         reg("sky_zoom", "Achievements: fly", SoundEvents.PLAYER_ATTACK_SWEEP, 0.6f);
@@ -145,9 +150,9 @@ public final class SoundFx {
             d0.add(new String[]{g + ".rng", NONE, NONE, NONE, NONE, NONE});
         }
         d0.removeIf(r -> AnimationManager.isSlayer(r[0]));                     // Mob Drops have their own set (the epic one)
-        for (String g : new String[]{"slayer", "crimson", "dragon", "mobs"}) for (String ty : g.equals("slayer") ? new String[]{"nodrops", "normal", "rng"} : new String[]{"normal", "rng"}) {      // the first take of each moment
+        for (String g : MOB_GROUPS) for (String ty : g.equals("slayer") ? new String[]{"nodrops", "normal", "rng"} : new String[]{"normal", "rng"}) {      // VOYAGER, the same set for every Mob Drops scene
             String[] r = new String[6]; r[0] = g + "." + ty;
-            for (int k = 0; k < 5; k++) r[k + 1] = "slr_" + slayerFamily(r[0], k) + "_a";
+            for (int k = 0; k < 5; k++) r[k + 1] = "slr_" + slayerFamily(r[0], k) + "_d";
             d0.add(r);
         }
         String[][] d = d0.toArray(new String[0][]);
@@ -181,6 +186,7 @@ public final class SoundFx {
 
     /** The sound the player picked (or the default) for e.g. ("epic", "reveal"), in the current sound set. */
     public static String chosen(String scene, String slot) {
+        voyager();
         String key = scene + "." + slot;
         boolean custom = StardropsConfig.get().customSounds;
         String v = picks().get(key);
@@ -193,6 +199,12 @@ public final class SoundFx {
         return (custom ? DEFAULTS : MC_DEFAULTS).get(key);
     }
     public static void choose(String scene, String slot, String name) { picks().put(scene + "." + slot, name); }
+    /** Once: the Mob Drops scenes forget their old picks, so every one plays the new VOYAGER set (author, 13 Nov: "make them all the same"). */
+    private static void voyager() {
+        StardropsConfig c = StardropsConfig.get(); if (c.voyagerSet) return; c.voyagerSet = true;
+        if (c.sounds != null) c.sounds.keySet().removeIf(k -> { for (String g : MOB_GROUPS) if (k.startsWith(g + ".")) return true; return false; });
+        StardropsConfig.save();
+    }
 
     /** Master volume as a 0..1 factor (0 when sounds are off). */
     public static float master() {
