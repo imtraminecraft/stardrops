@@ -2940,6 +2940,8 @@ public class StardropsScreen extends Screen {
             rows.add(toggle(":collection:", "Your constellations", "The stars you have lit in Achievements shine in the real sky, joined up", () -> c.cosCons, v -> c.cosCons = v));
             rows.add(toggle(":cos_night:", "Milky Way", "The faint band of the galaxy across the sky", () -> c.cosMilky, v -> c.cosMilky = v));
             rows.add(toggle(":cosmos:", "Planets", "A ringed giant and a small red world", () -> c.cosPlanets, v -> c.cosPlanets = v));
+            rows.add(toggle(":amb_glow:", "Deep sky", "Colourful nebulae, and a spiral galaxy far away", () -> c.cosDeep, v -> c.cosDeep = v));
+            rows.add(toggle(":cos_shoot:", "Comet", "Every few minutes a comet crosses slowly, its two tails behind it", () -> c.cosComet, v -> c.cosComet = v));
         });
         rows.add(vLine(1, "shoot", ":cos_shoot:", "Shooting stars", "Now and then a shooting star crosses the night sky", () -> c.cosShooting, v -> c.cosShooting = v, false));
         rows.add(vLine(1, "aurora", ":cos_aurora:", "Aurora", "At night, curtains of green and violet light sway low in the north", () -> c.cosAurora, v -> c.cosAurora = v, false));

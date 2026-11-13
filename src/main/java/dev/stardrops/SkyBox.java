@@ -84,6 +84,12 @@ final class SkyBox {
             boolean core = Math.abs(lon - 1.2) < 0.9;                             // the bright heart of the galaxy
             haze[i] = new float[]{d.x, d.y, d.z, 0.16f + 0.14f * rnd(i * 3 + 1) + (core ? 0.08f : 0f), hc[i % (core ? hc.length : 5)], (0.05f + 0.05f * rnd(i * 11)) * (core ? 1.7f : 1f)};
         }
+        double[][] nc = {{70, 40}, {250, 25}, {160, 70}}; int[][] ncol = {{0xFF5AA8, 0xB06AFF, 0xFF9A6A}, {0x3AD8C8, 0x5A8AFF, 0x9AE8FF}, {0xFFB04A, 0xFF5A7A, 0xC86AFF}};
+        nebula = new float[nc.length * 14][];
+        for (int n = 0; n < nc.length; n++) { Vector3f ctr = at(Math.toRadians(nc[n][0]), Math.toRadians(nc[n][1])); Vector3f u = new Vector3f(), v = new Vector3f(); basis(ctr, u, v);
+            for (int i = 0; i < 14; i++) { int sd = n * 97 + i * 13; float ox = (rnd(sd) - 0.5f) * 0.16f, oy = (rnd(sd + 1) - 0.5f) * 0.1f;
+                Vector3f d = new Vector3f(ctr).add(new Vector3f(u).mul(ox)).add(new Vector3f(v).mul(oy)).normalize();
+                nebula[n * 14 + i] = new float[]{d.x, d.y, d.z, 0.035f + 0.07f * rnd(sd + 2), ncol[n][i % 3], 0.09f + 0.1f * rnd(sd + 3)}; } }
     }
 
     // ------------------------------------------------------------------ drawing
@@ -105,7 +111,7 @@ final class SkyBox {
             float night = (c.cosOnlyNight ? 1f : CosmosHud.nightness(day) * (1f - mc.level.getRainLevel(1f))) * (c.cosSkyBright / 100f);   // Only night: always there, whatever the world's (or another mod's) clock says
             if (night < 0.02f) return;
             if (sDir == null) make();
-            milky = c.cosMilky; planets = c.cosPlanets;
+            milky = c.cosMilky; planets = c.cosPlanets; deep = c.cosDeep; comet = c.cosComet;
             minS = 0.75f * (float) Math.toRadians(mc.options.fov().get()) / Math.max(240, mc.getWindow().getHeight());   // one and a half pixels across
             final float Rr = Math.max(96f, mc.options.getEffectiveRenderDistance() * 16f * 2f);
             final long now = System.currentTimeMillis(); final float t = (now % 3_600_000L) / 1000f;
@@ -124,7 +130,7 @@ final class SkyBox {
             double diff = want - turnD; diff -= Math.round(diff);
             if (turnD < 0 || Math.abs(diff) > 0.02) turnD = want;
             else { double rate = c.cosOnlyNight ? 1.0 / 5400 : 1.0 / 1200; turnD += Math.max(0, Math.min(3 * rate, rate + diff / 8.0)) * dtS; }
-            turnD -= Math.floor(turnD); float turn = (float) turnD;
+            turnD -= Math.floor(turnD); float turn = (float) turnD; drawTurn = turn;
             ps.mulPose(new Quaternionf().rotateZ(0.35f).rotateX(turn * 6.2831853f));                // the whole sky turns, on a tilted axis
             final float nightF = night;
             ctx.submitNodeCollector().submitCustomGeometry(ps, SKY, (pose, buf) -> { Q q = (x, y, z, col) -> buf.addVertex(pose, x * Rr, y * Rr, z * Rr).setColor(col); draw(q, t, nightF, figs, shoot, aur); });
@@ -132,7 +138,10 @@ final class SkyBox {
         } catch (Throwable e) { broken = true; System.err.println("[Stardrops] sky box failed, using screen stars: " + e); }
     }
     /** The smallest half-size, in sky units, that still covers about one and a half screen pixels (0 on the bench). */
-    static float minS; static boolean milky = true, planets = true;
+    static float minS; static boolean milky = true, planets = true, deep = true, comet = true;
+    /** The turn the sky is drawn at (the aurora is held still against it). */
+    static float drawTurn;
+    private static float[][] nebula;
     /** A star or line smaller than that is drawn at that size and dimmed to the same total light, so it never blinks in and out. */
     private static int fit(float s, int col) { if (s >= minS) return col; float k = s / minS; return Math.round((col >>> 24) * k * k) << 24 | (col & 0xFFFFFF); }
     private static void quad(Q q, float cx, float cy, float cz, float ux, float uy, float uz, float vx, float vy, float vz, float s, int col) {
@@ -181,7 +190,7 @@ final class SkyBox {
             int col = (int) f[0][4]; Vector3f[] p = new Vector3f[f.length];
             for (int i = 0; i < f.length; i++) p[i] = new Vector3f(ctr).add(new Vector3f(cu).mul(-f[i][0] * CON_K)).add(new Vector3f(cv).mul(f[i][1] * CON_K)).normalize();
             for (int i = 0; i < f.length; i++) { int par = (int) f[i][2]; if (par < 0 || par >= f.length) continue; boolean lit = f[i][3] > 0 && f[par][3] > 0;
-                float a = (lit ? 0.9f : 0.16f) * night; int lc = argb(a, lit ? Ritual.mixc(col, 0xFFFFFF, 0.25f) : 0x8A94B8); line(q, p[par], p[i], lit ? 0.0028f : 0.0014f, lc, lc);
+                float a = (lit ? 0.9f : 0.32f) * night; int lc = argb(a, lit ? Ritual.mixc(col, 0xFFFFFF, 0.25f) : 0xA8B4E0); line(q, p[par], p[i], lit ? 0.0028f : 0.0018f, lc, lc);
                 if (lit) { int gl = argb(0.22f * night, col); line(q, p[par], p[i], 0.009f, gl, gl); } }                                    // a lit line glows
             for (int i = 0; i < f.length; i++) { boolean lit = f[i][3] > 0; basis(p[i], u, v);
                 if (lit) { float pu = 0.85f + 0.15f * (float) Math.sin(t * 2f + i + c); soft(q, p[i], u, v, 0.055f * pu, col, 0.6f * night, 12); soft(q, p[i], u, v, 0.02f, 0xFFFFFF, 0.8f * night, 8); quad(q, p[i].x, p[i].y, p[i].z, u.x, u.y, u.z, v.x, v.y, v.z, 0.0085f, argb(night, 0xFFFFFF));
@@ -196,16 +205,48 @@ final class SkyBox {
             Vector3f head = new Vector3f(a).add(new Vector3f(dir).mul(s[4] * k)).normalize(), tail = new Vector3f(a).add(new Vector3f(dir).mul(s[4] * Math.max(0f, k - 0.3f))).normalize();
             float f = (float) Math.sin(Math.PI * k) * night; line(q, tail, head, 0.0022f, argb(0, 0xC8B4FF), argb(f, 0xFFFFFF)); basis(head, u, v); soft(q, head, u, v, 0.012f, 0xFFFFFF, f, 8);
         }
-        if (aur) for (int b = 0; b < 2; b++) for (int k = 0; k < 48; k++) {                             // aurora: curtains low in the north, swaying
-            double az0 = Math.toRadians(-70 + k * 2.9), az1 = Math.toRadians(-70 + (k + 1) * 2.9);
-            float lo0 = 0.2f + 0.1f * b + 0.05f * (float) Math.sin(k * 0.4f + t * 0.3f + b * 2), lo1 = 0.2f + 0.1f * b + 0.05f * (float) Math.sin((k + 1) * 0.4f + t * 0.3f + b * 2);
-            float h0 = 0.34f + 0.12f * (float) Math.sin(k * 0.9f + t * 0.5f + b), h1 = 0.34f + 0.12f * (float) Math.sin((k + 1) * 0.9f + t * 0.5f + b);
-            float e0 = (float) Math.sin(Math.PI * k / 48.0), e1 = (float) Math.sin(Math.PI * (k + 1) / 48.0);
-            int col = Ritual.mixc(0x5AF0B0, 0x9B7BFF, 0.5f + 0.5f * (float) Math.sin(k * 0.3f + t * 0.2f + b * 1.5f));
-            Vector3f p0 = at(az0, lo0), p1 = at(az1, lo1), q0 = at(az0, lo0 + h0), q1 = at(az1, lo1 + h1); float a0 = 0.22f * night * e0 * (0.7f + 0.3f * (float) Math.sin(k * 1.7f + t * 1.3f)), a1 = 0.22f * night * e1 * (0.7f + 0.3f * (float) Math.sin((k + 1) * 1.7f + t * 1.3f));
-            q.v(p0.x, p0.y, p0.z, argb(a0, col)); q.v(p1.x, p1.y, p1.z, argb(a1, col)); q.v(q1.x, q1.y, q1.z, argb(0, col)); q.v(q0.x, q0.y, q0.z, argb(0, col));
+        if (deep) {                                                                                     // deep sky: nebulae, and a spiral galaxy far away
+            for (float[] nb : nebula) { d.set(nb[0], nb[1], nb[2]); basis(d, u, v); soft(q, d, u, v, nb[3], (int) nb[4], nb[5] * night, 10); }
+            Vector3f gc = at(Math.toRadians(205), Math.toRadians(58)); basis(gc, u, v); float tl = 0.5f, cs = (float) Math.cos(tl), sn = (float) Math.sin(tl);
+            soft(q, gc, u, v, 0.06f, 0x8AA0FF, 0.16f * night, 12); soft(q, gc, u, v, 0.018f, 0xFFF0C8, 0.55f * night, 10);
+            for (int arm = 0; arm < 2; arm++) for (int i = 0; i < 44; i++) {
+                float an = i * 0.2f + arm * 3.1416f + t * 0.01f, r = 0.005f + i * 0.00095f, x = r * (float) Math.cos(an), y = r * 0.42f * (float) Math.sin(an), rx = x * cs - y * sn, ry = x * sn + y * cs;
+                Vector3f pt = new Vector3f(gc).add(new Vector3f(u).mul(rx)).add(new Vector3f(v).mul(ry));
+                quad(q, pt.x, pt.y, pt.z, u.x, u.y, u.z, v.x, v.y, v.z, 0.0016f + 0.0012f * (1f - i / 44f), argb(night * (0.75f - 0.5f * i / 44f), i % 4 == 0 ? 0xFFC8F0 : 0xC8D8FF));
+            }
+        }
+        if (comet) {                                                                                    // a comet: every eight minutes it crosses part of the sky, slowly, in about 80 seconds
+            long ms = System.currentTimeMillis() % 480_000L; float k = ms / 80_000f;
+            if (k < 1f) {
+                Vector3f a0 = at(Math.toRadians(40), Math.toRadians(30)), a1 = at(Math.toRadians(140), Math.toRadians(62));
+                Vector3f head = new Vector3f(a0).lerp(a1, k).normalize(), back = new Vector3f(a0).sub(a1).normalize(); float f = (float) Math.sin(Math.PI * k) * night;
+                basis(head, u, v); soft(q, head, u, v, 0.03f, 0x9AE8FF, 0.35f * f, 10); soft(q, head, u, v, 0.009f, 0xFFFFFF, 0.95f * f, 8);
+                for (int i = 1; i <= 14; i++) { float s = i / 14f;                                           // the dust tail curves a little, the ion tail runs straight and blue
+                    Vector3f pd = new Vector3f(head).add(new Vector3f(back).mul(0.3f * s)).add(new Vector3f(u).mul(0.05f * s * s)).normalize(); basis(pd, u, v);
+                    soft(q, pd, u, v, 0.012f + 0.03f * s, 0xFFE8B8, 0.22f * f * (1f - s), 8); basis(head, u, v); }
+                line(q, head, new Vector3f(head).add(new Vector3f(back).mul(0.42f)).normalize(), 0.004f, argb(0.6f * f, 0x8AC8FF), argb(0, 0x6A9AFF));
+            }
+        }
+        if (aur) {                                                                                      // aurora: curtains of light low over the northern horizon, held still while the stars turn
+            org.joml.Matrix3f fix = new org.joml.Matrix3f().rotateX((float) (-drawTurn * Math.PI * 2)).rotateZ(-0.35f);
+            Vector3f p0 = new Vector3f(), p1 = new Vector3f(), m0 = new Vector3f(), m1 = new Vector3f(), q0 = new Vector3f(), q1 = new Vector3f();
+            for (int b = 0; b < 2; b++) for (int k = 0; k < 64; k++) {
+                double az0 = Math.toRadians(-60 + k * 1.9 + b * 6), az1 = Math.toRadians(-60 + (k + 1) * 1.9 + b * 6);
+                float w0 = 0.04f * (float) Math.sin(k * 0.35f + t * 0.25f + b * 2), w1 = 0.04f * (float) Math.sin((k + 1) * 0.35f + t * 0.25f + b * 2);
+                float lo0 = 0.06f + 0.05f * b + w0, lo1 = 0.06f + 0.05f * b + w1;
+                float h0 = 0.2f + 0.09f * (float) Math.sin(k * 0.7f + t * 0.4f + b), h1 = 0.2f + 0.09f * (float) Math.sin((k + 1) * 0.7f + t * 0.4f + b);
+                float e0 = (float) Math.sin(Math.PI * k / 64.0), e1 = (float) Math.sin(Math.PI * (k + 1) / 64.0);
+                float r0 = 0.45f + 0.55f * sq((float) Math.sin(k * 1.9f + t * 0.6f + b * 3)), r1 = 0.45f + 0.55f * sq((float) Math.sin((k + 1) * 1.9f + t * 0.6f + b * 3));   // light rays
+                float a0 = 0.3f * night * e0 * r0 * (b == 0 ? 1f : 0.6f), a1 = 0.3f * night * e1 * r1 * (b == 0 ? 1f : 0.6f);
+                fix.transform(p0.set(at(az0, lo0))); fix.transform(p1.set(at(az1, lo1))); fix.transform(m0.set(at(az0, lo0 + h0 * 0.35f))); fix.transform(m1.set(at(az1, lo1 + h1 * 0.35f)));
+                fix.transform(q0.set(at(az0, lo0 + h0))); fix.transform(q1.set(at(az1, lo1 + h1)));
+                int gr = 0x4AF0A0, mid = 0x5AD8C8, top = 0xA06AFF;
+                q.v(p0.x, p0.y, p0.z, argb(a0 * 0.6f, gr)); q.v(p1.x, p1.y, p1.z, argb(a1 * 0.6f, gr)); q.v(m1.x, m1.y, m1.z, argb(a1, mid)); q.v(m0.x, m0.y, m0.z, argb(a0, mid));
+                q.v(m0.x, m0.y, m0.z, argb(a0, mid)); q.v(m1.x, m1.y, m1.z, argb(a1, mid)); q.v(q1.x, q1.y, q1.z, argb(0, top)); q.v(q0.x, q0.y, q0.z, argb(0, top));
+            }
         }
     }
+    private static float sq(float x) { return x * x; }
     /** A pixel planet: lit from one side (its dark side adds nothing, so it shows a phase), with a ring if it has one. */
     private static void planet(Q q, Vector3f ctr, float rad, int n, int ca, int cb, boolean ring, float tilt, float night) {
         Vector3f u = new Vector3f(), v = new Vector3f(); basis(ctr, u, v); float px = rad * 2f / n, cs = (float) Math.cos(tilt), sn = (float) Math.sin(tilt);
