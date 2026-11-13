@@ -53,6 +53,7 @@ final class FlickerGuard {
             long now = System.currentTimeMillis();
             boolean quiet = mc.level == null || mc.gui.screen() != null || AnimationManager.isPlaying() || CosmosHud.momentPlaying() || !StardropsConfig.get().flickerGuard;
             if (quiet) { lumN = 0; if (state == PAUSED || state == BISECT) stateAt = now; return; }        // a menu or a drop's flash on screen: not a fair look; a test in progress just waits
+            try { clock(mc.level.getOverworldClockTime()); } catch (Throwable ignored) { }
             step(now);
             sample(mc);
         } catch (Throwable t) { broken = true; Flicker.off = userOff | foundOff; System.err.println("[Stardrops] flicker guard off: " + t); }
@@ -84,7 +85,27 @@ final class FlickerGuard {
         finally { BUSY[i] = false; }
     }
 
-    private static void push(float l) { LUM[lumAt] = l; lumAt = (lumAt + 1) % LUM.length; if (lumN < LUM.length) lumN++; }
+    private static void push(float l) { LUM[lumAt] = l; lumAt = (lumAt + 1) % LUM.length; if (lumN < LUM.length) lumN++; diag(l); }
+
+    // A diary for the author's log: one line a second while the picture or the clock jumps, so a flicker the guard did not catch can be read afterwards.
+    private static long secAt, beatAt = -1, total; private static int secN, secTurns, lines; private static float secMin = 1e9f, secMax = -1, secSum, secPrevD, secPrevL = -1;
+    private static long clkMin = Long.MAX_VALUE, clkMax = Long.MIN_VALUE;
+    static void clock(long t) { clkMin = Math.min(clkMin, t); clkMax = Math.max(clkMax, t); }
+    private static void diag(float l) {
+        total++; long now = System.currentTimeMillis();
+        if (secPrevL >= 0) { float d = l - secPrevL; if (Math.abs(d) >= 4f) { if (secPrevD != 0 && Math.signum(d) != Math.signum(secPrevD)) secTurns++; secPrevD = d; } }
+        secPrevL = l; secN++; secSum += l; secMin = Math.min(secMin, l); secMax = Math.max(secMax, l);
+        if (beatAt < 0) beatAt = now + 20_000L;
+        if (beatAt > 0 && now >= beatAt) { beatAt = 0; System.err.println("[Stardrops] flicker guard watching: " + total + " frames read, sky brightness now " + Math.round(l)); }
+        if (secAt == 0) secAt = now;
+        if (now - secAt >= 1000) {
+            boolean jumpy = secMax - secMin >= 10 || secTurns >= 4 || clkMax - clkMin > 40 && clkMax != Long.MIN_VALUE;
+            if (jumpy && lines < 900) { lines++;
+                System.err.println("[Stardrops] flicker diary: frames=" + secN + " bright=" + Math.round(secMin) + ".." + Math.round(secMax) + " avg=" + Math.round(secSum / Math.max(1, secN)) + " turns=" + secTurns
+                    + " clock=" + (clkMax == Long.MIN_VALUE ? "?" : clkMin + ".." + clkMax) + " state=" + state + " off=" + Flicker.off + " sky=" + SkyBox.diag()); }
+            secAt = now; secN = 0; secTurns = 0; secMin = 1e9f; secMax = -1; secSum = 0; clkMin = Long.MAX_VALUE; clkMax = Long.MIN_VALUE;
+        }
+    }
 
     /** The fingerprint: of the last 12 frames, at least 8 steps of 12+ (of 255) that keep turning round (up, down, up...). */
     static boolean flickering() {

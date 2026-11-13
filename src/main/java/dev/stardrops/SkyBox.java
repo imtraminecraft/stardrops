@@ -163,6 +163,7 @@ final class SkyBox {
         if (now - dayPendAt >= 1500) { dayHeld = day; dayPendAt = 0; return day; }
         return dayHeld;
     }
+    static String diag() { return "night " + Math.round(nightE * 100) / 100f + " day " + Math.round(dayHeld * 1000) / 1000f; }
     private static float dayHeld = -1, dayPend, nightE = -1; private static long dayPendAt, lastNightAt;
     static float minS; static boolean milky = true, planets = true, deep = true, comet = true;
     /** The turn the sky is drawn at (the aurora is held still against it). */
