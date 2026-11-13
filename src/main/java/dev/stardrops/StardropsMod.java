@@ -118,7 +118,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
 
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("stardrops", "drop_animation"),
-                (graphics, deltaTracker) -> { if (Flicker.on(Flicker.HUD)) AnimationManager.render(graphics); });
+                (graphics, deltaTracker) -> { GnetumCompat.uncache("drop_animation"); if (Flicker.on(Flicker.HUD)) AnimationManager.render(graphics); });
 
         try {                                                                                  // auras are real particles in the world: hidden by blocks and bodies, always on the player
             net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents.END_EXTRACTION.register(AuraFx::extract);
@@ -126,7 +126,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
 
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("stardrops", "lyrics"),
-                (graphics, deltaTracker) -> { if (Flicker.on(Flicker.AURAS)) AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false));
+                (graphics, deltaTracker) -> { GnetumCompat.uncache("lyrics"); if (Flicker.on(Flicker.AURAS)) AuraWorld.render(graphics, deltaTracker.getGameTimeDeltaPartialTick(false));
                     if (!Flicker.on(Flicker.HUD)) return;
                     float away = Math.min(1f, slideOffset(true) / 63f);                                      // a big scene: our own HUD slides up out of the way with the hotbar going down
                     if (away < 0.99f) { boolean mv = away > 0.01f; if (mv) { Gfx.push(graphics); Gfx.translate(graphics, 0, -away * 90f); }
@@ -136,7 +136,7 @@ public class StardropsMod implements ClientModInitializer, ModInitializer {
 
         HudElementRegistry.attachElementAfter(VanillaHudElements.CHAT,
                 Identifier.fromNamespaceAndPath("stardrops", "auras"),
-                (graphics, deltaTracker) -> { if (Flicker.on(Flicker.AURAS)) AuraFx.render(graphics); });
+                (graphics, deltaTracker) -> { GnetumCompat.uncache("auras"); if (Flicker.on(Flicker.AURAS)) AuraFx.render(graphics); });
 
         try {                                                                                  // moving name effects: refresh the tab list every frame, just before it is drawn
             HudElementRegistry.attachElementBefore(Identifier.withDefaultNamespace("player_list"), Identifier.fromNamespaceAndPath("stardrops", "tab_fx"),
