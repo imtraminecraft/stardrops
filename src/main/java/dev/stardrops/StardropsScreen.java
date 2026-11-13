@@ -2853,7 +2853,14 @@ public class StardropsScreen extends Screen {
         int bx = x + w - 36, by = y + 6, bh = h - 12; if (bx > mx0 + rad + 2) { pill(g, bx, by, 28, bh, Ui.ROW); for (int i = 0; i * 6 + 6 < bh; i++) g.fill(bx + 3, by + 4 + i * 6, bx + (i % 2 == 0 ? 8 : 6), by + 5 + i * 6, 0xCCB9B6E6);
             g.fill(bx + 2, by + bh / 2, bx + 26, by + bh / 2 + 1, 0xFFFF7AD9); vText(g, "Y " + (pl == null ? 71 : (int) Math.floor(pl.getY())), bx + 10, by + bh / 2 - 7, 0.6f, Ui.TEXT); }
     }
-    private void mini(GuiGraphicsExtractor g, int room, int x, int y, int w, int h, long now) { g.enableScissor(x, Math.max(y, lt), x + w, Math.min(y + h, lb)); if (room == 0) miniMusic(g, x, y, w, h, now); else if (room == 1) miniSky(g, x, y, w, h, 5, now, 1f); else miniHuds(g, x, y, w, h, now); g.disableScissor(); }
+    /** The live pictures: the real Now Playing card, the real night sky, and (for HUDs, in the door only) a compass that follows you. */
+    private void mini(GuiGraphicsExtractor g, int room, boolean door, int x, int y, int w, int h, long now) {
+        g.enableScissor(x, Math.max(y, lt), x + w, Math.min(y + h, lb));
+        if (room == 0) { g.fill(x, y, x + w, y + h, 0xFF05061A); if (StardropsConfig.get().npOn) NowPlayingHud.drawIn(g, font, x, y, w, h); else Gfx.textCentered(g, font, "Now Playing is off", x + w / 2, y + h / 2 - 4, Ui.DIM); }
+        else if (room == 1) { if (StardropsConfig.get().cosNight) SkyPreview.draw(g, door ? 0 : 1, x, y, w, h); else { g.fill(x, y, x + w, y + h, 0xFF05061A); Gfx.textCentered(g, font, "Night sky is off", x + w / 2, y + h / 2 - 4, Ui.DIM); } }
+        else miniHuds(g, x, y, w, h, now);
+        g.disableScissor();
+    }
     private int[] vCount(int room) { StardropsConfig c = StardropsConfig.get();
         if (room == 0) return new int[]{(c.npOn ? 1 : 0) + (c.lyricsOn ? 1 : 0) + (c.ambGlow || c.ambBars || c.ambNotes || c.ambWave ? 1 : 0) + (Spotify.linked() || LocalMusic.count() > 0 ? 1 : 0), 4};
         if (room == 1) return new int[]{(c.cosNight ? 1 : 0) + (c.cosShooting ? 1 : 0) + (c.cosAurora ? 1 : 0) + (c.cosMeteor ? 1 : 0), 4};
@@ -2864,7 +2871,7 @@ public class StardropsScreen extends Screen {
         for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); int x = b[0], y = b[1], w = b[2], h = b[3]; boolean hv = mx >= x && mx < x + w && my >= Math.max(y, lt) && my < Math.min(y + h, lb) && popup == null;
             float k = anim("vdoor" + i, hv ? 1f : 0f, 40f); int col = V_COL[i];
             holoTile(g, x, y, w, h, col, k, false, hv, i * 31 + 7, now);
-            int ph2 = h - 50; pill(g, x + 3, y + 3, w - 6, ph2, 0xFF05061A); mini(g, i, x + 4, y + 4, w - 8, ph2 - 2, now); rout(g, x + 3, y + 3, w - 6, ph2, Gfx.argb(Math.round(70 + 150 * k), col & 0xFFFFFF));
+            int ph2 = h - 50; pill(g, x + 3, y + 3, w - 6, ph2, 0xFF05061A); mini(g, i, true, x + 4, y + 4, w - 8, ph2 - 2, now); rout(g, x + 3, y + 3, w - 6, ph2, Gfx.argb(Math.round(70 + 150 * k), col & 0xFFFFFF));
             Icons.draw(g, V_ICON[i], x + 5, y + ph2 + 6, now); Gfx.text(g, font, V_NAME[i], x + 24, y + ph2 + 10, Canvas.mix(Ui.TEXT, 0xFFFFFFFF, k));
             vText(g, Gfx.fit(font, V_SUB[i], Math.round((w - 12) / 0.75f)), x + 6, y + ph2 + 25, 0.75f, Ui.DIM);
             int[] n = vCount(i); int dw = Math.min(5, Math.max(3, (w - 70) / Math.max(1, n[1])));
@@ -2885,7 +2892,7 @@ public class StardropsScreen extends Screen {
     private int[] prevBtn(Row r, int i) { int x = r.x + r.w - 5; for (int q = r.vBtn.length - 1; q >= i; q--) { int w = Gfx.w(font, r.vBtn[q]) + 12; x -= w; if (q == i) return new int[]{x, r.y + r.h - 19, w, 14}; x -= 4; } return new int[4]; }
     private void drawPrev(GuiGraphicsExtractor g, Row r, int mx, int my) {
         long now = System.currentTimeMillis();
-        pill(g, r.x, r.y, r.w, r.h, 0xFF05061A); mini(g, r.vRoom, r.x + 1, r.y + 1, r.w - 2, r.h - 2, now); rout(g, r.x, r.y, r.w, r.h, Gfx.argb(110, V_COL[r.vRoom] & 0xFFFFFF));
+        pill(g, r.x, r.y, r.w, r.h, 0xFF05061A); mini(g, r.vRoom, false, r.x + 1, r.y + 1, r.w - 2, r.h - 2, now); rout(g, r.x, r.y, r.w, r.h, Gfx.argb(110, V_COL[r.vRoom] & 0xFFFFFF));
         vText(g, "LIVE PREVIEW", r.x + 6, r.y + 5, 0.6f, 0xE6FFC870);
         for (int i = 0; i < r.vBtn.length; i++) { int[] b = prevBtn(r, i); boolean hv = mx >= b[0] && mx < b[0] + b[2] && my >= b[1] && my < b[1] + b[3] && my >= lt && my < lb; float k = anim("vpb" + r.vRoom + i, hv ? 1f : 0f, 48f);
             pill(g, b[0], b[1], b[2], b[3], Canvas.mix(0xFF181A44, V_COL[r.vRoom], 0.2f + 0.3f * k)); rout(g, b[0], b[1], b[2], b[3], Gfx.argb(Math.round(110 + 120 * k), V_COL[r.vRoom] & 0xFFFFFF)); Gfx.textCentered(g, font, r.vBtn[i], b[0] + b[2] / 2, b[1] + 3, Ui.TEXT); }
@@ -2896,7 +2903,7 @@ public class StardropsScreen extends Screen {
         for (int i = 0; i < r.vBtn.length; i++) { int[] b = prevBtn(r, i); if (mx >= b[0] && mx < b[0] + b[2] && my >= b[1] && my < b[1] + b[3]) { r.vAct[i].run(); return true; } }
         return true;
     }
-    private Row vPrev(int room, String[] btn, Runnable[] act) { Row r = new Row(); r.kind = VPREV; r.h = 50; r.vRoom = room; r.vBtn = btn; r.vAct = act; r.noSearch = true; return r; }
+    private Row vPrev(int room, String[] btn, Runnable[] act) { Row r = new Row(); r.kind = VPREV; r.h = room == 0 ? 68 : 62; r.vRoom = room; r.vBtn = btn; r.vAct = act; r.noSearch = true; return r; }
     /** One slim line of a room: the feature's name, its switch, and (when it has options) an arrow that opens them under it. */
     private Row vLine(int room, String key, String icon, String title, String sub, BooleanSupplier get, Consumer<Boolean> set, boolean opts) {
         Row r = row(0, icon, title, "", V_COL[room]); r.h = 22;
@@ -2965,7 +2972,7 @@ public class StardropsScreen extends Screen {
     }
     /** Visuals > HUDs: little pieces for your screen. */
     private void instrumentsPage(StardropsConfig c) {
-        if (!searching) rows.add(vPrev(2, new String[]{"Arrange my screen"}, new Runnable[]{this::arrange}));
+        if (!searching) { Row mv = row(0, ":move:", "Arrange my screen", "Move and size every HUD piece in one place", 0xFFFFD27A); mv.ctls.add(new Btn("Arrange", 0xFFE8A93A, this::arrange)); mv.click = this::arrange; rows.add(mv); }
         if (c.instHide) { Row hd = row(0, ":instruments:", "All HUDs are hidden", "Your choices are kept", 0xFFFFC857); hd.ctls.add(new Btn("Show them", 0xFFE8A93A, () -> c.instHide = false)); hd.noSearch = true; rows.add(hd); }
         for (int i = 0; i < InstrumentsHud.N; i++) { final int k = i;
             Row ln = vLine(2, "inst" + i, InstrumentsHud.ICONS[i], InstrumentsHud.NAMES[i], InstrumentsHud.SUBS[i], () -> c.instOn[k], v -> c.instOn[k] = v, true); rows.add(ln);
@@ -3075,7 +3082,7 @@ public class StardropsScreen extends Screen {
     }
     /** Visuals > Music. */
     private void musicRoom(StardropsConfig c) {
-        if (!searching) rows.add(vPrev(0, new String[]{"Arrange my screen"}, new Runnable[]{this::arrange}));
+        if (!searching) rows.add(vPrev(0, new String[0], new Runnable[0]));                           // your real Now Playing card, as it looks on your screen
         Row np = vLine(0, "np", ":disc:", "Now Playing", "The song you're playing, on your screen", () -> c.npOn, v -> c.npOn = v, true); rows.add(np); vBody(np, () -> npOpts(c));
         Row ly = vLine(0, "lyrics", ":note:", "Lyrics", "The words of the song you're playing, from LRCLIB", () -> c.lyricsOn, v -> c.lyricsOn = v, true); rows.add(ly); vBody(ly, () -> lyricsOpts(c));
         Row am = vLine(0, "amb", ":amb:", "Ambience", "The space around you in the album's colours, while a song plays", null, null, true); rows.add(am); vBody(am, () -> ambOpts(c));

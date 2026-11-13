@@ -43,6 +43,15 @@ final class NowPlayingHud {
         draw(g, mc.font, cx, top, k, e, t, now, now - changedAt, pos, playing, dt, "", AlbumArt.ready && !(preview && Spotify.track == null), AlbumArt.accent());
     }
     private static long peekAt; private static boolean peekPlaying; static final long PEEK_MS = 9000;
+    /** The menu's preview: the real card, as it is on your screen (your song, cover, colours and settings), fitted into the box. */
+    static void drawIn(GuiGraphicsExtractor g, Font font, int x, int y, int w, int h) {
+        Spotify.Track t = Spotify.track != null ? Spotify.track : new Spotify.Track("demo", "Song title", "Artist", "", 200_000, "");
+        boolean demo = Spotify.track == null; long now = System.currentTimeMillis();
+        float k = Math.min((h - 6) / (float) height(false), (w - 8) / (float) width()) * StardropsConfig.get().npScale / 100f;
+        k = Math.min(k, Math.min((h - 6) / (float) height(false), (w - 8) / (float) width()));
+        long pos = demo ? (now / 10) % 200_000 : Spotify.position();
+        draw(g, font, x + w / 2f, y + (h - height(false) * k) / 2f, k, 1f, t, now, now - changedAt, pos, demo || Spotify.playing, 0.016f, "", AlbumArt.ready && !demo, AlbumArt.accent());
+    }
     static int width() { return 214; }
     /** How solid the glass is (Visuals > Music > Now Playing > Background), 0.2..0.7. */
     static float bg() { return StardropsConfig.get().npBg / 100f; }

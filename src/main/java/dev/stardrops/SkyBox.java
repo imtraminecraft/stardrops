@@ -90,6 +90,10 @@ final class SkyBox {
     interface Q { void v(float x, float y, float z, int argb); }
     private static int argb(float a, int rgb) { return Math.round(Math.max(0f, Math.min(1f, a)) * 255) << 24 | (rgb & 0xFFFFFF); }
     private static double turnD = -1; private static long lastTurnAt;
+    /** How far the sky has turned right now (0..1), for the menu's picture of it. */
+    static float turnNow() { return turnD < 0 ? 0.6f : (float) turnD; }
+    /** Builds the stars if they are not built yet (the menu's picture may need them before the world draws the sky). */
+    static void make0() { if (sDir == null) make(); }
     private static long nextShoot; private static final float[][] shoots = new float[3][]; private static final java.util.Random R = new java.util.Random();
 
     static void submit(LevelRenderContext ctx) {
