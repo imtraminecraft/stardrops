@@ -1,6 +1,11 @@
 # Changelog
 
 ## 0.9.0
+- Mob Drops show the right creature for every drop (checked against the drop tables), and a new Diamond Goblin.
+- Smooth animations with Gnetum installed.
+- The menu: compact page headers and Quick switches on every tab; real live previews (your Now Playing card, the real night sky); HUDs has no preview.
+- Cosmos: Try a meteor / shower is lighter and brings you back to the menu. New Deep sky (nebulae, a galaxy) and Comet; the aurora stays low over the horizon.
+- Lyrics: Drift removed; clearer style buttons; long text scrolls calmly.
 - Visuals menu remade: three rooms (Music, Cosmos, HUDs) with live previews, quick switches, and one feature open at a time.
 - Now Playing: the rocket no longer covers the artist, several artists read cleanly, no bottom bar. New Peek option.
 - Drop moments: a new drop never restarts a meteor shower that is still burning.
