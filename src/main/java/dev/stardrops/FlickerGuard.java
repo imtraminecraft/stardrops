@@ -89,58 +89,58 @@ final class FlickerGuard {
     private static void push(float l) { LUM[lumAt] = l; lumAt = (lumAt + 1) % LUM.length; if (lumN < LUM.length) lumN++; diag(l); probeCount(l); }
 
     // ------------------------------------------------------------------ the join test
-    // The author's log (14 Nov, 13:31-13:32): the flashing comes in bursts of 4 to 6 seconds right after joining or warping to a world,
-    // smaller steps than the guard's fingerprint, so it never stepped in. Warps happen all the time, so the guard tests on them:
-    // for the first seconds after a join Stardrops is either all on or all off (taking turns), and the guard counts the flashes.
-    // Flashing only with Stardrops on: it then turns one part off per join until the flashing stops, keeps that part off for the session
-    // and says which. Flashing either way: not Stardrops, and chat says so once.
-    private static Object lastLevel; private static int probe = -1, probeMask, probeFrames, probeTurns, joins, round, culprit = -1;
-    private static long probeFrom; private static float probePrevL = -1, probePrevD;
-    private static final java.util.List<Float> ON = new java.util.ArrayList<>(), OFF = new java.util.ArrayList<>();
-    private static float onAvg, offAvg; private static boolean told;
-    private static final long PROBE_MS = 6500;
+    // The author's logs (14 Nov): the flashing comes in bursts while the game lags right after joining or warping to a world (10 to 80
+    // frames a second), worst on the first world after starting the game. Bursts come and go on their own, so a whole join on and the
+    // next one off proves nothing. Instead, for the first 9 s after every join the guard takes turns inside the burst itself:
+    // 1.5 s with Stardrops as usual, 1.5 s with Stardrops (or one part of it) switched off, and so on, counting the flashes in each.
+    // Flashing only in the "on" turns means Stardrops; it then does the same with one part off at a time, keeps the part that stops it
+    // off for the session and says which in chat. Flashing in both means another mod or the server, said once.
+    private static Object lastLevel; private static int probe = -1, probeMask, joins, rounds, culprit = -1, slotN, skip;
+    private static long probeFrom, slotAt; private static float probePrevL = -1, probePrevD;
+    private static final int[] PF = new int[2], PT = new int[2];                                  // frames and flashes: [0] as usual, [1] with the mask
+    private static boolean told;
+    private static final long PROBE_MS = 9000, SLOT_MS = 1500;
     private static void joined(long now) {
-        joins++; if (probe >= 0) endProbe(now, false);
-        if (told || round > 4) return;
-        if (culprit < 0) {                                                                          // stage 1: all on / all off, taking turns
-            probeMask = (ON.size() <= OFF.size()) ? 0 : ALL; probe = 0;
-        } else {                                                                                    // stage 2: one part off at a time
-            probeMask = PARTS[culprit]; probe = 1;
-        }
-        probeFrom = 0; probeFrames = 0; probeTurns = 0; probePrevL = -1; probePrevD = 0;
-        userOff = state == WATCH ? Flicker.off & ~foundOff : userOff; Flicker.off = userOff | foundOff | probeMask;
+        joins++; if (probe >= 0) { probe = -1; Flicker.off = userOff | foundOff; }
+        if (told || rounds > 6) return;
+        probeMask = culprit < 0 ? ALL : PARTS[culprit]; probe = 0;
+        probeFrom = 0; slotN = (joins & 1); probePrevL = -1; probePrevD = 0;
+        if (state == WATCH) userOff = Flicker.off & ~foundOff;
     }
+    private static boolean masked() { return (slotN & 1) == 1; }
     private static void probeCount(float l) {
         if (probe < 0 || probeFrom == 0) return;
-        if (probePrevL >= 0) { float d = l - probePrevL; if (Math.abs(d) >= 4f) { if (probePrevD != 0 && Math.signum(d) != Math.signum(probePrevD)) probeTurns++; probePrevD = d; } }
-        probePrevL = l; probeFrames++;
+        if (skip > 0) { skip--; probePrevL = -1; probePrevD = 0; return; }                         // the frames right after a switch do not count
+        int k = masked() ? 1 : 0;
+        if (probePrevL >= 0) { float d = l - probePrevL; if (Math.abs(d) >= 4f) { if (probePrevD != 0 && Math.signum(d) != Math.signum(probePrevD)) PT[k]++; probePrevD = d; } }
+        probePrevL = l; PF[k]++;
     }
     private static void probeStep(long now) {
-        if (probeFrom == 0) { probeFrom = now; return; }                                            // the first frame of the world itself (the loading screen does not count)
-        if (now - probeFrom >= PROBE_MS) endProbe(now, true);
+        if (probeFrom == 0) { probeFrom = now; slotAt = now; apply(); return; }                   // the first frame of the world itself (the loading screen does not count)
+        if (now - slotAt >= SLOT_MS) { slotN++; slotAt = now; skip = 3; apply(); }
+        if (now - probeFrom >= PROBE_MS) { probe = -1; Flicker.off = userOff | foundOff; decide(); }
     }
-    private static void endProbe(long now, boolean full) {
-        int mask = probeMask, kind = probe; probe = -1; Flicker.off = userOff | foundOff;
-        if (!full || probeFrames < 60) { System.err.println("[Stardrops] flicker test: join " + joins + " too short to count (" + probeFrames + " frames)"); return; }
-        float rate = probeTurns / (float) probeFrames;
-        System.err.println("[Stardrops] flicker test: join " + joins + " with " + (mask == 0 ? "Stardrops on" : mask == ALL ? "Stardrops off" : PART_NAMES[culprit] + " off") + ": " + probeTurns + " flashes in " + probeFrames + " frames (" + Math.round(rate * 100) + "%)");
-        if (kind == 0) {
-            (mask == 0 ? ON : OFF).add(rate);
-            if (ON.size() >= 2 && OFF.size() >= 2) {
-                onAvg = avg(ON); offAvg = avg(OFF);
-                if (onAvg < 0.12f) { round++; ON.clear(); OFF.clear(); System.err.println("[Stardrops] flicker test: no flashing after these joins; testing again on later ones"); return; }
-                if (offAvg >= onAvg * 0.5f) {
-                    told = true; System.err.println("[Stardrops] flicker test: it flashes with Stardrops off too (" + Math.round(onAvg * 100) + "% on, " + Math.round(offAvg * 100) + "% off): not Stardrops");
-                    say("Flicker test: the flashing after a warp happens with Stardrops switched off too, so it comes from another mod or the server, not Stardrops. Stardrops' sky ignores it.");
-                } else { culprit = 0; System.err.println("[Stardrops] flicker test: Stardrops makes it flash (" + Math.round(onAvg * 100) + "% on, " + Math.round(offAvg * 100) + "% off); now one part at a time"); }
-            }
+    private static void apply() { Flicker.off = userOff | foundOff | (masked() ? probeMask : 0); }
+    private static void decide() {
+        float on = PT[0] / (float) Math.max(1, PF[0]), off = PT[1] / (float) Math.max(1, PF[1]);
+        String what = culprit < 0 ? "Stardrops off" : PART_NAMES[culprit] + " off";
+        System.err.println("[Stardrops] flicker test after join " + joins + ": as usual " + PT[0] + " flashes in " + PF[0] + " frames (" + Math.round(on * 100) + "%), with " + what + " " + PT[1] + " in " + PF[1] + " (" + Math.round(off * 100) + "%)");
+        if (PF[0] < 120 || PF[1] < 120) return;                                                   // not enough yet: keep counting on the next join
+        if (on < 0.12f) { if (PF[0] > 1500) { rounds++; PF[0] = PF[1] = PT[0] = PT[1] = 0; System.err.println("[Stardrops] flicker test: no flashing lately; counting afresh"); } return; }
+        boolean gone = off < on * 0.45f, same = off >= on * 0.6f;
+        if (culprit < 0) {
+            if (same) { told = true; System.err.println("[Stardrops] flicker test: it flashes with Stardrops off too: not Stardrops");
+                say("Flicker test: the flashing after warps goes on with Stardrops switched off, so it comes from another mod or the server, not Stardrops."); }
+            else if (gone) { culprit = 0; System.err.println("[Stardrops] flicker test: Stardrops makes it flash; now one part at a time"); }
+            else return;
         } else {
-            if (rate < (onAvg + offAvg) / 2f) {                                                     // that part off, and the flashing is gone: found it
-                foundOff |= PARTS[culprit]; Flicker.off = userOff | foundOff; told = true;
+            if (gone) { foundOff |= PARTS[culprit]; Flicker.off = userOff | foundOff; told = true;
                 System.err.println("[Stardrops] flicker test: " + PART_NAMES[culprit] + " made it flash; switched off for this session");
-                say("Stardrops found that " + PART_NAMES[culprit] + " made your screen flash after warps, and switched it off until you restart. Please tell the author, so it can be fixed for good.");
-            } else if (++culprit >= PARTS.length) { culprit = -1; round++; ON.clear(); OFF.clear(); System.err.println("[Stardrops] flicker test: no single part does it; starting over"); }
+                say("Stardrops found that " + PART_NAMES[culprit] + " made your screen flash after warps, and switched it off until you restart. Please tell the author, so it can be fixed for good."); }
+            else if (same) { if (++culprit >= PARTS.length) { culprit = -1; rounds++; System.err.println("[Stardrops] flicker test: no single part does it; starting over"); } }
+            else return;
         }
+        PF[0] = PF[1] = PT[0] = PT[1] = 0;
     }
     private static float avg(java.util.List<Float> l) { float s = 0; for (float f : l) s += f; return l.isEmpty() ? 0 : s / l.size(); }
 
@@ -148,8 +148,10 @@ final class FlickerGuard {
     private static long secAt, beatAt = -1, total; private static int secN, secTurns, lines; private static float secMin = 1e9f, secMax = -1, secSum, secPrevD, secPrevL = -1;
     private static long clkMin = Long.MAX_VALUE, clkMax = Long.MIN_VALUE;
     static void clock(long t) { clkMin = Math.min(clkMin, t); clkMax = Math.max(clkMax, t); }
+    private static final float[] SEQ = new float[40]; private static int seqN; private static long lastF;
+    private static final int[] FT = new int[40];
     private static void diag(float l) {
-        total++; long now = System.currentTimeMillis();
+        total++; { long nf = System.nanoTime(); if (seqN < SEQ.length) { SEQ[seqN] = l; FT[seqN] = lastF == 0 ? 0 : (int) ((nf - lastF) / 1_000_000L); seqN++; } lastF = nf; } long now = System.currentTimeMillis();
         if (secPrevL >= 0) { float d = l - secPrevL; if (Math.abs(d) >= 4f) { if (secPrevD != 0 && Math.signum(d) != Math.signum(secPrevD)) secTurns++; secPrevD = d; } }
         secPrevL = l; secN++; secSum += l; secMin = Math.min(secMin, l); secMax = Math.max(secMax, l);
         if (beatAt < 0) beatAt = now + 20_000L;
@@ -159,11 +161,12 @@ final class FlickerGuard {
             boolean jumpy = secMax - secMin >= 10 || secTurns >= 4 || clkMax - clkMin > 40 && clkMax != Long.MIN_VALUE;
             if (jumpy && lines < 3000) { lines++;
                 System.err.println("[Stardrops] flicker diary: frames=" + secN + " bright=" + Math.round(secMin) + ".." + Math.round(secMax) + " avg=" + Math.round(secSum / Math.max(1, secN)) + " turns=" + secTurns
-                    + " clock=" + (clkMax == Long.MIN_VALUE ? "?" : clkMin + ".." + clkMax) + " state=" + state + " off=" + Flicker.off + " sky=" + SkyBox.diag()); }
-            secAt = now; secN = 0; secTurns = 0; secMin = 1e9f; secMax = -1; secSum = 0; clkMin = Long.MAX_VALUE; clkMax = Long.MIN_VALUE;
+                    + " clock=" + (clkMax == Long.MIN_VALUE ? "?" : clkMin + ".." + clkMax) + " state=" + state + " off=" + Flicker.off + " sky=" + SkyBox.diag() + " seq=" + seq()); }
+            secAt = now; seqN = 0; secN = 0; secTurns = 0; secMin = 1e9f; secMax = -1; secSum = 0; clkMin = Long.MAX_VALUE; clkMax = Long.MIN_VALUE;
         }
     }
 
+    private static String seq() { StringBuilder b = new StringBuilder(); for (int i = 0; i < seqN; i++) b.append(Math.round(SEQ[i])).append('/').append(FT[i]).append(' '); return b.toString().trim(); }
     /** The fingerprint: of the last 12 frames, at least 8 steps of 12+ (of 255) that keep turning round (up, down, up...). */
     static boolean flickering() {
         if (lumN < 13) return false;
