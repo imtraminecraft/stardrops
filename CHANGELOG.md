@@ -1,6 +1,10 @@
 # Changelog
 
 ## 0.9.0
+- **Achievements, grand opening:** the first time you open the page each session, one star pulls the whole sky into itself and bursts; eight comets fly out and draw the constellations one by one, the title is struck over the galaxy and the land rises into view. It has its own score. Click to skip; later openings use the short loader.
+- **Achievements, the lookout:** the stargazer and the cat now have a place of their own: a wooden deck under a string of lights, with a tent, a campfire, a lake, an observatory sweeping the sky and a rocket on its pad. Constellation names are always on the map.
+- **Mythological dig:** the camera now films the dig up close, swinging round you and kicking with every strike; the ground cracks with light, and a pillar of it breaks out when the creature or the chest comes up.
+- **Sounds:** every catalog's animation has its own set. Mob Drops keep VOYAGER; Mythological creatures get RELIC (lyre, drums, bronze, blade) and treasure gets TROVE (spade, hinges, coins, music box), all timed to the dig.
 - Mythological animations: you dig, the right creature climbs out and is cut down (or a chest rises and opens), all on a little planet in space. Twelve creatures, treasure, No Drops, RNG.
 - Drop text has a new format: a small headline, the name, a hairline, the value, and one line with chance, odds and Magic Find.
 - Achievements: a new loading screen (a wheel of eight lights) and a Star Atlas list of every constellation.

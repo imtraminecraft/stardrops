@@ -36,12 +36,16 @@ public final class SoundFx {
     /** The Slayer sound families (one per moment) and the names of their three takes. */
     static final String[] SL_FAM = {"rise", "approach", "strike", "dust", "none", "barrage", "reveal", "close", "shower", "jackpot", "glow"};
     private static final String[][] SL_TAKES = {
-        {"Awakening", "War horn", "From the abyss", "Launch"}, {"War drums", "The roar", "Heart of the planet", "Signal acquired"}, {"Thunderbolt", "Meteorite", "Falling star", "Re-entry"},
-        {"Ash", "Crumble", "Last breath", "Static"}, {"Two notes", "Cello", "Hollow", "Silence of space"}, {"Bombardment", "Rain of fire", "Orchestra", "Meteor field"},
-        {"Triumph", "Glass bells", "Starlight", "Discovery"}, {"Rest", "Echo", "One bell", "Drift"}, {"Ascension", "Gacha roll", "Titan", "Star rain"},
-        {"Coronation", "Heaven's gate", "Supernova", "First light"}, {"Afterglow", "Halo", "Music box", "Nebula"}};
+        {"Awakening", "War horn", "From the abyss", "Launch", "Breaking ground", "X marks the spot"}, {"War drums", "The roar", "Heart of the planet", "Signal acquired", "It wakes", "Something solid"},
+        {"Thunderbolt", "Meteorite", "Falling star", "Re-entry", "One cut", "Rusty hinge"}, {"Ash", "Crumble", "Last breath", "Static", "To dust", "Cobwebs"},
+        {"Two notes", "Cello", "Hollow", "Silence of space", "Empty hands", "Better luck"}, {"Bombardment", "Rain of fire", "Orchestra", "Meteor field", "Three cuts", "Unlocked"},
+        {"Triumph", "Glass bells", "Starlight", "Discovery", "Olympus", "Glitter"}, {"Rest", "Echo", "One bell", "Drift", "Embers", "Pocketed"},
+        {"Ascension", "Gacha roll", "Titan", "Star rain", "Five cuts", "The big lock"},
+        {"Coronation", "Heaven's gate", "Supernova", "First light", "Gift of the gods", "Dragon's hoard"}, {"Afterglow", "Halo", "Music box", "Nebula", "Hymn", "Lullaby"}};
     /** The takes of each moment: a, b, c the epic set, d VOYAGER (tools/make_voyager_sounds.py), the space and exploration set every Mob Drops scene plays by default. */
-    static final String TAKES = "abcd";
+    static final String TAKES = "abcdef";       // e RELIC (Mythological creatures), f TROVE (Mythological treasure): tools/make_dig_sounds.py
+    /** Every catalog's animation has its own set: Mob Drops VOYAGER (d), Mythological creatures RELIC (e), treasure TROVE (f). */
+    static char takeOf(String group) { return group.equals("myth") ? 'e' : group.equals("treasure") ? 'f' : 'd'; }
     /** Every Mob Drops scene group: the Slayers and every Location. */
     static final String[] MOB_GROUPS = {"slayer", "crimson", "dragon", "mobs", "mobs_hub", "mobs_spider", "mobs_deep", "mobs_hollows", "mobs_park", "mobs_marsh", "mobs_canyon", "mobs_spooky", "mobs_dungeon", "myth", "treasure"};
     private static final SoundEvent[] SL_VAN = {SoundEvents.ZOMBIE_AMBIENT, SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.SAND_BREAK,
@@ -72,6 +76,8 @@ public final class SoundFx {
         for (int f = 0; f < SL_FAM.length; f++) for (int v = 0; v < 3; v++)
             reg("slr_" + SL_FAM[f] + "_" + "abc".charAt(v), SL_TAKES[f][v], SL_VAN[f], 0.85f);
         for (int f = 0; f < SL_FAM.length; f++) reg("slr_" + SL_FAM[f] + "_d", SL_TAKES[f][3], SL_VAN[f], 0.85f);          // VOYAGER
+        for (int f = 0; f < SL_FAM.length; f++) for (int v = 4; v < 6; v++) reg("slr_" + SL_FAM[f] + "_" + TAKES.charAt(v), SL_TAKES[f][v], SL_VAN[f], 0.85f);   // RELIC, TROVE
+        reg("sky_epic", "Achievements: grand opening", SoundEvents.AMETHYST_BLOCK_CHIME, 0.8f);
         reg("sky_open", "Achievements: open", SoundEvents.AMETHYST_BLOCK_CHIME, 0.7f);              // the achievements sky
         reg("sky_close", "Achievements: close", SoundEvents.AMETHYST_BLOCK_HIT, 0.6f);
         reg("sky_zoom", "Achievements: fly", SoundEvents.PLAYER_ATTACK_SWEEP, 0.6f);
@@ -152,7 +158,7 @@ public final class SoundFx {
         d0.removeIf(r -> AnimationManager.isSlayer(r[0]));                     // Mob Drops have their own set (the epic one)
         for (String g : MOB_GROUPS) for (String ty : g.equals("slayer") || g.equals("myth") || g.equals("treasure") ? new String[]{"nodrops", "normal", "rng"} : new String[]{"normal", "rng"}) {      // VOYAGER, the same set for every Mob Drops scene
             String[] r = new String[6]; r[0] = g + "." + ty;
-            for (int k = 0; k < 5; k++) r[k + 1] = "slr_" + slayerFamily(r[0], k) + "_d";
+            for (int k = 0; k < 5; k++) r[k + 1] = "slr_" + slayerFamily(r[0], k) + "_" + takeOf(g);
             d0.add(r);
         }
         String[][] d = d0.toArray(new String[0][]);
@@ -207,7 +213,7 @@ public final class SoundFx {
     }
     /** Once: Mythological got the dig scene (14 Nov), so its old sound picks go and it starts on the Mob Drops set like every other star scene. */
     private static void digSet() {
-        StardropsConfig c = StardropsConfig.get(); if (c.digSet) return; c.digSet = true;
+        StardropsConfig c = StardropsConfig.get(); if (c.relicSet) return; c.relicSet = true; c.digSet = true;                 // 2: RELIC and TROVE became their defaults
         if (c.sounds != null) c.sounds.keySet().removeIf(k -> k.startsWith("myth.") || k.startsWith("treasure."));
         StardropsConfig.save();
     }

@@ -390,5 +390,189 @@
         "stream": false
       }
     ]
+  },
+  "slr_rise_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_rise_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_approach_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_approach_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_strike_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_strike_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_dust_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_dust_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_none_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_none_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_barrage_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_barrage_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_reveal_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_reveal_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_close_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_close_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_shower_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_shower_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_jackpot_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_jackpot_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_glow_e": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_glow_e",
+        "stream": false
+      }
+    ]
+  },
+  "slr_rise_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_rise_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_approach_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_approach_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_strike_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_strike_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_dust_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_dust_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_none_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_none_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_barrage_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_barrage_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_reveal_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_reveal_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_close_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_close_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_shower_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_shower_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_jackpot_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_jackpot_f",
+        "stream": false
+      }
+    ]
+  },
+  "slr_glow_f": {
+    "sounds": [
+      {
+        "name": "stardrops:slr_glow_f",
+        "stream": false
+      }
+    ]
+  },
+  "sky_epic": {
+    "sounds": [
+      {
+        "name": "stardrops:sky_epic",
+        "stream": false
+      }
+    ]
   }
 }

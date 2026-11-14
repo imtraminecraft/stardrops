@@ -42,6 +42,12 @@ final class Codex {
     private static final long INTRO = 2600, IRIS = 900, LONG_INTRO = 7000, LOAD = 2300; private static long introFrom; private static int introSounds;
     private static long introLen = INTRO; private static boolean longIntro, longPlayed;          // the long opening plays the first time the sky opens each time the game starts
     private static String blinkId = "";
+    /** The grand opening: the first time the sky opens each time the game starts (later openings use the short chart loader). */
+    private static final long EPIC = 5600, BURST = 2100; private static boolean epic, epicPlayed;
+    private static final float[] CG = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};                    // how far each constellation has drawn itself (the grand opening lights them one by one)
+    private static float rise, introZ, epicWarp;
+    private static final int[] EORD = {0, 1, 2, 7, 3, 4, 5, 6};
+    private static float arrive(int c) { int k = 0; for (int i = 0; i < EORD.length; i++) if (EORD[i] == c) k = i; return BURST + 500 + k * 190 + 620; }
     private static int[] from = {0, 0, 0, 0};
     private static int focus = -1, prevFocus = -1, hoverCon = -1, lastHoverCon = -1;
     private static final long OPEN = 900, CLOSE = 300, ZOOM = 480;
@@ -62,11 +68,12 @@ final class Codex {
         long t0 = System.currentTimeMillis(); introFrom = t0; introSounds = 0;
         boolean intro = StardropsConfig.get().achIntro;
         longIntro = false; introLen = LOAD;                                                              // one opening now: the chart loader (14 Nov; it replaced the hill film and the long first opening)
+        epic = intro && allowLong && !epicPlayed && !(chapter >= 1 && chapter <= ACH.length); if (epic) { epicPlayed = true; introLen = EPIC; }
         soloId = null;
         open = true; openAt = t0 + (intro ? introLen : 0); closeAt = 0; from = btn.clone(); IGNITE.clear(); igSounded.clear(); ignitesPlanned = false; blinkId = "";
         focus = chapter >= 1 && chapter <= ACH.length ? chapter - 1 : -1; prevFocus = focus; zoomAt = 0;
         Achievements.refresh(true);
-        sound("sky_open", 1f, 0.8f);
+        sound(epic ? "sky_epic" : "sky_open", 1f, epic ? 1f : 0.8f);
     }
     static int colourOf(String ch) { return ACH_COL[groupOf(ch)]; }
     static String nameOf(String ch) { return ACH_NAME[groupOf(ch)]; }
@@ -130,7 +137,10 @@ final class Codex {
         if (closeT >= CLOSE) { open = false; return; }
         boolean film = openAt > introFrom;                                              // this opening has the film
         float fu = film && closeT < 0 ? now - introFrom : 1e9f;                       // ms into the opening shot
-        if (longIntro && fu < LONG_INTRO + 2000) { longTimeline(fu); } else { day = 0f; trail = 0f; sunK = 1f; title = 0f;
+        boolean ep = epic && film && fu < EPIC + 900;
+        if (!ep) { java.util.Arrays.fill(CG, 1f); rise = 0f; introZ = 0f; epicWarp = 0f; }
+        if (ep) epicTimeline(fu);
+        else if (longIntro && fu < LONG_INTRO + 2000) { longTimeline(fu); } else { day = 0f; trail = 0f; sunK = 1f; title = 0f;
         if (film && fu < LOAD) { int lit = Math.min(ACH.length, (int) ((fu - 180f) / 140f) + 1); while (fu >= 180f && introSounds < lit) { sound("sky_star", 0.8f + 0.09f * introSounds, 0.35f); introSounds++; } }
         if (film && introSounds < 20 && fu >= 1400) { introSounds = 20; sound("sky_zoom", 0.9f, 0.7f); }
         // the loading screen: the sky waits dim behind the chart loader (eight lights, one per constellation), then each light flies to its place and the figures draw themselves
@@ -159,10 +169,11 @@ final class Codex {
         int pf = zoomAt > now ? -1 : prevFocus, fc = focus;
         float[] a0 = camOf(zoomAt > now ? -1 : prevFocus), a1 = camOf(zoomAt > now ? -1 : focus);
         if (zoomAt > now) { a0 = camOf(-1); a1 = a0; }
-        camU = a0[0] + (a1[0] - a0[0]) * z; camV = a0[1] + (a1[1] - a0[1]) * z; camS = a0[2] + (a1[2] - a0[2]) * (z * z * (3 - 2 * z));
+        camU = a0[0] + (a1[0] - a0[0]) * z; camV = a0[1] + (a1[1] - a0[1]) * z; camS = (a0[2] + (a1[2] - a0[2]) * (z * z * (3 - 2 * z))) * (1f + introZ);
         float zoomed = zoomAt > now ? 0f : fc >= 0 ? (pf >= 0 ? 1f : z) : (pf >= 0 ? 1f - z : 0f);
         float flyWarp = zoomAt == 0 || now < zoomAt ? 0f : (float) Math.sin(Math.PI * cl((now - zoomAt) / (float) ZOOM)) * (pf >= 0 && fc >= 0 ? 0.6f : 1f);
         warp = Math.max(closeT >= 0 || film ? 0f : 1f - ease((t - 120f) / (OPEN - 120f)), flyWarp * 0.7f);
+        warp = Math.max(warp, epicWarp);
         int showFocus = zoomAt > now ? -1 : fc;
 
         bake();                                                                          // (only when the size changed)
@@ -179,14 +190,15 @@ final class Codex {
         shootingStars(g);
         if (tilting) Gfx.pop(g);
         if (dusk > 0.001f) twilight(g);
-        if (tilting) { Gfx.push(g); Gfx.translate(g, 0, tilt * sh * 0.16f); }               // the ground is nearer: it slides further
+        boolean lifting = tilting || rise > 0.001f;
+        if (lifting) { Gfx.push(g); Gfx.translate(g, 0, tilt * sh * 0.16f + rise * sh * 0.34f); }               // the ground is nearer: it slides further
         stargazer(g, 1f - cl(zoomed * 2.5f));
-        if (tilting) Gfx.pop(g);
+        if (lifting) Gfx.pop(g);
         nearDust(g, 1f - cl(zoomed * 1.5f));
         titleCard(g);
         vignette(g);
         if (open0 > 0.002f) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(open0, 0x020208));
-        if (film && fu < LOAD + 200) loader(g, fu);
+        if (ep) epicOverlay(g, fu); else if (film && !epic && fu < LOAD + 200) loader(g, fu);
         g.disableScissor();
         frame(g);
         if (alpha > 0.6f && closeT < 0) {
@@ -413,9 +425,20 @@ final class Codex {
     // ------------------------------------------------------------------ the stargazer: on a hill, bottom left, with a telescope that follows your mouse
     /** The hill's top at screen x (the stargazer, the tripod's feet and the lantern all stand on it). */
     private static float ground(float x) {
-        float hillW = sw * 0.36f, i = x - sx0, u = i / hillW; if (u < 0 || u > 1) return sy0 + sh;
-        return sy0 + sh - (sh * 0.17f * (1f - u * u) * (0.95f + 0.05f * (float) Math.sin(i * 0.15f)) + 3);
+        float u = (x - sx0) / sw; if (u >= DECK0 && u <= DECK1) return deckY();
+        return hill(x);
     }
+    /** The bare hill (under the deck too): a broad shoulder that holds its height, then rolls down to the lake. */
+    private static float hill(float x) {
+        float hillW = sw * 0.46f, i = x - sx0, u = i / hillW; if (u < 0 || u > 1) return sy0 + sh;
+        return sy0 + sh - (sh * 0.17f * (1f - u * u * u) * (0.95f + 0.05f * (float) Math.sin(i * 0.15f)) + 3);
+    }
+    /** The lookout: a flat wooden deck on the hill's shoulder. The stargazer, the cat, the lantern and the telescope are all on its planks. */
+    private static final float DECK0 = 0.016f, DECK1 = 0.252f;
+    private static float deckY() { return hill(sx0 + sw * 0.1f) - sh / 150f * 3.2f; }
+    /** The string of lights over the deck: bulb i of n, hanging between the two poles. */
+    private static float[] bulb(float u) { float k = sh / 150f, x0 = sx0 + sw * (DECK0 + 0.006f), x1 = sx0 + sw * (DECK1 - 0.006f), top = deckY() - 34 * k;
+        return new float[]{x0 + (x1 - x0) * u, top + 7 * k * 4 * u * (1 - u)}; }
     private static void stargazer(GuiGraphicsExtractor g, float a) { stargazer(g, a, false); }
     /** Over the stargazer, the cat, the lantern or the telescope (bottom left): not over a constellation. */
     private static boolean overScene(float x, float y) { float k = sh / 150f, p = 0.8f * k, hx = sx0 + sw * 0.12f; return x < hx + 40 * p && x > sx0 && y > ground(x) - 34 * p; }
@@ -426,6 +449,7 @@ final class Codex {
         float k = sh / 150f, gnd = sy0 + sh, hillW = sw * 0.36f;
         int sil = argb(a * alpha, 0x05040A);
         NebulaTex.layer(g, "land", landC, sx0, sy0, sw, sh, argb(a * alpha, 0xFFFFFF));          // the hill, its grass and the firs (baked once)
+        camp(g, a, film);
         float hx = sx0 + sw * 0.12f, hy = ground(hx) + 1;
         // Minecraft, by night: a figure sitting on the hill beside a telescope on its tripod, a cat sitting right beside them, a
         // lantern a little way off. All silhouettes (only the lantern keeps its colour), built from upright boxes so the outline stays
@@ -510,6 +534,31 @@ final class Codex {
             for (int i = 0; i < 30; i++) { float u = (i + ((now / 60) % 3) / 3f) / 30f; if (u * d < 6) continue; float xx = tx1 + (ox - tx1) * u, yy = ty1 + (oy - ty1) * u; G.fill(Math.round(xx), Math.round(yy), Math.round(xx) + 1, Math.round(yy) + 1, argb(0.25f * ha * a * (1f - u) * alpha, ACH_COL[hoverCon])); }
         }
     }
+    /** The camp's living parts: the string of lights, the campfire with its sparks and smoke, the tent's lamp. */
+    private static void camp(GuiGraphicsExtractor g, float a, boolean film) {
+        float k = sh / 150f, tt = (now % 3_600_000L) / 1000f, aa = a * alpha;
+        for (int i = 0; i < 9; i++) {                                                                  // nine bulbs, each breathing on its own, warm with one or two coloured
+            float[] b = bulb((i + 0.5f) / 9f); int col = i % 4 == 1 ? 0xFF9AD0 : i % 4 == 3 ? 0x9AD8FF : 0xFFD890;
+            float tw = 0.7f + 0.3f * (float) Math.sin(tt * (1.1f + 0.23f * i) + i * 1.9f);
+            glow(b[0], b[1] + 1.2f * k, 5.5f * k, col, 0.32f * tw * a);
+            g.fill(Math.round(b[0] - 0.6f * k), Math.round(b[1] + 0.5f * k), Math.round(b[0] + 0.7f * k), Math.round(b[1] + 2f * k), argb(aa * (0.75f + 0.25f * tw), mix(0xFF000000 | col, 0xFFFFFFFF, 0.45f) & 0xFFFFFF));
+        }
+        float fxp = sx0 + sw * FIRE_U, fyp = ground(fxp) - 1.2f * k, fl = 0.75f + 0.25f * (float) Math.sin(tt * 11) * (float) Math.sin(tt * 7.3f);
+        NebulaTex.glow(g, fxp, fyp + 2 * k, 30 * k * fl, 6 * k, argb(0.3f * aa, 0xFF8A30));               // firelight pooled on the grass
+        glow(fxp, fyp - 3 * k, 22 * k * fl, 0xFF9A40, 0.28f * a);
+        for (int i = 0; i < 5; i++) {                                                                  // flames: five tongues of blocks, licking at their own pace
+            float ph = tt * (5f + i * 0.9f) + i * 2.4f, h = (3.2f + 2.6f * (float) Math.abs(Math.sin(ph))) * k * (i == 2 ? 1.5f : i % 2 == 1 ? 1.15f : 0.8f), x = fxp + (i - 2) * 1.3f * k + (float) Math.sin(ph * 0.7f) * 0.4f * k;
+            g.fill(Math.round(x - 0.8f * k), Math.round(fyp - h), Math.round(x + 0.8f * k), Math.round(fyp), argb(aa, i == 2 ? 0xFFB040 : 0xE8502A));
+            g.fill(Math.round(x - 0.45f * k), Math.round(fyp - h * 0.6f), Math.round(x + 0.45f * k), Math.round(fyp), argb(aa, i == 2 ? 0xFFF0A8 : 0xFFA038));
+        }
+        for (int i = 0; i < 7; i++) {                                                                  // sparks climbing, then smoke thinning into the night
+            float q = (tt * (0.35f + 0.07f * i) + rnd(i * 31 + 5)) % 1f, x = fxp + (float) Math.sin(q * 6 + i * 2.1f) * (2 + 5 * q) * k + (rnd(i * 7) - 0.5f) * 3 * k, y = fyp - (4 + 38 * q) * k;
+            g.fill(Math.round(x), Math.round(y), Math.round(x) + Math.max(1, Math.round(0.5f * k)), Math.round(y) + Math.max(1, Math.round(0.5f * k)), argb(aa * (1f - q) * (1f - q), q < 0.3f ? 0xFFE8A0 : 0xFF8A40));
+        }
+        for (int i = 0; i < 4; i++) { float q = (tt * 0.11f + i / 4f) % 1f; glow(fxp + (float) Math.sin(q * 4 + i) * 6 * k * q + 10 * k * q * q, fyp - (8 + 44 * q) * k, (4 + 9 * q) * k, 0x8A8AB8, 0.09f * (float) Math.sin(Math.PI * q) * a); }
+        float txp = sx0 + sw * TENT_U, typ = ground(txp);                                              // the tent's lamp, swaying a little
+        glow(txp - 1.2f * k, typ - 4.5f * k, 11 * k, 0xFFB850, (0.3f + 0.06f * (float) Math.sin(tt * 1.7f)) * a);
+    }
     /** A soft shadow cast across the grass away from the lantern: from x0 for len pixels, as tall as h at its foot, darkest where the lamp is close. */
     private static void shadow(float x0, float w, float len, float lx, float a) {
         float near = Math.max(0f, 1f - Math.abs(x0 - lx) / (sw * 0.18f)); if (near < 0.02f) return;
@@ -554,6 +603,7 @@ final class Codex {
     }
     // ------------------------------------------------------------------ the landscape, baked once into two pictures (at twice the menu's pixels)
     private static Canvas farC, landC; private static int bakedW, bakedH;
+    private static float obsU, obsV, rocketU, rocketV, rocketBaseV; private static final float TENT_U = 0.305f, FIRE_U = 0.365f;
     private static float h1(int i) { int h = i * 374761393 + 668265263; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) & 0xFFFFFF) / 16777216f; }
     private static float n1(float x) { int i = (int) Math.floor(x); float f = x - i; f = f * f * (3 - 2 * f); return h1(i) + (h1(i + 1) - h1(i)) * f; }
     /** A mountain skyline: sharp ridges (ridged noise), big shapes with smaller ones on them. 0..1. */
@@ -573,34 +623,62 @@ final class Codex {
             for (int x = 0; x < CW; x++) {
                 float u = x / (float) CW, hgt = CH * (rg[1] + rg[2] * (ridge(u * 2.4f, seed) - 0.5f) * 2f);
                 float ry = CH - hgt; int y0 = (int) Math.floor(ry); float fr = 1f - (ry - y0);
+                float snow = ri == 0 ? hgt - CH * 0.135f : 0f;                                             // the far peaks keep their snow; every ridge has a thin line of moonlight
                 for (int y = Math.max(0, y0); y < CH; y++) {
                     float t = (y - ry) / Math.max(1f, hgt); int col = Canvas.mix(top, foot, (float) Math.pow(Math.min(1f, t), 1.4f));
+                    if (y - y0 < R) col = Canvas.mix(col, ri == 0 ? 0xFF5A62A8 : 0xFF34387A, 0.75f);
+                    else if (snow > 0 && y - y0 < snow * (0.6f + 0.4f * h1(x / (2 * R) * 7 + 3))) col = Canvas.mix(col, 0xFF8A92D0, 0.5f);
                     f.set(x, y, y == y0 ? (Math.round(255 * fr) << 24) | (col & 0xFFFFFF) : col);
                 }
             }
             for (int y = (int) (CH * 0.93f); y < CH; y++) { float t = (y - CH * 0.93f) / (CH * 0.07f); for (int x = 0; x < CW; x++) f.set(x, y, Canvas.rgb(Math.round(45 * t), 0x2A2A58)); }   // a little mist along the foot
         }
+        {   // a lake at the mountains' feet: dark water, long pale streaks where it holds the sky
+            int y0 = Math.round(CH * 0.945f);
+            for (int y = y0; y < CH; y++) { float t = (y - y0) / (float) Math.max(1, CH - y0);
+                for (int x = Math.round(CW * 0.3f); x < CW; x++) { float edge = Math.min(1f, (x - CW * 0.3f) / (CW * 0.06f)); int col = Canvas.mix(0xFF0B1030, 0xFF1A2058, t * 0.8f);
+                    if (h1((y / R) * 131 + x / (9 * R)) < 0.16f) col = Canvas.mix(col, 0xFF5A66B8, 0.45f);
+                    f.set(x, y, (Math.round(235 * edge) << 24) | (col & 0xFFFFFF)); } }
+            // the observatory on the near ridge: a drum, a dome with its slit open, a lit window
+            float ou = 0.615f, oh = CH * (0.07f + 0.04f * (ridge(ou * 2.4f, 9) - 0.5f) * 2f); int ox = Math.round(CW * ou), oy = Math.round(CH - oh) + R, dw = Math.round(5.2f * k), dh = Math.round(3.4f * k);
+            for (int y = oy - dh; y <= oy + 2 * R; y++) for (int x = ox - dw; x <= ox + dw; x++) f.set(x, y, x - (ox - dw) < R ? 0xFF4A52A0 : 0xFF161A40);
+            for (int y = -dw; y <= 0; y++) for (int x = -dw; x <= dw; x++) if (x * x + y * y <= dw * dw) { boolean rim = x * x + y * y > (dw - R) * (dw - R) && x < 0; boolean slit = x > dw * 0.15f && x < dw * 0.42f;
+                f.set(ox + x, oy - dh + y, slit ? 0xFF05060F : rim ? 0xFF5A62A8 : 0xFF1C2050); }
+            for (int y = 0; y < 2 * R; y++) for (int x = 0; x < 2 * R; x++) f.set(ox - dw / 2 + x, oy - dh / 2 + y, 0xFFFFC870);
+            obsU = ox / (float) CW; obsV = (oy - dh - dw * 0.8f) / CH;
+            // the launch pad further along: a rocket standing by its tower
+            float ru = 0.455f, rh = CH * (0.07f + 0.04f * (ridge(ru * 2.4f, 9) - 0.5f) * 2f); int rx = Math.round(CW * ru), ry0 = Math.round(CH - rh) + R, bw = Math.max(R, Math.round(1.0f * k)), bh = Math.round(9f * k);
+            for (int y = 0; y < bh; y++) { int w2 = y > bh * 0.78f ? Math.max(0, Math.round(bw * (1f - (y - bh * 0.78f) / (bh * 0.22f)))) : bw;
+                for (int x = -w2; x <= w2; x++) f.set(rx + x, ry0 - y, x == -w2 ? 0xFF6A72B8 : y > bh * 0.55f && y < bh * 0.62f ? 0xFF8A3A4A : 0xFF262A5E); }
+            for (int y = 0; y < 2.2f * k; y++) for (int sgn = -1; sgn <= 1; sgn += 2) { int fw = Math.round(bw + (2.2f * k - y) * 0.7f); for (int x = bw; x <= fw; x++) f.set(rx + sgn * x, ry0 - y, 0xFF1C2050); }
+            int tx = rx - Math.round(3.2f * k); for (int y = 0; y < bh * 0.9f; y++) { f.set(tx, ry0 - y, 0xFF1C2050); f.set(tx + R * 2, ry0 - y, 0xFF1C2050); if ((y / R) % 4 == 0) for (int x = 0; x <= R * 2; x++) f.set(tx + x, ry0 - y, 0xFF1C2050); }
+            for (int x = tx; x < rx; x++) if ((x / R) % 2 == 0) f.set(x, ry0 - Math.round(bh * 0.6f), 0xFF1C2050);
+            rocketU = rx / (float) CW; rocketV = (ry0 - bh) / (float) CH; rocketBaseV = ry0 / (float) CH;
+        }
         farC = f;
         Canvas l = new Canvas(CW, CH); int dark = 0xFF05040A;
-        float lanternX = (sw * 0.12f - 16 * k / R) * R, lightR = 34 * k;
+        float lanternX = (sw * 0.12f - 16 * k / R) * R, lightR = 34 * k, fireX = sw * FIRE_U * R;
         for (int x = 0; x < CW; x++) {                                                                // the hill
-            float gy = (ground(sx0 + x / (float) R) - sy0) * R; if (gy >= CH) continue;
+            float gy = (hill(sx0 + x / (float) R) - sy0) * R; if (gy >= CH) continue;
             int y0 = (int) Math.floor(gy); float fr = 1f - (gy - y0);
             float ld = Math.abs(x - lanternX) / lightR, warm = ld < 1f ? (1f - ld) * (1f - ld) : 0f;
+            float fd = Math.abs(x - fireX) / (lightR * 0.8f), warm2 = fd < 1f ? (1f - fd) * (1f - fd) : 0f; warm = Math.max(warm, warm2);
             for (int y = Math.max(0, y0); y < CH; y++) {
-                int col = dark; if (warm > 0f && y - y0 < 3 * R) col = Canvas.mix(dark, 0xFF6A3A18, warm * 0.75f * (1f - (y - y0) / (3f * R)));
+                int col = Canvas.mix(0xFF20204E, 0xFF0A0A1C, Math.min(1f, (y - y0) / (22f * R)));               // a body of its own: lighter earth at the top, night below (it used to be one flat black)
+                if (y - y0 < R) col = Canvas.mix(col, 0xFF5A62B4, 0.8f);                                  // the moon on its edge
+                if (warm > 0f && y - y0 < 4 * R) col = Canvas.mix(col, 0xFF8A4A1E, warm * 0.8f * (1f - (y - y0) / (4f * R)));
                 l.set(x, y, y == y0 ? (Math.round(255 * fr) << 24) | (col & 0xFFFFFF) : col);
             }
             float dens = 0.35f + 0.4f * n1(x * 0.05f);                                                 // grass: clumps of fine blades, each leaning its own way
             if (h1(x * 7 + 3) < dens) {
                 float bh = (1.2f + 3.6f * h1(x * 13 + 1)) * k * 0.45f, lean = (h1(x * 5 + 9) - 0.5f) * bh * 0.6f;
-                int col = warm > 0f ? Canvas.mix(dark, 0xFF7A4A20, warm * 0.8f) : dark;
+                int col = warm > 0f ? Canvas.mix(dark, 0xFF9A5A24, warm * 0.85f) : h1(x * 3 + 11) < 0.3f ? 0xFF2A3266 : 0xFF0E0E24;
                 for (int j = 0; j < Math.round(bh); j++) { float q = j / bh; l.set(Math.round(x + lean * q * q), Math.round(gy - j), col); }
             }
         }
-        float[][] firs = {{0.035f, 30, 1}, {0.062f, 19, 2}, {0.012f, 23, 3}};                       // firs: a trunk and tiers of ragged boughs
+        float[][] firs = {{0.004f, 36, 1}, {0.268f, 27, 2}, {0.425f, 22, 3}, {0.402f, 15, 4}};                       // firs: a trunk and tiers of ragged boughs
         for (float[] fz : firs) {
-            float fx = (sw * fz[0]) * R, base = (ground(sx0 + sw * fz[0]) - sy0) * R + R, th = fz[1] * k; int sd = (int) fz[2];
+            float fx = (sw * fz[0]) * R, base = (hill(sx0 + sw * fz[0]) - sy0) * R + R, th = fz[1] * k; int sd = (int) fz[2];
             for (int y = Math.round(base - 4 * k); y < base; y++) for (int x = Math.round(fx - 0.7f * k); x < fx + 0.7f * k; x++) l.set(x, y, dark);
             int rows = Math.round(th - 3 * k);
             for (int r = 0; r < rows; r++) {
@@ -609,6 +687,36 @@ final class Codex {
                 int y = Math.round(base - 3 * k - r);
                 for (int x = Math.round(fx - hw); x <= Math.round(fx + hw); x++) l.set(x, y, dark);
             }
+        }
+        {   // the lookout deck: planks on posts, steps down to the grass, two poles for the string of lights
+            int dx0 = Math.round(sw * DECK0 * R), dx1 = Math.round(sw * DECK1 * R), dy = Math.round((deckY() - sy0) * R), pt = Math.max(2 * R, Math.round(1.7f * k));
+            for (int x = dx0; x <= dx1; x++) { float ld = Math.abs(x - lanternX) / (lightR * 1.5f), warm = ld < 1f ? (1f - ld) * (1f - ld) : 0f; boolean gap = ((x - dx0) / R) % 9 == 8;
+                int hy = Math.round((hill(sx0 + x / (float) R) - sy0) * R);
+                for (int y = 0; y < pt; y++) { int col = y < R ? Canvas.mix(0xFF4A4476, 0xFFD08A3A, warm) : Canvas.mix(0xFF1A1630, 0xFF5A3418, warm * 0.8f); if (gap && y >= R) col = 0xFF0C0A18; l.set(x, dy + y, col); }
+                for (int y = dy + pt; y < hy + R; y++) l.set(x, y, Canvas.mix(0xFF0A0916, 0xFF05040A, Math.min(1f, (y - dy) / (8f * R))));           // the dark under the deck
+                int ph = ((x - dx0) / R) % 30; if (ph < 2 || x > dx1 - 2 * R) for (int y = dy + pt; y < hy + R; y++) l.set(x, y, ph == 0 ? 0xFF3A3662 : 0xFF14122A);   // posts
+            }
+            for (int st = 1; st <= 3; st++) { int x0 = dx1 + (st - 1) * Math.round(2.6f * k), yy = dy + st * Math.round(1.5f * k);                     // steps
+                for (int x = x0; x < x0 + Math.round(2.6f * k); x++) { int hy = Math.round((hill(sx0 + x / (float) R) - sy0) * R); if (yy > hy) break; for (int y = yy; y < hy + R; y++) l.set(x, y, y == yy ? 0xFF4A4476 : 0xFF14122A); } }
+            for (int e = 0; e < 2; e++) { int px0 = e == 0 ? dx0 + Math.round(sw * 0.006f * R) : dx1 - Math.round(sw * 0.006f * R);                    // the two poles
+                for (int y = dy - Math.round(34 * k); y < dy; y++) { l.set(px0, y, 0xFF5A5690); l.set(px0 + R, y, 0xFF1C1A38); l.set(px0 + 2 * R, y, 0xFF1C1A38); } }
+            for (int i = 0; i <= 160; i++) { float[] b = bulb(i / 160f); l.set(Math.round((b[0] - sx0) * R), Math.round((b[1] - sy0) * R), 0xFF3A3862); }   // the wire
+            // a crate of charts and a mug by the lantern end; a backpack by the steps
+            int cs = Math.round(4.2f * k), cx0 = dx1 - Math.round(sw * 0.006f * R) - cs - Math.round(2.2f * k);
+            for (int y = 0; y < cs; y++) for (int x = 0; x < cs + R; x++) l.set(cx0 + x, dy - 1 - y, x == 0 || y == cs - 1 ? 0xFF4A4476 : (y / R) % 3 == 2 ? 0xFF0C0A18 : 0xFF1A1630);
+            for (int i = 0; i < 3; i++) for (int y = 0; y < Math.round((3 + i) * 0.5f * k) + R; y++) for (int x = 0; x < R; x++) l.set(cx0 + R * (2 + i * 3) + x, dy - cs - 1 - y, i == 1 ? 0xFFB8A070 : 0xFF6A6498);          // rolled charts sticking out
+        }
+        {   // the tent: canvas pitched on the slope, lamplight through its open flap
+            float tu = TENT_U; int tx = Math.round(sw * tu * R), ty = Math.round((ground(sx0 + sw * tu) - sy0) * R) + R, hw = Math.round(10f * k), th = Math.round(13f * k);
+            for (int y = 0; y < th; y++) { int w2 = Math.round(hw * (1f - y / (float) th));
+                for (int x = -w2; x <= w2; x++) { boolean door = Math.abs(x + hw * 0.12f) < w2 * 0.34f && y < th * 0.72f, seam = x == -w2 || x == w2;
+                    int col = door ? Canvas.mix(0xFFFFD070, 0xFFB85A22, y / (th * 0.72f)) : seam ? 0xFF8A7AD0 : x < 0 ? 0xFF4A3F86 : 0xFF2E2860; if (!door && !seam && (x + y / 2) % (5 * R) == 0) col = Canvas.mix(col, 0xFF000000, 0.25f);
+                    l.set(tx + x, ty - y, col); } }
+            for (int y = 0; y < 2 * R; y++) l.set(tx, ty - th - y, 0xFF6A5AA8);
+            // the fire ring: stones round the campfire, two logs
+            int fx0 = Math.round(fireX), fy = Math.round((ground(sx0 + sw * FIRE_U) - sy0) * R) + R;
+            for (int i = -3; i <= 3; i++) for (int y = 0; y < R + (i % 2 == 0 ? R : 0); y++) for (int x = 0; x < R * 2; x++) l.set(fx0 + i * R * 2 + x - R, fy - y, i % 2 == 0 ? 0xFF3A3A5A : 0xFF2A2A46);
+            for (int x = -3 * R; x <= 3 * R; x++) { l.set(fx0 + x, fy - 2 * R - Math.abs(x) / 3, 0xFF2A1810); l.set(fx0 + x, fy - 2 * R - Math.abs(x) / 3 - 1, 0xFF3A2416); }
         }
         landC = l;
     }
@@ -649,7 +757,19 @@ final class Codex {
             NebulaTex.glow(g, sx, sy, sr * 9, sr * 5, argb(0.35f * sa, 0xFF8A3A)); NebulaTex.glow(g, sx, sy, sr * 3.5f, sr * 3.5f, argb(0.55f * sa, 0xFFC060));
             disc(g, sx, sy, sr, argb(sa, mix(0xFFFFF0C0, 0xFFFF7A3A, sunK)));
         }
-        NebulaTex.layer(g, "far", farC, sx0, sy0 + tilt * sh * 0.05f, sw, sh, argb(a * alpha, 0xFFFFFF));   // the mountains (baked once)
+        NebulaTex.layer(g, "far", farC, sx0, sy0 + tilt * sh * 0.05f + rise * sh * 0.2f, sw, sh, argb(a * alpha, 0xFFFFFF));   // the mountains (baked once)
+        {   float fy0 = sy0 + tilt * sh * 0.05f + rise * sh * 0.2f, tt2 = (now % 3_600_000L) / 1000f, k2 = sh / 150f;
+            float ox = sx0 + obsU * sw, oy = fy0 + obsV * sh + 2 * k2, ang = -1.15f + 0.35f * (float) Math.sin(tt2 * 0.13f);      // the observatory: a thin beam out of the dome, sweeping the sky slowly
+            for (int i = 0; i < 26; i++) { float q = i / 26f, d = (3 + 120 * q) * k2; glow(ox + 1.6f * k2 + (float) Math.cos(ang) * d, oy + (float) Math.sin(ang) * d, (1.5f + 5 * q) * k2, 0x8AD8FF, 0.11f * (1f - q) * a); }
+            glow(ox - 2.6f * k2, fy0 + obsV * sh + 6.5f * k2, 4 * k2, 0xFFC870, 0.35f * a);
+            float rx = sx0 + rocketU * sw, ry = fy0 + rocketV * sh, bl = (now % 1800L) < 160 ? 1f : 0f;                           // the rocket on its pad: a red beacon, floodlights, vapour off the tanks
+            glow(rx, ry - 1 * k2, 5 * k2, 0xFF4040, 0.75f * bl * a); g.fill(Math.round(rx), Math.round(ry - k2), Math.round(rx) + 1, Math.round(ry - k2) + 1, argb(a * alpha * (0.35f + 0.65f * bl), 0xFF6060));
+            float rb = fy0 + rocketBaseV * sh; NebulaTex.glow(g, rx, rb - 3 * k2, 9 * k2, 6 * k2, argb(0.2f * a * alpha, 0xBFD0FF));
+            for (int i = 0; i < 3; i++) { float q = (tt2 * 0.16f + i / 3f) % 1f; glow(rx + (1.5f + 7 * q) * k2, rb - (1 + 3 * q) * k2, (2 + 4 * q) * k2, 0xC8D0F0, 0.12f * (float) Math.sin(Math.PI * q) * a); }
+            for (int i = 0; i < 16; i++) {                                                             // the lake: glints coming and going where it catches the stars
+                float gx = sx0 + sw * (0.36f + 0.62f * rnd(i * 19 + 2)), gy2 = fy0 + sh * (0.953f + 0.04f * rnd(i * 7 + 9)), tw = (float) Math.max(0, Math.sin(tt2 * (0.6f + rnd(i) * 0.9f) + i * 2.3f));
+                g.fill(Math.round(gx), Math.round(gy2), Math.round(gx + (2 + 4 * rnd(i * 3)) * k2), Math.round(gy2) + 1, argb(0.5f * tw * tw * a * alpha, 0xBFD0FF)); }
+        }
         long per = 26000; float su = (now % per) / (float) per;                                           // a satellite crossing now and then, blinking
         if (su < 0.5f) { float sxp = sx0 + sw * (0.1f + su * 1.6f), syp = sy0 + sh * (0.06f + su * 0.1f); boolean on = (now / 500) % 2 == 0;
             g.fill(Math.round(sxp), Math.round(syp), Math.round(sxp) + 1, Math.round(syp) + 1, argb((on ? 0.9f : 0.35f) * a * alpha, on ? 0xFF8A8A : 0xFFFFFF)); }
@@ -818,6 +938,74 @@ final class Codex {
      * draws an arc around the pole star as the night wheels overhead; the exposure ends, the trails pull back into points, the title
      * rises, and the constellations come into focus and draw themselves.
      */
+    /** The grand opening, in time: dark, one star; it draws the sky into itself (streaks); it bursts and the galaxy is there, close;
+     *  the camera falls back while eight comets fly out and each draws its constellation; the title; the land rises; the atlas arrives. */
+    private static void epicTimeline(float fu) {
+        day = 0f; trail = 0f; sunK = 1f; title = 0f; dusk = 0f; tilt = 0f; focusPull = 0f; introSounds = 99;
+        float b = fu - BURST;
+        open0 = b < 0 ? 1f : 0f; night = ease(b / 500f); milky = ease(b / 900f); conA = b > 0 ? 1f : 0f; lineGrow = 1f;
+        for (int c = 0; c < ACH.length && c < CG.length; c++) CG[c] = cl((fu - arrive(c)) / 850f);
+        float zo = cl(b / 2700f); introZ = b < 0 ? 1.7f : 1.7f * (1f - (1f - (1f - zo) * (1f - zo) * (1f - zo)));
+        rise = 1f - ease((fu - 3900f) / 1400f);
+        epicWarp = b < 0 ? 0f : 1.5f * (1f - ease(b / 1100f));
+    }
+    private static void epicOverlay(GuiGraphicsExtractor g, float fu) {
+        float cx = sx0 + sw / 2f, cy = sy0 + sh / 2f, b = fu - BURST, k = sh / 150f;
+        if (b < 0) {
+            float s = ease(fu / 800f), w = ease((fu - 650f) / 1450f), w2 = w * w, beat = 1f + 0.12f * (float) Math.sin(fu / 90.0) * w;
+            float tw = (float) Math.pow(fu / 1000f, 2.6) * 0.55f;                                         // the sky falling into the star: streaks from everywhere, faster and longer
+            for (int i = 0; i < 150 && w > 0.01f; i++) {
+                float an = rnd(i * 7 + 3) * 6.2832f, sp = 0.35f + rnd(i * 11) * 0.65f, ph = 1f - ((tw * sp + rnd(i * 5)) % 1f), r0 = (0.04f + ph * ph) * Math.max(sw, sh) * 0.7f, len = (4f + 90f * sp * w2) * (0.3f + ph);
+                float ca = (float) Math.cos(an), sa = (float) Math.sin(an) * 0.72f; int col = i % 5 == 0 ? 0xC9A0FF : i % 3 == 0 ? 0x9AD8FF : 0xFFFFFF;
+                streak(cx + ca * r0, cy + sa * r0, cx + ca * (r0 + len), cy + sa * (r0 + len), col, w * (1f - ph * 0.6f) * 0.9f);
+            }
+            for (int i = 0; i < 3; i++) { float q = ((fu - 900f) / 600f + i / 3f) % 1f; if (fu < 900f) break; float r = sh * 0.55f * (1f - q) * (1f - q); ring(cx, cy, r, argb(0.5f * q * w * alpha, 0xC9A0FF), 1f); }   // rings closing on it
+            NebulaTex.glow(g, cx, cy, sw * (0.05f + 0.42f * w2) * beat, 2.5f * k * (0.4f + w), argb(0.75f * s * alpha, 0xBFD0FF));        // the flare: a long thin line of light
+            NebulaTex.glow(g, cx, cy, 1.6f * k * (0.5f + w), sh * (0.03f + 0.2f * w2) * beat, argb(0.5f * s * alpha, 0xE6DCFF));
+            glow(cx, cy, (10f + 46f * w2) * beat * k * 0.5f, 0xA88BFF, 0.55f * s); glow(cx, cy, (4f + 14f * w2) * beat * k * 0.5f, 0xFFFFFF, s);
+            for (int i = 0; i < 4; i++) { double an = Math.PI / 4 + i * Math.PI / 2 + fu / 2600.0; float L = (4f + 22f * w2) * k * 0.5f; line(cx, cy, cx + (float) Math.cos(an) * L, cy + (float) Math.sin(an) * L, 0xFFFFFF, 0.7f * s, 0); }
+            float ta = ease((fu - 450f) / 500f) * (1f - ease((fu - 1500f) / 400f));
+            if (ta > 0.01f) { String q = spaced("every drop is a star"); small(g, q, Math.round(cx - host.width(q) * 0.375f), Math.round(cy + 26 * k * 0.5f + 10), argb(0.75f * ta * alpha, 0xC8C0E8)); }
+            return;
+        }
+        // the burst: white, then two shock rings running out through the new sky
+        float fl = 1f - ease(b / 650f); if (fl > 0.003f) { g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(fl * fl, 0xFFFFFF)); g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(0.35f * fl, 0xC9A0FF)); }
+        for (int i = 0; i < 2; i++) { float q = (b - i * 170f) / 1000f; if (q <= 0f || q >= 1f) continue; float r = sh * (0.04f + 1.15f * (1f - (1f - q) * (1f - q)));
+            for (int j = 0; j < 3; j++) ring(cx, cy, r - j * 1.2f, argb((1f - q) * (0.9f - 0.25f * j) * alpha, i == 0 ? 0xFFFFFF : 0xC9A0FF), 1f);
+            for (int j = 0; j < 20; j++) { double an = j * Math.PI / 10 + i; glow(cx + (float) Math.cos(an) * r, cy + (float) Math.sin(an) * r * 0.98f, 9 * k, i == 0 ? 0xE6DCFF : 0xA88BFF, 0.16f * (1f - q)); } }
+        glow(cx, cy, 60 * k * (1f - ease(b / 1400f)), 0xFFFFFF, 0.5f * (1f - ease(b / 1400f)));
+        // eight comets, one per constellation: out of the burst, along an arc, to where the figure lives; it lands and the figure draws itself
+        for (int c = 0; c < ACH.length; c++) {
+            float t1 = arrive(c), t0 = t1 - 620f, u = (fu - t0) / 620f; if (u <= 0f) continue;
+            float[] o = centre(c); float hx = X(o[0]), hy = Y(o[1]); int col = ACH_COL[c];
+            if (u < 1f) {
+                float dx = hx - cx, dy = hy - cy, d = (float) Math.hypot(dx, dy) + 0.001f, nx = -dy / d, ny = dx / d, bend = (c % 2 == 0 ? 1 : -1) * d * 0.28f;
+                for (int j = 14; j >= 0; j--) { float uj = u - j * 0.022f; if (uj <= 0f) continue; float e = 1f - (1f - uj) * (1f - uj), ar = (float) Math.sin(Math.PI * e) * bend, x = cx + dx * e + nx * ar, y = cy + dy * e + ny * ar, f = 1f - j / 15f;
+                    glow(x, y, (2.5f + 7f * f) * k * 0.5f, col, 0.75f * f * f); if (j == 0) { glow(x, y, 3.2f * k, 0xFFFFFF, 1f); glow(x, y, 16 * k, col, 0.35f); }
+                    if (j % 3 == 1) g.fill(Math.round(x + (rnd(c * 9 + j) - 0.5f) * 6), Math.round(y + (rnd(c * 5 + j) - 0.5f) * 6), Math.round(x + (rnd(c * 9 + j) - 0.5f) * 6) + 1, Math.round(y + (rnd(c * 5 + j) - 0.5f) * 6) + 1, argb(f * alpha, 0xFFFFFF)); }
+            } else {
+                float q = (fu - t1) / 750f; if (q >= 1f) continue; float e = 1f - (1f - q) * (1f - q), r = 0.17f * sh * camS * e;
+                ring(hx, hy, r, argb((1f - q) * alpha, col), 1f); ring(hx, hy, r * 0.7f, argb((1f - q) * 0.5f * alpha, 0xFFFFFF), 1f);
+                glow(hx, hy, 30 * k * (1f - q), col, 0.6f * (1f - q)); glow(hx, hy, 9 * k * (1f - q), 0xFFFFFF, 0.9f * (1f - q));
+                for (int j = 0; j < 10; j++) { double an = j * Math.PI / 5 + c; float r0 = r * 0.5f, r1 = r * (0.8f + 0.5f * rnd(j + c * 3)); line(hx + (float) Math.cos(an) * r0, hy + (float) Math.sin(an) * r0, hx + (float) Math.cos(an) * r1, hy + (float) Math.sin(an) * r1, col, 0.8f * (1f - q), 0); }
+            }
+        }
+        // the title: struck letter by letter over the galaxy, the count running up beneath it; then it flies up to be the page's header
+        float tb = fu - 2950f; if (tb <= 0f) return;
+        Achievements.Profile p = Achievements.profile(); int all = 0, lit = 0; if (p != null) for (Achievements.Ach a : p.list()) { all++; if (a.done()) lit++; }
+        String ttl = spaced("ACHIEVEMENTS"); float fly = ease((fu - 4750f) / 800f), gone = cl((fu - EPIC - 350f) / 400f), big = 2.6f, sc = big + (1f - big) * fly, tw = host.width(ttl);
+        float x0 = cx - tw * big / 2f, y0 = cy - 14 * big * 0.5f - sh * 0.02f, x = x0 + (sx0 + 14 - x0) * fly, y = y0 + (sy0 + 11 - y0) * fly, ta = 1f - gone; if (ta <= 0f) return;
+        float band = (1f - fly) * cl(tb / 300f);
+        NebulaTex.glow(g, cx, cy - sh * 0.01f, tw * big * 0.75f, 30 * big * 0.5f + 16, argb(0.6f * band * alpha, 0x02010A));
+        NebulaTex.glow(g, cx, cy - sh * 0.02f, tw * big * 0.55f, 16, argb(0.22f * band * alpha, 0xC9A0FF));
+        int shown = Math.min(ttl.length(), (int) (tb / 34f) + 1); String part = ttl.substring(0, shown);
+        Gfx.push(g); Gfx.translate(g, x, y); Gfx.scale(g, sc); Gfx.txt(g, font, part, 0, 0, argb(ta * alpha, 0xE6DCFF), true);
+        if (shown < ttl.length() || tb < ttl.length() * 34f + 200f) { float hw = host.width(part); Gfx.pop(g); glow(x + hw * sc, y + 4 * sc, 10 * k, 0xFFFFFF, 0.8f * (1f - cl((tb - ttl.length() * 34f) / 200f))); } else Gfx.pop(g);
+        float lw = tw * big * 0.5f * ease((tb - 250f) / 700f), la = band; int ly = Math.round(y0 + 9 * big + 6);
+        g.fill(Math.round(cx - lw), ly, Math.round(cx + lw), ly + 1, argb(0.8f * la * alpha, 0xE6DCFF)); disc(g, cx, ly + 0.5f, 2.2f, argb(la * alpha, 0xFFFFFF));
+        String sub = Math.round(lit * ease((tb - 500f) / 900f)) + " of " + all + " stars lit"; float sa = la * cl((tb - 450f) / 300f);
+        small(g, sub, Math.round(cx - host.width(sub) * 0.375f), ly + 7, argb(0.9f * sa * alpha, 0xD8DCEC));
+    }
     private static void longTimeline(float fu) {
         open0 = 1f - ease(fu / 600f);
         day = 1f - ease((fu - 300f) / 2200f);
@@ -838,7 +1026,7 @@ final class Codex {
 
     private static void constellation(GuiGraphicsExtractor g, int c, float zoomed, int fc) {
         List<Node> t = tree(c); List<Achievements.Ach> l = achOf(ACH[c]);
-        boolean other = fc >= 0 && c != fc; float fade = (other ? 1f - 0.8f * zoomed : 1f) * conA;
+        boolean other = fc >= 0 && c != fc; float fade = (other ? 1f - 0.8f * zoomed : 1f) * conA * cl(CG[c] * 4f); if (fade <= 0.003f) return; float lineGrow = Math.min(Codex.lineGrow, CG[c]);
         float d0 = DEPTH[c], dep = fc == c ? d0 + (1f - d0) * zoomed : d0, still = 1f - zoomed;
         pX = parX(dep) * still; pY = parY(dep) * still; dK = 0.62f + 0.38f * dep;
         float[] o = centre(c); float ox = X(o[0]) + pX, oy = Y(o[1]) + pY;
@@ -860,24 +1048,24 @@ final class Codex {
             if (lineGrow < 1f) { float gr = cl(lineGrow * 1.6f - i / (float) Math.max(1, t.size()) * 0.6f); if (gr <= 0f) continue; x1 = x0 + (x1 - x0) * gr; y1 = y0 + (y1 - y0) * gr; }
             boolean lit = q.a().done() && n.a().done(), half = q.a().done() || n.a().done();
             if (lit) { line(x0, y0, x1, y1, col, 0.45f * fade * dl, 2); line(x0, y0, x1, y1, mix(col, 0xFFFFFFFF, 0.6f), 0.9f * fade * dl, 0); spark(x0, y0, x1, y1, col, fade * dl, i + c * 9); }
-            else { line(x0, y0, x1, y1, mix(half ? mix(col, 0xFF8A94B8, 0.5f) : 0xFF8A94B8, col, 0.7f * hk), ((half ? 0.3f : 0.18f) + 0.5f * hk) * fade * dl, 0);
+            else { line(x0, y0, x1, y1, mix(half ? mix(col, 0xFFB0B8D8, 0.4f) : mix(col, 0xFFB0B8D8, 0.65f), col, 0.7f * hk), ((half ? 0.5f : 0.4f) + 0.4f * hk) * fade * dl, 0);
                    if (hk > 0f) line(x0, y0, x1, y1, col, 0.35f * hk * fade * dl, 2); }
         }
         if (c == 0) heart(g, c, ox, oy, any, full, fade * dl, zoomed, fc);
         for (Node n : t) nodeOf(g, c, n, false, fade * dl, zoomed, fc);
         if (hk > 0f) for (Node n : t) { float sx = X(o[0] + n.du()) + pX, sy = Y(o[1] + n.dv()) + pY; glow(sx, sy, 7f * dK, col, 0.55f * hk * fade * dl); glow(sx, sy, 2.5f * dK, 0xFFFFFF, 0.6f * hk * fade * dl); }   // hovered: every star brightens
         if (zoomed < 0.6f && inSky(ox, oy)) {
-            float la = (1f - zoomed / 0.6f) * fade * alpha * (0.0f + hk);                                  // named only while pointed at: the atlas lists them all
+            float la0 = (1f - zoomed / 0.6f) * fade * alpha, la = la0 * hk, ln = la0 * (0.78f + 0.22f * hk);   // the name and its bar are always there; the count and the figure's own name come when you point
             String nm = spaced(ACH_NAME[c].toUpperCase(Locale.ROOT));
             float bot = 0.04f, top = -0.04f; for (Node n : t) { bot = Math.max(bot, n.dv()); top = Math.min(top, n.dv()); }
             boolean above = c == 3 || c == 4;                                          // these figures have their names above them (clear of the hill and of each other)
             int ty = above ? Math.round(Y(o[1] + top) + pY) - 26 : Math.round(Y(o[1] + bot) + pY) + 8, nw = host.width(nm);
             float hx0 = ox;
             int nc = argb(la, hv || full ? mix(col, 0xFFFFFFFF, 0.4f) : mix(col, 0xFFFFFFFF, 0.65f));
-            small(g, nm, Math.round(ox - nw * 0.375f), ty + 2, nc);
+            small(g, nm, Math.round(ox - nw * 0.375f), ty + 2, argb(ln, hv || full ? mix(col, 0xFFFFFFFF, 0.4f) : mix(col, 0xFFFFFFFF, 0.65f)));
             float bw0 = Math.max(26, nw * 0.6f), bx0 = ox - bw0 / 2f, by0 = ty + 11;                       // a thin bar: how much of it is lit
-            g.fill(Math.round(bx0), Math.round(by0), Math.round(bx0 + bw0), Math.round(by0) + 1, argb(la * 0.35f, 0x8A94B8));
-            g.fill(Math.round(bx0), Math.round(by0), Math.round(bx0 + bw0 * frac), Math.round(by0) + 1, argb(la, col));
+            g.fill(Math.round(bx0), Math.round(by0), Math.round(bx0 + bw0), Math.round(by0) + 1, argb(ln * 0.35f, 0x8A94B8));
+            g.fill(Math.round(bx0), Math.round(by0), Math.round(bx0 + bw0 * frac), Math.round(by0) + 1, argb(ln, col));
             String sub = done + " / " + l.size(); int subW = Math.round(host.width(sub) * 0.6f);
             Gfx.push(g); Gfx.translate(g, ox - subW / 2f, by0 + 3); Gfx.scale(g, 0.6f); Gfx.txt(g, font, sub, 0, 0, argb(la * 0.8f, full ? col : 0xA8B2D0), false); Gfx.pop(g);
             if (full) small(g, "✦ COMPLETE ✦", Math.round(ox - host.width("✦ COMPLETE ✦") * 0.375f), ty - 9, argb(la, col));

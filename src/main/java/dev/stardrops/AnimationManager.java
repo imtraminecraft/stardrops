@@ -214,6 +214,11 @@ public final class AnimationManager {
         float[] beats = tre ? new float[]{0.215f * O, 0.505f * O, 0.795f * O} : new float[]{0.34f * O, 0.58f * O, 0.80f * O};
         if (isSlayer(scene)) {                                                                       // Slayer: the boss rises, walks, the meteors strike, then the reveal and after
             float P = SL_PIVOT, Al = animLen(scene, ty);
+            if (isDig(scene)) {                                                                      // the dig: the spade (it bites from 0.5), the thing coming up, the cuts or the lid, the reveal
+                float h0 = Dig3D.hits(tre, nod ? 0 : ty == RNG ? 2 : 1)[0];
+                if (nod) return new float[][]{{0.30f}, {Dig3D.RISE0}, {h0 - 0.45f}, {h0 + 0.05f}, {P + 0.6f}};
+                return new float[][]{{0.30f}, {Dig3D.RISE0}, {h0 - 0.35f}, {P}, {ty == RNG ? P + 0.6f : Al - 0.7f + hold}};
+            }
             // the rise and the walk (SlayerScene.RISE / WALK), then the meteors: each strike sound starts so its impacts land on SlayerScene.HITS
             if (nod) return new float[][]{{SlayerScene.RISE}, {SlayerScene.WALK}, {SlayerScene.HITS[0][0] - 0.45f}, {SlayerScene.HITS[0][0] + 0.05f}, {P + 0.6f}};
             if (ty == RNG) return new float[][]{{SlayerScene.RISE}, {SlayerScene.WALK}, {SlayerScene.HITS[2][0] - 0.35f}, {P}, {P + 0.6f}};

@@ -31,11 +31,17 @@ final class Dig3D {
 
     /** {distance, yaw, eye height, target height}. The treasure's camera pushes in over the chest as it opens. */
     static float[] camera(float t, float p, boolean treasure, int type) {
-        float in = eo(t / 1.6f);
-        float yaw = (float) Math.toRadians(13 + 4 * Math.sin(t * 0.3) - 10 * (1f - in));
-        if (!treasure) return new float[]{lerp(12.5f, 10.2f, in) - 0.5f * sm((t - RISE0) / 1.0f) + 0.7f * sm(p / 0.7f), yaw, 2.3f + 0.4f * (1f - in), 1.35f};
+        // The dig is filmed close and low, swinging round the digger: every bite of the spade punches the camera in and shakes it.
+        // When the ground gives, it sweeps back and up to the wide shot the fight (or the chest) plays in.
+        float[] digs = treasure ? DIGS_T : DIGS; float open = treasure ? CHEST_UP0 : RISE0;
+        float wide = sm((t - (open - 0.25f)) / 0.7f), in = eo(t / 1.6f);
+        float punch = 0f, shake = 0f; for (int i = 0; i < digs.length; i++) { float d = t - digs[i]; if (d >= 0f && d < 0.5f) { float e = (float) Math.exp(-d * 9f) * (0.75f + 0.2f * i); punch += e; shake += e * (float) Math.sin(d * 70f); } }
+        { float d = t - open; if (d >= 0f && d < 0.6f) shake += 1.4f * (float) Math.exp(-d * 7f) * (float) Math.sin(d * 60f); }
+        float yawWide = (float) Math.toRadians(13 + 4 * Math.sin(t * 0.3)), yawDig = (float) Math.toRadians(64 - 46 * sm(t / Math.max(0.5f, open)));
+        float yaw = lerp(yawDig, yawWide, wide), dist = lerp(lerp(9.0f, 7.2f, sm(t / open)), 10.2f, wide) - 0.55f * punch, eye = lerp(lerp(0.95f, 1.5f, sm(t / open)), 2.3f, wide) + 0.07f * shake, tgt = lerp(0.75f, 1.35f, wide) + 0.05f * shake;
+        if (!treasure) return new float[]{dist - 0.5f * sm((t - RISE0) / 1.0f) + 0.7f * sm(p / 0.7f), yaw, eye, tgt};
         float z = sm((t - 2.25f) / 0.95f) * (1f - 0.5f * sm(p / 0.9f));
-        return new float[]{lerp(12.5f, 10f, in) - 3.4f * z, yaw * (1f - 0.5f * z), 2.3f + 0.4f * (1f - in) + 0.8f * z, 1.35f - 0.35f * z};
+        return new float[]{dist - 0.2f - 3.4f * z, yaw * (1f - 0.5f * z), eye + 0.8f * z, tgt - 0.35f * z};
     }
 
     static void scene(float t, float p, float A, int energy, Theme th, float aspect) {
@@ -65,8 +71,31 @@ final class Dig3D {
         }
         for (int i = 0; i < digs.length; i++) {                                                       // every dig throws clods of the planet's own ground, and a puff of dust
             float d = t - digs[i]; if (d < 0) continue;
-            debris(0.05f, 0.05f, d, 0.75f, 9, 40 + i * 13, th);
-            if (d < 0.5f) for (int q = 0; q < 6; q++) { float an = q * 1.05f + i; glow(F.add, (float) Math.cos(an) * (0.2f + d * 1.1f), 0.12f + d * 0.5f, (float) Math.sin(an) * (0.2f + d * 0.9f), 0.16f, mixc(th.dirt(), 0xFFFFFF, 0.3f), 0.35f * (1f - d / 0.5f)); }
+            boolean lastDig = i == digs.length - 1; float pw = Math.min(1.25f, 0.8f + 0.16f * i + (lastDig ? 0.2f : 0f)); int lc2 = treasure ? 0xFFD25A : energy;
+            debris(0.05f, 0.05f, d, 0.75f * pw, 9 + 3 * i, 40 + i * 13, th); debris(-0.1f, 0.12f, d, 1.15f * pw, 6 + 2 * i, 140 + i * 17, th);
+            if (d < 0.6f) for (int q = 0; q < 10; q++) { float an = q * 0.63f + i, sp = 0.8f + 0.6f * rnd(q * 5 + i);                               // dust rolling out along the ground, and up
+                glow(F.add, (float) Math.cos(an) * (0.25f + d * 1.9f * sp * pw), 0.12f + d * (0.3f + 0.7f * rnd(q + i * 3)), (float) Math.sin(an) * (0.25f + d * 1.6f * sp * pw), 0.2f + d * 0.35f, mixc(th.dirt(), 0xFFFFFF, 0.3f), 0.4f * (1f - d / 0.6f)); }
+            if (d < 0.45f) { float e = 1f - (1f - d / 0.45f) * (1f - d / 0.45f);                                                                  // the blow runs out through the ground: a ring of the light below
+                ring(F.add, 0, 0.06f, 0, 0.3f + 2.6f * pw * e, 0.1f * (1f - e) + 0.03f, lc2, 0.75f * (1f - d / 0.45f));
+                if (lastDig) ring(F.add, 0, 0.07f, 0, 0.2f + 4.2f * e, 0.16f * (1f - e) + 0.03f, 0xFFFFFF, 0.6f * (1f - d / 0.45f)); }
+            if (d < 0.14f) glint(F.add, 0.05f, 0.14f, 0.05f, (0.5f + 0.3f * i) * (1f - d / 0.14f) + 0.1f, 0xFFFFFF, 1f - d / 0.14f);                 // the bite itself: a white spark at the blade
+            if (d < 0.7f) for (int q = 0; q < 5 + 2 * i; q++) { float an = q * 1.9f + i * 0.7f, sp = 1.2f + 2.6f * rnd(q * 9 + i * 5), g = d * sp, yy = 0.15f + d * (3.2f + 2f * rnd(q + i)) - 5.5f * d * d;   // sparks of that light thrown up with the earth
+                if (yy > 0.05f) glow(F.add, (float) Math.cos(an) * g * 0.6f, yy, (float) Math.sin(an) * g * 0.6f, 0.07f, mixc(lc2, 0xFFFFFF, 0.5f), 1f - d / 0.7f); }
+        }
+        if (done > 0) {                                                                               // the ground cracks further with every dig, and the light below leaks up through the cracks and the hole
+            int lc3 = treasure ? 0xFFD25A : energy; float open2 = treasure ? CHEST_UP0 : RISE0, fade2 = 1f - sm((t - (open2 + 0.7f)) / 0.6f), since = t - digs[done - 1], grow = done - 1 + eo(since / 0.25f);
+            if (fade2 > 0.01f) {
+                for (int c = 0; c < 7; c++) { float an = c * 0.9f + 0.3f, len = (0.35f + 0.33f * rnd(c * 3 + 1)) * grow; int steps = Math.round(len / 0.11f); float x = (float) Math.cos(an) * r * 0.9f, z = (float) Math.sin(an) * r * 0.8f, a2 = an;
+                    for (int q = 0; q < steps; q++) { a2 += (rnd(c * 11 + q * 7) - 0.5f) * 0.9f; x += (float) Math.cos(a2) * 0.11f; z += (float) Math.sin(a2) * 0.1f;
+                        glow(F.add, x, surf(x, z) + 0.05f, z, 0.075f, mixc(lc3, 0xFFFFFF, 0.35f), fade2 * (0.55f + 0.3f * (float) Math.sin(t * 13f + q + c)) * (1f - q / (float) (steps + 2))); } }
+                float ch = done / (float) digs.length, flick = 0.85f + 0.15f * (float) Math.sin(t * 17f);
+                column(F.add, 0, 0.03f, 0, 0.7f + 1.3f * grow, 0.1f + 0.07f * grow, lc3, 0.3f * ch * fade2 * flick);                                 // a shaft of it standing in the hole, taller every time
+                for (int q = 0; q < 4 + 3 * done; q++) { float ph = (t * (0.7f + 0.5f * rnd(q * 3)) + rnd(q * 7)) % 1f, an = q * 2.1f; glow(F.add, (float) Math.cos(an) * r * 0.5f, 0.1f + ph * (0.8f + 0.9f * grow), (float) Math.sin(an) * r * 0.4f, 0.05f, mixc(lc3, 0xFFFFFF, 0.6f), fade2 * (1f - ph)); }   // motes climbing the shaft
+                float d2 = t - open2; if (d2 >= 0f && d2 < 0.7f) { float e = 1f - (1f - d2 / 0.7f) * (1f - d2 / 0.7f);                               // it breaks: a pillar of light to the sky, two rings out across the ground
+                    column(F.add, 0, 0.03f, 0, 7f, 0.55f * (1f - 0.6f * e), 0xFFFFFF, 0.6f * (1f - d2 / 0.7f)); column(F.add, 0, 0.03f, 0, 7f, 0.9f, lc3, 0.4f * (1f - d2 / 0.7f));
+                    ring(F.add, 0, 0.07f, 0, 0.4f + 5f * e, 0.2f * (1f - e) + 0.04f, lc3, 0.9f * (1f - d2 / 0.7f)); ring(F.add, 0, 0.08f, 0, 0.3f + 3.2f * e, 0.1f, 0xFFFFFF, 0.7f * (1f - d2 / 0.7f));
+                    glint(F.add, 0, 0.6f, 0, 1.6f * (1f - d2 / 0.7f) + 0.2f, 0xFFFFFF, 1f - d2 / 0.7f); }
+            }
         }
         if (treasure) { float d = t - CLANG; if (d >= 0 && d < 0.35f) { glint(F.add, 0.05f, 0.1f, 0.1f, 0.55f * (1f - d / 0.35f) + 0.15f, 0xFFFFFF, 1f - d / 0.35f);            // the spade rings on the chest
             for (int q = 0; q < 7; q++) { float an = q * 0.9f; glow(F.add, (float) Math.cos(an) * d * 2.2f, 0.1f + d * (1.5f + rnd(q)) , (float) Math.sin(an) * d * 1.6f, 0.05f, 0xFFE9A0, 1f - d / 0.35f); } } }
@@ -84,7 +113,7 @@ final class Dig3D {
         float open = treasure ? CHEST_UP0 : RISE0;
         // ---- what the arms do: the spade swings for every dig; then the sword, raised and brought down on every cut
         float aR = -0.35f, aL = 0.15f, lean = 0f, hop = 0f, back = 0f, dash = 0f, look = 0f; boolean sword = !treasure && t > RISE0 + 0.25f;
-        for (float d0 : digs) { float d = t - d0; if (d > -0.3f && d < 0.22f) { float up = sm((d + 0.3f) / 0.2f) * (1f - sm((d + 0.06f) / 0.07f)); aR = lerp(-0.55f, -2.5f, up); aL = aR * 0.8f; lean = lerp(0.42f, -0.1f, up); } }
+        for (float d0 : digs) { float d = t - d0; if (d > -0.3f && d < 0.22f) { float up = sm((d + 0.3f) / 0.2f) * (1f - sm((d + 0.06f) / 0.07f)); aR = lerp(-0.5f, -2.95f, up); aL = aR * 0.85f; lean = lerp(0.55f, -0.22f, up); hop = Math.max(hop, 0.42f * up); } }
         if (t > digs[digs.length - 1] + 0.22f || t < digs[0] - 0.3f) { aR = -0.35f; lean = 0f; }
         if (t > open) { float u = cl((t - open) / 0.45f); back = sm(u) * 0.75f; hop = (float) Math.sin(Math.PI * u) * 0.35f; }                              // it comes up: a jump back
         if (!treasure) {
