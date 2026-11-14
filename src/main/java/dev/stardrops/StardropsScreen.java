@@ -2838,7 +2838,7 @@ public class StardropsScreen extends Screen {
     private static final String[] POS_NAMES = {"Top Center", "Center", "Above Action Bar"};
 
     /** Animations and Sounds are being remade for Stardrops: only Mob Drops (Slayers first) is open, the rest show the WIP page. */
-    private static boolean locked(Categories.Cat c) { return c.wip() || !c.id().equals("bosses"); }
+    private static boolean locked(Categories.Cat c) { return c.wip() || !(c.id().equals("bosses") || c.id().equals("mythological")); }      // remade so far: Mob Drops, and Mythological (the dig scene, 14 Nov)
     private void animationsPage(StardropsConfig c) {
         if (searching || landing()) { animationsLanding(c); return; }
         Categories.Cat cat = curCat();

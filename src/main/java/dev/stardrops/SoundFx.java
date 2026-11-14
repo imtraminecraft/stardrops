@@ -43,7 +43,7 @@ public final class SoundFx {
     /** The takes of each moment: a, b, c the epic set, d VOYAGER (tools/make_voyager_sounds.py), the space and exploration set every Mob Drops scene plays by default. */
     static final String TAKES = "abcd";
     /** Every Mob Drops scene group: the Slayers and every Location. */
-    static final String[] MOB_GROUPS = {"slayer", "crimson", "dragon", "mobs", "mobs_hub", "mobs_spider", "mobs_deep", "mobs_hollows", "mobs_park", "mobs_marsh", "mobs_canyon", "mobs_spooky", "mobs_dungeon"};
+    static final String[] MOB_GROUPS = {"slayer", "crimson", "dragon", "mobs", "mobs_hub", "mobs_spider", "mobs_deep", "mobs_hollows", "mobs_park", "mobs_marsh", "mobs_canyon", "mobs_spooky", "mobs_dungeon", "myth", "treasure"};
     private static final SoundEvent[] SL_VAN = {SoundEvents.ZOMBIE_AMBIENT, SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.SAND_BREAK,
         SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundEvents.AMETHYST_BLOCK_RESONATE,
         SoundEvents.GENERIC_EXPLODE.value(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundEvents.BEACON_AMBIENT};
@@ -150,7 +150,7 @@ public final class SoundFx {
             d0.add(new String[]{g + ".rng", NONE, NONE, NONE, NONE, NONE});
         }
         d0.removeIf(r -> AnimationManager.isSlayer(r[0]));                     // Mob Drops have their own set (the epic one)
-        for (String g : MOB_GROUPS) for (String ty : g.equals("slayer") ? new String[]{"nodrops", "normal", "rng"} : new String[]{"normal", "rng"}) {      // VOYAGER, the same set for every Mob Drops scene
+        for (String g : MOB_GROUPS) for (String ty : g.equals("slayer") || g.equals("myth") || g.equals("treasure") ? new String[]{"nodrops", "normal", "rng"} : new String[]{"normal", "rng"}) {      // VOYAGER, the same set for every Mob Drops scene
             String[] r = new String[6]; r[0] = g + "." + ty;
             for (int k = 0; k < 5; k++) r[k + 1] = "slr_" + slayerFamily(r[0], k) + "_d";
             d0.add(r);
@@ -186,7 +186,7 @@ public final class SoundFx {
 
     /** The sound the player picked (or the default) for e.g. ("epic", "reveal"), in the current sound set. */
     public static String chosen(String scene, String slot) {
-        voyager();
+        voyager(); digSet();
         String key = scene + "." + slot;
         boolean custom = StardropsConfig.get().customSounds;
         String v = picks().get(key);
@@ -203,6 +203,12 @@ public final class SoundFx {
     private static void voyager() {
         StardropsConfig c = StardropsConfig.get(); if (c.voyagerSet) return; c.voyagerSet = true;
         if (c.sounds != null) c.sounds.keySet().removeIf(k -> { for (String g : MOB_GROUPS) if (k.startsWith(g + ".")) return true; return false; });
+        StardropsConfig.save();
+    }
+    /** Once: Mythological got the dig scene (14 Nov), so its old sound picks go and it starts on the Mob Drops set like every other star scene. */
+    private static void digSet() {
+        StardropsConfig c = StardropsConfig.get(); if (c.digSet) return; c.digSet = true;
+        if (c.sounds != null) c.sounds.keySet().removeIf(k -> k.startsWith("myth.") || k.startsWith("treasure."));
         StardropsConfig.save();
     }
 

@@ -39,7 +39,7 @@ final class Codex {
     private static long openAt, closeAt, zoomAt, hoverAt, blinkAt;
     /** The opening film: the stargazer at the telescope (INTRO ms, then the page starts at openAt), the camera pushes into the lens, and
      *  the page opens out of it like an iris while the camera pulls back from the hill. Click or Esc skips it. */
-    private static final long INTRO = 2600, IRIS = 900, LONG_INTRO = 7000; private static long introFrom; private static int introSounds;
+    private static final long INTRO = 2600, IRIS = 900, LONG_INTRO = 7000, LOAD = 2300; private static long introFrom; private static int introSounds;
     private static long introLen = INTRO; private static boolean longIntro, longPlayed;          // the long opening plays the first time the sky opens each time the game starts
     private static String blinkId = "";
     private static int[] from = {0, 0, 0, 0};
@@ -61,7 +61,7 @@ final class Codex {
     static void open(int[] btn, int chapter, boolean allowLong) {
         long t0 = System.currentTimeMillis(); introFrom = t0; introSounds = 0;
         boolean intro = StardropsConfig.get().achIntro;
-        longIntro = intro && allowLong && !longPlayed; if (longIntro) longPlayed = true; introLen = longIntro ? LONG_INTRO : INTRO;
+        longIntro = false; introLen = LOAD;                                                              // one opening now: the chart loader (14 Nov; it replaced the hill film and the long first opening)
         soloId = null;
         open = true; openAt = t0 + (intro ? introLen : 0); closeAt = 0; from = btn.clone(); IGNITE.clear(); igSounded.clear(); ignitesPlanned = false; blinkId = "";
         focus = chapter >= 1 && chapter <= ACH.length ? chapter - 1 : -1; prevFocus = focus; zoomAt = 0;
@@ -97,6 +97,9 @@ final class Codex {
 
     private static void sound(String name, float pitch, float gain) { try { SoundFx.Fx fx = SoundFx.byName(name); if (fx == null) fx = SoundFx.byName("sky_star"); if (fx != null) SoundFx.play(fx, pitch, gain); } catch (Throwable ignored) { } }
     private static float cl(float v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+    /** Small eased values kept by name (row highlights). */
+    private static final class Host2 { private static final Map<String, double[]> V = new HashMap<>();
+        static float anim(String k, float target) { double[] e = V.computeIfAbsent(k, q -> new double[]{target, now}); double dt = Math.min(100.0, Math.max(0.0, now - e[1])); e[1] = now; e[0] += (target - e[0]) * (1.0 - Math.exp(-dt / 70.0)); return (float) e[0]; } }
     private static float ease(float v) { v = cl(v); return v * v * v * (v * (v * 6 - 15) + 10); }
     private static int mix(int a, int b, float f) { return Canvas.mix(a, b, cl(f)); }
     private static int argb(float a, int rgb) { return Gfx.argb(Math.round(cl(a) * 255), rgb & 0xFFFFFF); }
@@ -128,19 +131,19 @@ final class Codex {
         boolean film = openAt > introFrom;                                              // this opening has the film
         float fu = film && closeT < 0 ? now - introFrom : 1e9f;                       // ms into the opening shot
         if (longIntro && fu < LONG_INTRO + 2000) { longTimeline(fu); } else { day = 0f; trail = 0f; sunK = 1f; title = 0f;
-        if (film && introSounds < 1 && fu >= 700) { introSounds = 1; sound("sky_zoom", 0.9f, 0.7f); }
-        open0 = 1f - ease(fu / 650f);                                                       // out of black, like opening your eyes
-        dusk = 1f - ease((fu - 200f) / 2200f);                                              // the last of the sunset low on the horizon, fading
-        night = ease((fu - 150f) / 1300f);                                                  // the bright stars first, then the faint ones (eyes adjusting)
-        milky = ease((fu - 700f) / 1700f);                                                  // the Milky Way and the nebulae last of all
-        tilt = 1f - ease((fu - 250f) / 2300f);                                              // the head tilting up from the horizon
-        focusPull = 1f - ease((fu - 1700f) / 800f);
-        conA = ease((fu - 1400f) / 800f);
-        lineGrow = ease((fu - 1700f) / 900f);                                               // the figures draw themselves, star to star
+        if (film && fu < LOAD) { int lit = Math.min(ACH.length, (int) ((fu - 180f) / 140f) + 1); while (fu >= 180f && introSounds < lit) { sound("sky_star", 0.8f + 0.09f * introSounds, 0.35f); introSounds++; } }
+        if (film && introSounds < 20 && fu >= 1400) { introSounds = 20; sound("sky_zoom", 0.9f, 0.7f); }
+        // the loading screen: the sky waits dim behind the chart loader (eight lights, one per constellation), then each light flies to its place and the figures draw themselves
+        open0 = 0.72f * (1f - ease((fu - 1350f) / 800f)) + 0.28f * (1f - ease(fu / 300f));
+        dusk = 0f; tilt = 0f; focusPull = 0f;
+        night = ease(fu / 900f);
+        milky = ease((fu - 900f) / 1200f);
+        conA = ease((fu - 1500f) / 600f);
+        lineGrow = ease((fu - 1650f) / 800f);
         }
         float grow = closeT >= 0 ? 1f - ease(closeT / CLOSE) : film ? 1f : ease(t / 420f);
         alpha = closeT >= 0 ? 1f - cl(closeT / (CLOSE * 0.8f)) : film ? 1f : cl(t / 200f);
-        if (film && introSounds < 3 && t >= 0) { introSounds = 3; sound("sky_star", 1.4f, 0.6f); }
+        if (film && introSounds < 30 && t >= 0) { introSounds = 30; sound("sky_star", 1.4f, 0.6f); }
         planIgnites();
         { float tx = cl((mx - (W / 2f)) / Math.max(1f, W) + 0.5f) - 0.5f, ty = cl((my - (H / 2f)) / Math.max(1f, H) + 0.5f) - 0.5f;   // the mouse, smoothed: the layers of the sky slide against each other by depth
           long dt = Math.min(100, Math.max(0, now - lastPar)); lastPar = now; float k = 1f - (float) Math.exp(-dt / 140.0); mpx += (tx - mpx) * k; mpy += (ty - mpy) * k; }
@@ -183,6 +186,7 @@ final class Codex {
         titleCard(g);
         vignette(g);
         if (open0 > 0.002f) g.fill(sx0, sy0, sx0 + sw, sy0 + sh, argb(open0, 0x020208));
+        if (film && fu < LOAD + 200) loader(g, fu);
         g.disableScissor();
         frame(g);
         if (alpha > 0.6f && closeT < 0) {
@@ -194,7 +198,7 @@ final class Codex {
     }
     private static boolean isTime(Achievements.Ach a) { return LocalLedger.live(a) != a.progress() || a.ch().equals("time") && a.id().startsWith("time_"); }
     private static float[] camOf(int c) {
-        if (c < 0) return new float[]{aspect() / 2f, 0.5f, 1f};
+        if (c < 0) return new float[]{aspect() / 2f + 0.115f * aspect() / 0.84f, 0.51f, 0.84f};          // the whole map, a little smaller and to the left: the atlas index has the right side
         float[] o = centre(c); float top = -0.06f, bot = 0.06f;
         for (Node n : tree(c)) { top = Math.min(top, n.dv()); bot = Math.max(bot, n.dv()); }
         float s = Math.min(3.4f, 0.82f / Math.max(0.12f, bot - top + 0.12f)), mid = (top + bot) / 2f;
@@ -839,7 +843,7 @@ final class Codex {
         pX = parX(dep) * still; pY = parY(dep) * still; dK = 0.62f + 0.38f * dep;
         float[] o = centre(c); float ox = X(o[0]) + pX, oy = Y(o[1]) + pY;
         float rad = 0.16f * sh * camS;
-        boolean hv = fc < 0 && zoomed < 0.05f && soloId == null && Math.hypot(mx - ox, my - oy) < rad && !overScene(mx, my);
+        boolean hv = fc < 0 && zoomed < 0.05f && soloId == null && (atlasHover == c || atlasHover < 0 && Math.hypot(mx - ox, my - oy) < rad && !overScene(mx, my) && !overAtlas(mx, my));
         if (hv) hoverCon = c;
         float hk = hv ? ease((now - hoverAt) / 350f) : 0f;
         int done = 0; for (Achievements.Ach a : l) if (a.done()) done++;
@@ -863,7 +867,7 @@ final class Codex {
         for (Node n : t) nodeOf(g, c, n, false, fade * dl, zoomed, fc);
         if (hk > 0f) for (Node n : t) { float sx = X(o[0] + n.du()) + pX, sy = Y(o[1] + n.dv()) + pY; glow(sx, sy, 7f * dK, col, 0.55f * hk * fade * dl); glow(sx, sy, 2.5f * dK, 0xFFFFFF, 0.6f * hk * fade * dl); }   // hovered: every star brightens
         if (zoomed < 0.6f && inSky(ox, oy)) {
-            float la = (1f - zoomed / 0.6f) * fade * alpha;
+            float la = (1f - zoomed / 0.6f) * fade * alpha * (0.0f + hk);                                  // named only while pointed at: the atlas lists them all
             String nm = spaced(ACH_NAME[c].toUpperCase(Locale.ROOT));
             float bot = 0.04f, top = -0.04f; for (Node n : t) { bot = Math.max(bot, n.dv()); top = Math.min(top, n.dv()); }
             boolean above = c == 3 || c == 4;                                          // these figures have their names above them (clear of the hill and of each other)
@@ -879,7 +883,7 @@ final class Codex {
             if (full) small(g, "✦ COMPLETE ✦", Math.round(ox - host.width("✦ COMPLETE ✦") * 0.375f), ty - 9, argb(la, col));
             { String fg = FIGURE[c]; int fw = Math.round(host.width(fg) * 0.55f);                       // which constellation it is
               Gfx.push(g); Gfx.translate(g, ox - fw / 2f, by0 + 10); Gfx.scale(g, 0.55f); Gfx.txt(g, font, fg, 0, 0, argb(la * (0.45f + 0.45f * hk), mix(col, 0xFFFFFFFF, 0.3f)), false); Gfx.pop(g); }
-            ox = hx0; if (fc < 0) HITS.add(new Object[]{Math.round(ox - rad), Math.round(oy - rad), Math.round(ox + rad), Math.round(oy + rad + 30), (Runnable) () -> fly(c), "sky"});
+            ox = hx0; if (fc < 0 && !overAtlas(ox, oy)) HITS.add(new Object[]{Math.round(ox - rad), Math.round(oy - rad), Math.round(ox + rad), Math.round(oy + rad + 30), (Runnable) () -> fly(c), "sky"});
         }
     }
     /** The heart of a constellation: a big star in the chapter's colour (dim until you earn something there), with a ring of rays. */
@@ -982,8 +986,9 @@ final class Codex {
         for (Achievements.Ach q : p.list()) { if (q.done()) recent.add(q); else if (!q.secret() && q.goal() > 0 && !LocalLedger.WAITING.contains(q.id())) next.add(q); }
         next.sort(Comparator.comparingDouble(q -> -(LocalLedger.live(q) / q.goal())));
         recent.sort(Comparator.comparingLong(q -> -q.at()));
-        int w = Math.max(110, Math.round(sw * 0.2f)), x = sx0 + sw - w - 10, y = sy0 + 26;
-        y = card(g, "NEARLY THERE", next.subList(0, Math.min(3, next.size())), x, y, w, a, true) + 6;
+        int w = atlasW(), x = sx0 + sw - w - 10, y = sy0 + 28;
+        y = atlas(g, x, y, w, a) + 6;
+        if (y + 14 + 3 * 18 < sy0 + sh - 52) y = card(g, "NEARLY THERE", next.subList(0, Math.min(3, next.size())), x, y, w, a, true) + 6;
         // (Recently Lit was removed to keep the sky clear; Nearly There stays)
         int lx = sx0 + Math.round(sw * 0.5f) - 120, ly = sy0 + sh - 16;                         // the key: the four tiers, and what a reward looks like
         g.fill(lx - 8, ly - 5, lx + 248, ly + 10, argb(0.5f * a * alpha, 0x060818)); g.fill(lx - 8, ly - 5, lx + 248, ly - 4, argb(0.4f * a * alpha, 0xA88BFF));
@@ -993,7 +998,69 @@ final class Codex {
             String tn = LocalLedger.TIER[i]; small(g, tn, kx + 10, ly + 1, argb(0.85f * a * alpha, mix(0xFFD8DCEC, 0xFF000000 | tc, 0.35f))); kx += 14 + Math.round(host.width(tn) * 0.75f) + 8;
         }
         line(kx + 1, ly + 3, kx + 7, ly + 3, 0xE6DCFF, a, 0); line(kx + 4, ly, kx + 4, ly + 6, 0xE6DCFF, a, 0); small(g, "reward", kx + 11, ly + 1, argb(0.8f * a * alpha, 0xD8DCEC));
-        small(g, "click a constellation to fly in", lx + 248 - Math.round(host.width("click a constellation to fly in") * 0.75f), ly - 14, argb(0.45f * a * alpha, 0xB8C0DA));
+    }
+    // ---- the atlas: every constellation in one list (the new achievements menu, 14 Nov). Point at a row and its figure lights up on the map; click to fly in.
+    private static int atlasHover = -1, atlasTop, atlasBot, atlasX;
+    private static int atlasW() { return Math.max(118, Math.round(sw * 0.23f)); }
+    private static boolean overAtlas(float x, float y) { return focus < 0 && x >= atlasX - 4 && y >= atlasTop - 2 && y < atlasBot + 2 && atlasBot > atlasTop; }
+    private static int atlas(GuiGraphicsExtractor g, int x, int y, int w, float a) {
+        Achievements.Profile p = Achievements.profile(); int rowH = Math.max(14, Math.min(19, (sh - 150) / ACH.length)), n = ACH.length, h = 16 + n * rowH + 3;
+        atlasX = x; atlasTop = y; atlasBot = y + h; int hovNow = -1; float aa = a * alpha;
+        g.fill(x, y, x + w, y + h, argb(0.6f * aa, 0x060818)); g.fill(x, y, x + w, y + 1, argb(0.7f * aa, 0xA88BFF)); g.fill(x, y + h - 1, x + w, y + h, argb(0.25f * aa, 0xA88BFF));
+        small(g, spaced("STAR ATLAS"), x + 7, y + 5, argb(0.9f * aa, 0xA88BFF));
+        int[] order = {0, 1, 2, 7, 3, 4, 5, 6};                                                         // Every Drop first, then the Catalog's order, Playtime last
+        for (int k = 0; k < n; k++) {
+            int c = order[k], yy = y + 16 + k * rowH, col = ACH_COL[c]; List<Achievements.Ach> l = achOf(ACH[c]);
+            int done = 0, tb = 0, ts = 0, tg = 0; for (Achievements.Ach q : l) if (q.done()) { done++; }
+            boolean full = !l.isEmpty() && done == l.size(), hv = a > 0.5f && mx >= x && mx < x + w && my >= yy && my < yy + rowH;
+            if (hv) hovNow = c; boolean lit = hv || hoverCon == c;
+            float hk = Host2.anim("atlas" + c, lit ? 1f : 0f);
+            if (hk > 0.01f) { g.fill(x + 1, yy, x + w, yy + rowH - 1, argb(0.16f * hk * aa, col)); g.fill(x, yy, x + 2, yy + rowH - 1, argb(hk * aa, col)); }
+            float sx = x + 10, sy = yy + rowH / 2f - 0.5f;                                              // its star: dim until something is lit there, a ring when complete
+            glow(sx, sy, 3.2f + 1.2f * hk, col, (done > 0 ? 0.9f : 0.35f) * a); glow(sx, sy, 1.2f, 0xFFFFFF, (done > 0 ? 0.9f : 0.4f) * a);
+            if (full) ring(sx, sy, 4.6f, argb(0.9f * aa, col), 1f);
+            small(g, ACH_NAME[c], x + 18, yy + (rowH >= 17 ? 2 : 3), argb(aa, lit ? 0xFFFFFF : mix(0xFFD8DCEC, 0xFF000000 | col, 0.25f)));
+            String cnt = l.isEmpty() ? "-" : done + "/" + l.size(); small(g, cnt, x + w - 7 - Math.round(host.width(cnt) * 0.75f), yy + (rowH >= 17 ? 2 : 3), argb(0.8f * aa, full ? col : 0xB8C0DA));
+            if (rowH >= 17) { int bx = x + 18, bw = w - 26, by = yy + rowH - 6; float f = l.isEmpty() ? 0f : done / (float) l.size();
+                g.fill(bx, by, bx + bw, by + 1, argb(0.25f * aa, 0x9AA6D0)); g.fill(bx, by, bx + Math.round(bw * f), by + 1, argb(aa, col)); }
+            final int cc = c; HITS.add(new Object[]{x, yy, x + w, yy + rowH, (Runnable) () -> fly(cc)});
+        }
+        atlasHover = hovNow;
+        return y + h;
+    }
+    /** The loading screen: a wheel of eight lights, one for each constellation, lit one after another while the count runs up; then every light flies to its place in the sky. */
+    private static void loader(GuiGraphicsExtractor g, float fu) {
+        float cx = sx0 + sw / 2f, cy = sy0 + sh / 2f - 4, R = sh * 0.26f, out = ease((fu - 1400f) / 750f), in = cl(fu / 250f), fadeText = in * (1f - cl((fu - 1300f) / 300f));
+        Achievements.Profile p = Achievements.profile(); int all = 0; if (p != null) all = p.list().size();
+        int n = ACH.length; float litF = cl((fu - 180f) / (140f * n)) * n;
+        // the wheel: a faint ring of ticks, an arc that follows the lights, a slow sweep hand
+        if (out < 1f) {
+            float ra = in * (1f - out);
+            for (int k = 0; k < 96; k++) { double an = k * Math.PI * 2 / 96 - Math.PI / 2; boolean on = k / 96f * n <= litF; float r0 = R + (k % 12 == 0 ? -4 : -2), x0 = cx + (float) Math.cos(an) * r0, y0 = cy + (float) Math.sin(an) * r0, x1 = cx + (float) Math.cos(an) * (R + 1), y1 = cy + (float) Math.sin(an) * (R + 1);
+                line(x0, y0, x1, y1, on ? 0xE6DCFF : 0x6A70A0, (on ? 0.9f : 0.3f) * ra, 0); }
+            ring(cx, cy, R - 8, argb(0.18f * ra * alpha, 0xA88BFF), 1f);
+            double sa = fu / 1000.0 * Math.PI * 2 * 0.9 - Math.PI / 2; line(cx, cy, cx + (float) Math.cos(sa) * (R - 10), cy + (float) Math.sin(sa) * (R - 10), 0xA88BFF, 0.22f * ra, 0);
+        }
+        for (int i = 0; i < n; i++) {
+            double an = i * Math.PI * 2 / n - Math.PI / 2; float on = cl((fu - 180f - i * 140f) / 160f); if (on <= 0f && out <= 0f) { glow(cx + (float) Math.cos(an) * R, cy + (float) Math.sin(an) * R, 2.2f, 0x8A94B8, 0.35f * in); continue; }
+            float wx = cx + (float) Math.cos(an) * R, wy = cy + (float) Math.sin(an) * R;
+            float[] o = centre(i); float hx = X(o[0]), hy = Y(o[1]);                                    // where this constellation lives on the map
+            float u = ease((fu - 1400f - i * 35f) / 650f), x = wx + (hx - wx) * u, y = wy + (hy - wy) * u - (float) Math.sin(Math.PI * u) * sh * 0.05f;
+            float a = (1f - cl((fu - 2050f - i * 35f) / 250f)), pop = on < 1f ? 1f + 0.8f * (1f - on) : 1f; int col = ACH_COL[i];
+            glow(x, y, (10f + 3f * u) * pop, col, 0.8f * on * a); glow(x, y, 3.2f * pop, 0xFFFFFF, on * a);
+            line(x - 5 * pop, y, x + 5 * pop, y, 0xFFFFFF, 0.6f * on * a, 0); line(x, y - 5 * pop, x, y + 5 * pop, 0xFFFFFF, 0.6f * on * a, 0);
+            if (u > 0.02f && u < 0.98f) { float u2 = ease((fu - 1400f - i * 35f - 90f) / 650f), tx = wx + (hx - wx) * u2, ty = wy + (hy - wy) * u2 - (float) Math.sin(Math.PI * u2) * sh * 0.05f; line(tx, ty, x, y, col, 0.6f * a, 2); }
+            if (u <= 0f && on > 0.3f) { String nm = ACH_NAME[i]; float lx = cx + (float) Math.cos(an) * (R + 12), ly = cy + (float) Math.sin(an) * (R + 12); int tw = Math.round(host.width(nm) * 0.6f);
+                float tx = Math.cos(an) > 0.3 ? lx : Math.cos(an) < -0.3 ? lx - tw : lx - tw / 2f, ty = (float) (ly - 3 + Math.sin(an) * 3);
+                Gfx.push(g); Gfx.translate(g, tx, ty); Gfx.scale(g, 0.6f); Gfx.txt(g, font, nm, 0, 0, argb(0.85f * on * fadeText * alpha, mix(0xFF000000 | col, 0xFFFFFFFF, 0.4f)), false); Gfx.pop(g); }
+        }
+        if (fadeText > 0.01f) {
+            String ttl = spaced("ACHIEVEMENTS"); int tw = host.width(ttl); text(g, ttl, Math.round(cx - tw / 2f), Math.round(cy - 12), argb(fadeText * alpha, 0xE6DCFF), true);
+            int shown = Math.round(all * cl((fu - 180f) / (140f * n))); String sub = p == null ? "Reading the stars..." : "charting " + shown + " of " + all + " stars";
+            small(g, sub, Math.round(cx - host.width(sub) * 0.375f), Math.round(cy + 3), argb(0.8f * fadeText * alpha, 0xB8C0DA));
+            int cur = Math.max(0, Math.min(n - 1, (int) Math.ceil(litF) - 1)); String fg = FIGURE[cur]; int fw = Math.round(host.width(fg) * 0.55f);
+            Gfx.push(g); Gfx.translate(g, cx - fw / 2f, cy + 14); Gfx.scale(g, 0.55f); Gfx.txt(g, font, fg, 0, 0, argb(0.6f * fadeText * alpha, mix(0xFF000000 | ACH_COL[cur], 0xFFFFFFFF, 0.3f)), false); Gfx.pop(g);
+        }
     }
     private static int card(GuiGraphicsExtractor g, String title, List<Achievements.Ach> l, int x, int y, int w, float a, boolean bars) {
         if (l.isEmpty()) return y;

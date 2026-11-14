@@ -1,6 +1,10 @@
 # Changelog
 
 ## 0.9.0
+- Mythological animations: you dig, the right creature climbs out and is cut down (or a chest rises and opens), all on a little planet in space. Twelve creatures, treasure, No Drops, RNG.
+- Drop text has a new format: a small headline, the name, a hairline, the value, and one line with chance, odds and Magic Find.
+- Achievements: a new loading screen (a wheel of eight lights) and a Star Atlas list of every constellation.
+- Menu: icons without backgrounds, a trail instead of the sidebar tree, cleaner Catalog pages, Mob Drops on one page, drop chances back under each drop.
 - Visuals page is much lighter (its background aurora was thousands of tiny pieces; the sky preview redraws less often; the music folder is read on a side thread).
 - Flicker guard: Stardrops watches for a flickering sky by itself. If one of its parts causes it, that part switches off and chat tells you which; if something else does, chat says so.
 - Drops now play RNG by default only when worth your RNG price (new in Settings > Prices, 10m to start); cheaper drops play Normal. Your own picks stay.

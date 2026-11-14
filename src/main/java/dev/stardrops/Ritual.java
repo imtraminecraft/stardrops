@@ -180,11 +180,16 @@ final class Ritual {
     static void end() { hold = 0f; slayerMode = false; itemOffs = new float[]{0f}; }
     /** The colour of each boss: zombie, spider, wolf, enderman, blaze, vampire. */
     static final int[] SL_ENERGY = {0x7CD060, 0xE03030, 0xC8D4E8, 0xD060FF, 0xFFB030, 0xD01030, 0xFF6A2A, 0xC77DFF, 0x7FE8D8, 0xFF5A20, 0xFFB040, 0xFF7A20, 0xB070FF, 0x8AD8FF, 0x8AC8E8, 0xFF6A2A, 0x40E8A0, 0x6AE8F0,
-        0xE8E0C8, 0xFF4A2A, 0x7CD060, 0xC8D0E0, 0x40D86A, 0xFF4A3A, 0x60E080, 0xC8D8C8, 0xFFB0B0, 0xFFB040, 0x6AE8D8, 0xFF5A5A, 0x7AE860};   // the six slayers, the Crimson Isle, the End, the Mines, then the Mob Drops creatures (skeleton, wither skeleton, zombie, knight, slime, pigman, witch, golem, pig, crawler, serpent, bat, creeper)
+        0xE8E0C8, 0xFF4A2A, 0x7CD060, 0xC8D0E0, 0x40D86A, 0xFF4A3A, 0x60E080, 0xC8D8C8, 0xFFB0B0, 0xFFB040, 0x6AE8D8, 0xFF5A5A, 0x7AE860,
+        0xFF8A4A, 0x7AD860, 0xFFC850, 0x7AF0D0, 0xFF6A4A, 0xB07AFF, 0x8AE86A, 0xFFB040, 0x6AD8FF, 0xFF4A5A, 0xFF7A3A, 0xFFD24A, 0xFFD25A};   // the six slayers, the Crimson Isle, the End, the Mines, then the Mob Drops creatures (skeleton, wither skeleton, zombie, knight, slime, pigman, witch, golem, pig, crawler, serpent, bat, creeper)
     static boolean isSlayer(Anim a) { return AnimationManager.isSlayer(a.group); }
     /** The mob a drop comes from (its "mob" in the data), or null. */
     static String slMob(Anim a) { if (a.item != null && a.item.source != null) for (DropData.Drop d : a.item.source.drops) if (d.id.equals(a.item.id)) return d.mob; return null; }
-    static int slTheme(Anim a) { int fixed = AnimationManager.starBoss(a.group); if (fixed >= 0) { int cr = -1; if (a.item != null && a.item.source != null) for (DropData.Drop d : a.item.source.drops) if (d.id.equals(a.item.id)) { cr = AnimationManager.creature(d.mob); break; } return cr >= 0 ? cr : fixed; }      // the drop's own creature (its "mob" in the data), else the group's
+    static int slTheme(Anim a) {
+        if (AnimationManager.isDig(a.group)) {                                                    // Mythological: the creature the drop belongs to (the preview walks through all twelve); the chest for treasure
+            if (a.group.startsWith("treasure")) return Star3D.CHEST;
+            int k = a.kind >= 0 ? a.kind : a.item != null && a.item.source != null ? kindOf(a.item.source.id) : 0; return Star3D.MYTH + Math.floorMod(k, KINDS.length); }
+        int fixed = AnimationManager.starBoss(a.group); if (fixed >= 0) { int cr = -1; if (a.item != null && a.item.source != null) for (DropData.Drop d : a.item.source.drops) if (d.id.equals(a.item.id)) { cr = AnimationManager.creature(d.mob); break; } return cr >= 0 ? cr : fixed; }      // the drop's own creature (its "mob" in the data), else the group's
         return Math.floorMod(a.kind >= 0 ? a.kind : a.item != null && a.item.source != null ? SlayerData.theme(a.item.source.id) : 0, 6); }
 
 
@@ -385,7 +390,7 @@ final class Ritual {
             if (na > 0.01f) {
                 int boss = slTheme(a), en = SL_ENERGY[boss];
                 float sc = Math.max(1f, Math.min(W, H) / 270f) * 1.1f;
-                String l1 = "Nothing dropped", l2 = SlayerScene.NAMES[boss];
+                String l1 = boss == Star3D.CHEST ? "Empty" : "Nothing dropped", l2 = boss >= Star3D.MYTH ? Dig3D.NAMES[boss - Star3D.MYTH] : boss < SlayerScene.NAMES.length ? SlayerScene.NAMES[boss] : "";
                 int y0 = Math.round(icy * u - 6 * sc);
                 Gfx.push(g); Gfx.translate(g, W / 2f - font.width(l1) * sc / 2f, y0 + (1f - na) * 4); Gfx.scale(g, sc); Gfx.txt(g, font, l1, 0, 0, Gfx.argb(Math.round(240 * na), 0xFFFFFF), true); Gfx.pop(g);
                 float s2 = sc * 0.65f;

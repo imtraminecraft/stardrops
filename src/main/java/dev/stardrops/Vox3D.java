@@ -50,6 +50,7 @@ final class Vox3D {
     // ------------------------------------------------------------------ per frame state
     static Frame F; static Matrix4f projView; static final Vector3f eye = new Vector3f(), right = new Vector3f(), up = new Vector3f();
     static Matrix4f M = new Matrix4f(); static final ArrayDeque<Matrix4f> STACK = new ArrayDeque<>();
+    static float ambient;                                        // extra light on what is being drawn (the explorer's white suit would be grey in its own shadow)
     static boolean mobMode; static int rimCol; static float clipY = -99f, lastAspect = 1.45f;
     static int pass; static boolean dyn;                         // pass 1: build the still scenery once; pass 2: only what moves (dyn)
     static float fovNow = 30f;
@@ -102,7 +103,7 @@ final class Vox3D {
             float ul = Math.abs(ux + uy + uz), vl = Math.abs(vx + vy + vz);
             int w = Math.max(1, Math.round(ul * px)), h = Math.max(1, Math.round(vl * px));
             Vector3f n = M.transformDirection(new Vector3f(NRM[f][0], NRM[f][1], NRM[f][2])).normalize();
-            float s = 0.36f + 0.5f * Math.max(0f, n.dot(LIGHT)) + 0.06f * Math.max(0f, n.y);                // moonlight: soft, a little blue
+            float s = 0.36f + ambient + 0.5f * Math.max(0f, n.dot(LIGHT)) + 0.06f * Math.max(0f, n.y);                // moonlight: soft, a little blue
             float rim = 0f, pxw = 0f;
             if (mobMode) {                                                                          // the boss: a rim of its energy where it turns away from us
                 Vector3f fc = M.transformPosition(new Vector3f(ox + (ux + vx) / 2, oy + (uy + vy) / 2, oz + (uz + vz) / 2));
@@ -303,7 +304,8 @@ final class Vox3D {
         new Theme(0x02080C, 0x0A2028, 0x1E5A54, 0x3A5A34, 0x4A6E3A, 0x3A3022, 0x2A3A30, 0xE8FFF0),   // Moonglade Marsh (11): mud and moss under a big moon, mist on the water
         new Theme(0x100608, 0x3A1A14, 0xC8602A, 0xB86A3A, 0xC87A44, 0x8A4A2A, 0x6A3A24, 0xFFE0B0),   // Torrhus Canyon (12): banded terracotta under a burning sunset
         new Theme(0x08040E, 0x22102A, 0x8A3A14, 0x4A3A22, 0x5A4428, 0x3A2A1A, 0x2A2220, 0xFFC060),   // Spooky Festival (13): an orange harvest moon, pumpkins, a purple night
-        new Theme(0x06030E, 0x1A0A30, 0x4A1A6A, 0x5A4E68, 0x6A5A78, 0x3E3448, 0x2A2236, 0xF0D8FF)};  // Crystal Hollows (14): violet rock and gemstone light
+        new Theme(0x06030E, 0x1A0A30, 0x4A1A6A, 0x5A4E68, 0x6A5A78, 0x3E3448, 0x2A2236, 0xF0D8FF),   // Crystal Hollows (14): violet rock and gemstone light
+        new Theme(0x05061A, 0x1A1848, 0x7A4A8A, 0x5E9A3E, 0xA89A40, 0x6A4A2A, 0xD8D4C8, 0xFFF4D8)};  // the Mythological plain (15): a meadow among marble ruins under a violet dusk
 
     /** A world point at a fixed place in the window: (sx, sy) in -1..1 of the window, d deep. */
     private static final Matrix4f invView = new Matrix4f(); private static Matrix4f invOf;
@@ -1100,7 +1102,7 @@ final class Vox3D {
         } else if (boss == 4) {
             for (int i = 0; i < 40; i++) { float u = ((t * 0.25f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 11f + (float) Math.sin(t + i) * 0.4f, -1f + u * 7f, (rnd(i * 11) - 0.5f) * 7f, 0.05f, i % 2 == 0 ? 0xFFB040 : 0xFF6020, (1f - u) * 0.9f); }
         } else {
-            int col = boss == 1 ? 0xC8C8D8 : boss == 3 ? 0xD060FF : boss == 8 || boss == 9 ? 0x8AB8FF : boss == 10 ? 0xB8C8A8 : boss == 11 ? 0x9AE8D8 : boss == 12 ? 0xFFB070 : boss == 13 ? 0xFF9A40 : boss == 14 ? 0xE08AFF : 0xFF4A8A;
+            int col = boss == 1 ? 0xC8C8D8 : boss == 3 ? 0xD060FF : boss == 8 || boss == 9 ? 0x8AB8FF : boss == 10 ? 0xB8C8A8 : boss == 11 ? 0x9AE8D8 : boss == 12 ? 0xFFB070 : boss == 13 ? 0xFF9A40 : boss == 14 ? 0xE08AFF : boss == 15 ? 0xFFE9A0 : 0xFF4A8A;
             for (int i = 0; i < 30; i++) { float u = ((t * 0.15f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 11f + (float) Math.sin(t * 0.7f + i) * 0.5f, u * 6f, (rnd(i * 11) - 0.5f) * 7f, 0.05f, col, (1f - u) * 0.6f); }
         }
     }

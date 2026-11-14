@@ -31,6 +31,7 @@ final class Star3D {
     /** worldIn: the place the creature stands in (the mob's spawn location; -1 = its own); variantIn: its colouring (see boss()). */
     static Frame build(float t, float A, int bossIn, int typeIn, int energy, float aspect, float pinY, boolean z01, int worldIn, int variantIn) {
         boss = Math.floorMod(bossIn, CREATURES); world = worldIn >= 0 && worldIn < THEMES.length ? worldIn : boss < 9 ? boss : WORLD_OF[boss - 9]; variant = variantIn; type = typeIn; Vox3D.lastAspect = aspect; reseed(t); hits = SlayerScene.HITS[type]; n = hits.length; last = hits[n - 1];
+        boolean dig = boss >= MYTH; if (dig) { hits = Dig3D.hits(boss == CHEST, type); n = hits.length; last = hits[n - 1]; }          // the Mythological dig scene: its own beats (digs, the slash or the lid)
         F = new Frame(); tint = 0f; M = new Matrix4f(); STACK.clear(); mobMode = false; pass = 0; dyn = false; fovNow = FOV;
         float O = AnimationManager.SL_PIVOT, p = t - O;
 
@@ -43,6 +44,7 @@ final class Star3D {
         float yaw = (float) Math.toRadians(12 + 5 * Math.sin(t * 0.3) - 10 * (1f - eo(t / 1.6f)));
         float eyeY = 2.3f + 0.4f * (1f - eo(t / 1.6f));
         Vector3f target = new Vector3f(0f, 1.35f, 0f);
+        if (dig) { float[] cam = Dig3D.camera(t, p, boss == CHEST, type); dist = cam[0]; yaw = cam[1]; eyeY = cam[2]; target.y = cam[3]; roarK = 0f; }
         eye.set((float) Math.sin(yaw) * dist, eyeY, (float) Math.cos(yaw) * dist);
         float sh = Math.min(2.2f, kick + 0.35f * roarK + (type == 2 ? 0.12f * sm((t - HUSH) / 0.4f) * (t < last ? 1f : 0f) : 0f)), jx = 0.06f * sh * (float) (Math.sin(t * 53) + Math.sin(t * 31 + 1.3)), jy = 0.06f * sh * (float) (Math.sin(t * 47 + 2.1) + Math.sin(t * 37 + 0.4));
         Matrix4f view = new Matrix4f().lookAt(eye.x + jx, eye.y + jy, eye.z, target.x + jx * 0.5f, target.y + jy * 0.5f, target.z, 0, 1, 0);
@@ -67,6 +69,7 @@ final class Star3D {
         nearGround(th, dim);
         if (world != 4 && world != 6) Vox3D.weather(t, world);
         spawn(t, energy, th);
+        if (dig) { Dig3D.scene(t, p, A, energy, th, aspect); return F; }
 
         // ---- the boss
         boss(t, p, energy, roarK);
@@ -272,6 +275,11 @@ final class Star3D {
                 case 1 -> n2 < 0.3f ? 0x3E3448 : 0x4E4258;
                 case 2 -> (u % (px / 2) == 0 || v % (px / 2) == 0) ? 0x2E2638 : 0x4A3E58;
                 default -> n2 < 0.3f ? 0x02C040FF : 0x3A2E48; };
+            case 15 -> c = switch (blk) {                                                           // the Mythological plain: meadow grass, dry wheat stubble, a dirt path, old marble flagstones
+                case 0 -> n2 < 0.2f ? 0x4E8A34 : n2 < 0.28f ? 0x7AB04A : 0x5E9A3E;
+                case 1 -> n2 < 0.25f ? 0xC8B050 : n2 < 0.5f ? 0x8A8A34 : 0xA89A40;
+                case 2 -> n2 < 0.2f ? 0x8A6A3E : 0x6A4A2A;
+                default -> (u % (px / 2) == 0 || v % (px / 2) == 0) ? 0x9A968A : n2 < 0.2f ? 0xE8E4D8 : 0xD0CCC0; };
             default -> c = switch (blk) {                                                           // the Rift: purple nylium, mycelium, blackstone, crying obsidian
                 case 0 -> n2 < 0.2f ? 0x6A2A5A : 0x4A2A4A;
                 case 1 -> n2 < 0.25f ? 0x7A6A7A : 0x5E4E62;
@@ -362,7 +370,7 @@ final class Star3D {
         {"...X...", "..XXX..", "..XXX..", ".XXXXX.", ".XXXXX.", "XXXXXXX"}};                                                                              // crystal / rock
     static final int[][] SIL_SET = {{1, 0, 2, 0, 1, 2, 0}, {1, 7, 6, 7, 1, 6, 7}, {3, 3, 1, 3, 3, 7, 3}, {4, 7, 4, 4, 7, 4, 7}, {5, 4, 7, 4, 5, 4, 7}, {4, 1, 7, 6, 4, 7, 1},
         {5, 4, 6, 4, 5, 7, 4}, {4, 4, 7, 4, 4, 7, 4}, {7, 5, 7, 4, 7, 7, 5},
-        {7, 4, 7, 7, 4, 7, 7}, {5, 0, 2, 5, 0, 4, 2}, {3, 6, 1, 3, 6, 3, 1}, {4, 7, 4, 4, 7, 4, 7}, {1, 0, 6, 2, 1, 0, 6}, {7, 7, 4, 7, 7, 4, 7}};
+        {7, 4, 7, 7, 4, 7, 7}, {5, 0, 2, 5, 0, 4, 2}, {3, 6, 1, 3, 6, 3, 1}, {4, 7, 4, 4, 7, 4, 7}, {1, 0, 6, 2, 1, 0, 6}, {7, 7, 4, 7, 7, 4, 7}, {4, 5, 4, 3, 4, 5, 3}};
     static void sprite(Mesh m, String[] s, float x, float y, float z, float ax, float az, float px, int col, int lit) {
         int H = s.length; for (int r = 0; r < H; r++) {
             String row = s[r]; float y0 = y + (H - 1 - r) * px, y1 = y0 + px; int W = row.length();
@@ -607,6 +615,18 @@ final class Star3D {
                     pop(); glow(F.add, g[0], gy + 0.8f, g[1], 1.1f, gc, 0.35f + 0.15f * (float) Math.sin(t * 2f + g[3])); }
                 burstUp(t, rise, new int[]{0x4A3E5A, 0xE040C0, 0x5A4E6A});
             }
+            case 15 -> {                                                                          // the Mythological plain: old marble columns (one broken, one fallen), a burning brazier, fireflies
+                Skin marble = (f, u, v, w, hh) -> { float nz = rnd(f * 23 + u * 7 + v * 13 + 3); return f != 2 && u % 2 == 0 ? mul(0xB8B4A8, 0.9f + nz * 0.15f) : nz < 0.08f ? 0x8A9A6A : mul(0xE4E0D4, 0.9f + nz * 0.14f); };
+                for (float[] cl : new float[][]{{-3.0f, -2.2f, 2.5f, 1}, {3.1f, -2.6f, 1.3f, 0}, {-3.6f, 0.1f, 0.7f, 0}}) { float gy = surf(cl[0], cl[1]);
+                    push(); M.translate(cl[0], gy, cl[1]); box(-0.4f, 0f, -0.4f, 0.4f, 0.16f, 0.4f, marble, 10f, 0.03f); box(-0.27f, 0.16f, -0.27f, 0.27f, cl[2], 0.27f, marble, 10f, 0.03f);
+                    if (cl[3] > 0) { box(-0.38f, cl[2], -0.38f, 0.38f, cl[2] + 0.14f, 0.38f, marble, 10f, 0.03f); box(-0.46f, cl[2] + 0.14f, -0.46f, 0.46f, cl[2] + 0.26f, 0.46f, marble, 10f, 0.03f); }
+                    pop(); }
+                push(); M.translate(3.5f, surf(3.5f, 0.4f) + 0.27f, 0.4f).rotateY(0.5f).rotateZ(1.5708f); box(-0.27f, -0.7f, -0.27f, 0.27f, 0.7f, 0.27f, marble, 10f, 0.03f); pop();
+                Skin bronze = (f, u, v, w, hh) -> mul(0x8A5A2A, 0.8f + rnd(f * 7 + u * 5 + v * 3) * 0.4f);
+                float bx = -2.1f, bz = -2.9f, by = surf(bx, bz); push(); M.translate(bx, by, bz); box(-0.05f, 0f, -0.05f, 0.05f, 0.8f, 0.05f, bronze, 12f, 0.02f); box(-0.24f, 0.8f, -0.24f, 0.24f, 0.95f, 0.24f, bronze, 12f, 0.02f); pop();
+                fire(t, bx, by + 0.95f, bz, 0.8f); glow(F.add, bx, by + 1.2f, bz, 1.6f, 0xFFB040, 0.3f + 0.08f * (float) Math.sin(t * 9f));
+                for (int i = 0; i < 26; i++) { float u = ((t * 0.12f + rnd(i * 3)) % 1f); glow(F.add, (rnd(i * 7) - 0.5f) * 10f + (float) Math.sin(t * 0.8f + i) * 0.4f, 0.2f + rnd(i * 13) * 2.6f + 0.25f * (float) Math.sin(t * 1.7f + i), (rnd(i * 11) - 0.5f) * 6f, 0.045f, i % 3 == 0 ? 0xFFFFFF : 0xFFE08A, (float) Math.sin(Math.PI * u) * 0.75f); }
+            }
             default -> {                                                                          // crying obsidian, a red rift it steps out of
                 Skin cry = (f, u, v, w, hh) -> { float nz = rnd(f * 31 + u * 7 + v * 13 + 99); return nz < 0.2f ? 0x8A2AD8 : mul(0x1A0E26, 0.8f + nz * 0.4f); };
                 for (float[] pl : new float[][]{{-1.9f, -1.5f, 1.3f}, {2.0f, -1.8f, 1.5f}}) { push(); M.translate(pl[0], surf(pl[0], pl[1]), pl[1]); box(-0.42f, 0f, -0.42f, 0.42f, pl[2], 0.42f, cry, 6f, 0.03f); pop(); }
@@ -704,12 +724,13 @@ final class Star3D {
         }
     }
     static final float[] MOB_K_STAR = {1.4f, 1.5f, 1.85f, 0.85f, 1.4f, 1.35f, 1.45f, 1.0f, 1.2f, 1.3f, 1.35f, 1.25f, 1.35f, 1.4f, 1.4f, 1.75f, 0.85f, 1.05f,
-        1.35f, 1.3f, 1.35f, 1.3f, 1.5f, 1.35f, 1.25f, 1.05f, 1.6f, 1.35f, 1.5f, 1.6f, 1.45f};
+        1.35f, 1.3f, 1.35f, 1.3f, 1.5f, 1.35f, 1.25f, 1.05f, 1.6f, 1.35f, 1.5f, 1.6f, 1.45f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f, 1.3f};
     /** Creatures 9 and up stand in one of the first nine worlds: Bladesoul, Barbarian Duke X, Ashfang, the Mage Outlaw (Crimson Isle), a Ghost, an Ice Walker (the Mines), Bal (his lava), a special Zealot (the End). */
     static final int BLADESOUL = 9, DUKE = 10, ASHFANG = 11, MAGE = 12, GHOST = 13, WALKER = 14, BAL = 15, ZEALOT = 16, GOBLIN = 17,
-        SKEL = 18, WSKEL = 19, ZOMBIE = 20, KNIGHT = 21, SLIME = 22, PIGMAN = 23, WITCH = 24, GOLEM = 25, PIG = 26, BUG = 27, SERPENT = 28, BAT = 29, CREEPER = 30, CREATURES = 31;
+        SKEL = 18, WSKEL = 19, ZOMBIE = 20, KNIGHT = 21, SLIME = 22, PIGMAN = 23, WITCH = 24, GOLEM = 25, PIG = 26, BUG = 27, SERPENT = 28, BAT = 29, CREEPER = 30,
+        MYTH = 31, CHEST = 43, CREATURES = 44;      // 31..42: the twelve Mythological creatures in Ritual.KINDS order (the dig scene, Dig3D); 43: the treasure chest
     /** The scenery each creature from 9 on stands in when its location gives none (Crimson Isle 6, the End 7, the Mines 8, the Catacombs 10...). */
-    static final int[] WORLD_OF = {6, 6, 6, 6, 8, 8, 6, 7, 8, 10, 6, 0, 10, 9, 13, 2, 0, 12, 11, 10, 9};
+    static final int[] WORLD_OF = {6, 6, 6, 6, 8, 8, 6, 7, 8, 10, 6, 0, 10, 9, 13, 2, 0, 12, 11, 10, 9, 0, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15};
     /** The colourings (Row variant): zombies green, Golden Ghoul gold, Lapis Zombie blue, dungeon grey, villager; knights iron, King Midas gold, Obsidian Defender, Shadow Assassin;
      *  golems iron, Drybark bark, dungeon stone; crawlers: isopod, ant, pangolin, bee, honeymite, brineling, torrid. */
     static final int[] ZOMBIE_SKIN = {0x5A8A40, 0xD8B040, 0x3A5AB8, 0x8A9088, 0x6A8A50}, ZOMBIE_SHIRT = {0x2A9AA0, 0x8A6A20, 0x2A3A8A, 0x3A3A3A, 0x6A4A2A};

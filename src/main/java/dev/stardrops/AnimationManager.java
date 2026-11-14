@@ -136,14 +136,16 @@ public final class AnimationManager {
     // ---- Slayer (Stardrops): its own timeline. The black hole forms, the boss is pulled in (three gulps), and at 3.4 s it is gone:
     // No Drops 5.5 s (the hole swallows the scene, "nothing dropped"), a drop 6 s, RNG 7 s (the supernova); the words stay 3 s after.
     /** The groups that play the star scene (Star3D): the slayer bosses, and since 0.9 the rest of Mob Drops: the Crimson Isle, the End, the Mines. */
-    static boolean isSlayer(String groupOrKey) { return groupOrKey != null && (groupOrKey.startsWith("slayer") || groupOrKey.startsWith("crimson") || groupOrKey.startsWith("dragon") || groupOrKey.startsWith("mobs")); }
+    static boolean isSlayer(String groupOrKey) { return groupOrKey != null && (groupOrKey.startsWith("slayer") || groupOrKey.startsWith("crimson") || groupOrKey.startsWith("dragon") || groupOrKey.startsWith("mobs") || isDig(groupOrKey)); }
+    /** The Mythological groups: they play the dig scene (Dig3D) inside the same star world. */
+    static boolean isDig(String groupOrKey) { return groupOrKey != null && (groupOrKey.startsWith("myth") || groupOrKey.startsWith("treasure")); }
     /** Which creature and world the star scene shows for a group that has only one (-1: a slayer boss, by its own theme). */
     static int starBoss(String group) {
         if (group == null) return -1;
         return switch (group) {
             case "mobs_hub" -> Star3D.ZOMBIE; case "mobs_spider" -> 1; case "mobs_deep" -> Star3D.ZOMBIE; case "mobs_hollows" -> 8; case "mobs_park" -> 2;
             case "mobs_marsh" -> Star3D.SERPENT; case "mobs_canyon" -> Star3D.BUG; case "mobs_spooky" -> Star3D.WITCH; case "mobs_dungeon" -> Star3D.SKEL;
-            default -> group.startsWith("crimson") ? 6 : group.startsWith("dragon") ? 7 : group.startsWith("mobs") ? 8 : -1; };
+            default -> group.startsWith("crimson") ? 6 : group.startsWith("dragon") ? 7 : group.startsWith("mobs") ? 8 : group.startsWith("treasure") ? Star3D.CHEST : group.startsWith("myth") ? Star3D.MYTH : -1; };
     }
     /** The world a location's creatures stand in (Star3D.world), -1 = the creature's own. Each Mob Drops location has its own. */
     static int starWorld(String group) {
