@@ -38,7 +38,8 @@ public class StardropsConfig {
     public long epicThreshold = 10_000_000L; // the RNG price: a drop you never picked plays RNG when it is worth this or more, else Normal
     public boolean relicSet;                 // true once Mythological's picks were cleared for its own sets (RELIC, TROVE)
     public boolean digSet;                   // true once Mythological's old sound picks were cleared for the dig scene
-    public boolean flickerGuard = true;      // watch the screen for the sky flicker and find its cause (FlickerGuard)
+    public boolean flickerGuard = true;      // (old setting, no longer read)
+    public boolean guardWatch = false;       // FlickerGuard reading the screen back (off since 14 Nov: its own readings were a suspect, see DESIGN)
     public int rngPriceV = 0;                // 1 once the RNG price moved from the old hidden 20m default to 10m
     public boolean popups = true;            // notices pop up under the menu instead of going to chat
 

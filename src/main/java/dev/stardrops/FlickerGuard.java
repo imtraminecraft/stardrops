@@ -51,8 +51,9 @@ final class FlickerGuard {
         try {
             Minecraft mc = Minecraft.getInstance();
             long now = System.currentTimeMillis();
-            if (mc.level != lastLevel) { lastLevel = mc.level; if (mc.level != null) joined(now); }
-            boolean quiet = mc.level == null || mc.gui.screen() != null || AnimationManager.isPlaying() || CosmosHud.momentPlaying() || !StardropsConfig.get().flickerGuard;
+            if (mc.level != lastLevel) { lastLevel = mc.level; if (mc.level != null && StardropsConfig.get().guardWatch) joined(now); }
+            if (!StardropsConfig.get().guardWatch) { if (probe >= 0) { probe = -1; Flicker.off = userOff | foundOff; } return; }
+            boolean quiet = mc.level == null || mc.gui.screen() != null || AnimationManager.isPlaying() || CosmosHud.momentPlaying() || !StardropsConfig.get().guardWatch;
             if (quiet) { lumN = 0; if (state == PAUSED || state == BISECT) stateAt = now; return; }        // a menu or a drop's flash on screen: not a fair look; a test in progress just waits
             try { clock(mc.level.getOverworldClockTime()); } catch (Throwable ignored) { }
             if (probe >= 0) probeStep(now); else step(now);
