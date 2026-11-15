@@ -24,39 +24,39 @@ final class CosmeticData {
     private static final String BETA_HOW = "Downloaded the mod before v1.0";
     static final List<Def> ALL = List.of(
         // Beta: kept by everyone who had the mod before 1.0
-        new Def("pulse", "Pulse", Line.BETA, Kind.NAME, BETA_HOW, 0xFFFF9AC8, "beta"),
+        new Def("pulse", "Signal", Line.BETA, Kind.NAME, BETA_HOW, 0xFFFF9AC8, "beta"),
         // Name Icons: Special (Bug Finder, Contributors, Patreon only), Legendary, Rare, Common. Unlock rules for the last three come later.
-        new Def("bug", "Bug", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFFF5A36, "bugfinder"),
-        new Def("code", "Code", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFF55D8FF, "contributors"),
-        new Def("patron", "Patreon", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFFFB400, "patreon"),
-        new Def("betamark", "Beta", Line.BETA, Kind.SUFFIX, "Downloaded the mod before v1.0", 0xFF3FD16A, "beta"),
-        new Def("dice", "Lucky Dice", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF4F6FB),
-        new Def("chest", "Treasure Chest", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF8A5A2C),
-        new Def("anvil", "Anvil", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF9AA3B5),
-        new Def("disc", "Music Disc", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF22242E),
-        new Def("tractor", "Tractor", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF3AA848),
-        new Def("bell", "Bell", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF2B01E),
-        new Def("clock", "Clock", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF2F4FA),
+        new Def("bug", "Glitch", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFFF5A36, "bugfinder"),
+        new Def("code", "Satellite", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFF55D8FF, "contributors"),
+        new Def("patron", "Patron Sun", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFFFB400, "patreon"),
+        new Def("betamark", "Beta Rocket", Line.BETA, Kind.SUFFIX, "Downloaded the mod before v1.0", 0xFF3FD16A, "beta"),
+        new Def("dice", "Ringed Planet", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF4F6FB),
+        new Def("chest", "Supply Crate", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF8A5A2C),
+        new Def("anvil", "Meteor", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF9AA3B5),
+        new Def("disc", "Golden Record", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF22242E),
+        new Def("tractor", "Rover", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF3AA848),
+        new Def("bell", "Comet", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF2B01E),
+        new Def("clock", "Moon Phase", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF2F4FA),
         // Name effects earned in the ledger: they keep your own name colour and add light or movement
-        new Def("sweep", "Light Sweep", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFF4F6FB),
-        new Def("ripple", "Ripple", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFB8E8FF),
-        new Def("spark", "Spark", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFFFE680),
-        new Def("neon", "Neon", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFF6AF2FF),
+        new Def("sweep", "Comet Trail", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFF4F6FB),
+        new Def("ripple", "Tide", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFB8E8FF),
+        new Def("spark", "Twinkle", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFFFE680),
+        new Def("neon", "Eclipse", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFF6AF2FF),
         // Auras earned in the ledger
-        new Def("bubbleaura", "Bubbles", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFF8FE0FF),
-        new Def("fireflyaura", "Fireflies", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFE8FF70),
-        new Def("coinaura", "Coin Shower", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFFFD24A),
-        new Def("runeaura", "Runes", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFC9A0FF),
+        new Def("bubbleaura", "Zero-G Bubbles", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFF8FE0FF),
+        new Def("fireflyaura", "Glow Motes", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFE8FF70),
+        new Def("coinaura", "Coin Orbit", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFFFD24A),
+        new Def("runeaura", "Rune Ring", Line.ACHIEVEMENT, Kind.AURA, "Achievement", 0xFFC9A0FF),
         // Special: handed out by hand, one set at a time (suffix + name effect + aura)
-        new Def("sparkle", "Sparkle", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFB48CFF, "sparkle"),
+        new Def("sparkle", "Shooting Star", Line.SPECIAL, Kind.SUFFIX, "Special Set", 0xFFB48CFF, "sparkle"),
         new Def("sparklefx", "Starlight", Line.SPECIAL, Kind.NAME, "Special Set", 0xFFA9BBFF, "sparkle"),
-        new Def("sparkleaura", "Twinkle", Line.SPECIAL, Kind.AURA, "Special Set", 0xFFFFE680, "sparkle"),
+        new Def("sparkleaura", "Star Halo", Line.SPECIAL, Kind.AURA, "Special Set", 0xFFFFE680, "sparkle"),
         new Def("glitch", "Critical", Line.SPECIAL, Kind.NAME, "Bug Finder Set", 0xFFFF5A36, "bugfinder"),
-        new Def("glitchaura", "Alarm", Line.SPECIAL, Kind.AURA, "Bug Finder Set", 0xFFFF7A2E, "bugfinder"),
-        new Def("contribfx", "Aqua Flow", Line.SPECIAL, Kind.NAME, "Contributors Set", 0xFF55D8FF, "contributors"),
+        new Def("glitchaura", "Red Alert", Line.SPECIAL, Kind.AURA, "Bug Finder Set", 0xFFFF7A2E, "bugfinder"),
+        new Def("contribfx", "Nebula", Line.SPECIAL, Kind.NAME, "Contributors Set", 0xFF55D8FF, "contributors"),
         new Def("stardust", "Stardust", Line.SPECIAL, Kind.AURA, "Contributors Set", 0xFF8FD0FF, "contributors"),
-        new Def("royal", "Royal", Line.SPECIAL, Kind.NAME, "Patreon Set", 0xFFFFB400, "patreon"),
-        new Def("patronaura", "Embers", Line.SPECIAL, Kind.AURA, "Patreon Set", 0xFFFF9B2E, "patreon"));
+        new Def("royal", "Solar", Line.SPECIAL, Kind.NAME, "Patreon Set", 0xFFFFB400, "patreon"),
+        new Def("patronaura", "Solar Embers", Line.SPECIAL, Kind.AURA, "Patreon Set", 0xFFFF9B2E, "patreon"));
 
     static Def byId(String id) { for (Def d : ALL) if (d.id().equals(id)) return d; return null; }
     static List<Def> line(Line l) { List<Def> o = new ArrayList<>(); for (Def d : ALL) if (d.line() == l) o.add(d); return o; }

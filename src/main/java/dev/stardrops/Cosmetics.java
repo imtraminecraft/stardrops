@@ -25,18 +25,18 @@ final class Cosmetics {
     /** What one player shows: a suffix, a name effect and an aura (any of them may be none). */
     record Look(Suffix suffix, String fx, String aura) {}
     static final Suffix[] SUFFIXES = {
-        new Suffix("sparkle", "Sparkle", "Original", fr(0xE020)),
-        new Suffix("bug", "Bug", "Name Icon", fr(0xE100)),
-        new Suffix("code", "Code", "Name Icon", fr(0xE110)),
-        new Suffix("patron", "Patreon", "Name Icon", fr(0xE120)),
-        new Suffix("betamark", "Beta", "Name Icon", fr(0xE130)),
-        new Suffix("dice", "Lucky Dice", "Name Icon", fr(0xE150)),
-        new Suffix("chest", "Treasure Chest", "Name Icon", fr(0xE160)),
-        new Suffix("anvil", "Anvil", "Name Icon", fr(0xE170)),
-        new Suffix("disc", "Music Disc", "Name Icon", fr(0xE180)),
-        new Suffix("tractor", "Tractor", "Name Icon", fr(0xE1A0)),
-        new Suffix("bell", "Bell", "Name Icon", fr(0xE1B0)),
-        new Suffix("clock", "Clock", "Name Icon", fr(0xE1C0))};
+        new Suffix("sparkle", "Shooting Star", "Original", fr(0xE020)),
+        new Suffix("bug", "Glitch", "Name Icon", fr(0xE100)),
+        new Suffix("code", "Satellite", "Name Icon", fr(0xE110)),
+        new Suffix("patron", "Patron Sun", "Name Icon", fr(0xE120)),
+        new Suffix("betamark", "Beta Rocket", "Name Icon", fr(0xE130)),
+        new Suffix("dice", "Ringed Planet", "Name Icon", fr(0xE150)),
+        new Suffix("chest", "Supply Crate", "Name Icon", fr(0xE160)),
+        new Suffix("anvil", "Meteor", "Name Icon", fr(0xE170)),
+        new Suffix("disc", "Golden Record", "Name Icon", fr(0xE180)),
+        new Suffix("tractor", "Rover", "Name Icon", fr(0xE1A0)),
+        new Suffix("bell", "Comet", "Name Icon", fr(0xE1B0)),
+        new Suffix("clock", "Moon Phase", "Name Icon", fr(0xE1C0))};
     /** Who owns cosmetics. Everyone with the mod sees their suffix; only they can open the Cosmetics page. */
     /** Owners are stored as SHA-256 codes of their UUID, never as the UUID itself. This one is built in; more come from cosmetics.json. */
     static final String OWNER = "7ad5d2b31b239f2ed148d1de18f8214967bf7d1a411c838d466e9829ab7c2bf8";
@@ -221,13 +221,13 @@ final class Cosmetics {
     static String token(String id) { return id == null ? "" : ":" + id + ":"; }
     /** Logs any suffix whose picture file or font entry is missing, so a wrong id never shows up as an empty box silently. */
     static void checkIcons() {
-        for (Suffix s : SUFFIXES) try {                                                   // the chat/tab sprite must show what the strip shows; tools/make_suffix_sprites.py rebuilds the sprites
+        for (Suffix s : SUFFIXES) try {                                                   // the chat/tab sprite must show what the strip shows; tools/make_name_icons.py draws both
             String n = "sparkle".equals(s.id()) ? "sparkle" : "suffix_" + s.id();
             try (java.io.InputStream a = Cosmetics.class.getResourceAsStream("/assets/stardrops/textures/font/" + n + ".png"); java.io.InputStream b = Cosmetics.class.getResourceAsStream("/assets/stardrops/textures/gui/sprites/suffix/" + s.id() + ".png")) {
                 if (a == null || b == null) { System.err.println("[Stardrops] suffix " + s.id() + ": strip or chat sprite missing"); continue; }
                 java.awt.image.BufferedImage sa = javax.imageio.ImageIO.read(a), sb = javax.imageio.ImageIO.read(b); boolean same = sb.getHeight() == 60;
                 for (int f = 0; f < 6 && same; f++) for (int y = 0; y < 10 && same; y++) for (int x = 0; x < 10; x++) if (sa.getRGB(f * 10 + x, y) != sb.getRGB(x, f * 10 + y)) { same = false; break; }
-                if (!same) System.err.println("[Stardrops] suffix " + s.id() + ": the chat sprite differs from its strip. Run tools/make_suffix_sprites.py");
+                if (!same) System.err.println("[Stardrops] suffix " + s.id() + ": the chat sprite differs from its strip. Run tools/make_name_icons.py");
             }
         } catch (Throwable ignored) { }
     }
