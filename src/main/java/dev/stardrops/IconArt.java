@@ -757,10 +757,12 @@ final class IconArt {
                     for (int k = 1; k < 5; k++) pxa(hx - k / 2, hy + k, q == 0 ? 0xB48CFF : 0xFF7AD9, 1f - k / 5f);
                     rect(hx, hy, 2, 2, 0xFFFFFF); }
             }
-            case "amb_wave" -> {                                                             // Supernova: a bright core and a ring bursting outward
-                float u = f % 1f; float r = 1.5f + u * 6.5f;
-                for (int q = 0; q < 20; q++) { double an = q * Math.PI / 10; pxa(Math.round(8 + (float) Math.cos(an) * r), Math.round(8 + (float) Math.sin(an) * r), q % 2 == 0 ? 0xFF7AD9 : 0xC8B4FF, 1f - u * 0.7f); }
-                glow(8, 8, 3, 0xFFFFFF, 0.5f * (1f - u)); ball(8, 8, 1.5f, 0xFFF4D8);
+            case "amb_wave" -> {                                                             // Lift-off: a rocket climbing, its flame and a trail of squares below
+                int o = 2 - Math.round((f % 1f) * 3);
+                rect(7, 3 + o, 3, 6, 0xE8ECFF); px(8, 2 + o, 0xFF7AD9); rect(8, 5 + o, 1, 2, 0x7AD8FF);
+                px(6, 8 + o, 0xFF7AD9); px(10, 8 + o, 0xFF7AD9); px(6, 7 + o, 0xFF7AD9); px(10, 7 + o, 0xFF7AD9);
+                rect(7, 9 + o, 3, 1, 0xFF8A3A); px(8, 10 + o, 0xFFE07A);
+                for (int q = 0; q < 3; q++) pxa(8 + (q % 2 == 0 ? -1 : 1), 12 + o + q, q == 0 ? 0xFF7AD9 : 0x9B7BFF, 0.9f - q * 0.25f);
             }
             case "spot" -> {                                                                 // Spotify page: a pair of headphones, a beat pulsing between them
                 for (int x = 3; x < 13; x++) { double a = (x - 8) / 5.0; px(x, (int) Math.round(6 - Math.sqrt(Math.max(0, 1 - a * a)) * 4), 0xD8E8DA); }

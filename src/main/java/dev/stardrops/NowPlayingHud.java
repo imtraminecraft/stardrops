@@ -19,7 +19,7 @@ final class NowPlayingHud {
     /** The demo shown while you move the HUD with nothing playing. */
     static boolean preview;
     /** Where it was last drawn (screen pixels), for the HUD editor. */
-    static int bx0, by0, bx1, by1;
+    static int bx0, by0, bx1, by1; static long drawnAt;
 
     /** From the HUD (not while the HUD editor draws its own). */
     static void hud(GuiGraphicsExtractor g) { if (!preview) render(g); }
@@ -61,7 +61,7 @@ final class NowPlayingHud {
     static void draw(GuiGraphicsExtractor g, Font font, float cx, float top, float k, float e, Spotify.Track t, long now, long since,
                      long pos, boolean playing, float dt, String lyric, boolean art, int acc) {
         int w = width(), h = height(!lyric.isEmpty());
-        bx0 = Math.round(cx - w / 2f * k); by0 = Math.round(top); bx1 = Math.round(cx + w / 2f * k); by1 = Math.round(top + h * k);
+        bx0 = Math.round(cx - w / 2f * k); by0 = Math.round(top); bx1 = Math.round(cx + w / 2f * k); by1 = Math.round(top + h * k); if (e > 0.9f) drawnAt = now;
         Gfx.push(g); Gfx.translate(g, cx - w / 2f * k, top); Gfx.scale(g, k);
         LyricsHud.dock(g, font, w, h, e, top > 26 * k, acc);                       // the sung line, sliding out from behind the card
         glass(g, font, w, h, e, t, now, since, pos, playing, lyric, art, acc);
@@ -204,11 +204,12 @@ final class NowPlayingHud {
             float u = ease(leave); rx = ox2 + (rx - ox2) * u; ry = oy2 + (ry - oy2) * u; ang = lerpAng(oang, ang, u);
             behind = u < 0.4f && Math.sin(pa) < 0; firing = true;
         }
-        if (behind) flyer(g, rx, ry, ang, a, now, firing, 1f);
+        boolean out = AmbienceHud.away(since);                                                    // Lift-off: the rocket is out flying across the screen
+        if (behind && !out) flyer(g, rx, ry, ang, a, now, firing, 1f);
         Worlds.draw(g, dx, yb, r0 + (r1 - r0) * (1f - pan), Math.round(a * edge(dx, tx, w)), seed(prevId), spin);
         if (playing) { float bp = (now % 500L) / 500f, bt = (1f - bp) * (1f - bp); circle(g, dX, yb, r1 + 2f + 5f * bp, Gfx.argb(Math.round(a * 0.45f * bt * edge(dX, tx, w)), 0xD8C8FF)); }   // it pulses with the beat
         Worlds.draw(g, dX, yb, r1, Math.round(a * edge(dX, tx, w)), seed(curId), spin);
-        if (!behind) flyer(g, rx, ry, ang, a, now, firing, leave < 1f && leave > 0f ? 1.8f : 1f);
+        if (!behind && !out) flyer(g, rx, ry, ang, a, now, firing, leave < 1f && leave > 0f ? 1.8f : 1f);
         // the time, small, inside the arc (the card ends right under the worlds)
         String tm = mmss(pos) + "  /  " + mmss(dur); float tw2 = font.width(tm) * 0.55f;          // the time, small, under the middle of the arc
         small(g, font, tm, (sx + ex) / 2f - tw2 / 2f, yb + 3, 0.55f, Gfx.argb(Math.round(a * 0.6f), 0xFFFFFF));
@@ -218,7 +219,7 @@ final class NowPlayingHud {
     private static float bd(float p0, float p1, float p2, float u) { return 2 * (1f - u) * (p1 - p0) + 2 * u * (p2 - p1); }
     private static float lerpAng(float a0, float a1, float u) { float d = a1 - a0; while (d > Math.PI) d -= (float) (2 * Math.PI); while (d < -Math.PI) d += (float) (2 * Math.PI); return a0 + d * u; }
     /** A little rocket pointing right, its nose at x+5: white body, a round window, pink fins, a flickering flame (longer with boost). */
-    private static void rocket(GuiGraphicsExtractor g, float x, float y, int a, long now, boolean firing, float boost) {
+    static void rocket(GuiGraphicsExtractor g, float x, float y, int a, long now, boolean firing, float boost) {
         int cx = Math.round(x), cy = Math.round(y);
         if (firing) {
             float fl = 0.7f + 0.3f * (float) Math.sin(now / 45.0) * (float) Math.sin(now / 17.0); int len = Math.round((3 + 2 * fl) * boost);
