@@ -71,7 +71,7 @@ final class InstrumentsHud {
     private static void draw(GuiGraphicsExtractor g, Minecraft mc, int i, float a, long now) {
         int w = SIZE[i][0], h = SIZE[i][1]; Font f = mc.font;
         switch (i) {
-            case 0 -> { long ticks = mc.level.getOverworldClockTime(); clock(g, (ticks % 24000L) / 24000f, ticks, a); }
+            case 0 -> { long ticks = NightLock.real(mc.level); clock(g, (ticks % 24000L) / 24000f, ticks, a); }
             case 1 -> compass(g, f, w, h, a, mc.player.getYRot());
             case 2 -> altimeter(g, f, w, h, a, (float) mc.player.getY(), now);
             case 3 -> thruster(g, f, w, h, a, now);

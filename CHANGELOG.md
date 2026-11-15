@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.9.0
+- **Always night:** Visuals > Cosmos > Night sky > Always night keeps your world at midnight (only for you), so there is no sun under the galaxies. On by default.
 - **Flicker guard:** now catches the short flashing right after warps, and tests itself on your warps (Stardrops on, then off) to find out whether it is the cause; if it is, it switches off the part responsible and tells you in chat.
 - **Achievements, grand opening:** the first time you open the page each session, one star pulls the whole sky into itself and bursts; eight comets fly out and draw the constellations one by one, the title is struck over the galaxy and the land rises into view. It has its own score. Click to skip; later openings use the short loader.
 - **Achievements, the lookout:** the stargazer and the cat now have a place of their own: a wooden deck under a string of lights, with a tent, a campfire, a lake, an observatory sweeping the sky and a rocket on its pad. Constellation names are always on the map.

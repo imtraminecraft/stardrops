@@ -55,7 +55,7 @@ final class FlickerGuard {
             if (!StardropsConfig.get().guardWatch) { if (probe >= 0) { probe = -1; Flicker.off = userOff | foundOff; } return; }
             boolean quiet = mc.level == null || mc.gui.screen() != null || AnimationManager.isPlaying() || CosmosHud.momentPlaying() || !StardropsConfig.get().guardWatch;
             if (quiet) { lumN = 0; if (state == PAUSED || state == BISECT) stateAt = now; return; }        // a menu or a drop's flash on screen: not a fair look; a test in progress just waits
-            try { clock(mc.level.getOverworldClockTime()); } catch (Throwable ignored) { }
+            try { clock(NightLock.real(mc.level)); } catch (Throwable ignored) { }
             if (probe >= 0) probeStep(now); else step(now);
             sample(mc);
         } catch (Throwable t) { broken = true; Flicker.off = userOff | foundOff; System.err.println("[Stardrops] flicker guard off: " + t); }

@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "package": "dev.stardrops.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "ClockMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

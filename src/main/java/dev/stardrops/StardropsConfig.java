@@ -178,7 +178,7 @@ public class StardropsConfig {
     public boolean instHide = false, instAnimHide = true, npPeek = false, cosMilky = true, cosPlanets = true, cosDeep = true, cosComet = true;   // HUDs step aside for drop animations; Now Playing only peeks in; the sky's Milky Way and planets   // "All HUDs" off: every HUD piece hidden, the choices kept
     public boolean[] instOn = new boolean[InstrumentsHud.N]; public float[] instX = new float[InstrumentsHud.N], instY = new float[InstrumentsHud.N]; public int[] instSize = new int[InstrumentsHud.N];
     public int localVolume = 70, localMode = 0;                       // Visuals > Music > Your files: volume in percent; 0 in order, 1 shuffle, 2 repeat one
-    public boolean cosCons = true, cosOnlyNight = false; public int cosSkyBright = 100;     // the night sky box: your lit constellations in it, how bright it is (percent)
+    public boolean cosCons = true, cosOnlyNight = true, nightSet; public int cosSkyBright = 100;     // the night sky box: your lit constellations in it, how bright it is (percent)
     public boolean ambGlow = false, ambNotes = false, ambBars = false, ambWave = false, lyricsStars = true; public int ambGlowStrength = 60;   // Ambience (Visuals > Ambience)
     public boolean npOn = true; public int npScale = 100, npHidePaused = 1, npBg = 60;   // npBg: how solid the card's background is, 20..70 %
       // Now Playing; when paused: 0 stays, 1 hides after 8 s, 2 hides at once
@@ -214,6 +214,7 @@ public class StardropsConfig {
         if (c.sounds == null) c.sounds = new LinkedHashMap<>();
         if (c.mcSounds == null) c.mcSounds = new LinkedHashMap<>();
         if (c.playDone == null) c.playDone = new LinkedHashMap<>();
+        if (!c.nightSet) { c.nightSet = true; c.cosOnlyNight = true; save(); }          // 16 Nov: Always night is on for everyone once (the author: no sun under the galaxies)
         if (c.ver < 3) { c.ver = 3; c.sounds.clear(); c.mcSounds.clear(); save(); }          // the rewrite: old sound picks refer to sounds that no longer exist
         if (c.ver < 6) { c.ver = 6; if ("minos".equals(c.suffix) || "rod".equals(c.suffix)) c.suffix = ""; save(); }          // 0.7.8: the King Minos and Fishing Rod icons are gone
         if (c.ver < 9) { c.ver = 9; c.itemScale = Math.min(1.1f, c.itemScale * 1.5f); save(); }          // Item size: the old 50% is the new 75%, capped at 110%

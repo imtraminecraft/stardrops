@@ -3348,7 +3348,7 @@ public class StardropsScreen extends Screen {
             if (!c.cosNight) { rows.add(note("Switch it on to set it up.", 0xFF8A93B0)); return; }
             Row br = row(0, ":size:", "Brightness", "How bright the night sky is", Ui.ACCENT);
             br.ctls.add(new Slider(30, 150, 10, () -> c.cosSkyBright, v -> c.cosSkyBright = (int) v, () -> c.cosSkyBright + "%").typed(1)); rows.add(br);
-            rows.add(toggle(":cos_night:", "Only night", "Always there, day or night; it turns by the real clock, steady even if another mod changes the time", () -> c.cosOnlyNight, v -> c.cosOnlyNight = v));
+            rows.add(toggle(":cos_night:", "Always night", "No sun: your world is always at midnight, so the galaxies make sense. Only you see it", () -> c.cosOnlyNight, v -> c.cosOnlyNight = v));
             rows.add(toggle(":collection:", "Your constellations", "The stars you have lit in Achievements shine in the real sky, joined up", () -> c.cosCons, v -> c.cosCons = v));
             rows.add(toggle(":cos_night:", "Milky Way", "The faint band of the galaxy across the sky", () -> c.cosMilky, v -> c.cosMilky = v));
             rows.add(toggle(":cosmos:", "Planets", "A ringed giant and a small red world", () -> c.cosPlanets, v -> c.cosPlanets = v));
