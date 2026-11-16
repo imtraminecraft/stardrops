@@ -2,12 +2,12 @@ package dev.stardrops;
 
 import net.minecraft.network.chat.Style;
 
-/** Effects for a player's name (IGN). They keep the colour the server gave the name and add light and movement on top. Every effect is the name's main colour and white, nothing else. */
+/** Effects for a player's name (IGN). Special effects have colours of their own; every other one keeps the colour the server gave the name and only adds white. */
 final class NameFx {
     private NameFx() {}
 
-    /** Does it move? (The soft glow is the only still one.) */
-    static boolean animated(String fx) { return !"glow".equals(fx); }
+    /** Does it move? Every effect does. */
+    static boolean animated(String fx) { return fx != null && !fx.isEmpty(); }
 
     private static int mix(int a, int b, float k) {
         k = Math.max(0f, Math.min(1f, k));
@@ -21,17 +21,23 @@ final class NameFx {
     }
 
 
-    /** The colour (RGB) of letter i of n at time t (ms). Every effect uses ONE main colour and white, nothing else:
-     *  Beta keeps the colour the server gave the name; the Special ones have a main colour of their own. */
+    /** The colour (RGB) of letter i of n at time t (ms).
+     *  The colour rule: a Special effect (and Beta, a Special set) may give the name colours of its own;
+     *  every other effect only moves between the name's own colour and white. */
     static int color(String fx, int i, int n, int base, long t) {
         base &= 0xFFFFFF;
         StardropsConfig cf = StardropsConfig.get();
         t = cf.cosCalm ? 1200L : t * Math.max(10, cf.cosSpeed) / 100;          // calm mode: every name stands still (one quiet frame); otherwise the speed setting applies, in chat, tab, name tags and the menu alike
         float ph;
         switch (fx) {
-            case "pulse":                                                   // Beta: the name breathes between its own colour and white
-                ph = 0.5f + 0.5f * (float) Math.sin(t / 500.0);
-                return mix(base, 0xFFFFFF, 0.45f * ph);
+            // ---------------- Special: colours of their own
+            case "pulse": {                                                 // Signal (Beta): mission-control green; a bright scan runs along the name and leaves a fading trace
+                int c = 0x3FD16A;
+                float pos = (t % 2200L) / 2200f * (n + 9) - 2, d = pos - i;
+                if (d >= -0.5f && d < 0.6f) return mix(c, 0xFFFFFF, 0.9f);
+                if (d >= 0.6f && d < 5f) return mix(mix(c, 0xFFFFFF, 0.55f), c, (d - 0.6f) / 4.4f);
+                return mix(c, 0x1E8A4A, 0.25f + 0.25f * (float) Math.sin(t / 700.0 + i * 0.9));
+            }
             case "sparklefx": {                                             // Starlight: pale starlight blue; a white comet runs along it and single letters twinkle white
                 int main = 0xA9BBFF;
                 ph = 0.5f + 0.5f * (float) Math.sin(t / 900.0 - i * 0.5);
@@ -53,28 +59,35 @@ final class NameFx {
                 }
                 return mix(c, 0xFFFFFF, 0.92f * best);
             }
-            case "contribfx": {                                             // Aqua Flow: aqua with a wave of white foam running along it
-                int c = 0x38D2FF;
-                float foam = (float) Math.pow(Math.max(0.0, Math.sin(t / 420.0 - i * 0.8)), 6);
-                c = mix(c, 0xFFFFFF, 0.85f * foam);
-                float pos = (t % 3200L) / 3200f * (n + 12) - 6, k = Math.max(0f, 1f - Math.abs(i - pos) / 3f);
-                return mix(c, 0xFFFFFF, 0.6f * k);
+            case "contribfx": {                                             // Nebula: teal, violet and pink clouds drift slowly through the name; now and then a letter lights up like a new star
+                float u = 0.5f + 0.5f * (float) Math.sin(t / 1300.0 - i * 0.55), v = 0.5f + 0.5f * (float) Math.sin(t / 2100.0 + i * 0.35 + 1.7);
+                int c = mix(mix(0x3FE0D0, 0x9B7BFF, u), 0xFF7AC8, 0.7f * v * u);
+                long st = t / 900L; float en = (float) Math.sin(Math.PI * ((t % 900L) / 900f));
+                if (n > 0 && hash(13, st) % n == i) c = mix(c, 0xFFFFFF, 0.85f * en);
+                return c;
             }
-            case "royal": {                                                 // Royal: gold with a white glint that runs along the name
-                int c = 0xFFB400;
-                float pos = (t % 1900L) / 1900f * (n + 10) - 5, k = Math.max(0f, 1f - Math.abs(i - pos) / 2.2f);
-                return mix(c, 0xFFFFFF, k);
+            case "royal": {                                                 // Solar: gold that glows down to orange and back, and a white flare that sweeps along the name
+                ph = 0.5f + 0.5f * (float) Math.sin(t / 650.0 - i * 0.7);
+                int c = mix(0xFFC21A, 0xFF7A1E, 0.55f * ph);
+                long cyc = t % 2600L;
+                if (cyc < 1300L) { float pos = cyc / 1300f * (n + 8) - 4, k = Math.max(0f, 1f - Math.abs(i - pos) / 2.4f); c = mix(c, 0xFFFFFF, k * k * (3 - 2 * k)); }
+                return c;
             }
-            case "sweep": {                                                 // Light Sweep: a soft, wide band of white light crosses your name now and then
-                long cyc = t % 3400L; if (cyc > 2000L) return base;
-                float pos = cyc / 2000f * (n + 8) - 4, k = Math.max(0f, 1f - Math.abs(i - pos) / 2.6f);
-                return mix(base, 0xFFFFFF, 0.85f * k * k * (3 - 2 * k));
+            // ---------------- earned in Achievements: only the name's own colour and white
+            case "sweep": {                                                 // Comet Trail: a white head crosses your name and drags a long fading tail
+                long cyc = t % 3000L; if (cyc > 1900L) return base;
+                float pos = cyc / 1900f * (n + 12) - 1, d = pos - i;
+                if (d >= -0.5f && d < 0.7f) return 0xFFFFFF;
+                if (d >= 0.7f && d < 7f) { float k = 1f - (d - 0.7f) / 6.3f; return mix(base, 0xFFFFFF, 0.8f * k * k); }
+                return base;
             }
-            case "ripple": {                                                // Ripple: two soft swells of light roll along the letters, your colour in between
-                float w = (float) Math.sin(t / 260.0 - i * 0.75);
-                return mix(base, 0xFFFFFF, 0.38f * (float) Math.pow(Math.max(0f, w), 3));
+            case "ripple": {                                                // Tide: white rises through the name from the left like water coming in, then draws back
+                float lvl = (0.5f - 0.5f * (float) Math.cos(t / 1500.0 * Math.PI)) * (n + 3) - 1.5f;          // where the water's edge is
+                float d = lvl - i, k = d > 1.5f ? 0.55f : d > -1.5f ? 0.55f * (d + 1.5f) / 3f : 0f;
+                if (Math.abs(d) < 0.8f) k = Math.max(k, 0.95f);                                                // the foam at the edge
+                return mix(base, 0xFFFFFF, k);
             }
-            case "spark": {                                                 // Spark: single letters flash white for a moment, two at a time, here and there
+            case "spark": {                                                 // Twinkle: single letters flash white for a moment, two at a time, here and there
                 int c = base;
                 for (int k = 0; k < 2; k++) {
                     long per = 520L, off = k * 260L, st = (t + off) / per; float u = ((t + off) % per) / (float) per;
@@ -82,28 +95,12 @@ final class NameFx {
                 }
                 return c;
             }
-            case "neon": {                                                  // Neon: your colour turned up like a lit tube, a soft hum of brightness, and now and then a letter flickers
-                float[] hsv = java.awt.Color.RGBtoHSB((base >> 16) & 255, (base >> 8) & 255, base & 255, null);
-                float sat = hsv[1] < 0.08f ? 0f : Math.min(1f, hsv[1] * 1.15f + 0.1f);
-                int c = java.awt.Color.HSBtoRGB(hsv[0], sat, 1f) & 0xFFFFFF;
-                c = mix(c, 0xFFFFFF, 0.12f + 0.1f * (float) Math.sin(t / 140.0) * (float) Math.sin(t / 370.0));
-                long st = t / 90L; if (n > 0 && hash(5, t / 1800L) % n == i && (t % 1800L) < 300L && hash(9, st) % 3 == 0) c = mix(c, 0x000000, 0.55f);       // a flicker
-                if ((t % 7000L) < 120L) c = mix(c, 0x000000, 0.35f);                                       // the whole tube blinks once in a while
-                return c;
+            case "neon": {                                                  // Eclipse: white slides over your name from one side, covers it for a moment, and slides off the other side
+                long cyc = t % 5200L; if (cyc > 3000L) return base;
+                float u = cyc / 3000f, lead = u * (n + 6) - 1, trail = lead - (n * 0.6f + 2.5f), d1 = lead - i, d2 = i - trail;
+                float k = Math.max(0f, Math.min(1f, Math.min(d1, d2) / 1.4f));
+                return mix(base, 0xFFFFFF, 0.92f * k * k * (3 - 2 * k));
             }
-            case "shimmer": {                                               // a band of white sweeps over the name
-                float pos = (t % 2400L) / 2400f * (n + 6) - 3, k = Math.max(0f, 1f - Math.abs(i - pos) / 1.6f);
-                return mix(base, 0xFFFFFF, 0.9f * k);
-            }
-            case "wave":                                                    // white waves run along the letters
-                ph = 0.5f + 0.5f * (float) Math.sin(t / 300.0 - i * 0.9);
-                return mix(base, 0xFFFFFF, 0.45f * ph);
-            case "glow":                                                    // a soft white glow that slowly brightens from the left
-                ph = 0.5f + 0.5f * (float) Math.sin(t / 900.0);
-                return mix(base, 0xFFFFFF, n <= 1 ? 0.2f * ph : (0.1f + 0.35f * ph) * i / (n - 1) + 0.1f * ph);
-            case "fresh":                                                   // a lighter shade of the name drifts slowly along it
-                ph = 0.5f + 0.5f * (float) Math.sin(t / 900.0 - i * 0.6);
-                return mix(base, 0xFFFFFF, 0.5f * ph);
             default: return base;
         }
     }

@@ -1,6 +1,9 @@
 # Changelog
 
 ## 0.9.0
+- Cosmetics menu: three doors (Name Icons, Name FX, Auras) with live previews; the open door shows its items right below, and a strip tells you about the one you point at, with its star and your progress.
+- Name effects have new looks: Signal, Nebula, Solar, Comet Trail, Tide, Twinkle, Eclipse. Achievement effects only use your own name colour and white.
+- Achievements: click a star that has a reward to see it in Cosmetics.
 - Cosmetics: every Name Icon is redrawn in a space theme (Shooting Star, Comet, Moon Phase, Ringed Planet, Meteor, Rover, Supply Crate, Golden Record and more), and effects and auras have new names. What you own stays yours.
 - **Always night:** Visuals > Cosmos > Night sky > Always night keeps your world at midnight (only for you), so there is no sun under the galaxies. On by default.
 - **Flicker guard:** now catches the short flashing right after warps, and tests itself on your warps (Stardrops on, then off) to find out whether it is the cause; if it is, it switches off the part responsible and tells you in chat.

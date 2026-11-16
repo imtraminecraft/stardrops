@@ -37,7 +37,7 @@ final class CosmeticData {
         new Def("tractor", "Rover", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFF3AA848),
         new Def("bell", "Comet", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF2B01E),
         new Def("clock", "Moon Phase", Line.ACHIEVEMENT, Kind.SUFFIX, "Achievement", 0xFFF2F4FA),
-        // Name effects earned in the ledger: they keep your own name colour and add light or movement
+        // Name effects earned in Achievements: only your own name colour and white (the colour rule)
         new Def("sweep", "Comet Trail", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFF4F6FB),
         new Def("ripple", "Tide", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFB8E8FF),
         new Def("spark", "Twinkle", Line.ACHIEVEMENT, Kind.NAME, "Achievement", 0xFFFFE680),
@@ -103,14 +103,7 @@ final class CosmeticData {
             case BETA: return betaEligible();
             case RARE: case LEGENDARY: return false;                              // unlock rules come later (admins have everything)
             case SPECIAL: return grantsOf(Cosmetics.me()).contains(d.set());
-            default:
-                if (d.id().equals("newcomer") || d.id().equals("fresh")) return true;
-                return switch (d.id()) {
-                    case "ember" -> c.dropsSeen >= 15;
-                    case "frost" -> c.dropsSeen >= 75;
-                    case "neon" -> c.dropsSeen >= 300;
-                    default -> false;
-                };
+            default: return false;                                                // everything else is earned in Achievements (the server decides)
         }
     }
     /** What to tell a player who presses a locked cosmetic. */
@@ -120,12 +113,7 @@ final class CosmeticData {
         if (d.line() == Line.ACHIEVEMENT || d.line() == Line.RARE || d.line() == Line.LEGENDARY || d.line() == Line.FREE) return "Earned through an achievement. Open Achievements to see which.";
         if (d.line() == Line.BETA) return "The beta is over. Only players who downloaded before v1.0 have it.";
         if (d.line() == Line.SPECIAL) return setById(d.set()).how();
-        return switch (d.id()) {
-            case "ember" -> "Get 15 rare drops.";
-            case "frost" -> "Get 75 rare drops.";
-            case "neon" -> "Get 300 rare drops.";
-            default -> "Find the hidden button.";
-        };
+        return "Not available yet.";
     }
     static String fmtN(double v) { return v >= 1e9 ? String.format(java.util.Locale.ROOT, "%.1fB", v / 1e9) : v >= 1e6 ? String.format(java.util.Locale.ROOT, "%.1fM", v / 1e6) : v >= 1e4 ? String.format(java.util.Locale.ROOT, "%.0fk", v / 1e3) : String.valueOf((long) v); }
     static int rarityOf(Def d) { return d.line() == Line.SPECIAL || d.line() == Line.BETA ? 4 : d.line() == Line.LEGENDARY ? 3 : d.line() == Line.ACHIEVEMENT ? 2 : d.line() == Line.RARE ? 1 : 0; }          // Beta is a Special set

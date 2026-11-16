@@ -269,7 +269,7 @@ public class StardropsScreen extends Screen {
         }
     }
 
-    private static final int NORMAL = 0, SECTION = 1, BANNER = 2, NOTE = 3, PREVIEW = 4, TEXT = 5, PANEL = 6, HERO = 7, TIP = 8, CHATPREV = 9, PICKER = 11, COSPREV = 12, CAT = 13, SHOWBAR = 14, UPDATE = 16, VDOORS = 17, VQUICK = 18, VPREV = 19;
+    private static final int NORMAL = 0, SECTION = 1, BANNER = 2, NOTE = 3, PREVIEW = 4, TEXT = 5, PANEL = 6, HERO = 7, TIP = 8, CHATPREV = 9, PICKER = 11, COSPREV = 12, CAT = 13, SHOWBAR = 14, UPDATE = 16, VDOORS = 17, VQUICK = 18, VPREV = 19, CDOORS = 20, CINFO = 21;
     private class Row {
         String fkey;                                                      // set on folding rows: lets the Show > All tile open or close them all
 
@@ -870,7 +870,7 @@ public class StardropsScreen extends Screen {
             if (shk != null) { long ag = now - shk; if (ag < 420) { float dk = 1f - ag / 420f; b[0] += Math.round((float) Math.sin(ag * 0.034) * 3f * dk * dk); } }          // a locked tile shakes when you press it
             float k = anim("pick|" + r.title + "|" + r.pLabels[i], on ? 1f : hv ? 0.4f : 0f, 40f);
             if (hv && r.pTips != null) { tipText = r.pTips[i]; tipCol = r.pBg != null ? r.pBg[i] : col; }
-            if (hv && r.pIds != null) hoverCos = r.pIds[i];
+            if (hv && r.pIds != null) { hoverCos = r.pIds[i]; if (r.pIds[i] != null) cosInfoId = r.pIds[i]; }
             int rar = r.pRar == null ? -1 : r.pRar[i];                                                  // rarity: 0 common, 1 rare, 2 achievement, 3 legendary, 4 special (the colours of its set)
             int sch = r.pBg != null ? r.pBg[i] : rar == 2 ? 0xFF8FB8FF : rar == 1 ? 0xFF3B5BDB : rar == 0 ? 0xFF9AA3B5 : col;     // the colour scheme of the tile: every tile of a set shares it
             int bgBase = rar < 0 ? Ui.PANEL2 : Canvas.mix(Ui.PANEL2, sch, rar == 4 ? 0.12f : rar == 2 ? 0.13f : rar == 1 ? 0.14f : rar == 3 ? 0.08f : 0.07f);
@@ -894,9 +894,12 @@ public class StardropsScreen extends Screen {
                 if (ic0) Icons.draw(g, r.pIcons[i], b[0] + (b[2] - 16) / 2, top, hv || on ? now : 2400L);
                 String nm0 = r.pLabels[i]; int nw0 = Math.max(1, Gfx.w(font, nm0)); float nk0 = Math.min(1f, (b[2] - 6) / (float) nw0);
                 Gfx.push(g); Gfx.translate(g, b[0] + (b[2] - nw0 * nk0) / 2f, top + (ic0 ? 19 : 4) + (1f - nk0) * 2f); Gfx.scale(g, nk0);
-                Gfx.text(g, font, nm0, 0, 0, on ? Ui.TEXT : wip ? Ui.DIM : Ui.SUB); Gfx.pop(g);
+                if (r.pFx != null && r.pFx[i] != null) { int lx = 0; for (int ci = 0; ci < nm0.length(); ci++) { String chs = String.valueOf(nm0.charAt(ci)); Gfx.text(g, font, chs, lx, 0, 0xFF000000 | NameFx.color(r.pFx[i], ci, nm0.length(), col & 0xFFFFFF, now)); lx += Gfx.w(font, chs); } }
+                else Gfx.text(g, font, nm0, 0, 0, on ? Ui.TEXT : wip ? Ui.DIM : Ui.SUB);
+                Gfx.pop(g);
                 if (r.pSubs != null && r.pSubs[i] != null) { String sv = r.pSubs[i]; float sk = Math.min(0.7f, (b[2] - 6) / (float) Math.max(1, Gfx.w(font, sv))); Gfx.push(g); Gfx.translate(g, b[0] + (b[2] - Gfx.w(font, sv) * sk) / 2f, b[1] + b[3] - 11); Gfx.scale(g, sk); Gfx.text(g, font, sv, 0, 0, on ? Canvas.mix(Ui.SUB, col, 0.45f) : Ui.DIM); Gfx.pop(g); }
                 if (wip) wipChip(g, b[0] + b[2] - 21, b[1] + 4, 0.75f);
+                if (lk) lockMark(g, b, shk, now);
                 continue;
             }
             boolean ico = r.pIcons[i] != null; int iw = ico ? 21 : 0, iy = b[1] + (b[3] - 16) / 2;
@@ -918,13 +921,15 @@ public class StardropsScreen extends Screen {
                 else { Gfx.push(g); Gfx.translate(g, tx, b[1] + 19); Gfx.scale(g, 0.8f); Gfx.text(g, font, sb2, 0, 0, on ? Canvas.mix(Ui.SUB, col, 0.45f) : Ui.DIM); Gfx.pop(g); }
             }
             if (wip) wipChip(g, b[0] + b[2] - 23, b[1] + 5, 1f);
-            if (lk) {                                                                                  // locked: dimmed, with a padlock
-                g.fill(b[0] + 1, b[1] + 1, b[0] + b[2] - 1, b[1] + b[3] - 1, 0x70080A10);
-                int lx = b[0] + b[2] - 16, ly = b[1] + 5, lc = shk != null && now - shk < 420 ? 0xFFFF6B6B : 0xFFB9C0D6;
-                g.fill(lx + 2, ly, lx + 3, ly + 4, lc); g.fill(lx + 7, ly, lx + 8, ly + 4, lc); g.fill(lx + 2, ly, lx + 8, ly + 1, lc);
-                g.fill(lx, ly + 4, lx + 10, ly + 10, lc); g.fill(lx + 4, ly + 6, lx + 6, ly + 8, 0xFF1A1C26);
-            }
+            if (lk) lockMark(g, b, shk, now);
         }
+    }
+    /** A locked tile: dimmed, with a padlock (red while it shakes). */
+    private static void lockMark(GuiGraphicsExtractor g, int[] b, Long shk, long now) {
+        g.fill(b[0] + 1, b[1] + 1, b[0] + b[2] - 1, b[1] + b[3] - 1, 0x70080A10);
+        int lx = b[0] + b[2] - 16, ly = b[1] + 5, lc = shk != null && now - shk < 420 ? 0xFFFF6B6B : 0xFFB9C0D6;
+        g.fill(lx + 2, ly, lx + 3, ly + 4, lc); g.fill(lx + 7, ly, lx + 8, ly + 4, lc); g.fill(lx + 2, ly, lx + 8, ly + 1, lc);
+        g.fill(lx, ly + 4, lx + 10, ly + 10, lc); g.fill(lx + 4, ly + 6, lx + 6, ly + 8, 0xFF1A1C26);
     }
     /** A menu tile, Stardrops style: dark glass with cut corners, faint scanlines and a few twinkling stars, a thin edge and bright corner
      *  brackets in the tile's colour; pointing at it lights it up and sweeps a beam of light across; the open one has a glowing base line. */
@@ -1079,15 +1084,15 @@ public class StardropsScreen extends Screen {
     private static String effectNote(CosmeticData.Def d) {
         if (d.kind() != CosmeticData.Kind.NAME) return "";
         return switch (d.id()) {
-            case "shimmer" -> "A band of white sweeps over your name. ";
-            case "pulse" -> "Your name breathes between its colour and white. ";
-            case "wave" -> "White waves run along your name. ";
-            case "glow" -> "A soft white glow that slowly brightens. ";
-            case "fresh" -> "A lighter shade drifts along your name. ";
+            case "pulse" -> "Mission-control green with a bright scan running along it. ";
             case "sparklefx" -> "Starlight blue with a white comet and twinkling letters. ";
             case "glitch" -> "Red with a heartbeat: twice a beat a white pulse runs out from the middle. ";
-            case "contribfx" -> "Aqua with waves of white foam. ";
-            case "royal" -> "Gold with a running white glint. ";
+            case "contribfx" -> "Teal, violet and pink clouds drifting through your name. ";
+            case "royal" -> "Glowing gold and orange with a white flare. ";
+            case "sweep" -> "A white comet crosses your name and drags a fading tail. ";
+            case "ripple" -> "White comes in from the left like a tide, then draws back. ";
+            case "spark" -> "Single letters flash white, here and there. ";
+            case "neon" -> "White slides over your name, covers it, and slides off. ";
             default -> "";
         };
     }
@@ -1096,7 +1101,8 @@ public class StardropsScreen extends Screen {
     }
 
     /** One grid of tiles: sets (SetDef) or single cosmetics (Def). */
-    private Row grid(List<Object> items, int cols) {
+    private Row grid(List<Object> items, int cols) { return grid(items, cols, false); }
+    private Row grid(List<Object> items, int cols, boolean tall) {
         int n = items.size();
         String[] lb = new String[n], sb = new String[n], ic = new String[n], tp = new String[n], fxs = new String[n], ids = new String[n], sids = new String[n]; int[] cl = new int[n], rar = new int[n], bg = new int[n]; boolean[] lk = new boolean[n], eq = new boolean[n]; boolean sets = false;
         for (int k = 0; k < n; k++) {
@@ -1123,11 +1129,92 @@ public class StardropsScreen extends Screen {
             if (CosmeticData.editMode) { for (CosmeticData.Def d : ds) CosmeticData.force.put(d.id(), !owned); CosmeticData.changed(); toast((owned ? "Removed " : "Added ") + sd.name() + " set\n(test only, nothing is saved)", owned ? 0xFFFF8A5A : 0xFF62E6A8); return; }
             if (!owned) { lockShake.put(lb[i], System.currentTimeMillis()); toast("LOCKED!\n" + sd.how(), 0xFFFF5A5A); toastShake = true; } else CosmeticData.toggleSet(sd);
         }) : picker("", "", lb, ic, cl, null, () -> -1, i -> clickDef((CosmeticData.Def) items.get(i), lb[i]));
-        pk.pCols = cols; pk.pColsForce = 0; pk.pTop = 6; fit(pk);
+        pk.pCols = cols; pk.pColsForce = 0; pk.pTop = 6; if (tall) { pk.pVert = true; pk.pTh = 40; } fit(pk);
         pk.pOn = i -> eq[i]; pk.pLock = lk; pk.pTips = tp; pk.pFx = fxs; pk.pIds = ids; pk.pRar = rar; pk.pBg = bg; pk.pSetId = sids;
         return pk;
     }
 
+    // ---- the three doors (Name Icons, Name FX, Auras), the open door's room and the strip that tells you about the tile you point at
+    private static int cosDoor; private static String cosInfoId;
+    private static final String[] CD_NAME = {"Name Icons", "Name FX", "Auras"}, CD_SUB = {"A little icon after your name", "Light and colour in your name", "Particles around your character"}, CD_ICON = {":cos_suffix:", ":cos_name:", ":cos_aura:"};
+    private static final int[] CD_COL = {0xFFFFC857, 0xFFFF9AC8, 0xFF8FD0FF};
+    private static final CosmeticData.Kind[] CD_KIND = {CosmeticData.Kind.SUFFIX, CosmeticData.Kind.NAME, CosmeticData.Kind.AURA};
+    /** One kind's cosmetics, the rarest first: a rarity's set items, then its single items. */
+    private static List<Object> cosList(CosmeticData.Kind kind) {
+        List<Object> li = new ArrayList<>();
+        for (int r2 = 4; r2 >= 0; r2--) {
+            for (CosmeticData.SetDef sd : CosmeticData.SETS) if (sd.rarity() == r2) for (CosmeticData.Def d : CosmeticData.members(sd)) if (d.kind() == kind) li.add(d);
+            for (CosmeticData.Def d : CosmeticData.ALL) if (d.kind() == kind && d.set() == null && CosmeticData.rarityOf(d) == r2) li.add(d);
+        }
+        return li;
+    }
+    /** A cosmetic drawn big: the icon, the aura's picture, or your name wearing the effect. */
+    private void cosFigure(GuiGraphicsExtractor g, CosmeticData.Def d, int cx, int cy, float sc, long now) {
+        if (d.kind() == CosmeticData.Kind.NAME) {
+            String user = net.minecraft.client.Minecraft.getInstance().getUser().getName(); float k = Math.min(sc * 0.75f, 1.5f); int w = Gfx.w(font, user);
+            Gfx.push(g); Gfx.translate(g, cx - w * k / 2f, cy - 4 * k); Gfx.scale(g, k);
+            int lx = 0; for (int ci = 0; ci < user.length(); ci++) { String chs = String.valueOf(user.charAt(ci)); Gfx.text(g, font, chs, lx, 0, 0xFF000000 | NameFx.color(d.id(), ci, user.length(), 0x55FFFF, now)); lx += Gfx.w(font, chs); }
+            Gfx.pop(g); return;
+        }
+        String tok = d.kind() == CosmeticData.Kind.SUFFIX ? Cosmetics.token(d.id()) : Icons.tok("cx_" + d.id());
+        Gfx.push(g); Gfx.translate(g, cx - 8 * sc, cy - 8 * sc); Gfx.scale(g, sc); Icons.draw(g, tok, 0, 0, now); Gfx.pop(g);
+    }
+    private void drawCosDoors(GuiGraphicsExtractor g, Row r, int mx, int my) {
+        long now = System.currentTimeMillis();
+        for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); int x = b[0], y = b[1], w = b[2], h = b[3]; boolean hv = mx >= x && mx < x + w && my >= Math.max(y, lt) && my < Math.min(y + h, lb) && popup == null, sel = cosDoor == i;
+            float k = anim("cdoor" + i, hv || sel ? 1f : 0f, 40f); int col = CD_COL[i];
+            holoTile(g, x, y, w, h, col, k, false, hv, i * 31 + 19, now);
+            int ph2 = h - 50; pill(g, x + 3, y + 3, w - 6, ph2, 0xFF05061A);
+            g.enableScissor(x + 4, y + 4, x + w - 4, y + ph2 + 2);
+            miniSky(g, x + 4, y + 4, w - 8, ph2 - 2, 40 + i * 17, now, 0.55f);
+            List<Object> li = cosList(CD_KIND[i]); int have = 0; CosmeticData.Def worn = null;
+            for (Object o : li) { CosmeticData.Def d = (CosmeticData.Def) o; if (CosmeticData.unlocked(d)) { have++; if (CosmeticData.isEquipped(d)) worn = d; } }
+            CosmeticData.Def show = worn != null ? worn : li.isEmpty() ? null : (CosmeticData.Def) li.get((int) ((now / 2200L + i) % li.size()));          // nothing worn: the room's items take turns
+            if (show != null) { NebulaTex.glow(g, x + w / 2f, y + 3 + ph2 / 2f, w * 0.3f, ph2 * 0.55f, Gfx.argb(Math.round(40 + 40 * k), show.color() & 0xFFFFFF)); cosFigure(g, show, x + w / 2, y + 3 + ph2 / 2, 2f, now); }
+            g.disableScissor();
+            rout(g, x + 3, y + 3, w - 6, ph2, Gfx.argb(Math.round(70 + 150 * k), col & 0xFFFFFF));
+            Icons.draw(g, CD_ICON[i], x + 5, y + ph2 + 6, hv || sel ? now : 2400L); Gfx.text(g, font, CD_NAME[i], x + 24, y + ph2 + 10, Canvas.mix(Ui.TEXT, 0xFFFFFFFF, k));
+            vText(g, Gfx.fit(font, worn != null ? "Worn: " + worn.name() : CD_SUB[i], Math.round((w - 12) / 0.75f)), x + 6, y + ph2 + 25, 0.75f, worn != null ? Canvas.mix(Ui.SUB, worn.color(), 0.5f) : Ui.DIM);
+            int n = li.size(), dw = Math.min(5, Math.max(3, (w - 70) / Math.max(1, n)));
+            for (int q = 0; q < n; q++) g.fill(x + 6 + q * dw, y + h - 11, x + 6 + q * dw + dw - 2, y + h - 8, q < have ? 0xFF62E6A8 : 0xFF2A2C5E);
+            vText(g, have + " of " + n, x + 9 + n * dw, y + h - 12, 0.75f, Ui.SUB);
+            chevron(g, x + w - 9 + Math.round(k * 2), y + h - 10, 0, Canvas.mix(Ui.DIM, 0xFFFFC870, k));
+            if (k > 0.02f) g.fill(x + 3, y + h - 3, x + 3 + Math.round((w - 6) * k), y + h - 2, sel ? col : 0xFFFFC870); }
+    }
+    /** The strip under the doors: the tile you point at (or pointed at last), what it is and how it is earned. */
+    private void drawCosInfo(GuiGraphicsExtractor g, Row r) {
+        long now = System.currentTimeMillis();
+        CosmeticData.Def d = cosInfoId == null ? null : CosmeticData.byId(cosInfoId);
+        if (d == null || d.kind() != CD_KIND[cosDoor]) {                                               // nothing pointed at in this room yet: what you wear, else its first item
+            d = CosmeticData.byId(CosmeticData.equipped(CD_KIND[cosDoor])); if (d != null && !CosmeticData.unlocked(d)) d = null;
+            if (d == null) { List<Object> li = cosList(CD_KIND[cosDoor]); if (li.isEmpty()) return; d = (CosmeticData.Def) li.get(0); }
+        }
+        boolean own = CosmeticData.unlocked(d), on = own && CosmeticData.isEquipped(d); int sch = schemeOf(d), rar = CosmeticData.rarityOf(d);
+        pill(g, r.x, r.y, r.w, r.h, Canvas.mix(Ui.ROW, sch, 0.1f)); rout(g, r.x, r.y, r.w, r.h, Gfx.argb(on ? 200 : 90, sch & 0xFFFFFF));
+        int bx = r.x + 5, bs = r.h - 10; boolean nameK = d.kind() == CosmeticData.Kind.NAME; int bw = nameK ? 78 : bs;
+        pill(g, bx, r.y + 5, bw, bs, 0xFF05061A); NebulaTex.glow(g, bx + bw / 2f, r.y + 5 + bs / 2f, bw * 0.5f, bs * 0.5f, Gfx.argb(60, d.color() & 0xFFFFFF));
+        g.enableScissor(bx + 1, r.y + 6, bx + bw - 1, r.y + 4 + bs); cosFigure(g, d, bx + bw / 2, r.y + 5 + bs / 2, nameK ? 1.34f : 2f, now); g.disableScissor();
+        int tx = bx + bw + 8, right = r.x + r.w - 8;
+        Achievements.Ach via = Achievements.unlocking(d.id());
+        String state = on ? "Wearing" : own ? "Click to wear" : via != null ? "Click: see the star" : "Locked";
+        int stc = on ? 0xFF62E6A8 : own ? Ui.TEXT : via != null ? 0xFFFFC870 : 0xFFFF8A8A, stw = Math.round(Gfx.w(font, state) * 0.75f);
+        vText(g, state, right - stw, r.y + 7, 0.75f, stc);
+        Gfx.text(g, font, d.name(), tx, r.y + 6, own ? Ui.TEXT : Ui.SUB);
+        String tag = CosmeticData.rarityName(rar) + (d.set() != null && CosmeticData.setById(d.set()) != null ? " · " + CosmeticData.setById(d.set()).name() + " set" : ""); int nx = tx + Gfx.w(font, d.name()) + 6, tw = Math.round(Gfx.w(font, tag) * 0.75f) + 8;
+        if (nx + tw < right - stw - 6) { pill(g, nx, r.y + 5, tw, 10, Canvas.mix(Ui.PANEL2, sch, 0.3f)); vText(g, tag, nx + 4, r.y + 7, 0.75f, Canvas.mix(sch, 0xFFFFFFFF, 0.55f)); }
+        int lw = Math.round((right - tx) / 0.75f);
+        String rule = nameK ? (rar == 4 ? effectNote(d) : effectNote(d) + "Only your name colour and white.") : "";
+        if (via != null && !own) {                                                                    // which star earns it, and how far along you are
+            vText(g, Gfx.fit(font, "✦ " + via.name() + "  ·  " + Codex.conOf(via) + "  ·  " + via.desc(), lw), tx, r.y + 19, 0.75f, Ui.SUB);
+            float pk = (float) Math.max(0.0, Math.min(1.0, via.progress() / Math.max(1.0, via.goal()))); String pr = CosmeticData.fmtN(via.progress()) + " / " + CosmeticData.fmtN(via.goal()); int pw2 = Math.round(Gfx.w(font, pr) * 0.75f);
+            int b0 = tx, b1 = right - pw2 - 6; g.fill(b0, r.y + 33, b1, r.y + 36, 0x66000000); g.fill(b0, r.y + 33, b0 + Math.round((b1 - b0) * pk), r.y + 36, Canvas.mix(sch, 0xFFFFFFFF, 0.2f));
+            vText(g, pr, right - pw2, r.y + 31, 0.75f, Ui.SUB);
+        } else {
+            String how = own ? (via != null ? "Earned: " + via.name() + " (" + Codex.conOf(via) + ")" : d.line() == CosmeticData.Line.SPECIAL || d.line() == CosmeticData.Line.BETA ? CosmeticData.lockText(d) : d.how()) : CosmeticData.lockText(d);
+            List<String> ls = new ArrayList<>(); if (!rule.isEmpty()) ls.addAll(wrap(rule.trim(), lw)); ls.addAll(wrap(how, lw));
+            for (int q = 0; q < Math.min(2, ls.size()); q++) vText(g, q == 1 && ls.size() > 2 ? Gfx.fit(font, ls.get(q), lw) : ls.get(q), tx, r.y + 19 + q * 10, 0.75f, q == 0 && !rule.isEmpty() ? Ui.SUB : Ui.DIM);
+        }
+    }
     private void cosmeticsPage() {
         if (!cosPanels() && query.isBlank()) { Row cp = new Row(); cp.kind = COSPREV; cp.noSearch = true; cp.h = 150; rows.add(cp); }          // small screens keep the previews inside the page
         CosmeticData.Kind[] kinds = {CosmeticData.Kind.SUFFIX, CosmeticData.Kind.NAME, CosmeticData.Kind.AURA};
@@ -1140,21 +1227,25 @@ public class StardropsScreen extends Screen {
                 v -> { c.selfSuffix = v; CosmeticData.changed(); }, v -> { c.othersSuffix = v; CosmeticData.changed(); }, v -> { c.selfName = v; CosmeticData.changed(); },
                 v -> { c.othersName = v; CosmeticData.changed(); }, v -> { c.selfAura = v; CosmeticData.changed(); }, v -> { c.othersAura = v; CosmeticData.changed(); }); }
         int ownedSets = 0; for (CosmeticData.SetDef sd : CosmeticData.SETS) if (CosmeticData.unlocked(CosmeticData.members(sd).get(0))) ownedSets++;
-        rows.add(catHeader("SETS", "A name icon and a name effect that go together, and an aura for most.", ownedSets + " / " + CosmeticData.SETS.size(), 0xFFC77DFF));
         List<Object> st = new ArrayList<>(); for (int r2 = 4; r2 >= 0; r2--) for (CosmeticData.SetDef sd : CosmeticData.SETS) if (sd.rarity() == r2) st.add(sd);
-        rows.add(grid(st, 3));
-        // --- one section per kind, ordered by rarity (special, then beta, then common); a set's items keep the set's colours
-        for (int ki = 0; ki < kinds.length; ki++) {
-            List<Object> li = new ArrayList<>(); int have = 0;
-            for (int r2 = 4; r2 >= 0; r2--) {                                                  // rarest first: a rarity's set items, then its single items
-                for (CosmeticData.SetDef sd : CosmeticData.SETS) if (sd.rarity() == r2) for (CosmeticData.Def d : CosmeticData.members(sd)) if (d.kind() == kinds[ki]) li.add(d);
-                for (CosmeticData.Def d : CosmeticData.ALL) if (d.kind() == kinds[ki] && d.set() == null && CosmeticData.rarityOf(d) == r2) li.add(d);
+        if (query.isBlank()) {                                                                     // three doors; the open one's room is right under them
+            cosDoor = Math.max(0, Math.min(2, cosDoor));
+            Row d = new Row(); d.kind = CDOORS; d.h = 104; d.noSearch = true; rows.add(d);
+            Row inf = new Row(); inf.kind = CINFO; inf.h = 46; inf.noSearch = true; rows.add(inf);
+            rows.add(grid(cosList(kinds[cosDoor]), 6, true));
+            rows.add(catHeader("SETS", "A name icon and a name effect that go together, and an aura for most.", ownedSets + " / " + CosmeticData.SETS.size(), 0xFFC77DFF));
+            rows.add(grid(st, 3));
+        } else {                                                                                   // searching: everything, one section per kind
+            rows.add(catHeader("SETS", "A name icon and a name effect that go together, and an aura for most.", ownedSets + " / " + CosmeticData.SETS.size(), 0xFFC77DFF));
+            rows.add(grid(st, 3));
+            for (int ki = 0; ki < kinds.length; ki++) {
+                List<Object> li = cosList(kinds[ki]); int have = 0;
+                for (Object o : li) if (CosmeticData.unlocked((CosmeticData.Def) o)) have++;
+                rows.add(catHeader(heads[ki], subs[ki], have + " / " + li.size(), accents[ki]));
+                rows.add(grid(li, 4));
             }
-            for (Object o : li) if (CosmeticData.unlocked((CosmeticData.Def) o)) have++;
-            rows.add(catHeader(heads[ki], subs[ki], have + " / " + li.size(), accents[ki]));
-            rows.add(grid(li, 4));
         }
-        rows.add(note("Click to wear, click again to take off. Hover a tile to see its rarity and how to get it.", Ui.DIM));
+        rows.add(note("Click to wear, click again to take off. A locked achievement item takes you to its star.", Ui.DIM));
         Row rf = row(0, ":sparkle:", "Cosmetics list", Cosmetics.refreshNote(), Ui.ACCENT); rf.noSearch = true;
         rf.ctls.add(new Btn("Refresh", 0xFF2F8F5A, () -> { Cosmetics.forceRefresh(); build(); toast("Refreshing the cosmetics list.", 0xFF62E6A8); }));
         rf.ctls.add(new Btn("Copy ID", 0xFF3A4FA0, () -> { try { net.minecraft.client.Minecraft.getInstance().keyboardHandler.setClipboard(Cosmetics.code(Cosmetics.me())); toast("Your ID was copied.", 0xFF62A8FF); } catch (Throwable ignored) { toast("Could not copy your ID.", 0xFFFF8A5C); } }));
@@ -2212,6 +2303,7 @@ public class StardropsScreen extends Screen {
     private final Codex.Host codexHost = new Codex.Host() {
         public net.minecraft.client.gui.Font font() { return font; }
         public void toast(String text, int col) { StardropsScreen.toast(text, col); if (text.startsWith("LOCKED")) toastShake = true; }
+        public void cosmetic(String id) { CosmeticData.Def d = CosmeticData.byId(id); if (d == null) return; openCos(); cosDoor = d.kind().ordinal(); cosInfoId = id; build(); }
         public void tip(String lines, int col) { if (lines == null) return; if (lines.contains("\n")) { tipText = lines; tipCol = col; } else { simpleTip = lines; simpleTipCol = col; } }
     };
     private void drawCosPreview(GuiGraphicsExtractor g, Row r) {
@@ -4124,6 +4216,8 @@ public class StardropsScreen extends Screen {
             if (r.kind == PICKER) { drawPicker(g, r, mx, my); continue; }
             if (r.kind == CAT) { drawCat(g, r); continue; }
             if (r.kind == VDOORS) { drawDoors(g, r, mx, my); continue; }
+            if (r.kind == CDOORS) { drawCosDoors(g, r, mx, my); continue; }
+            if (r.kind == CINFO) { drawCosInfo(g, r); continue; }
             if (r.kind == VQUICK) { drawQuick(g, r, mx, my); continue; }
             if (r.kind == VPREV) { drawPrev(g, r, mx, my); continue; }
             if (r.kind == CHATPREV) { drawChatPrev(g, r); continue; }
@@ -4637,6 +4731,10 @@ public class StardropsScreen extends Screen {
                     int[] pb = pickBox(r, i);
                     if (mx >= pb[0] && mx < pb[0] + pb[2] && my >= pb[1] && my < pb[1] + pb[3]) { r.pSet.accept(i); return true; }
                 }
+                return true;
+            }
+            if (r.kind == CDOORS && button == 0 && mx >= r.x && mx < r.x + r.w && my >= r.y && my < r.y + r.h) {                         // a door: its room opens under the doors
+                for (int i = 0; i < 3; i++) { int[] b = doorBox(r, i); if (mx >= b[0] && mx < b[0] + b[2] && cosDoor != i) { int keep = scroll; cosDoor = i; cosInfoId = null; build(); scroll = keep; } }
                 return true;
             }
             if ((r.kind == VDOORS || r.kind == VQUICK || r.kind == VPREV) && button == 0 && mx >= r.x && mx < r.x + r.w && my >= r.y && my < r.y + r.h) return clickVisual(r, mx, my);

@@ -22,11 +22,15 @@ final class Codex {
         default int width(String s) { return font().width(s); }
         void toast(String text, int col);
         void tip(String lines, int col);
+        /** Show this cosmetic in the Cosmetics menu. */
+        default void cosmetic(String id) {}
     }
 
     // ---- the star groups: the heart of the map (every drop: the Ledger and Fortune chapters together), then one group for each main page of the
     //      Drop Library, round it like the points of a star. Lanes of light run from the heart to each group and fill as you complete it.
     private static final String[] ACH = {"core", "myth", "mob", "farm", "fish", "dye", "time", "mine"};
+    /** The constellation an achievement belongs to. */
+    static String conOf(Achievements.Ach a) { int c = groupOf(a.ch()); return c < 0 || c >= ACH_NAME.length ? "" : ACH_NAME[c]; }
     private static final String[] ACH_NAME = {"Every Drop", "Mythological", "Mob Drops", "Farming", "Fishing", "Table & Dyes", "Playtime", "Mining"};
     private static final String[] FIGURE = {"Ursa Major, the Great Bear", "Orion, the Hunter", "Scorpius, the Scorpion", "Virgo, the Maiden", "Pisces, the Fishes", "Cassiopeia, the Queen", "Cygnus, the Swan", "Taurus, the Bull"};   // each group is drawn as this real constellation
     private static final int[] ACH_COL = {0xFFFFD27A, 0xFF55D8FF, 0xFFFF6A6A, 0xFF8CE86A, 0xFF4FC3FF, 0xFFFF72C6, 0xFFA9B4FF, 0xFF55D8FF};
@@ -903,7 +907,7 @@ final class Codex {
             if (!lastHoverStar.equals(a.id())) { lastHoverStar = a.id(); if (now - hoverSoundAt > 90) { hoverSoundAt = now; sound("sky_star", 0.85f + 0.3f * rnd(n.depth() + c * 13), 0.45f); } }      // one chime per star, never a burst
             String nm = a.secret() && !a.done() ? "???" : a.name();
             String rew = a.reward().isEmpty() ? "" : Ledger.rewardName(a.reward());
-            String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  Today's run: " + LocalLedger.firstDayLeft() + " left, then it starts again." : "  A 24 hour run starts with your next drop.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ".");
+            String how = (a.secret() && !a.done() ? "A secret. Keep finding drops." : a.desc()) + (a.first() && !a.done() ? (LocalLedger.firstDay() ? "  Today's run: " + LocalLedger.firstDayLeft() + " left, then it starts again." : "  A 24 hour run starts with your next drop.") : "") + (rew.isEmpty() ? "" : "  Unlocks the " + rew + ". Click: see it in Cosmetics.");
             String extra = (!a.done() && LocalLedger.WAITING.contains(a.id()) ? "Earned: waiting for the server to confirm it" : a.done() ? "Lit " + new java.text.SimpleDateFormat("d MMM yyyy").format(new Date(a.at())) : (isTime(a) ? Ledger.hms(LocalLedger.live(a)) + " / " + Ledger.hms(a.goal()) : Ledger.fmt(a.progress()) + " / " + Ledger.fmt(a.goal())));
             host.tip(nm + "\n" + ACH_NAME[c] + "\nT" + Math.max(0, Math.min(2, a.tier())) + "\n" + (a.done() ? "1" : "0") + "\n" + extra + "\n" + how, a.done() ? col : 0xFF807891);
         }
@@ -1149,6 +1153,10 @@ final class Codex {
         if (button != 0) return true;
         for (int i = HITS.size() - 1; i >= 0; i--) { Object[] h = HITS.get(i); if (x >= (int) h[0] && x < (int) h[2] && y >= (int) h[1] && y < (int) h[3]) { if (h.length > 5 && overScene((float) x, (float) y)) continue; ((Runnable) h[4]).run(); return true; } }
         boolean onSky = x >= sx0 && x < sx0 + sw && y >= sy0 && y < sy0 + sh;
+        if (onSky && !hoverStar.isEmpty()) {                                                         // a star with a reward: its cosmetic, in the Cosmetics menu
+            Achievements.Profile p = Achievements.profile();
+            if (p != null) for (Achievements.Ach a : p.list()) if (a.id().equals(hoverStar) && !a.reward().isEmpty() && CosmeticData.byId(a.reward()) != null) { close(); host.cosmetic(a.reward()); return true; }
+        }
         if (!onSky) close();
         return true;
     }
