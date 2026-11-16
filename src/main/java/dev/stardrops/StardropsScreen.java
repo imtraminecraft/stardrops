@@ -3552,7 +3552,7 @@ public class StardropsScreen extends Screen {
         rows.add(toggle(":amb_viz:", "Star equalizer", "Columns of stars rise and fall to the beat beside your hotbar", () -> c.ambBars, v -> c.ambBars = v));
         rows.add(toggle(":amb_notes:", "Comets", "Little comets curve up beside your hotbar and burst into sparks", () -> c.ambNotes, v -> c.ambNotes = v));
         rows.add(section("Moments"));
-        rows.add(toggle(":amb_wave:", "Lift-off", "A new song: the rocket leaves the card, flies to the song's world and circles it", () -> c.ambWave, v -> c.ambWave = v));
+        rows.add(toggle(":amb_wave:", "Lift-off", "A new song: the rocket leaves the card, flies a loop beside it and lands back on its course", () -> c.ambWave, v -> c.ambWave = v));
         return;
     }
     private void spotifyOpts(StardropsConfig c) {

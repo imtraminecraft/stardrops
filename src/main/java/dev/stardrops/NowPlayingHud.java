@@ -19,7 +19,7 @@ final class NowPlayingHud {
     /** The demo shown while you move the HUD with nothing playing. */
     static boolean preview;
     /** Where it was last drawn (screen pixels), for the HUD editor. */
-    static int bx0, by0, bx1, by1; static long drawnAt;
+    static int bx0, by0, bx1, by1; static long drawnAt; static float rkX = 70, rkY = 43;      // where the card is on screen, and where its rocket is inside it (Lift-off starts and ends there)
 
     /** From the HUD (not while the HUD editor draws its own). */
     static void hud(GuiGraphicsExtractor g) { if (!preview) render(g); }
@@ -204,6 +204,7 @@ final class NowPlayingHud {
             float u = ease(leave); rx = ox2 + (rx - ox2) * u; ry = oy2 + (ry - oy2) * u; ang = lerpAng(oang, ang, u);
             behind = u < 0.4f && Math.sin(pa) < 0; firing = true;
         }
+        rkX = rx; rkY = ry;
         boolean out = AmbienceHud.away(since);                                                    // Lift-off: the rocket is out flying across the screen
         if (behind && !out) flyer(g, rx, ry, ang, a, now, firing, 1f);
         Worlds.draw(g, dx, yb, r0 + (r1 - r0) * (1f - pan), Math.round(a * edge(dx, tx, w)), seed(prevId), spin);

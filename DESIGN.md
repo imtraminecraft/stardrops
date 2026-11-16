@@ -938,3 +938,10 @@ Standing rules from the author (ImTra). Read this before changing the menu, anim
 - Achievements -> Cosmetics: clicking a star that has a reward closes the sky and opens Cosmetics at that item (Codex.Host.cosmetic). The star's tip says "Click: see it in Cosmetics."
 - Removed: the unused minos and rod icon art, tools/make_sparkle.py and tools/make_suffix_sprites.py.
 - Not seen in game yet at the time of writing: Lift-off, the camp, the Cosmetics doors and the new effects (only the camp and the icons were checked in offline renders).
+
+## 16 Nov, Lift-off redone ("the rocket's path is really really weird", "the planet zooms in in a new hud really weirdly")
+
+- The first Lift-off (a big world appearing across the screen, the rocket flying an S-curve to it, orbiting, and both shrinking into the card; rings of squares and star streaks over the whole screen) is rejected and removed.
+- Lift-off now: on a new song the card's own rocket leaves the card, flies ONE smooth loop beside it (growing a little at the far end, a short trail behind it), and lands back exactly where the card's rocket is. A small puff and sparks at lift-off, a small twinkle on landing. About 3 seconds. No second world, nothing across the whole screen.
+- Rule: "since the hud can be moved, make sure that its retroactive to where the now playing hud is." Everything Lift-off draws is measured from the Now Playing card (its position and its size), every frame. The loop goes to the side of the card with more room and shrinks to stay on screen. No card on screen: no flight.
+

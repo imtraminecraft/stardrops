@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.9.0
+- Lift-off is calmer: on a new song the rocket flies one smooth loop beside the Now Playing card and lands back on its course. It follows the card wherever you move it.
 - Cosmetics menu: three doors (Name Icons, Name FX, Auras) with live previews; the open door shows its items right below, and a strip tells you about the one you point at, with its star and your progress.
 - Name effects have new looks: Signal, Nebula, Solar, Comet Trail, Tide, Twinkle, Eclipse. Achievement effects only use your own name colour and white.
 - Achievements: click a star that has a reward to see it in Cosmetics.
