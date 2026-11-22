@@ -81,7 +81,11 @@
       "meteor",
       "warp",
       "moonlight",
-      "orbit"
+      "orbit",
+      "chat_wind",
+      "chat_glint",
+      "chat_echo",
+      "chat_decode"
     ]
   },
   "wornUrl": "https://fancydrops-worn.imtraminecraft.workers.dev"
