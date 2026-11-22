@@ -76,7 +76,12 @@
       "disc",
       "tractor",
       "fireflyaura",
-      "chat_transmission"
+      "chat_transmission",
+      "pulsar",
+      "meteor",
+      "warp",
+      "moonlight",
+      "orbit"
     ]
   },
   "wornUrl": "https://fancydrops-worn.imtraminecraft.workers.dev"
